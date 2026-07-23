@@ -5,6 +5,8 @@ coverage
 npm-debug.log*
 .bun-check/
 dist/
+!plugins/oracle-firefox/dist/
+!plugins/oracle-firefox/dist/**
 build/
 *.tsbuildinfo
 tsconfig.tsbuildinfo

@@ -26,5 +26,13 @@
     "unicorn/prefer-add-event-listener": "off",
     "unicorn/prefer-set-has": "off"
   },
-  "ignorePatterns": ["coverage/", "dist/", "node_modules/", "pnpm-lock.yaml", "types/", "vendor/"]
+  "ignorePatterns": [
+    "coverage/",
+    "dist/",
+    "node_modules/",
+    "pnpm-lock.yaml",
+    "plugins/oracle-firefox/",
+    "types/",
+    "vendor/"
+  ]
 }

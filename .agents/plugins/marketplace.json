@@ -1,0 +1,20 @@
+{
+  "name": "nikokuma-oracle",
+  "interface": {
+    "displayName": "Nikokuma Oracle"
+  },
+  "plugins": [
+    {
+      "name": "oracle-firefox",
+      "source": {
+        "source": "local",
+        "path": "./plugins/oracle-firefox"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

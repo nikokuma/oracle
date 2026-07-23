@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "oracle-firefox": {
+      "command": "node",
+      "args": ["./dist/server.mjs"],
+      "cwd": ".",
+      "env_vars": [
+        "ORACLE_FIREFOX_HOME",
+        "ORACLE_FIREFOX_PATH"
+      ]
+    }
+  }
+}

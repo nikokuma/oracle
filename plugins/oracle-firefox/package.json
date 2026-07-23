@@ -1,0 +1,24 @@
+{
+  "name": "oracle-firefox-codex-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test",
+    "doctor": "node dist/cli.mjs doctor"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "fast-glob": "3.3.3",
+    "puppeteer-core": "25.3.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

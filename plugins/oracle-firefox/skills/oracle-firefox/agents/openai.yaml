@@ -1,0 +1,4 @@
+interface:
+  display_name: "Oracle Firefox"
+  short_description: "Consult and continue ChatGPT chats in Firefox"
+  default_prompt: "Use $oracle-firefox to consult ChatGPT or continue an existing chat through Firefox."

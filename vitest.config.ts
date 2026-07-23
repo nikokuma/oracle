@@ -1,9 +1,10 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
 export default defineConfig({
   test: {
     setupFiles: ["tests/setup-env.ts", "tests/cli/runOracle/setup.ts"],
+    exclude: [...configDefaults.exclude, "plugins/oracle-firefox/test/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
