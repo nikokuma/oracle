@@ -23,6 +23,14 @@ test("canonical metadata matches Codex, Claude, marketplace, and MCPB packages",
   assert.equal(mcpb.version, meta.version);
   const claudeMcp = JSON.parse(await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", ".mcp.json"), "utf8"));
   assert.match(claudeMcp.mcpServers["oracle-firefox"].args[0], /\$\{CLAUDE_PLUGIN_ROOT\}/u);
+  const { stdout: tracked } = await execFileAsync("git", [
+    "ls-files",
+    "--error-unmatch",
+    "plugins/oracle-firefox-claude/dist/server.mjs",
+    "plugins/oracle-firefox-claude/dist/broker.mjs",
+  ], { cwd: repositoryRoot });
+  assert.match(tracked, /plugins\/oracle-firefox-claude\/dist\/server\.mjs/u);
+  assert.match(tracked, /plugins\/oracle-firefox-claude\/dist\/broker\.mjs/u);
 });
 
 test("Claudex wrapper adds only plugin-dir and preserves managed or Fable arguments", async () => {
