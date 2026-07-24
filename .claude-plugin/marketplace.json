@@ -1,0 +1,33 @@
+{
+  "name": "nikokuma-oracle",
+  "owner": {
+    "name": "nikokuma"
+  },
+  "description": "Firefox-native Oracle plugins by nikokuma.",
+  "plugins": [
+    {
+      "name": "oracle-firefox",
+      "source": "./plugins/oracle-firefox-claude",
+      "displayName": "Oracle Firefox",
+      "description": "Durable, Pro-verified ChatGPT consultation through the user's authenticated Firefox.",
+      "version": "1.0.0",
+      "author": {
+        "name": "nikokuma",
+        "url": "https://github.com/nikokuma"
+      },
+      "homepage": "https://github.com/nikokuma/oracle/blob/main/FIREFOX.md",
+      "repository": "https://github.com/nikokuma/oracle",
+      "license": "MIT",
+      "keywords": [
+        "firefox",
+        "chatgpt",
+        "pro",
+        "webdriver-bidi",
+        "mcp",
+        "codex",
+        "claude"
+      ],
+      "category": "developer-tools"
+    }
+  ]
+}

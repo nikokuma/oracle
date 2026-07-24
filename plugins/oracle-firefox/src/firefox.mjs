@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -13,8 +14,23 @@ import {
 } from "./selectors.mjs";
 
 const execFileAsync = promisify(execFile);
+const ORACLE_APPROVED_ATTACHMENTS = new WeakMap();
 
 export const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+export function normalizeSemanticText(value) {
+  return String(value ?? "")
+    .replace(/\r\n?/gu, "\n")
+    .replace(/\u00a0/gu, " ")
+    .normalize("NFC")
+    .replace(/[ \t]+\n/gu, "\n")
+    .replace(/\n[ \t]+/gu, "\n")
+    .trim();
+}
+
+export function semanticTextHash(value) {
+  return createHash("sha256").update(normalizeSemanticText(value)).digest("hex");
+}
 
 export function normalizeConversationTitle(value) {
   return String(value ?? "")
@@ -617,24 +633,25 @@ export async function launchFirefox({ headless = false, profileDir = profileDire
     userDataDir: profileDir,
     headless,
     defaultViewport: { width: 1280, height: 900 },
-    handleSIGINT: true,
-    handleSIGTERM: true,
+    handleSIGINT: false,
+    handleSIGTERM: false,
   });
 }
 
-export async function openChatGpt(browser) {
+export async function openChatGpt(browser, { newPage = false, foreground = true } = {}) {
   const pages = await browser.pages();
-  const page =
-    pages.find((candidate) => candidate.url().includes("chatgpt.com")) ??
-    pages[0] ??
-    (await browser.newPage());
+  const page = newPage
+    ? await browser.newPage()
+    : pages.find((candidate) => candidate.url().includes("chatgpt.com")) ??
+      pages[0] ??
+      (await browser.newPage());
   page.setDefaultTimeout(30_000);
   if (!page.url().includes("chatgpt.com")) {
     await page.goto(CHATGPT_URL, { waitUntil: "domcontentloaded", timeout: 60_000 });
   } else if (page.url() !== CHATGPT_URL) {
     await page.goto(CHATGPT_URL, { waitUntil: "domcontentloaded", timeout: 60_000 });
   }
-  await page.bringToFront();
+  if (foreground) await page.bringToFront();
   return page;
 }
 
@@ -807,9 +824,54 @@ export async function readComposerText(page) {
   }, INPUT_SELECTORS);
 }
 
-export async function insertComposerText(page, text) {
+export async function inspectComposerState(page) {
+  return page.evaluate(
+    ({ inputSelectors, fileSelectors }) => {
+      const visible = (node) => {
+        if (!(node instanceof HTMLElement)) return false;
+        const rect = node.getBoundingClientRect();
+        const style = window.getComputedStyle(node);
+        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      };
+      const composer = inputSelectors
+        .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
+        .find(visible);
+      const root = composer?.closest('[data-testid*="composer"]') || composer?.closest("form") || composer?.parentElement || document.body;
+      const text = composer instanceof HTMLTextAreaElement || composer instanceof HTMLInputElement
+        ? composer.value
+        : composer?.innerText || composer?.textContent || "";
+      const filenames = new Set();
+      for (const input of fileSelectors.flatMap((selector) => Array.from(root.querySelectorAll(selector)))) {
+        if (input instanceof HTMLInputElement) {
+          for (const file of Array.from(input.files || [])) filenames.add(file.name);
+        }
+      }
+      for (const node of root.querySelectorAll('[data-testid*="attachment"], [data-testid*="file"], [aria-label*="Remove attachment" i], [title*="attachment" i]')) {
+        const value = node.getAttribute("aria-label") || node.getAttribute("title") || node.textContent || "";
+        const match = value.match(/(?:remove\s+(?:attachment|file)\s*)?[“"']?([^\n“”"']+\.[a-z0-9]{1,12})/iu);
+        if (match) filenames.add(match[1].trim());
+      }
+      const uploading = Array.from(root.querySelectorAll('[data-state], [data-testid*="upload"], [aria-label*="upload" i]')).some((node) => {
+        const value = `${node.getAttribute("data-state") || ""} ${node.getAttribute("aria-label") || ""} ${node.textContent || ""}`.toLowerCase();
+        return /\b(uploading|processing|pending)\b/u.test(value);
+      });
+      return { text, attachments: Array.from(filenames).sort(), uploading };
+    },
+    { inputSelectors: INPUT_SELECTORS, fileSelectors: FILE_INPUT_SELECTORS },
+  );
+}
+
+export async function insertComposerText(page, text, { expectedAttachments } = {}) {
   const content = String(text);
   if (!content) throw new Error("Cannot submit an empty prompt.");
+  const before = await inspectComposerState(page);
+  if (normalizeSemanticText(before.text)) {
+    throw new Error("ChatGPT composer contains an existing draft. Refusing to clear or overwrite it.");
+  }
+  const expected = [...(expectedAttachments ?? ORACLE_APPROVED_ATTACHMENTS.get(page) ?? [])].sort();
+  if (before.attachments.join("\u0000") !== expected.join("\u0000")) {
+    throw new Error(`ChatGPT composer already contains foreign attachments: ${before.attachments.join(", ")}.`);
+  }
   const editor = await waitForComposer(page);
   await editor.click();
   await editor.evaluate((node, value) => {
@@ -840,27 +902,21 @@ export async function insertComposerText(page, text) {
     }
   }, content);
   await delay(250);
-  let observed = await readComposerText(page);
-  if (observed.length < Math.max(1, content.length * 0.8)) {
-    await editor.evaluate((node) => {
-      node.focus();
-      if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) node.value = "";
-      else node.textContent = "";
-      node.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteByCut" }));
-    });
-    await page.keyboard.type(content);
-    await delay(250);
-    observed = await readComposerText(page);
-  }
-  if (observed.length < Math.max(1, content.length * 0.8)) {
+  const observed = await readComposerText(page);
+  if (normalizeSemanticText(observed) !== normalizeSemanticText(content)) {
     throw new Error(
-      `Prompt insertion appears truncated (${observed.length}/${content.length} characters).`,
+      `Prompt insertion did not match the whole authorized message (${observed.length}/${content.length} characters).`,
     );
   }
   return observed.length;
 }
 
-export async function uploadContextFile(page, filePath, { timeoutMs = 60_000 } = {}) {
+export async function uploadContextFile(page, filePath, { timeoutMs = 600_000 } = {}) {
+  const boundedTimeout = Math.max(1_000, Math.min(1_800_000, timeoutMs));
+  const initial = await inspectComposerState(page);
+  if (initial.attachments.length > 0) {
+    throw new Error(`ChatGPT composer already contains foreign attachments: ${initial.attachments.join(", ")}.`);
+  }
   let input = null;
   for (const selector of FILE_INPUT_SELECTORS) {
     input = await page.$(selector);
@@ -873,28 +929,19 @@ export async function uploadContextFile(page, filePath, { timeoutMs = 60_000 } =
   }
   await input.uploadFile(filePath);
   const filename = path.basename(filePath);
-  const deadline = Date.now() + timeoutMs;
+  const deadline = Date.now() + boundedTimeout;
   while (Date.now() < deadline) {
-    const ready = await page.evaluate((expectedName) => {
-      const bodyText = document.body?.innerText || "";
-      const send = Array.from(
-        document.querySelectorAll(
-          'button[data-testid="send-button"], button[data-testid*="composer-send"], form button[type="submit"]',
-        ),
-      ).find((node) => {
-        if (!(node instanceof HTMLElement)) return false;
-        const rect = node.getBoundingClientRect();
-        const disabled =
-          node.getAttribute("aria-disabled") === "true" ||
-          ("disabled" in node && Boolean(node.disabled));
-        return rect.width > 0 && rect.height > 0 && !disabled;
-      });
-      return bodyText.includes(expectedName) && Boolean(send);
-    }, filename);
-    if (ready) return filename;
+    const state = await inspectComposerState(page);
+    const send = await findVisibleHandle(page, SEND_BUTTON_SELECTORS, { enabled: true });
+    if (send) await send.dispose();
+    const exactAttachments = state.attachments.length === 1 && state.attachments[0] === filename;
+    if (exactAttachments && !state.uploading && Boolean(send)) {
+      ORACLE_APPROVED_ATTACHMENTS.set(page, [filename]);
+      return filename;
+    }
     await delay(500);
   }
-  throw new Error(`Attachment did not become ready before timeout: ${filename}`);
+  throw new Error(`Attachment did not become ready before the ${Math.round(boundedTimeout / 1000)}-second timeout: ${filename}`);
 }
 
 export async function assistantSnapshot(page) {
@@ -911,47 +958,50 @@ export async function assistantSnapshot(page) {
           style.visibility !== "hidden"
         );
       };
-      const roleNodes = Array.from(
-        document.querySelectorAll(
-          '[data-message-author-role="assistant"], [data-turn="assistant"], [data-testid*="assistant"]',
-        ),
-      );
-      const turns = [];
+      const roleNodes = Array.from(document.querySelectorAll('[data-message-author-role], [data-turn="assistant"], [data-turn="user"]'));
+      const orderedTurns = [];
       const seen = new Set();
-      for (const node of roleNodes) {
-        const turn =
-          node.closest('[data-testid^="conversation-turn"]') || node.closest("article") || node;
-        if (!seen.has(turn)) {
-          seen.add(turn);
-          turns.push(turn);
-        }
+      for (const roleNode of roleNodes) {
+        const turn = roleNode.closest('[data-testid^="conversation-turn"]') || roleNode.closest("article") || roleNode;
+        if (seen.has(turn)) continue;
+        seen.add(turn);
+        const explicitRole = roleNode.getAttribute("data-message-author-role") || roleNode.getAttribute("data-turn");
+        if (explicitRole !== "assistant" && explicitRole !== "user") continue;
+        const contentNode = explicitRole === "assistant"
+          ? turn.querySelector(".markdown, [data-message-content]") || roleNode
+          : turn.querySelector('[data-message-content], [data-testid*="user-message"], .whitespace-pre-wrap') || roleNode;
+        const text = (contentNode.innerText || contentNode.textContent || "").trim();
+        const id = turn.getAttribute("data-message-id") || roleNode.getAttribute("data-message-id") || turn.getAttribute("data-testid") || turn.id || null;
+        const attachments = Array.from(turn.querySelectorAll('[data-testid*="attachment"], [data-testid*="file"], a[download]'))
+          .map((node) => (node.getAttribute("download") || node.getAttribute("aria-label") || node.getAttribute("title") || node.textContent || "").trim())
+          .flatMap((value) => {
+            const match = value.match(/([^/\\\n]+\.[a-z0-9]{1,12})/iu);
+            return match ? [match[1].trim()] : [];
+          });
+        orderedTurns.push({
+          role: explicitRole,
+          id,
+          text,
+          html: turn.innerHTML || "",
+          attachments,
+          completionVisible: explicitRole === "assistant" && Boolean(turn.querySelector(finishedSelector)),
+        });
       }
+      const turns = orderedTurns.filter((turn) => turn.role === "assistant");
+      const userTurns = orderedTurns.filter((turn) => turn.role === "user");
       const last = turns.at(-1) || null;
-      const userRoleNodes = Array.from(
-        document.querySelectorAll('[data-message-author-role="user"]'),
-      );
-      const userTurns = [];
-      const seenUserTurns = new Set();
-      for (const node of userRoleNodes) {
-        const turn =
-          node.closest('[data-testid^="conversation-turn"]') || node.closest("article") || node;
-        if (!seenUserTurns.has(turn)) {
-          seenUserTurns.add(turn);
-          userTurns.push(turn);
-        }
-      }
       const lastUser = userTurns.at(-1) || null;
-      const text = (last?.innerText || last?.textContent || "").trim();
       const stopVisible = stopSelectors.some((selector) =>
         Array.from(document.querySelectorAll(selector)).some((node) => visible(node)),
       );
-      const completionVisible = Boolean(last?.querySelector(finishedSelector));
+      const completionVisible = Boolean(last?.completionVisible);
       return {
         count: turns.length,
         userCount: userTurns.length,
-        lastUserText: (lastUser?.innerText || lastUser?.textContent || "").trim(),
-        text,
-        html: last?.innerHTML || "",
+        lastUserText: lastUser?.text || "",
+        text: last?.text || "",
+        html: last?.html || "",
+        turns: orderedTurns,
         stopVisible,
         completionVisible,
         url: location.href,
@@ -989,20 +1039,20 @@ export async function waitForUserMessage(
   page,
   baselineCount,
   expectedText,
-  { timeoutMs = 30_000 } = {},
+  { timeoutMs = 30_000, expectedAttachments = [] } = {},
 ) {
-  const normalize = (value) =>
-    String(value ?? "")
-      .replace(/\s+/gu, " ")
-      .trim();
-  const expected = normalize(expectedText);
-  const expectedPrefix = expected.slice(0, Math.min(expected.length, 200));
+  const expectedHash = semanticTextHash(expectedText);
+  const expectedManifest = [...expectedAttachments].sort();
   const deadline = Date.now() + timeoutMs;
   let latest = null;
   while (Date.now() < deadline) {
     latest = await assistantSnapshot(page);
-    const observed = normalize(latest.lastUserText);
-    if (latest.userCount > baselineCount && observed.includes(expectedPrefix)) return latest;
+    const newUsers = latest.turns.filter((turn) => turn.role === "user").slice(baselineCount);
+    const match = newUsers.find((turn) =>
+      semanticTextHash(turn.text) === expectedHash &&
+      [...turn.attachments].sort().join("\u0000") === expectedManifest.join("\u0000"),
+    );
+    if (match) return { ...latest, userTurn: { ...match, hash: expectedHash } };
     await delay(250);
   }
   throw new Error(
@@ -1012,12 +1062,12 @@ export async function waitForUserMessage(
 
 export async function submitComposer(page) {
   const button = await findVisibleHandle(page, SEND_BUTTON_SELECTORS, { enabled: true });
-  if (button) {
-    await button.click();
-    return "button";
+  if (!button) {
+    throw new Error("A visible, enabled ChatGPT Send button was not found. No submission was attempted.");
   }
-  await page.keyboard.press("Enter");
-  return "enter";
+  await button.click();
+  await button.dispose();
+  return "button";
 }
 
 function isPlaceholder(text) {
@@ -1060,4 +1110,43 @@ export async function waitForAssistant(page, baselineCount, { timeoutMs = 600_00
   throw new Error(
     "ChatGPT response could not be confirmed complete before timeout; refusing to return a possibly incomplete answer.",
   );
+}
+
+export async function waitForAssistantAfterTurn(
+  page,
+  userTurn,
+  { timeoutMs = 10_800_000, stableMs = 2_500 } = {},
+) {
+  const deadline = Date.now() + timeoutMs;
+  let lastKey = "";
+  let stableSince = Date.now();
+  let terminalCycles = 0;
+  while (Date.now() < deadline) {
+    const snapshot = await assistantSnapshot(page);
+    let userIndex = -1;
+    if (userTurn.id) userIndex = snapshot.turns.findIndex((turn) => turn.role === "user" && turn.id === userTurn.id);
+    if (userIndex < 0) {
+      userIndex = snapshot.turns.findIndex((turn) => turn.role === "user" && semanticTextHash(turn.text) === userTurn.hash);
+    }
+    const assistant = userIndex >= 0
+      ? snapshot.turns.slice(userIndex + 1).find((turn) => turn.role === "assistant")
+      : null;
+    const key = assistant ? `${assistant.id || ""}:${semanticTextHash(assistant.text)}` : "";
+    if (key !== lastKey) {
+      lastKey = key;
+      stableSince = Date.now();
+      terminalCycles = 0;
+    }
+    const terminal = assistant && !isPlaceholder(assistant.text) && assistant.completionVisible && !snapshot.stopVisible;
+    if (terminal) {
+      terminalCycles += 1;
+      if (terminalCycles >= 3 && Date.now() - stableSince >= stableMs) {
+        return { ...snapshot, assistantTurn: assistant, text: assistant.text, html: assistant.html };
+      }
+    } else {
+      terminalCycles = 0;
+    }
+    await delay(500);
+  }
+  throw new Error("The assistant response bound to the submitted user turn could not be confirmed complete before timeout.");
 }

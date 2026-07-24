@@ -6,7 +6,10 @@
       "cwd": ".",
       "env_vars": [
         "ORACLE_FIREFOX_HOME",
-        "ORACLE_FIREFOX_PATH"
+        "ORACLE_FIREFOX_PATH",
+        "ORACLE_FIREFOX_COORDINATOR_HOME",
+        "ORACLE_FIREFOX_NODE_PATH",
+        "ORACLE_FIREFOX_WRITE_CONCURRENCY"
       ]
     }
   }

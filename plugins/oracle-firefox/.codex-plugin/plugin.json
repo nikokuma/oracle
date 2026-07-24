@@ -1,7 +1,7 @@
 {
   "name": "oracle-firefox",
-  "version": "0.2.0+codex.20260724002713",
-  "description": "Consult ChatGPT in standalone or project conversations and continue existing chats automatically through Firefox using WebDriver BiDi.",
+  "version": "1.0.0+codex.20260724123832",
+  "description": "Run durable, Pro-verified ChatGPT consultations through one shared Firefox broker from Codex, Claude, Claudex, or Desktop.",
   "author": {
     "name": "nikokuma",
     "url": "https://github.com/nikokuma"
@@ -19,8 +19,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Oracle Firefox",
-    "shortDescription": "Consult ChatGPT through Firefox without Chrome.",
-    "longDescription": "Oracle Firefox gives Codex a local, Firefox-native second-opinion workflow. It can discover ChatGPT projects and chats, start standalone or project consultations with selected source files, and safely continue one exact existing conversation.",
+    "shortDescription": "Durable ChatGPT Pro consultation through Firefox.",
+    "longDescription": "Oracle Firefox runs one authenticated Firefox and one durable broker per user. It safely queues standalone, project, and existing-chat messages, verifies Pro before sending, survives client timeouts and broker restarts, and supports structured local-evidence follow-ups.",
     "developerName": "nikokuma",
     "category": "Developer Tools",
     "capabilities": [
@@ -29,7 +29,10 @@
       "Context Bundling",
       "ChatGPT Consultation",
       "ChatGPT Projects",
-      "Existing Chat Continuation"
+      "Existing Chat Continuation",
+      "Durable Background Jobs",
+      "ChatGPT Pro Verification",
+      "Multi-Harness Coordination"
     ],
     "defaultPrompt": [
       "Get a Firefox-backed second opinion on this code.",

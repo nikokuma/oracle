@@ -1,12 +1,15 @@
 {
   "name": "oracle-firefox-codex-plugin",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "license": "MIT",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:mcpb": "node scripts/build.mjs && mcpb validate mcpb && mcpb pack mcpb releases/oracle-firefox-1.0.0.mcpb",
+    "generate:harnesses": "node scripts/generate-harnesses.mjs",
     "test": "node --test",
+    "test:portable": "node --test test/broker-multiprocess.test.mjs test/bundle.test.mjs test/evidence.test.mjs test/mcp-tools.test.mjs test/packaging.test.mjs test/profiles.test.mjs test/protocol.test.mjs test/safety.test.mjs test/scheduler.test.mjs test/state-store.test.mjs",
     "doctor": "node dist/cli.mjs doctor"
   },
   "dependencies": {
@@ -16,9 +19,14 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@anthropic-ai/mcpb": "2.1.2",
     "esbuild": "0.28.1"
   },
   "engines": {
     "node": ">=24"
+  },
+  "overrides": {
+    "@hono/node-server": "2.0.11",
+    "tmp": "0.2.7"
   }
 }

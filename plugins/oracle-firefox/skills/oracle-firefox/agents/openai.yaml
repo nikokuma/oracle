@@ -1,4 +1,11 @@
 interface:
   display_name: "Oracle Firefox"
-  short_description: "Consult ChatGPT chats and projects in Firefox"
-  default_prompt: "Use $oracle-firefox to consult ChatGPT in a standalone or project chat, or continue an existing chat through Firefox."
+  short_description: "Durable ChatGPT Pro consultation via Firefox"
+  default_prompt: "Use $oracle-firefox to start a durable ChatGPT Pro review and verify the result."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "oracle-firefox"
+      description: "Durable Oracle Firefox broker client"
+policy:
+  allow_implicit_invocation: true
