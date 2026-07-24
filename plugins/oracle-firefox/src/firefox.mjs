@@ -16,10 +16,32 @@ const execFileAsync = promisify(execFile);
 
 export const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-function normalizeConversationTitle(value) {
+export function normalizeConversationTitle(value) {
   return String(value ?? "")
     .replace(/\s+/gu, " ")
     .trim();
+}
+
+export const normalizeProjectTitle = normalizeConversationTitle;
+
+export function normalizeProjectUrl(value) {
+  let parsed;
+  try {
+    parsed = new URL(String(value));
+  } catch {
+    throw new Error(`Invalid ChatGPT project URL: ${value}`);
+  }
+  if (
+    parsed.protocol !== "https:" ||
+    parsed.hostname !== "chatgpt.com" ||
+    !/^\/g\/g-p-[^/]+\/project\/?$/u.test(parsed.pathname)
+  ) {
+    throw new Error("Project URL must be an https://chatgpt.com/g/g-p-.../project URL.");
+  }
+  parsed.pathname = parsed.pathname.replace(/\/+$/u, "");
+  parsed.search = "";
+  parsed.hash = "";
+  return parsed.href;
 }
 
 export function normalizeConversationUrl(value) {
@@ -32,26 +54,64 @@ export function normalizeConversationUrl(value) {
   if (
     parsed.protocol !== "https:" ||
     parsed.hostname !== "chatgpt.com" ||
-    !/(^|\/)c\/[a-zA-Z0-9-]+(?:\/|$)/u.test(parsed.pathname)
+    !(
+      /^\/c\/[a-zA-Z0-9-]+\/?$/u.test(parsed.pathname) ||
+      /^\/g\/g-p-[^/]+\/c\/[a-zA-Z0-9-]+\/?$/u.test(parsed.pathname)
+    )
   ) {
     throw new Error(
-      "Conversation URL must be an https://chatgpt.com URL containing a /c/<conversation-id> path.",
+      "Conversation URL must be an https://chatgpt.com/c/... or https://chatgpt.com/g/g-p-.../c/... URL.",
     );
   }
+  parsed.pathname = parsed.pathname.replace(/\/+$/u, "");
   parsed.search = "";
   parsed.hash = "";
   return parsed.href;
 }
 
-export async function findConversationCandidates(page, title, { visibleOnly = false } = {}) {
-  const normalizedTitle = normalizeConversationTitle(title);
-  if (!normalizedTitle) throw new Error("Chat title cannot be empty.");
+export function projectUrlFromConversationUrl(value) {
+  const conversationUrl = new URL(normalizeConversationUrl(value));
+  const match = conversationUrl.pathname.match(/^(\/g\/g-p-[^/]+)\/c\/[a-zA-Z0-9-]+$/u);
+  if (!match) return null;
+  return normalizeProjectUrl(`${conversationUrl.origin}${match[1]}/project`);
+}
+
+function projectBasePath(value) {
+  return new URL(normalizeProjectUrl(value)).pathname.replace(/\/project$/u, "");
+}
+
+function conversationMatchesProject(conversationUrl, projectUrl) {
+  if (!projectUrl) return true;
+  const pathname = new URL(normalizeConversationUrl(conversationUrl)).pathname;
+  return pathname.startsWith(`${projectBasePath(projectUrl)}/c/`);
+}
+
+export async function findConversationCandidatesByQuery(
+  page,
+  query,
+  { exact = false, visibleOnly = false, projectUrl = null } = {},
+) {
+  const normalizedQuery = normalizeConversationTitle(query);
+  if (!normalizedQuery) throw new Error("Chat search query cannot be empty.");
   const candidates = await page.evaluate(
-    ({ expectedTitle, requireVisible }) => {
-      const normalize = (value) => String(value || "").replace(/\s+/gu, " ").trim();
+    ({ expectedQuery, requireExact, requireVisible }) => {
+      const normalize = (value) =>
+        String(value || "")
+          .replace(/\s+/gu, " ")
+          .trim();
       return Array.from(document.querySelectorAll("a"))
         .filter((anchor) => {
-          if (normalize(anchor.textContent).toLowerCase() !== expectedTitle.toLowerCase()) return false;
+          const title =
+            normalize(anchor.textContent) || normalize(anchor.getAttribute("aria-label"));
+          const normalizedTitle = title.toLowerCase();
+          const normalizedExpected = expectedQuery.toLowerCase();
+          if (
+            requireExact
+              ? normalizedTitle !== normalizedExpected
+              : !normalizedTitle.includes(normalizedExpected)
+          ) {
+            return false;
+          }
           if (!requireVisible) return true;
           const rect = anchor.getBoundingClientRect();
           const style = window.getComputedStyle(anchor);
@@ -62,20 +122,32 @@ export async function findConversationCandidates(page, title, { visibleOnly = fa
             style.visibility !== "hidden"
           );
         })
-        .map((anchor) => ({ title: normalize(anchor.textContent), url: anchor.href }));
+        .map((anchor) => ({
+          title: normalize(anchor.textContent) || normalize(anchor.getAttribute("aria-label")),
+          url: anchor.href,
+        }));
     },
-    { expectedTitle: normalizedTitle, requireVisible: visibleOnly },
+    { expectedQuery: normalizedQuery, requireExact: exact, requireVisible: visibleOnly },
   );
   const unique = new Map();
   for (const candidate of candidates) {
     try {
       const url = normalizeConversationUrl(candidate.url);
-      unique.set(url, { title: candidate.title, url });
+      if (!conversationMatchesProject(url, projectUrl)) continue;
+      unique.set(url, {
+        title: candidate.title,
+        url,
+        projectUrl: projectUrlFromConversationUrl(url),
+      });
     } catch {
-      // Ignore exact-title links that are not ChatGPT conversation URLs.
+      // Ignore matching links that are not ChatGPT conversation URLs.
     }
   }
   return Array.from(unique.values());
+}
+
+export async function findConversationCandidates(page, title, options = {}) {
+  return findConversationCandidatesByQuery(page, title, { ...options, exact: true });
 }
 
 export function selectUniqueConversationCandidate(candidates, title) {
@@ -89,42 +161,61 @@ export function selectUniqueConversationCandidate(candidates, title) {
 }
 
 async function openChatSearch(page) {
-  const handle = await page.evaluateHandle(() => {
-    const normalize = (value) => String(value || "").replace(/\s+/gu, " ").trim().toLowerCase();
-    return (
-      Array.from(document.querySelectorAll("button")).find((button) => {
-        const rect = button.getBoundingClientRect();
-        const style = window.getComputedStyle(button);
-        const label = normalize(button.getAttribute("aria-label"));
-        const text = normalize(button.textContent);
-        return (
-          rect.width > 0 &&
-          rect.height > 0 &&
-          style.display !== "none" &&
-          style.visibility !== "hidden" &&
-          (label === "search" || text === "search")
-        );
-      }) || null
-    );
-  });
-  const button = handle.asElement();
+  let button = null;
+  try {
+    button = await page.waitForSelector('nav button[aria-label="Search"]', {
+      visible: true,
+      timeout: 10_000,
+    });
+  } catch {
+    // Fall through to the older text-only search control.
+  }
+  let fallbackHandle = null;
   if (!button) {
-    await handle.dispose();
+    fallbackHandle = await page.evaluateHandle(() => {
+      const normalize = (value) =>
+        String(value || "")
+          .replace(/\s+/gu, " ")
+          .trim()
+          .toLowerCase();
+      return (
+        Array.from(document.querySelectorAll("button")).find((candidate) => {
+          const rect = candidate.getBoundingClientRect();
+          const style = window.getComputedStyle(candidate);
+          return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            normalize(candidate.textContent) === "search"
+          );
+        }) || null
+      );
+    });
+    button = fallbackHandle.asElement();
+  }
+  if (!button) {
+    await fallbackHandle?.dispose();
     throw new Error("ChatGPT's chat-search control was not found.");
   }
   try {
     await button.click();
   } finally {
-    await handle.dispose();
+    if (fallbackHandle) await fallbackHandle.dispose();
+    else await button.dispose();
   }
 }
 
-async function searchConversationByTitle(page, title, { timeoutMs = 15_000 } = {}) {
+async function searchConversationCandidates(
+  page,
+  query,
+  { exact = false, projectUrl = null, timeoutMs = 15_000 } = {},
+) {
   await openChatSearch(page);
-  const input = await page.waitForSelector("input[placeholder='Search'][aria-label='Search']", {
-    visible: true,
-    timeout: 10_000,
-  });
+  const input = await page.waitForSelector(
+    "[role='dialog'] input[placeholder='Search...'], input[placeholder='Search...'], input[placeholder='Search'][aria-label='Search']",
+    { visible: true, timeout: 10_000 },
+  );
   if (!input) throw new Error("ChatGPT's chat-search input was not found.");
   await input.click();
   await input.evaluate((node) => {
@@ -133,41 +224,349 @@ async function searchConversationByTitle(page, title, { timeoutMs = 15_000 } = {
     else node.value = "";
     node.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContent" }));
   });
-  await page.keyboard.type(title);
+  await page.keyboard.type(query);
   const deadline = Date.now() + timeoutMs;
   let candidates = [];
+  let lastKey = "";
+  let unchangedSince = Date.now();
   while (Date.now() < deadline) {
-    candidates = await findConversationCandidates(page, title, { visibleOnly: true });
-    if (candidates.length) return candidates;
+    candidates = await findConversationCandidatesByQuery(page, query, {
+      exact,
+      visibleOnly: true,
+      projectUrl,
+    });
+    const key = JSON.stringify(candidates);
+    if (key !== lastKey) {
+      lastKey = key;
+      unchangedSince = Date.now();
+    } else if (candidates.length > 0 && Date.now() - unchangedSince >= 750) {
+      return candidates;
+    }
     await delay(250);
   }
   return candidates;
 }
 
-export async function openExistingConversation(page, { title, conversationUrl } = {}) {
+async function searchConversationByTitle(page, title, options = {}) {
+  return searchConversationCandidates(page, title, { ...options, exact: true });
+}
+
+export async function findProjectCandidates(
+  page,
+  query = "",
+  { exact = false, visibleOnly = false } = {},
+) {
+  const normalizedQuery = normalizeProjectTitle(query);
+  return page.evaluate(
+    ({ expectedQuery, requireExact, requireVisible }) => {
+      const prefix = "Open project options for ";
+      const normalize = (value) =>
+        String(value || "")
+          .replace(/\s+/gu, " ")
+          .trim();
+      return Array.from(
+        document.querySelectorAll('button[aria-label^="Open project options for "]'),
+      )
+        .map((button) => ({
+          button,
+          title: normalize(button.getAttribute("aria-label")).slice(prefix.length),
+        }))
+        .filter(({ button, title }) => {
+          if (expectedQuery) {
+            const normalizedTitle = title.toLowerCase();
+            const normalizedExpected = expectedQuery.toLowerCase();
+            if (
+              requireExact
+                ? normalizedTitle !== normalizedExpected
+                : !normalizedTitle.includes(normalizedExpected)
+            ) {
+              return false;
+            }
+          }
+          if (!requireVisible) return true;
+          const rect = button.getBoundingClientRect();
+          const style = window.getComputedStyle(button);
+          return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            style.display !== "none" &&
+            style.visibility !== "hidden"
+          );
+        })
+        .map(({ title }) => ({ title }));
+    },
+    { expectedQuery: normalizedQuery, requireExact: exact, requireVisible: visibleOnly },
+  );
+}
+
+export function selectUniqueProjectCandidate(candidates, title) {
+  if (candidates.length === 1) return candidates[0];
+  if (candidates.length > 1) {
+    throw new Error(
+      `More than one ChatGPT project is titled ${JSON.stringify(title)}. Use an exact projectUrl instead.`,
+    );
+  }
+  return null;
+}
+
+async function waitForProjectControls(page, { timeoutMs = 15_000 } = {}) {
+  await page.waitForFunction(
+    () =>
+      Boolean(document.querySelector('button[aria-label^="Open project options for "]')) ||
+      Array.from(document.querySelectorAll("button")).some((button) => {
+        const label = String(button.getAttribute("aria-label") || "")
+          .trim()
+          .toLowerCase();
+        const text = String(button.textContent || "")
+          .replace(/\s+/gu, " ")
+          .trim()
+          .toLowerCase();
+        return label === "new project" || text === "new project";
+      }),
+    { timeout: timeoutMs },
+  );
+}
+
+async function readActiveProjectTitle(page) {
+  return page.evaluate(() => {
+    const normalize = (value) =>
+      String(value || "")
+        .replace(/\s+/gu, " ")
+        .trim();
+    const trigger = document.querySelector('[data-testid="project-modal-trigger"]');
+    return normalize(trigger?.textContent) || null;
+  });
+}
+
+export async function openProject(page, { title, projectUrl } = {}) {
+  const normalizedTitle = normalizeProjectTitle(title);
+  if (normalizedTitle && projectUrl) {
+    throw new Error("Provide either projectTitle or projectUrl, not both.");
+  }
+  if (!normalizedTitle && !projectUrl) {
+    throw new Error("Provide an exact projectTitle or projectUrl.");
+  }
+
+  let expectedUrl = null;
+  if (projectUrl) {
+    expectedUrl = normalizeProjectUrl(projectUrl);
+    await page.goto(expectedUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  } else {
+    await waitForProjectControls(page);
+    const candidates = await findProjectCandidates(page, normalizedTitle, { exact: true });
+    const candidate = selectUniqueProjectCandidate(candidates, normalizedTitle);
+    if (!candidate) {
+      throw new Error(
+        `No ChatGPT project was found with the exact title ${JSON.stringify(normalizedTitle)}.`,
+      );
+    }
+    const handle = await page.evaluateHandle((expectedTitle) => {
+      const prefix = "Open project options for ";
+      const normalize = (value) =>
+        String(value || "")
+          .replace(/\s+/gu, " ")
+          .trim();
+      const options = Array.from(
+        document.querySelectorAll('button[aria-label^="Open project options for "]'),
+      ).filter((button) => {
+        const titleValue = normalize(button.getAttribute("aria-label")).slice(prefix.length);
+        return titleValue.toLowerCase() === expectedTitle.toLowerCase();
+      });
+      if (options.length !== 1) return null;
+      return (
+        options[0].closest("li")?.querySelector('button[aria-label="Open project home"]') || null
+      );
+    }, normalizedTitle);
+    const button = handle.asElement();
+    if (!button) {
+      await handle.dispose();
+      throw new Error(
+        `ChatGPT's project-home control was not found for ${JSON.stringify(normalizedTitle)}.`,
+      );
+    }
+    try {
+      await button.click();
+    } finally {
+      await handle.dispose();
+    }
+    await page.waitForFunction(() => /^\/g\/g-p-[^/]+\/project\/?$/u.test(location.pathname), {
+      timeout: 30_000,
+    });
+  }
+
+  await waitForComposer(page, { timeoutMs: 60_000 });
+  let observedUrl;
+  try {
+    observedUrl = normalizeProjectUrl(page.url());
+  } catch {
+    throw new Error("ChatGPT did not remain on the requested project home after navigation.");
+  }
+  if (expectedUrl && observedUrl !== expectedUrl) {
+    throw new Error("ChatGPT redirected away from the requested project home.");
+  }
+  const observedTitle = await readActiveProjectTitle(page);
+  return {
+    title: observedTitle || normalizedTitle || null,
+    url: observedUrl,
+  };
+}
+
+export async function listProjects(page, query = "") {
+  await waitForProjectControls(page);
+  return findProjectCandidates(page, query);
+}
+
+export async function expandProjectConversationList(page, { timeoutMs = 15_000 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  await page
+    .waitForSelector("section > ol", {
+      timeout: Math.min(5_000, timeoutMs),
+    })
+    .catch(() => null);
+  while (Date.now() < deadline) {
+    const handle = await page.evaluateHandle(() => {
+      const normalize = (value) =>
+        String(value || "")
+          .replace(/\s+/gu, " ")
+          .trim()
+          .toLowerCase();
+      return (
+        Array.from(document.querySelectorAll("section > ol > button")).find(
+          (button) => normalize(button.textContent) === "load more conversations",
+        ) || null
+      );
+    });
+    const button = handle.asElement();
+    if (!button) {
+      await handle.dispose();
+      return;
+    }
+    const before = await page.$$eval("section a[href]", (anchors) => anchors.length);
+    try {
+      await button.click();
+    } finally {
+      await handle.dispose();
+    }
+    const changed = await page
+      .waitForFunction(
+        (previousCount) => {
+          const normalize = (value) =>
+            String(value || "")
+              .replace(/\s+/gu, " ")
+              .trim()
+              .toLowerCase();
+          const loadMore = Array.from(document.querySelectorAll("section > ol > button")).find(
+            (candidate) => normalize(candidate.textContent) === "load more conversations",
+          );
+          return document.querySelectorAll("section a[href]").length > previousCount || !loadMore;
+        },
+        { timeout: Math.min(5_000, Math.max(250, deadline - Date.now())) },
+        before,
+      )
+      .then(() => true)
+      .catch(() => false);
+    if (!changed) {
+      throw new Error(
+        "ChatGPT's project conversation list did not finish loading. Use an exact conversation URL.",
+      );
+    }
+  }
+  throw new Error(
+    "ChatGPT's project conversation list exceeded the discovery timeout. Use an exact conversation URL.",
+  );
+}
+
+export async function findChats(
+  page,
+  query,
+  { projectTitle, projectUrl, timeoutMs = 15_000 } = {},
+) {
+  const normalizedQuery = normalizeConversationTitle(query);
+  if (!normalizedQuery) throw new Error("A non-empty chat search query is required.");
+  let project = null;
+  if (normalizeProjectTitle(projectTitle) || projectUrl) {
+    project = await openProject(page, { title: projectTitle, projectUrl });
+    await expandProjectConversationList(page, { timeoutMs });
+    const conversations = await findConversationCandidatesByQuery(page, normalizedQuery, {
+      projectUrl: project.url,
+    });
+    return {
+      query: normalizedQuery,
+      project,
+      conversations,
+    };
+  }
+  const conversations = await searchConversationCandidates(page, normalizedQuery, {
+    projectUrl: project?.url || null,
+    timeoutMs,
+  });
+  return {
+    query: normalizedQuery,
+    project,
+    conversations,
+  };
+}
+
+export async function openExistingConversation(
+  page,
+  { title, conversationUrl, projectTitle, projectUrl } = {},
+) {
+  if (conversationUrl && (normalizeProjectTitle(projectTitle) || projectUrl)) {
+    throw new Error(
+      "A conversationUrl already identifies its project. Do not combine it with projectTitle or projectUrl.",
+    );
+  }
   let candidate;
+  let project = null;
   if (conversationUrl) {
-    candidate = { title: normalizeConversationTitle(title) || null, url: normalizeConversationUrl(conversationUrl) };
+    const url = normalizeConversationUrl(conversationUrl);
+    candidate = {
+      title: normalizeConversationTitle(title) || null,
+      url,
+      projectUrl: projectUrlFromConversationUrl(url),
+    };
   } else {
     const normalizedTitle = normalizeConversationTitle(title);
     if (!normalizedTitle) throw new Error("Provide an exact chatTitle or conversationUrl.");
+    if (normalizeProjectTitle(projectTitle) || projectUrl) {
+      project = await openProject(page, { title: projectTitle, projectUrl });
+      await expandProjectConversationList(page);
+    }
     await delay(1_000);
-    let candidates = await findConversationCandidates(page, normalizedTitle);
+    let candidates = await findConversationCandidates(page, normalizedTitle, {
+      projectUrl: project?.url || null,
+    });
     candidate = selectUniqueConversationCandidate(candidates, normalizedTitle);
     if (!candidate) {
-      candidates = await searchConversationByTitle(page, normalizedTitle);
+      if (project) {
+        throw new Error(
+          `No ChatGPT conversation was found with the exact title ${JSON.stringify(normalizedTitle)} inside project ${JSON.stringify(project.title || project.url)}.`,
+        );
+      }
+      candidates = await searchConversationByTitle(page, normalizedTitle, {
+        projectUrl: project?.url || null,
+      });
       candidate = selectUniqueConversationCandidate(candidates, normalizedTitle);
     }
     if (!candidate) {
-      throw new Error(`No ChatGPT conversation was found with the exact title ${JSON.stringify(normalizedTitle)}.`);
+      throw new Error(
+        `No ChatGPT conversation was found with the exact title ${JSON.stringify(normalizedTitle)}.`,
+      );
     }
   }
   await page.goto(candidate.url, { waitUntil: "domcontentloaded", timeout: 60_000 });
   await waitForComposer(page, { timeoutMs: 60_000 });
   await waitForConversationHistoryStable(page, { timeoutMs: 30_000, stableMs: 2_500 });
+  const observedUrl = normalizeConversationUrl(page.url());
+  const observedProjectUrl = projectUrlFromConversationUrl(observedUrl);
+  if (project?.url && observedProjectUrl !== project.url) {
+    throw new Error("The selected conversation did not open inside the requested project.");
+  }
   return {
     title: candidate.title,
-    url: normalizeConversationUrl(page.url()),
+    url: observedUrl,
+    projectTitle: project?.title || null,
+    projectUrl: observedProjectUrl,
   };
 }
 
@@ -185,7 +584,9 @@ export async function doctor() {
   let launchError = null;
   if (firefoxPath) {
     try {
-      const { stdout, stderr } = await execFileAsync(firefoxPath, ["--version"], { timeout: 10_000 });
+      const { stdout, stderr } = await execFileAsync(firefoxPath, ["--version"], {
+        timeout: 10_000,
+      });
       version = `${stdout}${stderr}`.trim() || null;
     } catch (error) {
       launchError = error instanceof Error ? error.message : String(error);
@@ -223,7 +624,10 @@ export async function launchFirefox({ headless = false, profileDir = profileDire
 
 export async function openChatGpt(browser) {
   const pages = await browser.pages();
-  const page = pages.find((candidate) => candidate.url().includes("chatgpt.com")) ?? pages[0] ?? (await browser.newPage());
+  const page =
+    pages.find((candidate) => candidate.url().includes("chatgpt.com")) ??
+    pages[0] ??
+    (await browser.newPage());
   page.setDefaultTimeout(30_000);
   if (!page.url().includes("chatgpt.com")) {
     await page.goto(CHATGPT_URL, { waitUntil: "domcontentloaded", timeout: 60_000 });
@@ -274,18 +678,28 @@ export async function probeLogin(page) {
       .find((node) => visible(node));
     const accountSignal = Boolean(
       document.querySelector('[data-testid="accounts-profile-button"]') ||
-        document.querySelector('[data-testid="profile-button"]') ||
-        document.querySelector('[data-testid^="history-item-"]'),
+      document.querySelector('[data-testid="profile-button"]') ||
+      document.querySelector('[data-testid^="history-item-"]'),
     );
     const loginText = Array.from(document.querySelectorAll("a, button"))
       .filter((node) => visible(node))
-      .map((node) => (node.textContent || node.getAttribute("aria-label") || "").trim().toLowerCase());
+      .map((node) =>
+        (node.textContent || node.getAttribute("aria-label") || "").trim().toLowerCase(),
+      );
     const loginCta = loginText.some((text) =>
       ["log in", "login", "sign in", "signin", "sign up for free"].includes(text),
     );
+    const pageText = String(document.body?.innerText || "")
+      .replace(/\s+/gu, " ")
+      .toLowerCase();
+    const challengeText = [
+      "verify you are human",
+      "checking your browser",
+      "performing security verification",
+    ].some((text) => pageText.includes(text));
     const cloudflare =
       document.title.toLowerCase().includes("just a moment") ||
-      Boolean(document.querySelector('script[src*="/challenge-platform/"]'));
+      (challengeText && Boolean(document.querySelector('script[src*="/challenge-platform/"]')));
     return {
       authenticated: sessionAuthenticated || (Boolean(composer) && accountSignal && !loginCta),
       sessionAuthenticated,
@@ -401,7 +815,10 @@ export async function insertComposerText(page, text) {
   await editor.evaluate((node, value) => {
     node.focus();
     if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) {
-      const prototype = node instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      const prototype =
+        node instanceof HTMLTextAreaElement
+          ? HTMLTextAreaElement.prototype
+          : HTMLInputElement.prototype;
       const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
       if (setter) setter.call(node, value);
       else node.value = value;
@@ -503,23 +920,21 @@ export async function assistantSnapshot(page) {
       const seen = new Set();
       for (const node of roleNodes) {
         const turn =
-          node.closest('[data-testid^="conversation-turn"]') ||
-          node.closest("article") ||
-          node;
+          node.closest('[data-testid^="conversation-turn"]') || node.closest("article") || node;
         if (!seen.has(turn)) {
           seen.add(turn);
           turns.push(turn);
         }
       }
       const last = turns.at(-1) || null;
-      const userRoleNodes = Array.from(document.querySelectorAll('[data-message-author-role="user"]'));
+      const userRoleNodes = Array.from(
+        document.querySelectorAll('[data-message-author-role="user"]'),
+      );
       const userTurns = [];
       const seenUserTurns = new Set();
       for (const node of userRoleNodes) {
         const turn =
-          node.closest('[data-testid^="conversation-turn"]') ||
-          node.closest("article") ||
-          node;
+          node.closest('[data-testid^="conversation-turn"]') || node.closest("article") || node;
         if (!seenUserTurns.has(turn)) {
           seenUserTurns.add(turn);
           userTurns.push(turn);
@@ -576,7 +991,10 @@ export async function waitForUserMessage(
   expectedText,
   { timeoutMs = 30_000 } = {},
 ) {
-  const normalize = (value) => String(value ?? "").replace(/\s+/gu, " ").trim();
+  const normalize = (value) =>
+    String(value ?? "")
+      .replace(/\s+/gu, " ")
+      .trim();
   const expected = normalize(expectedText);
   const expectedPrefix = expected.slice(0, Math.min(expected.length, 200));
   const deadline = Date.now() + timeoutMs;
@@ -603,7 +1021,10 @@ export async function submitComposer(page) {
 }
 
 function isPlaceholder(text) {
-  const normalized = String(text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const normalized = String(text ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
   return (
     !normalized ||
     normalized === "chatgpt said:" ||

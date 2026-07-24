@@ -27,18 +27,26 @@ Start a new consultation:
 
 > Use Oracle Firefox to review these files and identify correctness risks.
 
+Start a new chat in a project:
+
+> Use Oracle Firefox to review these files in my “Firefox Development” ChatGPT project.
+
 Continue an existing chat:
 
 > Continue the existing ChatGPT chat titled “Firefox compatibility plan” with this message: …
 
-Existing-chat titles must match exactly. Duplicate titles fail safely; use the conversation URL to disambiguate.
+If you give an approximate project or chat name, Oracle can list matching candidates and ask you to choose. A final write requires one exact, unique name; duplicate names fail safely, so use the project or conversation URL to disambiguate.
+
+When you do not mention a chat or project, Oracle starts a new standalone chat. Saying “continue” or “follow up” requires an existing chat name or URL.
 
 ## What works
 
 - Persistent ChatGPT login imported from normal Firefox
 - New ChatGPT consultations
+- New chats inside an exact ChatGPT project
+- Read-only project and chat discovery
 - Text-file context bundling and uploads
-- Existing-chat continuation by exact title or URL
+- Existing standalone or project-chat continuation by exact title or URL
 - Confirmed complete-response capture
 - Firefox 153 WebDriver BiDi smoke tests
 

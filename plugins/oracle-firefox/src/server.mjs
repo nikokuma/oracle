@@ -6,14 +6,96 @@ import {
   consult,
   continueChat,
   doctor,
+  findChatGptConversations,
   importFirefoxSession,
+  listChatGptProjects,
   listFirefoxProfiles,
   setupLogin,
 } from "./workflow.mjs";
 
 const server = new McpServer(
-  { name: "oracle-firefox", version: "0.1.0" },
+  { name: "oracle-firefox", version: "0.2.0" },
   { capabilities: { logging: {} } },
+);
+
+server.registerTool(
+  "list_projects",
+  {
+    title: "List ChatGPT projects",
+    description:
+      "Read the signed-in ChatGPT project list through Firefox. Optionally filter project names by a case-insensitive substring. This is read-only and never creates, opens, renames, or deletes a chat or project.",
+    inputSchema: {
+      query: z
+        .string()
+        .default("")
+        .describe("Optional ordinary project-name fragment. Empty lists all visible projects."),
+      headless: z
+        .boolean()
+        .default(false)
+        .describe("Headful is safer for ChatGPT/Cloudflare; headless may be blocked."),
+    },
+  },
+  async ({ query, headless }) =>
+    serializedBrowserTask(async () => {
+      try {
+        const result = await listChatGptProjects({ query, headless });
+        return {
+          content: textContent(JSON.stringify(result, null, 2)),
+          structuredContent: result,
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: textContent(error instanceof Error ? error.message : String(error)),
+        };
+      }
+    }),
+);
+
+server.registerTool(
+  "find_chats",
+  {
+    title: "Find existing ChatGPT conversations",
+    description:
+      "Search existing ChatGPT conversations by an ordinary title fragment and return candidate titles and exact URLs. Optionally scope results to one exact project title or project URL. This is read-only and never sends a message.",
+    inputSchema: {
+      query: z.string().min(1).describe("Case-insensitive chat-title fragment used for discovery."),
+      projectTitle: z
+        .string()
+        .optional()
+        .describe("Optional exact ChatGPT project title. Do not combine with projectUrl."),
+      projectUrl: z
+        .string()
+        .optional()
+        .describe("Optional exact https://chatgpt.com/g/g-p-.../project URL."),
+      timeoutSeconds: z.number().int().min(5).max(60).default(15),
+      headless: z
+        .boolean()
+        .default(false)
+        .describe("Headful is safer for ChatGPT/Cloudflare; headless may be blocked."),
+    },
+  },
+  async ({ query, projectTitle, projectUrl, timeoutSeconds, headless }) =>
+    serializedBrowserTask(async () => {
+      try {
+        const result = await findChatGptConversations({
+          query,
+          projectTitle,
+          projectUrl,
+          timeoutMs: timeoutSeconds * 1_000,
+          headless,
+        });
+        return {
+          content: textContent(JSON.stringify(result, null, 2)),
+          structuredContent: result,
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: textContent(error instanceof Error ? error.message : String(error)),
+        };
+      }
+    }),
 );
 
 server.registerTool(
@@ -21,17 +103,36 @@ server.registerTool(
   {
     title: "Continue an existing ChatGPT conversation",
     description:
-      "Find one existing ChatGPT conversation by exact title or exact conversation URL, send one new prompt in that conversation, wait for a confirmed complete reply, and return it. This changes the user's ChatGPT conversation. Exact-title ambiguity fails closed; use conversationUrl to disambiguate.",
+      "Find one existing ChatGPT conversation by exact title or exact conversation URL, optionally scope an exact-title lookup to one project, send one new prompt, wait for a confirmed complete reply, and return it. This changes the user's ChatGPT conversation. Ambiguity fails closed; use conversationUrl to disambiguate.",
     inputSchema: {
       chatTitle: z
         .string()
         .optional()
-        .describe("Exact existing ChatGPT conversation title. Matching is case-insensitive but not fuzzy."),
+        .describe(
+          "Exact existing ChatGPT conversation title. Matching is case-insensitive but not fuzzy.",
+        ),
       conversationUrl: z
         .string()
         .optional()
-        .describe("Exact https://chatgpt.com conversation URL; preferred when titles are duplicated."),
-      prompt: z.string().min(1).describe("The one new message to send in the existing conversation."),
+        .describe(
+          "Exact standalone or project ChatGPT conversation URL; preferred when titles are duplicated.",
+        ),
+      projectTitle: z
+        .string()
+        .optional()
+        .describe(
+          "Optional exact project title used only to scope chatTitle. Do not combine with projectUrl or conversationUrl.",
+        ),
+      projectUrl: z
+        .string()
+        .optional()
+        .describe(
+          "Optional exact project home URL used only to scope chatTitle. Do not combine with projectTitle or conversationUrl.",
+        ),
+      prompt: z
+        .string()
+        .min(1)
+        .describe("The one new message to send in the existing conversation."),
       timeoutSeconds: z.number().int().min(30).max(3600).default(600),
       headless: z
         .boolean()
@@ -39,12 +140,22 @@ server.registerTool(
         .describe("Headful is safer for ChatGPT/Cloudflare; headless may be blocked."),
     },
   },
-  async ({ chatTitle, conversationUrl, prompt, timeoutSeconds, headless }) =>
+  async ({
+    chatTitle,
+    conversationUrl,
+    projectTitle,
+    projectUrl,
+    prompt,
+    timeoutSeconds,
+    headless,
+  }) =>
     serializedBrowserTask(async () => {
       try {
         const result = await continueChat({
           chatTitle,
           conversationUrl,
+          projectTitle,
+          projectUrl,
           prompt,
           timeoutMs: timeoutSeconds * 1_000,
           headless,
@@ -158,10 +269,14 @@ server.registerTool(
       sourceProfile: z
         .string()
         .optional()
-        .describe("Optional Firefox profile name, directory basename, or absolute path. Defaults to a profile containing ChatGPT cookies."),
+        .describe(
+          "Optional Firefox profile name, directory basename, or absolute path. Defaults to a profile containing ChatGPT cookies.",
+        ),
       confirmImport: z
         .boolean()
-        .describe("Must be true after the user explicitly approves copying ChatGPT/OpenAI cookies."),
+        .describe(
+          "Must be true after the user explicitly approves copying ChatGPT/OpenAI cookies.",
+        ),
     },
   },
   async ({ sourceProfile, confirmImport }) =>
@@ -188,7 +303,7 @@ server.registerTool(
   {
     title: "Consult ChatGPT through Firefox",
     description:
-      "Bundle a prompt and selected UTF-8 text files, submit them to ChatGPT through a dedicated Firefox profile over WebDriver BiDi, wait for a confirmed complete answer, and return it. Paths/globs resolve from cwd. Sensitive key/env files are refused by default.",
+      "Create a new standalone ChatGPT conversation by default, or create it inside one exact project when projectTitle or projectUrl is supplied. Bundle a prompt and selected UTF-8 text files, submit through Firefox, wait for a confirmed complete answer, and return it. Sensitive key/env files are refused by default.",
     inputSchema: {
       prompt: z.string().min(1).describe("The exact second-opinion question."),
       files: z
@@ -203,6 +318,16 @@ server.registerTool(
         .enum(["auto", "inline", "attachment"])
         .default("auto")
         .describe("Auto attaches larger bundles and pastes smaller bundles inline."),
+      projectTitle: z
+        .string()
+        .optional()
+        .describe("Optional exact ChatGPT project title. Do not combine with projectUrl."),
+      projectUrl: z
+        .string()
+        .optional()
+        .describe(
+          "Optional exact https://chatgpt.com/g/g-p-.../project URL. Do not combine with projectTitle.",
+        ),
       timeoutSeconds: z.number().int().min(30).max(3600).default(600),
       headless: z
         .boolean()
@@ -210,7 +335,7 @@ server.registerTool(
         .describe("Headful is safer for ChatGPT/Cloudflare; headless may be blocked."),
     },
   },
-  async ({ prompt, files, cwd, delivery, timeoutSeconds, headless }) =>
+  async ({ prompt, files, cwd, delivery, projectTitle, projectUrl, timeoutSeconds, headless }) =>
     serializedBrowserTask(async () => {
       try {
         const result = await consult({
@@ -218,6 +343,8 @@ server.registerTool(
           files,
           cwd,
           delivery,
+          projectTitle,
+          projectUrl,
           timeoutMs: timeoutSeconds * 1_000,
           headless,
         });

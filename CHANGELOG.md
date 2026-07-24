@@ -2,6 +2,10 @@
 
 ## 0.16.2 — Unreleased
 
+### Added
+
+- Firefox plugin: discover ChatGPT projects and chats, create new consultations inside an exact project, and scope existing-chat continuation to a project while preserving fail-closed target selection.
+
 ## 0.16.1 — 2026-07-23
 
 ### Changed

@@ -1,7 +1,7 @@
 {
   "name": "oracle-firefox",
-  "version": "0.1.0+codex.20260723231841",
-  "description": "Consult ChatGPT and continue existing conversations automatically through an installed Firefox browser using WebDriver BiDi.",
+  "version": "0.2.0+codex.20260724002713",
+  "description": "Consult ChatGPT in standalone or project conversations and continue existing chats automatically through Firefox using WebDriver BiDi.",
   "author": {
     "name": "nikokuma",
     "url": "https://github.com/nikokuma"
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "Oracle Firefox",
     "shortDescription": "Consult ChatGPT through Firefox without Chrome.",
-    "longDescription": "Oracle Firefox gives Codex a local, Firefox-native second-opinion workflow. It can start a consultation with selected source files or continue one exact existing ChatGPT conversation, using a dedicated persistent Firefox profile and confirmed terminal response capture.",
+    "longDescription": "Oracle Firefox gives Codex a local, Firefox-native second-opinion workflow. It can discover ChatGPT projects and chats, start standalone or project consultations with selected source files, and safely continue one exact existing conversation.",
     "developerName": "nikokuma",
     "category": "Developer Tools",
     "capabilities": [
@@ -28,11 +28,12 @@
       "WebDriver BiDi",
       "Context Bundling",
       "ChatGPT Consultation",
+      "ChatGPT Projects",
       "Existing Chat Continuation"
     ],
     "defaultPrompt": [
       "Get a Firefox-backed second opinion on this code.",
-      "Ask ChatGPT to review these files through Firefox.",
+      "Ask ChatGPT to review these files in a project through Firefox.",
       "Continue an existing ChatGPT conversation through Firefox."
     ]
   },

@@ -5,11 +5,18 @@ import { profileDirectory } from "./config.mjs";
 import {
   assistantSnapshot,
   doctor,
+  findChats,
   insertComposerText,
   launchFirefox,
+  listProjects,
+  normalizeConversationTitle,
+  normalizeConversationUrl,
+  normalizeProjectTitle,
   openChatGpt,
   openExistingConversation,
+  openProject,
   probeLogin,
+  projectUrlFromConversationUrl,
   setupLogin,
   submitComposer,
   uploadContextFile,
@@ -91,30 +98,95 @@ function cleanAssistantText(text) {
     .trim();
 }
 
+function assertProjectSelector(projectTitle, projectUrl) {
+  if (normalizeProjectTitle(projectTitle) && projectUrl) {
+    throw new Error("Provide either projectTitle or projectUrl, not both.");
+  }
+}
+
+async function requireAuthenticatedPage(browser) {
+  const page = await openChatGpt(browser);
+  const login = await probeLogin(page);
+  if (!login.authenticated) {
+    throw new Error(
+      "The dedicated Firefox profile is not signed into ChatGPT. Import or set up the session, then retry.",
+    );
+  }
+  return page;
+}
+
+export async function listChatGptProjects({ query = "", headless = false } = {}) {
+  let browser = null;
+  try {
+    browser = await launchFirefox({ headless });
+    const page = await requireAuthenticatedPage(browser);
+    const normalizedQuery = normalizeProjectTitle(query);
+    const projects = await listProjects(page, normalizedQuery);
+    return { query: normalizedQuery || null, projects };
+  } finally {
+    await browser?.close().catch(() => undefined);
+  }
+}
+
+export async function findChatGptConversations({
+  query,
+  projectTitle,
+  projectUrl,
+  timeoutMs = 15_000,
+  headless = false,
+} = {}) {
+  const normalizedQuery = normalizeConversationTitle(query);
+  if (!normalizedQuery) throw new Error("A non-empty chat search query is required.");
+  assertProjectSelector(projectTitle, projectUrl);
+  let browser = null;
+  try {
+    browser = await launchFirefox({ headless });
+    const page = await requireAuthenticatedPage(browser);
+    const result = await findChats(page, normalizedQuery, {
+      projectTitle,
+      projectUrl,
+      timeoutMs,
+    });
+    return {
+      query: result.query,
+      projectTitle: result.project?.title || null,
+      projectUrl: result.project?.url || null,
+      chats: result.conversations.map((conversation) => ({
+        chatTitle: conversation.title,
+        conversationUrl: conversation.url,
+        projectUrl: conversation.projectUrl,
+      })),
+    };
+  } finally {
+    await browser?.close().catch(() => undefined);
+  }
+}
+
 export async function consult({
   prompt,
   files = [],
   cwd,
   delivery = "auto",
+  projectTitle,
+  projectUrl,
   timeoutMs = 600_000,
   headless = false,
 } = {}) {
+  assertProjectSelector(projectTitle, projectUrl);
   const context = await bundleContext({ prompt, files, cwd });
   const selectedDelivery = resolveDelivery(delivery, context);
   const session = await createSession(prompt);
   const requestPath = await writeSessionFile(session, "request.md", context.bundle);
   let attachmentPath = null;
   let browser = null;
+  let project = null;
   const startedAt = new Date().toISOString();
 
   try {
     browser = await launchFirefox({ headless });
-    const page = await openChatGpt(browser);
-    const login = await probeLogin(page);
-    if (!login.authenticated) {
-      throw new Error(
-        "The dedicated Firefox profile is not signed into ChatGPT. Run oracle_firefox_setup once, finish login in the opened Firefox window, then retry.",
-      );
+    const page = await requireAuthenticatedPage(browser);
+    if (normalizeProjectTitle(projectTitle) || projectUrl) {
+      project = await openProject(page, { title: projectTitle, projectUrl });
     }
     await waitForComposer(page);
     const baseline = await assistantSnapshot(page);
@@ -132,6 +204,14 @@ export async function consult({
     const insertedCharacters = await insertComposerText(page, composerPrompt);
     const submitMethod = await submitComposer(page);
     const response = await waitForAssistant(page, baseline.count, { timeoutMs });
+    const conversationUrl = normalizeConversationUrl(response.url);
+    const resultingProjectUrl = projectUrlFromConversationUrl(conversationUrl);
+    if (project?.url && resultingProjectUrl !== project.url) {
+      throw new Error("The new conversation was not created inside the requested project.");
+    }
+    if (!project && resultingProjectUrl) {
+      throw new Error("The standalone consultation unexpectedly opened inside a ChatGPT project.");
+    }
     const answer = cleanAssistantText(response.text);
     const responsePath = await writeSessionFile(session, "response.md", answer);
     const metadata = {
@@ -139,7 +219,10 @@ export async function consult({
       startedAt,
       completedAt: new Date().toISOString(),
       status: "completed",
-      conversationUrl: response.url,
+      mode: "new-chat",
+      projectTitle: project?.title || null,
+      projectUrl: project?.url || null,
+      conversationUrl,
       delivery: selectedDelivery,
       insertedCharacters,
       submitMethod,
@@ -163,6 +246,9 @@ export async function consult({
           startedAt,
           completedAt: new Date().toISOString(),
           status: "failed",
+          mode: "new-chat",
+          projectTitle: project?.title || normalizeProjectTitle(projectTitle) || null,
+          projectUrl: project?.url || projectUrl || null,
           error: message,
           requestPath,
           delivery: selectedDelivery,
@@ -182,6 +268,8 @@ export async function consult({
 export async function continueChat({
   chatTitle,
   conversationUrl,
+  projectTitle,
+  projectUrl,
   prompt,
   timeoutMs = 600_000,
   headless = false,
@@ -190,6 +278,12 @@ export async function continueChat({
   if (!String(chatTitle ?? "").trim() && !String(conversationUrl ?? "").trim()) {
     throw new Error("Provide an exact chatTitle or conversationUrl.");
   }
+  assertProjectSelector(projectTitle, projectUrl);
+  if (conversationUrl && (normalizeProjectTitle(projectTitle) || projectUrl)) {
+    throw new Error(
+      "A conversationUrl already identifies its project. Do not combine it with projectTitle or projectUrl.",
+    );
+  }
   const session = await createSession(`Continue ${chatTitle || conversationUrl}: ${prompt}`);
   const requestPath = await writeSessionFile(session, "request.md", `${String(prompt).trim()}\n`);
   const startedAt = new Date().toISOString();
@@ -197,19 +291,24 @@ export async function continueChat({
   let target = null;
   try {
     browser = await launchFirefox({ headless });
-    const page = await openChatGpt(browser);
-    const login = await probeLogin(page);
-    if (!login.authenticated) {
-      throw new Error(
-        "The dedicated Firefox profile is not signed into ChatGPT. Import or set up the session, then retry.",
-      );
-    }
-    target = await openExistingConversation(page, { title: chatTitle, conversationUrl });
+    const page = await requireAuthenticatedPage(browser);
+    target = await openExistingConversation(page, {
+      title: chatTitle,
+      conversationUrl,
+      projectTitle,
+      projectUrl,
+    });
     const baseline = await assistantSnapshot(page);
     const insertedCharacters = await insertComposerText(page, String(prompt).trim());
     const submitMethod = await submitComposer(page);
-    await waitForUserMessage(page, baseline.userCount, String(prompt).trim(), { timeoutMs: 30_000 });
+    await waitForUserMessage(page, baseline.userCount, String(prompt).trim(), {
+      timeoutMs: 30_000,
+    });
     const response = await waitForAssistant(page, baseline.count, { timeoutMs });
+    const observedConversationUrl = normalizeConversationUrl(response.url);
+    if (observedConversationUrl !== target.url) {
+      throw new Error("ChatGPT navigated away from the selected conversation after submission.");
+    }
     const answer = cleanAssistantText(response.text);
     const responsePath = await writeSessionFile(session, "response.md", answer);
     const metadata = {
@@ -219,7 +318,9 @@ export async function continueChat({
       status: "completed",
       mode: "continue-chat",
       targetTitle: target.title || chatTitle || null,
-      conversationUrl: response.url,
+      projectTitle: target.projectTitle || normalizeProjectTitle(projectTitle) || null,
+      projectUrl: target.projectUrl || null,
+      conversationUrl: observedConversationUrl,
       insertedCharacters,
       submitMethod,
       requestPath,
@@ -240,6 +341,8 @@ export async function continueChat({
           status: "failed",
           mode: "continue-chat",
           targetTitle: target?.title || chatTitle || null,
+          projectTitle: target?.projectTitle || normalizeProjectTitle(projectTitle) || null,
+          projectUrl: target?.projectUrl || projectUrl || null,
           conversationUrl: target?.url || conversationUrl || null,
           error: message,
           requestPath,
