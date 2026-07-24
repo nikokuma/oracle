@@ -7,6 +7,8 @@ npm-debug.log*
 dist/
 !plugins/oracle-firefox/dist/
 !plugins/oracle-firefox/dist/**
+!plugins/oracle-firefox-claude/dist/
+!plugins/oracle-firefox-claude/dist/**
 build/
 *.tsbuildinfo
 tsconfig.tsbuildinfo
