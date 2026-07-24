@@ -1,0 +1,33 @@
+{
+  "name": "oracle-firefox",
+  "displayName": "Oracle Firefox",
+  "version": "1.0.0",
+  "description": "Durable, Pro-verified ChatGPT consultation through the user's authenticated Firefox.",
+  "author": {
+    "name": "nikokuma",
+    "url": "https://github.com/nikokuma"
+  },
+  "homepage": "https://github.com/nikokuma/oracle/blob/main/FIREFOX.md",
+  "repository": "https://github.com/nikokuma/oracle",
+  "license": "MIT",
+  "keywords": [
+    "firefox",
+    "chatgpt",
+    "pro",
+    "webdriver-bidi",
+    "mcp",
+    "codex",
+    "claude"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "defaultEnabled": true,
+  "userConfig": {
+    "node_path": {
+      "type": "string",
+      "title": "Node.js 24+ executable",
+      "description": "Executable used for the durable broker. Leave as node when Node 24+ is on PATH.",
+      "default": "node"
+    }
+  }
+}

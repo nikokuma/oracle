@@ -18,6 +18,57 @@ export function sessionsDirectory() {
   return path.join(oracleFirefoxHome(), "sessions");
 }
 
+export function coordinatorDirectory() {
+  const configured = process.env.ORACLE_FIREFOX_COORDINATOR_HOME?.trim();
+  if (configured) return path.resolve(configured);
+  if (process.platform === "darwin") {
+    return path.join(os.homedir(), "Library", "Application Support", "oracle-firefox", "coordinator");
+  }
+  if (process.platform === "win32") {
+    return path.join(
+      process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"),
+      "oracle-firefox",
+      "coordinator",
+    );
+  }
+  return path.join(process.env.XDG_STATE_HOME || path.join(os.homedir(), ".local", "state"), "oracle-firefox", "coordinator");
+}
+
+export function brokerEndpoint() {
+  if (process.env.ORACLE_FIREFOX_BROKER_ENDPOINT?.trim()) {
+    return process.env.ORACLE_FIREFOX_BROKER_ENDPOINT.trim();
+  }
+  if (process.platform === "win32") {
+    return `\\\\.\\pipe\\oracle-firefox-${process.env.USERNAME || "user"}`;
+  }
+  const uid = typeof process.getuid === "function" ? process.getuid() : process.env.USER || "user";
+  return path.join(process.env.TMPDIR || os.tmpdir(), `oracle-firefox-${uid}`, "broker.sock");
+}
+
+export function brokerTokenPath() {
+  return path.join(coordinatorDirectory(), "broker.token");
+}
+
+export function coordinatorDatabasePath() {
+  return path.join(coordinatorDirectory(), "coordinator.sqlite");
+}
+
+export function coordinatorLogPath() {
+  return path.join(coordinatorDirectory(), "broker.log");
+}
+
+export function emergencyLockPath() {
+  return path.join(coordinatorDirectory(), "emergency.lock");
+}
+
+export function brokerLaunchLockPath() {
+  return path.join(coordinatorDirectory(), "broker.start.lock");
+}
+
+export function brokerNodePath() {
+  return process.env.ORACLE_FIREFOX_NODE_PATH?.trim() || process.execPath;
+}
+
 export async function resolveFirefoxPath() {
   const configured = process.env.ORACLE_FIREFOX_PATH?.trim();
   const candidates = configured

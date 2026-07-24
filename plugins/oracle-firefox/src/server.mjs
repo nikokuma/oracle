@@ -1,370 +1,194 @@
 #!/usr/bin/env node
+import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import {
-  consult,
-  continueChat,
-  doctor,
-  findChatGptConversations,
-  importFirefoxSession,
-  listChatGptProjects,
-  listFirefoxProfiles,
-  setupLogin,
-} from "./workflow.mjs";
+import { callBroker } from "./broker-client.mjs";
+import { structuredError } from "./errors.mjs";
 
 const server = new McpServer(
-  { name: "oracle-firefox", version: "0.2.0" },
+  { name: "oracle-firefox", version: "1.0.0" },
   { capabilities: { logging: {} } },
 );
 
-server.registerTool(
-  "list_projects",
-  {
-    title: "List ChatGPT projects",
-    description:
-      "Read the signed-in ChatGPT project list through Firefox. Optionally filter project names by a case-insensitive substring. This is read-only and never creates, opens, renames, or deletes a chat or project.",
-    inputSchema: {
-      query: z
-        .string()
-        .default("")
-        .describe("Optional ordinary project-name fragment. Empty lists all visible projects."),
-      headless: z
-        .boolean()
-        .default(false)
-        .describe("Headful is safer for ChatGPT/Cloudflare; headless may be blocked."),
-    },
-  },
-  async ({ query, headless }) =>
-    serializedBrowserTask(async () => {
-      try {
-        const result = await listChatGptProjects({ query, headless });
-        return {
-          content: textContent(JSON.stringify(result, null, 2)),
-          structuredContent: result,
-        };
-      } catch (error) {
-        return {
-          isError: true,
-          content: textContent(error instanceof Error ? error.message : String(error)),
-        };
-      }
-    }),
-);
+const projectFields = {
+  projectTitle: z.string().optional().describe("Exact project title; do not combine with projectUrl."),
+  projectUrl: z.string().url().optional().describe("Exact https://chatgpt.com/g/g-p-.../project URL."),
+};
+const executionFields = {
+  modelRequirement: z.enum(["pro", "current"]).default("pro").describe("Require and verify Pro by default; current explicitly preserves the visible model."),
+  responseTimeoutSeconds: z.number().int().min(30).max(86400).default(10800),
+  attachmentTimeoutSeconds: z.number().int().min(30).max(1800).default(600),
+  maxAutomaticEvidenceReplies: z.number().int().min(0).max(3).default(3),
+  headless: z.boolean().default(false),
+};
+const consultFields = {
+  prompt: z.string().min(1),
+  files: z.array(z.string()).default([]),
+  cwd: z.string().optional(),
+  delivery: z.enum(["auto", "inline", "attachment"]).default("auto"),
+  ...projectFields,
+  ...executionFields,
+};
+const continueFields = {
+  chatTitle: z.string().optional(),
+  conversationUrl: z.string().url().optional(),
+  ...projectFields,
+  prompt: z.string().min(1),
+  ...executionFields,
+};
 
-server.registerTool(
-  "find_chats",
-  {
-    title: "Find existing ChatGPT conversations",
-    description:
-      "Search existing ChatGPT conversations by an ordinary title fragment and return candidate titles and exact URLs. Optionally scope results to one exact project title or project URL. This is read-only and never sends a message.",
-    inputSchema: {
-      query: z.string().min(1).describe("Case-insensitive chat-title fragment used for discovery."),
-      projectTitle: z
-        .string()
-        .optional()
-        .describe("Optional exact ChatGPT project title. Do not combine with projectUrl."),
-      projectUrl: z
-        .string()
-        .optional()
-        .describe("Optional exact https://chatgpt.com/g/g-p-.../project URL."),
-      timeoutSeconds: z.number().int().min(5).max(60).default(15),
-      headless: z
-        .boolean()
-        .default(false)
-        .describe("Headful is safer for ChatGPT/Cloudflare; headless may be blocked."),
-    },
-  },
-  async ({ query, projectTitle, projectUrl, timeoutSeconds, headless }) =>
-    serializedBrowserTask(async () => {
-      try {
-        const result = await findChatGptConversations({
-          query,
-          projectTitle,
-          projectUrl,
-          timeoutMs: timeoutSeconds * 1_000,
-          headless,
-        });
-        return {
-          content: textContent(JSON.stringify(result, null, 2)),
-          structuredContent: result,
-        };
-      } catch (error) {
-        return {
-          isError: true,
-          content: textContent(error instanceof Error ? error.message : String(error)),
-        };
-      }
-    }),
-);
-
-server.registerTool(
-  "continue_chat",
-  {
-    title: "Continue an existing ChatGPT conversation",
-    description:
-      "Find one existing ChatGPT conversation by exact title or exact conversation URL, optionally scope an exact-title lookup to one project, send one new prompt, wait for a confirmed complete reply, and return it. This changes the user's ChatGPT conversation. Ambiguity fails closed; use conversationUrl to disambiguate.",
-    inputSchema: {
-      chatTitle: z
-        .string()
-        .optional()
-        .describe(
-          "Exact existing ChatGPT conversation title. Matching is case-insensitive but not fuzzy.",
-        ),
-      conversationUrl: z
-        .string()
-        .optional()
-        .describe(
-          "Exact standalone or project ChatGPT conversation URL; preferred when titles are duplicated.",
-        ),
-      projectTitle: z
-        .string()
-        .optional()
-        .describe(
-          "Optional exact project title used only to scope chatTitle. Do not combine with projectUrl or conversationUrl.",
-        ),
-      projectUrl: z
-        .string()
-        .optional()
-        .describe(
-          "Optional exact project home URL used only to scope chatTitle. Do not combine with projectTitle or conversationUrl.",
-        ),
-      prompt: z
-        .string()
-        .min(1)
-        .describe("The one new message to send in the existing conversation."),
-      timeoutSeconds: z.number().int().min(30).max(3600).default(600),
-      headless: z
-        .boolean()
-        .default(false)
-        .describe("Headful is safer for ChatGPT/Cloudflare; headless may be blocked."),
-    },
-  },
-  async ({
-    chatTitle,
-    conversationUrl,
-    projectTitle,
-    projectUrl,
-    prompt,
-    timeoutSeconds,
-    headless,
-  }) =>
-    serializedBrowserTask(async () => {
-      try {
-        const result = await continueChat({
-          chatTitle,
-          conversationUrl,
-          projectTitle,
-          projectUrl,
-          prompt,
-          timeoutMs: timeoutSeconds * 1_000,
-          headless,
-        });
-        return {
-          content: textContent(result.answer),
-          structuredContent: result,
-        };
-      } catch (error) {
-        return {
-          isError: true,
-          content: textContent(error instanceof Error ? error.message : String(error)),
-        };
-      }
-    }),
-);
-
-let browserQueue = Promise.resolve();
-function serializedBrowserTask(task) {
-  const run = browserQueue.then(task, task);
-  browserQueue = run.then(
-    () => undefined,
-    () => undefined,
-  );
-  return run;
+function contentFor(result) {
+  const text = result?.answer || JSON.stringify(result, null, 2);
+  return [{ type: "text", text }];
 }
 
-function textContent(value) {
-  return [{ type: "text", text: value }];
-}
-
-server.registerTool(
-  "doctor",
-  {
-    title: "Check Oracle Firefox readiness",
-    description:
-      "Check the installed Firefox executable and whether the dedicated Oracle Firefox profile exists. This does not open a browser.",
-    inputSchema: {},
-  },
-  async () => {
-    const result = await doctor();
-    return {
-      content: textContent(JSON.stringify(result, null, 2)),
-      structuredContent: result,
-    };
-  },
-);
-
-server.registerTool(
-  "setup",
-  {
-    title: "Sign into ChatGPT in dedicated Firefox",
-    description:
-      "Open a dedicated persistent Firefox profile at chatgpt.com and wait for the user to finish login. Google may reject sign-in inside an automated browser; in that case use profiles and import_session instead.",
-    inputSchema: {
-      timeoutSeconds: z.number().int().min(30).max(900).default(300),
-    },
-  },
-  async ({ timeoutSeconds }) =>
-    serializedBrowserTask(async () => {
-      try {
-        const result = await setupLogin({ timeoutMs: timeoutSeconds * 1_000 });
-        return {
-          content: textContent(
-            result.alreadyAuthenticated
-              ? "The dedicated Firefox profile is already signed into ChatGPT."
-              : "Login completed and was saved in the dedicated Firefox profile.",
-          ),
-          structuredContent: result,
-        };
-      } catch (error) {
-        return {
-          isError: true,
-          content: textContent(error instanceof Error ? error.message : String(error)),
-        };
-      }
-    }),
-);
-
-server.registerTool(
-  "profiles",
-  {
-    title: "Find Firefox profiles with ChatGPT cookies",
-    description:
-      "List normal Firefox profiles and report only the count of ChatGPT/OpenAI cookies in each. Cookie names and values are never returned. If Firefox locks its database, the count is null and active is true.",
-    inputSchema: {},
-  },
-  async () => {
+function register(name, config, method, timeoutMs = 65_000, prepareParams = null) {
+  server.registerTool(name, config, async (params) => {
     try {
-      const profiles = await listFirefoxProfiles();
-      return {
-        content: textContent(JSON.stringify(profiles, null, 2)),
-        structuredContent: { profiles },
-      };
+      const requestParams = prepareParams ? prepareParams(params) : params;
+      const result = await callBroker(method, requestParams, { timeoutMs, harness: "codex-mcp" });
+      return { content: contentFor(result), structuredContent: result };
     } catch (error) {
-      return {
-        isError: true,
-        content: textContent(error instanceof Error ? error.message : String(error)),
-      };
+      const value = structuredError(error);
+      return { isError: true, content: [{ type: "text", text: JSON.stringify(value, null, 2) }], structuredContent: { error: value } };
     }
-  },
-);
+  });
+}
 
-server.registerTool(
-  "import_session",
-  {
-    title: "Import ChatGPT login from normal Firefox",
-    description:
-      "Copy only ChatGPT/OpenAI cookies from a normal Firefox profile into Oracle Firefox's dedicated profile. This avoids Google OAuth inside WebDriver. Never copies passwords, history, Google cookies, or unrelated site cookies. Requires explicit user confirmation; both normal Firefox and the dedicated Oracle Firefox window must be closed briefly for a consistent database copy.",
-    inputSchema: {
-      sourceProfile: z
-        .string()
-        .optional()
-        .describe(
-          "Optional Firefox profile name, directory basename, or absolute path. Defaults to a profile containing ChatGPT cookies.",
-        ),
-      confirmImport: z
-        .boolean()
-        .describe(
-          "Must be true after the user explicitly approves copying ChatGPT/OpenAI cookies.",
-        ),
-    },
-  },
-  async ({ sourceProfile, confirmImport }) =>
-    serializedBrowserTask(async () => {
-      try {
-        const result = await importFirefoxSession({ sourceProfile, confirmImport });
-        return {
-          content: textContent(
-            `Imported ${result.importedCookieCount} ChatGPT/OpenAI cookies from Firefox profile ${result.sourceProfile.name}. Passwords, history, Google cookies, and unrelated site cookies were not copied.`,
-          ),
-          structuredContent: result,
-        };
-      } catch (error) {
-        return {
-          isError: true,
-          content: textContent(error instanceof Error ? error.message : String(error)),
-        };
-      }
-    }),
-);
+register("broker_status", {
+  title: "Check the Oracle Firefox broker",
+  description: "Show the user-wide broker, persistent Firefox, queue, recovery, and emergency-lock state.",
+  inputSchema: {},
+}, "broker.status");
 
-server.registerTool(
-  "consult",
-  {
-    title: "Consult ChatGPT through Firefox",
-    description:
-      "Create a new standalone ChatGPT conversation by default, or create it inside one exact project when projectTitle or projectUrl is supplied. Bundle a prompt and selected UTF-8 text files, submit through Firefox, wait for a confirmed complete answer, and return it. Sensitive key/env files are refused by default.",
-    inputSchema: {
-      prompt: z.string().min(1).describe("The exact second-opinion question."),
-      files: z
-        .array(z.string())
-        .default([])
-        .describe("Optional files, directories, globs, and !exclude patterns."),
-      cwd: z
-        .string()
-        .optional()
-        .describe("Absolute working directory used to resolve relative file patterns."),
-      delivery: z
-        .enum(["auto", "inline", "attachment"])
-        .default("auto")
-        .describe("Auto attaches larger bundles and pastes smaller bundles inline."),
-      projectTitle: z
-        .string()
-        .optional()
-        .describe("Optional exact ChatGPT project title. Do not combine with projectUrl."),
-      projectUrl: z
-        .string()
-        .optional()
-        .describe(
-          "Optional exact https://chatgpt.com/g/g-p-.../project URL. Do not combine with projectTitle.",
-        ),
-      timeoutSeconds: z.number().int().min(30).max(3600).default(600),
-      headless: z
-        .boolean()
-        .default(false)
-        .describe("Headful is safer for ChatGPT/Cloudflare; headless may be blocked."),
-    },
+register("doctor", {
+  title: "Check Oracle Firefox readiness",
+  description: "Check Firefox, the dedicated profile, and the durable broker without sending a ChatGPT message.",
+  inputSchema: {},
+}, "workflow.doctor");
+
+register("setup", {
+  title: "Sign into ChatGPT in dedicated Firefox",
+  description: "Open the dedicated Firefox login page under an exclusive maintenance barrier.",
+  inputSchema: { timeoutSeconds: z.number().int().min(30).max(900).default(300) },
+}, "workflow.setup", 910_000);
+
+register("profiles", {
+  title: "Find Firefox profiles with ChatGPT cookies",
+  description: "Report only ChatGPT/OpenAI cookie counts; never cookie names or values.",
+  inputSchema: {},
+}, "workflow.profiles");
+
+register("import_session", {
+  title: "Import ChatGPT login from Firefox",
+  description: "After explicit approval, copy only ChatGPT/OpenAI cookies into the dedicated profile under an exclusive maintenance barrier.",
+  inputSchema: {
+    sourceProfile: z.string().optional(),
+    confirmImport: z.boolean().describe("Must be true only after explicit user approval."),
   },
-  async ({ prompt, files, cwd, delivery, projectTitle, projectUrl, timeoutSeconds, headless }) =>
-    serializedBrowserTask(async () => {
-      try {
-        const result = await consult({
-          prompt,
-          files,
-          cwd,
-          delivery,
-          projectTitle,
-          projectUrl,
-          timeoutMs: timeoutSeconds * 1_000,
-          headless,
-        });
-        return {
-          content: textContent(result.answer),
-          structuredContent: result,
-        };
-      } catch (error) {
-        return {
-          isError: true,
-          content: textContent(error instanceof Error ? error.message : String(error)),
-        };
-      }
-    }),
-);
+}, "workflow.importSession", 120_000);
+
+register("list_projects", {
+  title: "List ChatGPT projects",
+  description: "Read-only project discovery with optional case-insensitive substring filtering.",
+  inputSchema: { query: z.string().default(""), headless: z.boolean().default(false) },
+}, "workflow.listProjects");
+
+register("find_chats", {
+  title: "Find existing ChatGPT conversations",
+  description: "Read-only chat-title discovery, optionally scoped to one exact project.",
+  inputSchema: {
+    query: z.string().min(1),
+    ...projectFields,
+    timeoutSeconds: z.number().int().min(5).max(60).default(15),
+    headless: z.boolean().default(false),
+  },
+}, "workflow.findChats", 90_000);
+
+register("consult_start", {
+  title: "Start a durable ChatGPT consultation",
+  description: "Authorize exactly one asynchronous new-chat submission. Returns a durable job receipt immediately.",
+  inputSchema: { authorizationId: z.string().uuid(), ...consultFields },
+}, "jobs.startConsult");
+
+register("continue_chat_start", {
+  title: "Start a durable existing-chat continuation",
+  description: "Authorize exactly one asynchronous message to one exact existing conversation. Returns immediately.",
+  inputSchema: { authorizationId: z.string().uuid(), ...continueFields },
+}, "jobs.startContinue");
+
+register("consult", {
+  title: "Consult ChatGPT through Firefox",
+  description: "Compatibility tool: starts one durable consultation, waits up to 240 seconds, then returns either the result or a non-error pending receipt.",
+  inputSchema: { authorizationId: z.string().uuid().optional(), ...consultFields },
+}, "jobs.compatConsult", 245_000, (params) => ({
+  ...params,
+  authorizationId: params.authorizationId ?? randomUUID(),
+}));
+
+register("continue_chat", {
+  title: "Continue an existing ChatGPT conversation",
+  description: "Compatibility tool: sends at most one message, waits up to 240 seconds, then returns the result or a non-error pending receipt.",
+  inputSchema: { authorizationId: z.string().uuid().optional(), ...continueFields },
+}, "jobs.compatContinue", 245_000, (params) => ({
+  ...params,
+  authorizationId: params.authorizationId ?? randomUUID(),
+}));
+
+register("job_status", {
+  title: "Read Oracle Firefox job status",
+  description: "Read durable state and recovery guidance without touching Firefox.",
+  inputSchema: { jobId: z.string().uuid() },
+}, "jobs.status");
+
+register("job_wait", {
+  title: "Wait briefly for an Oracle Firefox job",
+  description: "Long-poll one exact job for up to 55 seconds. It never restarts or resubmits the job.",
+  inputSchema: { jobId: z.string().uuid(), timeoutSeconds: z.number().int().min(0).max(55).default(55) },
+}, "jobs.wait", 60_000);
+
+register("job_result", {
+  title: "Read an Oracle Firefox job result",
+  description: "Return the completed answer, terminal failure, or a pending receipt.",
+  inputSchema: { jobId: z.string().uuid() },
+}, "jobs.result");
+
+register("list_jobs", {
+  title: "List Oracle Firefox jobs",
+  description: "List recent durable jobs without exposing prompt contents.",
+  inputSchema: { limit: z.number().int().min(1).max(200).default(50), states: z.array(z.string()).default([]) },
+}, "jobs.list");
+
+register("reconcile_job", {
+  title: "Reconcile an uncertain Oracle Firefox submission",
+  description: "Read the exact target conversation and look for the authorized user-turn hash. Never sends or retries a message.",
+  inputSchema: { jobId: z.string().uuid() },
+}, "jobs.reconcile", 120_000);
+
+register("acknowledge_uncertain", {
+  title: "Acknowledge an uncertain Oracle Firefox job",
+  description: "Remove its quarantine after manual inspection. This never sends a message.",
+  inputSchema: { jobId: z.string().uuid() },
+}, "jobs.acknowledge");
+
+register("cancel_job", {
+  title: "Cancel or detach from an Oracle Firefox job",
+  description: "Cancel only before submit_intent. After that boundary it detaches the caller while monitoring continues and never retries.",
+  inputSchema: { jobId: z.string().uuid() },
+}, "jobs.cancel");
+
+register("reply_with_local_data", {
+  title: "Reply to a safe Pro local-data request",
+  description: "Send structured, secret-scanned facts to the same conversation under the original authorization, up to three rounds.",
+  inputSchema: {
+    jobId: z.string().uuid(),
+    facts: z.array(z.object({ id: z.string().min(1), value: z.unknown(), source: z.string().min(1) })).default([]),
+    unavailable: z.array(z.object({ id: z.string().min(1), reason: z.string().min(1) })).default([]),
+    responseTimeoutSeconds: z.number().int().min(30).max(86400).optional(),
+  },
+}, "jobs.replyWithLocalData");
 
 const transport = new StdioServerTransport();
 transport.onerror = (error) => console.error("Oracle Firefox MCP transport error:", error);
-const closed = new Promise((resolve) => {
-  transport.onclose = resolve;
-});
 await server.connect(transport);
-await closed;

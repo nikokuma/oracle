@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { rm } from "node:fs/promises";
+import { readdir, readFile, rm, writeFile } from "node:fs/promises";
 
 await rm("dist", { recursive: true, force: true });
 
@@ -7,6 +7,8 @@ await build({
   entryPoints: {
     server: "src/server.mjs",
     cli: "src/cli.mjs",
+    broker: "src/broker.mjs",
+    "oracle-claudex": "src/oracle-claudex.mjs",
   },
   outdir: "dist",
   bundle: true,
@@ -21,3 +23,12 @@ await build({
   legalComments: "linked",
   logLevel: "info",
 });
+
+for (const filename of await readdir("dist")) {
+  if (!filename.endsWith(".mjs")) continue;
+  const target = `dist/${filename}`;
+  const source = await readFile(target, "utf8");
+  await writeFile(target, source.replace(/[ \t]+$/gmu, ""));
+}
+
+await import("./generate-harnesses.mjs");

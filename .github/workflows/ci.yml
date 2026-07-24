@@ -7,6 +7,38 @@ on:
     branches: [main]
 
 jobs:
+  oracle-firefox-plugin:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Install plugin dependencies
+        working-directory: plugins/oracle-firefox
+        run: npm ci
+      - name: Run portable broker and safety tests
+        working-directory: plugins/oracle-firefox
+        run: npm run test:portable
+      - name: Run macOS Firefox BiDi fixtures
+        if: matrix.os == 'macos-latest'
+        working-directory: plugins/oracle-firefox
+        run: npm test
+      - name: Build all harness packages
+        working-directory: plugins/oracle-firefox
+        run: npm run build
+      - name: Verify generated packages are committed
+        shell: bash
+        run: git diff --exit-code -- plugins/oracle-firefox/dist plugins/oracle-firefox-claude .claude-plugin
+      - name: Validate MCPB
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: plugins/oracle-firefox
+        run: npx mcpb validate mcpb
+
   build:
     strategy:
       fail-fast: false

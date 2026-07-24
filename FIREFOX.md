@@ -1,60 +1,114 @@
 # Oracle Firefox
 
-Oracle Firefox is a Codex plugin that talks to ChatGPT through your installed Firefox using WebDriver BiDi. It does not require Chrome, Chromium, or an OpenAI API key.
+Oracle Firefox lets Codex, Claude Code, Claudex, and Claude Desktop consult ChatGPT Pro through your logged-in Firefox. It needs no Chrome and no OpenAI API key.
 
-Tested on macOS with Firefox 153 and Node.js 24+.
+One background broker owns one dedicated Firefox profile per OS user. Calls from every agent enter the same durable queue, so a client timeout, plugin reload, or agent disconnect does not restart the message.
+
+macOS with Firefox 153 and Node.js 24+ is the live-qualified platform. Linux and Windows share the portable broker, protocol, SQLite, and packaging tests but are not yet advertised as live-supported.
 
 ## Install
+
+### Codex
 
 ```bash
 codex plugin marketplace add nikokuma/oracle
 codex plugin add oracle-firefox@nikokuma-oracle
 ```
 
-Start a new Codex task after installation so the tools load.
+Start a new Codex task after installing or updating the plugin.
 
-## First-time login
+### Claude Code
 
-Google blocks login inside automated browsers. Sign into ChatGPT normally in Firefox first, then ask Codex:
+```bash
+claude plugin marketplace add nikokuma/oracle
+claude plugin install oracle-firefox@nikokuma-oracle
+```
 
-> Import my existing ChatGPT session into Oracle Firefox. I approve copying only ChatGPT/OpenAI cookies.
+Run `/reload-plugins` or start a new Claude session.
 
-Close normal Firefox and the Oracle Firefox window briefly when Codex asks. The importer copies only `chatgpt.com` and `openai.com` cookies—not passwords, history, Google cookies, or unrelated site cookies.
+### Claudex
 
-## Use it
+From a downloaded repository checkout:
 
-Start a new consultation:
+```bash
+node plugins/oracle-firefox/scripts/install-claudex.mjs
+oracle-claudex [your normal Claudex arguments]
+```
 
-> Use Oracle Firefox to review these files and identify correctness risks.
+The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every other argument, including managed GPT and native Fable routes, and never combines `--plugin-dir` with a duplicate `--mcp-config`.
 
-Start a new chat in a project:
+### Claude Desktop
 
-> Use Oracle Firefox to review these files in my “Firefox Development” ChatGPT project.
+Download and open [`oracle-firefox-1.0.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.0.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
-Continue an existing chat:
+## First login
 
-> Continue the existing ChatGPT chat titled “Firefox compatibility plan” with this message: …
+Google often rejects login inside a WebDriver browser. The reliable path is:
 
-If you give an approximate project or chat name, Oracle can list matching candidates and ask you to choose. A final write requires one exact, unique name; duplicate names fail safely, so use the project or conversation URL to disambiguate.
+1. Sign into ChatGPT normally in Firefox.
+2. Ask the agent to inspect Firefox profiles.
+3. Explicitly approve importing only ChatGPT/OpenAI cookies.
+4. Briefly close normal Firefox and Oracle Firefox while the import runs.
 
-When you do not mention a chat or project, Oracle starts a new standalone chat. Saying “continue” or “follow up” requires an existing chat name or URL.
+The importer never copies passwords, history, Google cookies, cookie values into logs, or unrelated site cookies.
 
-## What works
+## Use it naturally
 
-- Persistent ChatGPT login imported from normal Firefox
-- New ChatGPT consultations
-- New chats inside an exact ChatGPT project
-- Read-only project and chat discovery
-- Text-file context bundling and uploads
-- Existing standalone or project-chat continuation by exact title or URL
-- Confirmed complete-response capture
-- Firefox 153 WebDriver BiDi smoke tests
+New standalone chat:
 
-## Current limits
+> Use Oracle Firefox to ask ChatGPT Pro to review these files for correctness bugs.
 
-- Uses the model currently selected in ChatGPT; automatic model selection is not finished
-- Long Pro responses can exceed the default wait and need reattachment support
-- Deep Research, images, and Gemini browser mode are not yet supported
-- Native Firefox support in the full Oracle CLI remains in progress on `feat/firefox-webdriver-bidi`
+New project chat:
 
-The plugin source is under [`plugins/oracle-firefox`](plugins/oracle-firefox). It is MIT licensed.
+> Use Oracle Firefox to review this in my “Firefox Development” ChatGPT project.
+
+Continue one chat:
+
+> Continue the ChatGPT chat “Firefox compatibility plan” with this message: …
+
+No chat target means a new chat. No project means standalone. “Continue” requires an exact existing title or URL. Partial and duplicate matches are shown for you to choose; Oracle never guesses.
+
+## Long jobs
+
+The durable flow returns a job id immediately:
+
+```bash
+node plugins/oracle-firefox/dist/cli.mjs consult-start \
+  --authorization-id "$(uuidgen | tr '[:upper:]' '[:lower:]')" \
+  -p "Review this design" \
+  -f FIREFOX.md
+
+node plugins/oracle-firefox/dist/cli.mjs watch <job-id> --jsonl --notify
+node plugins/oracle-firefox/dist/cli.mjs result <job-id>
+```
+
+MCP clients use `consult_start`, `continue_chat_start`, `job_status`, `job_wait`, and `job_result`. The compatibility `consult` and `continue_chat` tools wait at most 240 seconds, then return a pending receipt while the broker continues working.
+
+## Safety guarantees
+
+- Pro is selected and visibly verified before each message unless the caller explicitly requests `current`.
+- Each authorization allows at most one automatic Send-button click.
+- The broker writes `submit_intent` to SQLite before clicking Send and never retries past that boundary.
+- Existing drafts and foreign attachments are never cleared or overwritten.
+- The whole composer message must match after Unicode and line-ending normalization.
+- Attachments must exactly match, finish processing, and leave the composer send-ready.
+- Assistant completion is bound to the exact submitted user turn, not the latest visible response or turn count.
+- Oracle never clicks Answer now, regenerate, continue generation, Stop, or Enter as a send fallback.
+- Same-chat writes are FIFO across all harnesses. Different chats are serial by default; two-chat concurrency remains behind `ORACLE_FIREFOX_WRITE_CONCURRENCY=2` until live qualification is complete.
+- Uncertain submissions quarantine their exact conversation or creation scope until read-only reconciliation or user acknowledgement.
+
+Private state lives in:
+
+- Firefox profile and session artifacts: `~/.oracle-firefox/`
+- macOS coordinator database, token, and protected log: `~/Library/Application Support/oracle-firefox/coordinator/`
+- broker socket: `$TMPDIR/oracle-firefox-$UID/broker.sock`
+
+## Local evidence
+
+If Pro needs local facts, it returns a structured `ORACLE_LOCAL_DATA_REQUEST_V1` block instead of guessing. The local agent may perform up to three secret-scanned, read-only evidence rounds inside the original task scope. A fourth round, sensitive request, write, or scope expansion requires fresh user approval.
+
+## Recovery
+
+Use `broker_status` or `job_status` after a client restart. Safe pre-send work resumes automatically. Proven submitted turns reattach in monitor-only mode. Unproven post-send states return `SUBMISSION_UNCERTAIN`; `reconcile_job` searches the exact conversation read-only and never sends another message.
+
+The canonical Codex source is [`plugins/oracle-firefox`](plugins/oracle-firefox). The generated Claude package is [`plugins/oracle-firefox-claude`](plugins/oracle-firefox-claude). Both are MIT licensed.
