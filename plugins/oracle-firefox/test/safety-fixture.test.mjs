@@ -4,9 +4,12 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
+  attachmentManifestKey,
   assistantSnapshot,
+  inspectComposerState,
   insertComposerText,
   launchFirefox,
+  readComposerText,
   submitComposer,
   uploadContextFile,
   waitForAssistantAfterTurn,
@@ -36,6 +39,15 @@ test("refuses foreign drafts and never uses Enter when Send is disabled", async 
     await assert.rejects(() => insertComposerText(page, "authorized"), /existing draft/u);
     await assert.rejects(() => submitComposer(page), /No submission was attempted/u);
     assert.equal(await page.evaluate(() => window.enterCount), 0);
+  });
+});
+
+test("reconstructs Firefox contenteditable block boundaries exactly", async () => {
+  await withPage('<div id="prompt-textarea" role="textbox" contenteditable="true"></div>', async (page) => {
+    const authorized = "first line\n\nthird line\nfourth line";
+    await insertComposerText(page, authorized);
+    assert.equal(await readComposerText(page), authorized);
+    assert.equal((await inspectComposerState(page)).text, authorized);
   });
 });
 
@@ -81,6 +93,28 @@ test("waits through slow attachment processing and requires the exact ready file
   }
 });
 
+test("accepts ChatGPT's duplicate suffix only for the authorized attachment", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-upload-suffix-"));
+  const attachment = path.join(directory, "oracle-context.md");
+  await writeFile(attachment, "context");
+  try {
+    await withPage(`
+      <form><textarea id="prompt-textarea">ready prompt</textarea><input id="file" type="file"><button data-testid="send-button" disabled>Send</button></form>
+      <script>
+        document.querySelector('#file').addEventListener('change', (event) => {
+          const chip=document.createElement('div'); chip.dataset.testid='attachment-chip'; chip.dataset.state='ready'; chip.textContent='oracle-context(2).md'; document.querySelector('form').append(chip);
+          event.target.value='';
+          document.querySelector('[data-testid=send-button]').disabled=false;
+        });
+      </script>
+    `, async (page) => {
+      assert.equal(await uploadContextFile(page, attachment, { timeoutMs: 5_000 }), "oracle-context.md");
+    });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("binds completion to the exact new user turn and ignores Pro-thinking placeholders", async () => {
   await withPage(`
     <main id="thread">
@@ -94,7 +128,10 @@ test("binds completion to the exact new user turn and ignores Pro-thinking place
         const user=document.createElement('article'); user.dataset.testid='conversation-turn-3'; user.dataset.messageAuthorRole='user'; user.dataset.messageId='new-user'; user.innerHTML='<div data-message-content>same prompt</div>'; document.querySelector('#thread').append(user);
       }, 100);
     });
-    const confirmed = await waitForUserMessage(page, baseline.userCount, "same prompt", { timeoutMs: 3_000 });
+    const confirmed = await waitForUserMessage(page, baseline.userCount, "same prompt", {
+      timeoutMs: 3_000,
+      requireCanonicalUrl: false,
+    });
     assert.equal(confirmed.userTurn.id, "new-user");
     await page.evaluate(() => {
       const assistant=document.createElement('article'); assistant.dataset.testid='conversation-turn-4'; assistant.dataset.messageAuthorRole='assistant'; assistant.dataset.messageId='new-assistant'; assistant.innerHTML='<div class="markdown">Pro thinking — Answer now</div><button data-testid="copy-turn-action-button">Copy</button>'; document.querySelector('#thread').append(assistant);
@@ -103,5 +140,115 @@ test("binds completion to the exact new user turn and ignores Pro-thinking place
     const response = await waitForAssistantAfterTurn(page, confirmed.userTurn, { timeoutMs: 4_000, stableMs: 300 });
     assert.equal(response.text, "final exact answer");
     assert.equal(response.assistantTurn.id, "new-assistant");
+  });
+});
+
+test("excludes ChatGPT's Show more control from long user-turn correlation", async () => {
+  await withPage(`
+    <main id="thread">
+      <article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="new-user">
+        <div data-testid="collapsible-user-message-root">
+          <div data-testid="collapsible-user-message-content" class="whitespace-pre-wrap">exact authorized prompt</div>
+          <button data-testid="collapsible-user-message-toggle">Show more</button>
+        </div>
+      </article>
+    </main>
+  `, async (page) => {
+    const snapshot = await assistantSnapshot(page);
+    assert.equal(snapshot.turns[0].text, "exact authorized prompt");
+  });
+});
+
+test("reconstructs fenced code source for exact submitted-turn correlation", async () => {
+  await withPage(`
+    <main id="thread">
+      <article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="evidence-user">
+        <div data-testid="collapsible-user-message-content" class="whitespace-pre-wrap">ORACLE_LOCAL_DATA_RESPONSE_V1\n\n<pre><code>json\n{\n  &quot;value&quot;: true\n}</code></pre></div>
+      </article>
+    </main>
+  `, async (page) => {
+    const expected = 'ORACLE_LOCAL_DATA_RESPONSE_V1\n\n```json\n{\n  "value": true\n}\n```';
+    const snapshot = await assistantSnapshot(page);
+    assert.equal(snapshot.turns[0].text, expected);
+    const confirmed = await waitForUserMessage(page, 0, expected, {
+      timeoutMs: 1_000,
+      requireCanonicalUrl: false,
+    });
+    assert.equal(confirmed.userTurn.id, "evidence-user");
+  });
+});
+
+test("finds a new exact turn by ID when ChatGPT virtualizes below the baseline count", async () => {
+  await withPage(`
+    <main id="thread">
+      <article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="old-1"><div data-message-content>old one</div></article>
+      <article data-testid="conversation-turn-2" data-message-author-role="user" data-message-id="old-2"><div data-message-content>old two</div></article>
+      <article data-testid="conversation-turn-3" data-message-author-role="user" data-message-id="old-3"><div data-message-content>old three</div></article>
+      <article data-testid="conversation-turn-4" data-message-author-role="user" data-message-id="old-4"><div data-message-content>old four</div></article>
+    </main>
+  `, async (page) => {
+    const baseline = await assistantSnapshot(page);
+    await page.evaluate(() => {
+      document.querySelector('[data-message-id="old-1"]').remove();
+      document.querySelector('[data-message-id="old-2"]').remove();
+      const turn = document.createElement("article");
+      turn.dataset.testid = "conversation-turn-5";
+      turn.dataset.messageAuthorRole = "user";
+      turn.dataset.messageId = "new-5";
+      turn.innerHTML = '<div data-message-content>exact new prompt</div>';
+      document.querySelector("#thread").append(turn);
+    });
+    const confirmed = await waitForUserMessage(page, baseline.userCount, "exact new prompt", {
+      timeoutMs: 1_000,
+      requireCanonicalUrl: false,
+      baselineTurnIds: baseline.turns.filter((turn) => turn.role === "user").map((turn) => turn.id),
+    });
+    assert.equal(confirmed.userCount, 3);
+    assert.equal(confirmed.userTurn.id, "new-5");
+  });
+});
+
+test("correlates ChatGPT duplicate-suffixed attachment names exactly", async () => {
+  await withPage(`
+    <main><article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="attachment-user">
+      <div role="group" aria-label="oracle-context(2).md"></div>
+      <div data-message-content>attached prompt</div>
+    </article></main>
+  `, async (page) => {
+    const snapshot = await assistantSnapshot(page);
+    assert.deepEqual(snapshot.turns[0].attachments, ["oracle-context(2).md"]);
+    assert.equal(attachmentManifestKey(snapshot.turns[0].attachments), attachmentManifestKey(["oracle-context.md"]));
+    const confirmed = await waitForUserMessage(page, 0, "attached prompt", {
+      expectedAttachments: ["oracle-context.md"],
+      timeoutMs: 1_000,
+      requireCanonicalUrl: false,
+    });
+    assert.equal(confirmed.userTurn.id, "attachment-user");
+  });
+});
+
+test("classifies ChatGPT's visible request throttle as account cooldown", async () => {
+  await withPage(`
+    <main></main>
+    <div role="alert" style="width:200px;height:30px">You're making too many requests too quickly. Try again later.</div>
+  `, async (page) => {
+    await assert.rejects(
+      () => waitForUserMessage(page, 0, "authorized prompt", { timeoutMs: 1_000, requireCanonicalUrl: false }),
+      (error) => error.code === "ACCOUNT_COOLDOWN" && error.submissionMayHaveOccurred === false,
+    );
+  });
+});
+
+test("classifies a terminal ChatGPT throttle response as account cooldown", async () => {
+  await withPage(`
+    <main>
+      <article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="submitted-user"><div data-message-content>authorized prompt</div></article>
+      <article data-testid="conversation-turn-2" data-message-author-role="assistant" data-message-id="throttle-assistant"><div class="markdown">You're making too many requests too quickly. Please try again later.</div><button data-testid="copy-turn-action-button">Copy</button></article>
+    </main>
+  `, async (page) => {
+    await assert.rejects(
+      () => waitForAssistantAfterTurn(page, { id: "submitted-user", hash: "unused" }, { timeoutMs: 4_000, stableMs: 100 }),
+      (error) => error.code === "ACCOUNT_COOLDOWN" && error.submissionMayHaveOccurred === true,
+    );
   });
 });

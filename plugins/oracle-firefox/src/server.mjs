@@ -163,7 +163,10 @@ register("list_jobs", {
 register("reconcile_job", {
   title: "Reconcile an uncertain Oracle Firefox submission",
   description: "Read the exact target conversation and look for the authorized user-turn hash. Never sends or retries a message.",
-  inputSchema: { jobId: z.string().uuid() },
+  inputSchema: {
+    jobId: z.string().uuid(),
+    conversationUrl: z.string().url().optional().describe("Canonical ChatGPT URL discovered manually when an uncertain new chat failed before persisting its URL."),
+  },
 }, "jobs.reconcile", 120_000);
 
 register("acknowledge_uncertain", {

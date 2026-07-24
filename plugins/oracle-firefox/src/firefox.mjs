@@ -5,6 +5,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import puppeteer from "puppeteer-core";
 import { CHATGPT_URL, profileDirectory, resolveFirefoxPath } from "./config.mjs";
+import { codedError } from "./errors.mjs";
 import {
   FILE_INPUT_SELECTORS,
   FINISHED_ACTIONS_SELECTOR,
@@ -30,6 +31,13 @@ export function normalizeSemanticText(value) {
 
 export function semanticTextHash(value) {
   return createHash("sha256").update(normalizeSemanticText(value)).digest("hex");
+}
+
+export function attachmentManifestKey(values = []) {
+  return [...values]
+    .map((value) => String(value).trim().replace(/\(\d+\)(?=\.[^.]+$)/u, ""))
+    .sort()
+    .join("\u0000");
 }
 
 export function normalizeConversationTitle(value) {
@@ -796,7 +804,18 @@ export async function waitForComposer(page, { timeoutMs = 60_000 } = {}) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const handle = await findVisibleHandle(page, INPUT_SELECTORS);
-    if (handle) return handle;
+    if (handle) {
+      const ready = await handle.evaluate((node) => !String(node.className || "").includes("fallbackTextarea"));
+      if (ready) {
+        // ChatGPT can replace the real ProseMirror node once more immediately
+        // after its fallback textarea disappears. Require the same node to
+        // remain connected before delivering trusted keystrokes.
+        await delay(750);
+        const stable = await handle.evaluate((node) => node.isConnected).catch(() => false);
+        if (stable) return handle;
+      }
+      await handle.dispose();
+    }
     const state = await probeLogin(page).catch(() => null);
     if (state?.cloudflare) {
       throw new Error(
@@ -820,7 +839,26 @@ export async function readComposerText(page) {
       .find((candidate) => visible(candidate));
     if (!node) return "";
     if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) return node.value;
-    return node.innerText || node.textContent || "";
+    const inlineText = (root) => {
+      if (root.childNodes.length === 1 && root.firstChild instanceof HTMLBRElement) return "";
+      let value = "";
+      for (const child of root.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) value += child.textContent || "";
+        else if (child instanceof HTMLBRElement) value += "\n";
+        else value += inlineText(child);
+      }
+      return value;
+    };
+    const children = Array.from(node.children || []);
+    const blockTags = new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6"]);
+    if (children.length > 0 && children.every((child) => blockTags.has(child.tagName))) {
+      // Firefox/ProseMirror represents each authorized LF as a separate block.
+      // innerText expands those block boundaries (one LF becomes two and two
+      // become five), while joining direct block text reconstructs the exact
+      // message, including empty blocks used for blank lines.
+      return children.map(inlineText).join("\n");
+    }
+    return inlineText(node) || node.innerText || node.textContent || "";
   }, INPUT_SELECTORS);
 }
 
@@ -837,9 +875,26 @@ export async function inspectComposerState(page) {
         .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
         .find(visible);
       const root = composer?.closest('[data-testid*="composer"]') || composer?.closest("form") || composer?.parentElement || document.body;
-      const text = composer instanceof HTMLTextAreaElement || composer instanceof HTMLInputElement
-        ? composer.value
-        : composer?.innerText || composer?.textContent || "";
+      let text = "";
+      if (composer instanceof HTMLTextAreaElement || composer instanceof HTMLInputElement) {
+        text = composer.value;
+      } else if (composer) {
+        const inlineText = (root) => {
+          if (root.childNodes.length === 1 && root.firstChild instanceof HTMLBRElement) return "";
+          let value = "";
+          for (const child of root.childNodes) {
+            if (child.nodeType === Node.TEXT_NODE) value += child.textContent || "";
+            else if (child instanceof HTMLBRElement) value += "\n";
+            else value += inlineText(child);
+          }
+          return value;
+        };
+        const children = Array.from(composer.children || []);
+        const blockTags = new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6"]);
+        text = children.length > 0 && children.every((child) => blockTags.has(child.tagName))
+          ? children.map(inlineText).join("\n")
+          : inlineText(composer) || composer.innerText || composer.textContent || "";
+      }
       const filenames = new Set();
       for (const input of fileSelectors.flatMap((selector) => Array.from(root.querySelectorAll(selector)))) {
         if (input instanceof HTMLInputElement) {
@@ -874,9 +929,12 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
   }
   const editor = await waitForComposer(page);
   await editor.click();
-  await editor.evaluate((node, value) => {
-    node.focus();
-    if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) {
+  const editorKind = await editor.evaluate((node) =>
+    node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement ? "value" : "contenteditable",
+  );
+  if (editorKind === "value") {
+    await editor.evaluate((node, value) => {
+      node.focus();
       const prototype =
         node instanceof HTMLTextAreaElement
           ? HTMLTextAreaElement.prototype
@@ -892,20 +950,40 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
         }),
       );
       node.dispatchEvent(new Event("change", { bubbles: true }));
-    } else {
-      const selection = document.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(node);
-      selection?.removeAllRanges();
-      selection?.addRange(range);
-      document.execCommand("insertText", false, value);
+    }, content);
+  } else {
+    const lines = content.split("\n");
+    for (let index = 0; index < lines.length; index += 1) {
+      if (lines[index]) await page.keyboard.type(lines[index]);
+      if (index < lines.length - 1) {
+        await page.keyboard.down("Shift");
+        try { await page.keyboard.press("Enter"); }
+        finally { await page.keyboard.up("Shift"); }
+      }
     }
-  }, content);
+  }
   await delay(250);
   const observed = await readComposerText(page);
-  if (normalizeSemanticText(observed) !== normalizeSemanticText(content)) {
-    throw new Error(
+  const expectedNormalized = normalizeSemanticText(content);
+  const observedNormalized = normalizeSemanticText(observed);
+  if (observedNormalized !== expectedNormalized) {
+    let firstMismatch = 0;
+    const length = Math.max(expectedNormalized.length, observedNormalized.length);
+    while (firstMismatch < length && expectedNormalized[firstMismatch] === observedNormalized[firstMismatch]) firstMismatch += 1;
+    const codePoint = (value) => value.codePointAt(firstMismatch)?.toString(16).toUpperCase() ?? "EOF";
+    throw codedError(
+      "COMPOSER_MISMATCH",
       `Prompt insertion did not match the whole authorized message (${observed.length}/${content.length} characters).`,
+      {
+        safeToRetry: true,
+        details: {
+          firstMismatch,
+          expectedCodePoint: codePoint(expectedNormalized),
+          observedCodePoint: codePoint(observedNormalized),
+          expectedNormalizedLength: expectedNormalized.length,
+          observedNormalizedLength: observedNormalized.length,
+        },
+      },
     );
   }
   return observed.length;
@@ -913,6 +991,8 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
 
 export async function uploadContextFile(page, filePath, { timeoutMs = 600_000 } = {}) {
   const boundedTimeout = Math.max(1_000, Math.min(1_800_000, timeoutMs));
+  const testReadyDelayMs = Math.max(0, Number(process.env.ORACLE_FIREFOX_TEST_ATTACHMENT_READY_DELAY_MS) || 0);
+  const uploadStartedAt = Date.now();
   const initial = await inspectComposerState(page);
   if (initial.attachments.length > 0) {
     throw new Error(`ChatGPT composer already contains foreign attachments: ${initial.attachments.join(", ")}.`);
@@ -934,8 +1014,10 @@ export async function uploadContextFile(page, filePath, { timeoutMs = 600_000 } 
     const state = await inspectComposerState(page);
     const send = await findVisibleHandle(page, SEND_BUTTON_SELECTORS, { enabled: true });
     if (send) await send.dispose();
-    const exactAttachments = state.attachments.length === 1 && state.attachments[0] === filename;
-    if (exactAttachments && !state.uploading && Boolean(send)) {
+    const exactAttachments =
+      state.attachments.length === 1 &&
+      attachmentManifestKey(state.attachments) === attachmentManifestKey([filename]);
+    if (exactAttachments && !state.uploading && Boolean(send) && Date.now() - uploadStartedAt >= testReadyDelayMs) {
       ORACLE_APPROVED_ATTACHMENTS.set(page, [filename]);
       return filename;
     }
@@ -969,10 +1051,23 @@ export async function assistantSnapshot(page) {
         if (explicitRole !== "assistant" && explicitRole !== "user") continue;
         const contentNode = explicitRole === "assistant"
           ? turn.querySelector(".markdown, [data-message-content]") || roleNode
-          : turn.querySelector('[data-message-content], [data-testid*="user-message"], .whitespace-pre-wrap') || roleNode;
-        const text = (contentNode.innerText || contentNode.textContent || "").trim();
+          : turn.querySelector('[data-testid="collapsible-user-message-content"], .whitespace-pre-wrap, [data-message-content], [data-testid*="user-message-content"]') || roleNode;
+        const serializeUserSource = (node) => {
+          if (node.nodeType === Node.TEXT_NODE) return node.textContent || "";
+          if (!(node instanceof HTMLElement)) return "";
+          if (node instanceof HTMLBRElement) return "\n";
+          if (node instanceof HTMLPreElement) {
+            const code = node.querySelector(":scope > code");
+            const source = String(code?.textContent || node.textContent || "").replace(/\n+$/u, "");
+            return `\`\`\`${source}\n\`\`\``;
+          }
+          return Array.from(node.childNodes, serializeUserSource).join("");
+        };
+        const text = (explicitRole === "user"
+          ? serializeUserSource(contentNode)
+          : (contentNode.innerText || contentNode.textContent || "")).trim();
         const id = turn.getAttribute("data-message-id") || roleNode.getAttribute("data-message-id") || turn.getAttribute("data-testid") || turn.id || null;
-        const attachments = Array.from(turn.querySelectorAll('[data-testid*="attachment"], [data-testid*="file"], a[download]'))
+        const attachments = Array.from(turn.querySelectorAll('[data-testid*="attachment"], [data-testid*="file"], a[download], [role="group"][aria-label]'))
           .map((node) => (node.getAttribute("download") || node.getAttribute("aria-label") || node.getAttribute("title") || node.textContent || "").trim())
           .flatMap((value) => {
             const match = value.match(/([^/\\\n]+\.[a-z0-9]{1,12})/iu);
@@ -1039,24 +1134,59 @@ export async function waitForUserMessage(
   page,
   baselineCount,
   expectedText,
-  { timeoutMs = 30_000, expectedAttachments = [] } = {},
+  { timeoutMs = 30_000, expectedAttachments = [], requireCanonicalUrl = true, baselineTurnIds = [] } = {},
 ) {
   const expectedHash = semanticTextHash(expectedText);
   const expectedManifest = [...expectedAttachments].sort();
   const deadline = Date.now() + timeoutMs;
   let latest = null;
+  const knownTurnIds = new Set(baselineTurnIds.filter(Boolean));
   while (Date.now() < deadline) {
     latest = await assistantSnapshot(page);
-    const newUsers = latest.turns.filter((turn) => turn.role === "user").slice(baselineCount);
+    const cooldownNotice = await readChatGptCooldownNotice(page);
+    if (cooldownNotice) {
+      throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submission attempt because the account is temporarily rate-limited. Oracle did not retry.", {
+        submissionMayHaveOccurred: false,
+        recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+      });
+    }
+    const users = latest.turns.filter((turn) => turn.role === "user");
+    // ChatGPT virtualizes long conversations and can render fewer turns after
+    // submission than were present in the baseline. Prefer durable turn IDs;
+    // count slicing is only a fallback for fixtures/legacy DOMs without IDs.
+    const newUsers = knownTurnIds.size
+      ? users.filter((turn) => turn.id && !knownTurnIds.has(turn.id))
+      : users.slice(baselineCount);
     const match = newUsers.find((turn) =>
       semanticTextHash(turn.text) === expectedHash &&
-      [...turn.attachments].sort().join("\u0000") === expectedManifest.join("\u0000"),
+      attachmentManifestKey(turn.attachments) === attachmentManifestKey(expectedManifest),
     );
-    if (match) return { ...latest, userTurn: { ...match, hash: expectedHash } };
+    if (match) {
+      if (!requireCanonicalUrl) return { ...latest, userTurn: { ...match, hash: expectedHash } };
+      try {
+        normalizeConversationUrl(latest.url);
+        return { ...latest, userTurn: { ...match, hash: expectedHash } };
+      } catch {
+        // New project/standalone chats can render the submitted turn before
+        // ChatGPT's SPA exposes the canonical /c/ URL. Keep observing without
+        // clicking or resending until both proofs exist.
+      }
+    }
     await delay(250);
   }
-  throw new Error(
+  let conversationUrl = null;
+  try {
+    conversationUrl = normalizeConversationUrl(latest?.url || page.url());
+  } catch {
+    // A canonical URL may not exist yet for a failed new-chat submission.
+  }
+  throw codedError(
+    "SUBMISSION_UNCERTAIN",
     `The new user message could not be confirmed in the target conversation. Refusing to retry automatically. Last state: ${JSON.stringify({ userCount: latest?.userCount, baselineCount })}`,
+    {
+      submissionMayHaveOccurred: true,
+      details: { conversationUrl, observedUserCount: latest?.userCount ?? null, baselineCount },
+    },
   );
 }
 
@@ -1141,6 +1271,12 @@ export async function waitForAssistantAfterTurn(
     if (terminal) {
       terminalCycles += 1;
       if (terminalCycles >= 3 && Date.now() - stableSince >= stableMs) {
+        if (isChatGptCooldownText(assistant.text)) {
+          throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
+            submissionMayHaveOccurred: true,
+            recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+          });
+        }
         return { ...snapshot, assistantTurn: assistant, text: assistant.text, html: assistant.html };
       }
     } else {
@@ -1149,4 +1285,24 @@ export async function waitForAssistantAfterTurn(
     await delay(500);
   }
   throw new Error("The assistant response bound to the submitted user turn could not be confirmed complete before timeout.");
+}
+
+function isChatGptCooldownText(value) {
+  const normalized = String(value ?? "").replace(/\s+/gu, " ").trim();
+  return /(?:you(?:'|’)?re making )?too many requests(?: too quickly)?|temporarily rate[- ]limited|please try again (?:in a (?:few )?minutes?|later)/iu.test(normalized);
+}
+
+async function readChatGptCooldownNotice(page) {
+  return page.evaluate(() => {
+    const visible = (node) =>
+      node instanceof HTMLElement &&
+      node.getBoundingClientRect().width > 0 &&
+      node.getBoundingClientRect().height > 0;
+    const notices = Array.from(
+      document.querySelectorAll('[role="alert"], [data-sonner-toast], [data-testid*="toast"], [data-testid*="error"]'),
+    ).filter(visible);
+    return notices
+      .map((node) => (node.innerText || node.textContent || "").replace(/\s+/gu, " ").trim())
+      .find((text) => /too many requests(?: too quickly)?|temporarily rate[- ]limited|try again later/iu.test(text)) || null;
+  });
 }

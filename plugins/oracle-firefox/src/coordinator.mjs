@@ -9,7 +9,7 @@ import {
   deriveEvidenceAuthorizationId,
   scanEvidenceForSecrets,
 } from "./evidence.mjs";
-import { assistantSnapshot, normalizeConversationUrl, openExistingConversation, semanticTextHash } from "./firefox.mjs";
+import { attachmentManifestKey, assistantSnapshot, normalizeConversationUrl, openExistingConversation, semanticTextHash } from "./firefox.mjs";
 import { requestDigest, StateStore, TERMINAL_JOB_STATES } from "./state-store.mjs";
 import {
   conversationKeyFor,
@@ -294,10 +294,17 @@ export class Coordinator {
     return status.state === "completed" ? this.result(receipt.jobId) : { ...status, status: status.terminal ? status.state : "pending" };
   }
 
-  async reconcile(jobId) {
-    const job = this.store.requireJob(jobId);
+  async reconcile(jobId, conversationUrl) {
+    let job = this.store.requireJob(jobId);
     if (!new Set(["submission_uncertain", "response_uncertain", "quarantined"]).has(job.state)) {
       return { ...publicJob(job), reconciled: false, reason: "Job is not uncertain." };
+    }
+    if (!job.conversationUrl && conversationUrl) {
+      const canonicalUrl = normalizeConversationUrl(conversationUrl);
+      job = this.store.transition(job.id, job.state, {
+        conversationKey: canonicalUrl,
+        conversationUrl: canonicalUrl,
+      }, { userSuppliedReconciliationTarget: true });
     }
     if (!job.conversationUrl || !job.submittedMessageHash) {
       return {
@@ -311,7 +318,11 @@ export class Coordinator {
     try {
       await openExistingConversation(lease.page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
       const snapshot = await assistantSnapshot(lease.page);
-      const matches = snapshot.turns.filter((turn) => turn.role === "user" && semanticTextHash(turn.text) === job.submittedMessageHash);
+      const matches = snapshot.turns.filter((turn) =>
+        turn.role === "user" &&
+        semanticTextHash(turn.text) === job.submittedMessageHash &&
+        attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || []),
+      );
       if (matches.length !== 1) {
         return {
           ...publicJob(job),
@@ -406,7 +417,7 @@ export class Coordinator {
       "jobs.wait": (params) => this.waitForJob(params.jobId, params.timeoutSeconds),
       "jobs.result": (params) => this.result(params.jobId),
       "jobs.list": (params) => this.listJobs(params),
-      "jobs.reconcile": (params) => this.reconcile(params.jobId),
+      "jobs.reconcile": (params) => this.reconcile(params.jobId, params.conversationUrl),
       "jobs.acknowledge": (params) => this.acknowledge(params.jobId),
       "jobs.cancel": (params) => this.cancel(params.jobId),
       "jobs.replyWithLocalData": (params) => this.replyWithLocalData(params),

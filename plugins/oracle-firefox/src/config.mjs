@@ -57,6 +57,10 @@ export function coordinatorLogPath() {
   return path.join(coordinatorDirectory(), "broker.log");
 }
 
+export function browserOwnerPath() {
+  return path.join(coordinatorDirectory(), "browser-owner.json");
+}
+
 export function emergencyLockPath() {
   return path.join(coordinatorDirectory(), "emergency.lock");
 }

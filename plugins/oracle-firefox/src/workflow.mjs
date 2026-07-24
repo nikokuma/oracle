@@ -5,6 +5,7 @@ import { bundleContext } from "./bundle.mjs";
 import { profileDirectory } from "./config.mjs";
 import { codedError, structuredError } from "./errors.mjs";
 import {
+  attachmentManifestKey,
   assistantSnapshot,
   doctor,
   findChats,
@@ -394,16 +395,22 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
         "Follow the [USER] request and ORACLE LOCAL DATA PROTOCOL in that file.",
         "Return only the substantive answer or the strict local-data request block.",
       ].join("\n");
-      await insertComposerText(lease.page, composerPrompt);
+      await browserManager.withInputFocus(lease.page, () => insertComposerText(lease.page, composerPrompt));
       await uploadContextFile(lease.page, attachmentPath, { timeoutMs: job.request.attachmentTimeoutSeconds * 1_000 });
       triggerFailpoint("after_attachment_readiness");
     } else {
       store.transition(job.id, "attachment_processing", { attachmentManifest: [] });
-      await insertComposerText(lease.page, composerPrompt);
+      await browserManager.withInputFocus(lease.page, () => insertComposerText(lease.page, composerPrompt));
     }
     triggerFailpoint("after_insertion");
     const composerState = await inspectComposerState(lease.page);
-    if (composerState.uploading || composerState.attachments.join("\u0000") !== attachmentManifest.join("\u0000")) {
+    if (semanticTextHash(composerState.text) !== semanticTextHash(composerPrompt)) {
+      throw codedError("COMPOSER_MISMATCH", "The final composer content does not exactly match the authorized message.", { safeToRetry: true });
+    }
+    if (
+      composerState.uploading ||
+      attachmentManifestKey(composerState.attachments) !== attachmentManifestKey(attachmentManifest)
+    ) {
       throw codedError("ATTACHMENT_MISMATCH", "The composer attachment set changed before submission.", { safeToRetry: true });
     }
     store.transition(job.id, "composer_verified", { attachmentManifest });
@@ -429,6 +436,7 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
     const confirmed = await waitForUserMessage(lease.page, baseline.userCount, composerPrompt, {
       timeoutMs: 30_000,
       expectedAttachments: attachmentManifest,
+      baselineTurnIds: baseline.turns.filter((turn) => turn.role === "user").map((turn) => turn.id),
     });
     const observedUrl = normalizeConversationUrl(confirmed.url);
     const resultingProjectUrl = projectUrlFromConversationUrl(observedUrl);
@@ -459,7 +467,18 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
     triggerFailpoint("after_assistant_completion");
     return await finalizeResponse({ job: store.requireJob(job.id), response, store });
   } catch (error) {
-    const current = store.requireJob(job.id);
+    let current = store.requireJob(job.id);
+    if (current.submitIntentAt && !current.conversationUrl && error?.details?.conversationUrl) {
+      try {
+        const observedUrl = normalizeConversationUrl(error.details.conversationUrl);
+        current = store.transition(current.id, current.state, {
+          conversationKey: observedUrl,
+          conversationUrl: observedUrl,
+        }, { recoveredCanonicalUrl: true });
+      } catch {
+        // Preserve the original uncertainty classification if the URL is not canonical.
+      }
+    }
     if (current.state === "cancelled_pre_submit") throw error;
     const failed = store.markFailure(job.id, error);
     await writeFinalMetadata(failed, {
