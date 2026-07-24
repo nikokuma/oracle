@@ -44,6 +44,7 @@ Use compatibility `consult` or `continue_chat` only when a result is likely with
 - Read the final answer with `job_result` and independently verify it against local source and tests.
 - Never retry automatically after `submit_intent` or when `submissionMayHaveOccurred` is true.
 - For `SUBMISSION_UNCERTAIN`, call `reconcile_job`. It performs read-only exact-turn matching and never sends.
+- For `ACCOUNT_COOLDOWN`, report that ChatGPT rejected the request, do not retry, and wait for the user to authorize a fresh job after the cooldown. If it happened after `submit_intent`, preserve the conservative uncertain state and reconcile read-only before acknowledging it.
 - If reconciliation cannot prove the turn, ask the user to inspect the reported conversation and session. Use `acknowledge_uncertain` only after that decision.
 - Respect `CONVERSATION_QUARANTINED`; it prevents another write into an unresolved scope.
 - Never click or ask Oracle to click Answer now, regenerate, continue generation, Stop, or clear a user draft.

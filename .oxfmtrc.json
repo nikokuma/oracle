@@ -16,6 +16,7 @@
     ".pnpm-store/**/*",
     "coverage/**/*",
     ".bun-check/**/*",
-    "plugins/oracle-firefox/**/*"
+    "plugins/oracle-firefox/**/*",
+    "plugins/oracle-firefox-claude/**/*"
   ]
 }

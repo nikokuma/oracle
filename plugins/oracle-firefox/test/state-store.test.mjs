@@ -73,6 +73,26 @@ test("submit-intent failures quarantine the exact scope", async () => {
   });
 });
 
+test("post-click account cooldown remains conservative without losing its cause", async () => {
+  await withStore(async (store) => {
+    const created = store.createJob(input({ conversationKey: "new-standalone:cooldown" })).job;
+    for (const state of ["snapshotted", "queued", "page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified", "submit_intent"]) {
+      store.transition(created.id, state);
+    }
+    const error = Object.assign(new Error("ChatGPT account cooldown"), {
+      code: "ACCOUNT_COOLDOWN",
+      submissionMayHaveOccurred: false,
+      recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+    });
+    const failed = store.markFailure(created.id, error);
+    assert.equal(failed.state, "submission_uncertain");
+    assert.equal(failed.error.code, "ACCOUNT_COOLDOWN");
+    assert.equal(failed.error.submissionMayHaveOccurred, true);
+    assert.equal(failed.error.recoveryAction, error.recoveryAction);
+    assert.match(failed.recoveryAction, /reconcile_job/u);
+  });
+});
+
 test("restart recovery requeues pre-submit work and quarantines unproven sends", async () => {
   await withStore(async (store) => {
     const safe = store.createJob(input()).job;

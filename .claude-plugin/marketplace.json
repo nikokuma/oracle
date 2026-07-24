@@ -18,15 +18,7 @@
       "homepage": "https://github.com/nikokuma/oracle/blob/main/FIREFOX.md",
       "repository": "https://github.com/nikokuma/oracle",
       "license": "MIT",
-      "keywords": [
-        "firefox",
-        "chatgpt",
-        "pro",
-        "webdriver-bidi",
-        "mcp",
-        "codex",
-        "claude"
-      ],
+      "keywords": ["firefox", "chatgpt", "pro", "webdriver-bidi", "mcp", "codex", "claude"],
       "category": "developer-tools"
     }
   ]

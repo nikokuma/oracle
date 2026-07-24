@@ -14,6 +14,7 @@ import {
   uploadContextFile,
   waitForAssistant,
   waitForConversationHistoryStable,
+  waitForUserMessage,
 } from "../src/firefox.mjs";
 
 test(
@@ -98,11 +99,17 @@ test("creates a conversation from a project home fixture", { timeout: 30_000 }, 
           <script>
             composer.addEventListener('submit', (event) => {
               event.preventDefault();
-              history.pushState({}, '', '/g/g-p-fixture-project/c/fixture-conversation-id');
-              const turn = document.createElement('article');
-              turn.dataset.testid = 'conversation-turn-1';
-              turn.innerHTML = '<div data-message-author-role="assistant"><div class="markdown">Project fixture answer</div><button data-testid="copy-turn-action-button">Copy</button></div>';
-              turns.appendChild(turn);
+              const user = document.createElement('article');
+              user.dataset.testid = 'conversation-turn-1';
+              user.innerHTML = '<div data-message-author-role="user" data-message-id="fixture-user"><div data-message-content>create this project chat</div></div>';
+              turns.appendChild(user);
+              setTimeout(() => {
+                history.pushState({}, '', '/g/g-p-fixture-project/c/fixture-conversation-id');
+                const turn = document.createElement('article');
+                turn.dataset.testid = 'conversation-turn-2';
+                turn.innerHTML = '<div data-message-author-role="assistant"><div class="markdown">Project fixture answer</div><button data-testid="copy-turn-action-button">Copy</button></div>';
+                turns.appendChild(turn);
+              }, 250);
             });
           </script>`,
       });
@@ -113,6 +120,8 @@ test("creates a conversation from a project home fixture", { timeout: 30_000 }, 
     const baseline = await assistantSnapshot(page);
     await insertComposerText(page, "create this project chat");
     await submitComposer(page);
+    const confirmed = await waitForUserMessage(page, baseline.userCount, "create this project chat", { timeoutMs: 5_000 });
+    assert.match(confirmed.url, /fixture-conversation-id/u);
     const response = await waitForAssistant(page, baseline.count, { timeoutMs: 10_000 });
     assert.equal(projectUrlFromConversationUrl(response.url), projectUrl);
     assert.match(response.text, /Project fixture answer/);

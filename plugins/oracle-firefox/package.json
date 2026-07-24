@@ -9,7 +9,7 @@
     "build:mcpb": "node scripts/build.mjs && mcpb validate mcpb && mcpb pack mcpb releases/oracle-firefox-1.0.0.mcpb",
     "generate:harnesses": "node scripts/generate-harnesses.mjs",
     "test": "node --test",
-    "test:portable": "node --test test/broker-multiprocess.test.mjs test/bundle.test.mjs test/evidence.test.mjs test/mcp-tools.test.mjs test/packaging.test.mjs test/profiles.test.mjs test/protocol.test.mjs test/safety.test.mjs test/scheduler.test.mjs test/state-store.test.mjs",
+    "test:portable": "node --test test/broker-multiprocess.test.mjs test/browser-manager.test.mjs test/bundle.test.mjs test/evidence.test.mjs test/mcp-tools.test.mjs test/packaging.test.mjs test/profiles.test.mjs test/protocol.test.mjs test/safety.test.mjs test/scheduler.test.mjs test/state-store.test.mjs",
     "doctor": "node dist/cli.mjs doctor"
   },
   "dependencies": {

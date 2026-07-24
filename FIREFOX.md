@@ -31,6 +31,7 @@ Run `/reload-plugins` or start a new Claude session.
 From a downloaded repository checkout:
 
 ```bash
+brew install BeamoINT/tap/claudex
 node plugins/oracle-firefox/scripts/install-claudex.mjs
 oracle-claudex [your normal Claudex arguments]
 ```
@@ -94,7 +95,9 @@ MCP clients use `consult_start`, `continue_chat_start`, `job_status`, `job_wait`
 - Attachments must exactly match, finish processing, and leave the composer send-ready.
 - Assistant completion is bound to the exact submitted user turn, not the latest visible response or turn count.
 - Oracle never clicks Answer now, regenerate, continue generation, Stop, or Enter as a send fallback.
-- Same-chat writes are FIFO across all harnesses. Different chats are serial by default; two-chat concurrency remains behind `ORACLE_FIREFOX_WRITE_CONCURRENCY=2` until live qualification is complete.
+- Same-chat writes are FIFO across all harnesses. Different chats are serial by default; live-qualified two-chat overlap can be enabled with `ORACLE_FIREFOX_WRITE_CONCURRENCY=2`.
+- Firefox trusted keyboard input is foregrounded through a short broker-wide mutex; response generation on other leased pages continues concurrently.
+- A visible ChatGPT request throttle is reported as `ACCOUNT_COOLDOWN`; Oracle never retries it automatically.
 - Uncertain submissions quarantine their exact conversation or creation scope until read-only reconciliation or user acknowledgement.
 
 Private state lives in:
@@ -109,6 +112,6 @@ If Pro needs local facts, it returns a structured `ORACLE_LOCAL_DATA_REQUEST_V1`
 
 ## Recovery
 
-Use `broker_status` or `job_status` after a client restart. Safe pre-send work resumes automatically. Proven submitted turns reattach in monitor-only mode. Unproven post-send states return `SUBMISSION_UNCERTAIN`; `reconcile_job` searches the exact conversation read-only and never sends another message.
+Use `broker_status` or `job_status` after a client restart. Safe pre-send work resumes automatically. Proven submitted turns reattach in monitor-only mode. A verified ownership record lets a replacement broker close only its own orphaned dedicated Firefox after a crash. Unproven post-send states return `SUBMISSION_UNCERTAIN`; `reconcile_job` searches the exact conversation read-only and never sends another message.
 
 The canonical Codex source is [`plugins/oracle-firefox`](plugins/oracle-firefox). The generated Claude package is [`plugins/oracle-firefox-claude`](plugins/oracle-firefox-claude). Both are MIT licensed.
