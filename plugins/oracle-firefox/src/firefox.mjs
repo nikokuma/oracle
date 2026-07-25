@@ -123,19 +123,28 @@ export async function findConversationCandidatesByQuery(
         String(value || "")
           .replace(/\s+/gu, " ")
           .trim();
+      const titleFor = (anchor) => {
+        const values = [
+          anchor.getAttribute("aria-label"),
+          anchor.getAttribute("title"),
+          anchor.getAttribute("data-chat-title"),
+          ...Array.from(anchor.querySelectorAll('[data-testid*="conversation-title"], [class*="truncate"], [title]'))
+            .flatMap((node) => [node.getAttribute("title"), node.textContent]),
+          ...Array.from(anchor.children).map((node) => node.textContent),
+          anchor.textContent,
+        ]
+          .map(normalize)
+          .filter(Boolean);
+        const normalizedExpected = expectedQuery.toLowerCase();
+        const matching = [...new Set(values)].filter((value) => {
+          const normalized = value.toLowerCase();
+          return requireExact ? normalized === normalizedExpected : normalized.includes(normalizedExpected);
+        });
+        return matching.sort((left, right) => left.length - right.length)[0] || "";
+      };
       return Array.from(document.querySelectorAll("a"))
         .filter((anchor) => {
-          const title =
-            normalize(anchor.textContent) || normalize(anchor.getAttribute("aria-label"));
-          const normalizedTitle = title.toLowerCase();
-          const normalizedExpected = expectedQuery.toLowerCase();
-          if (
-            requireExact
-              ? normalizedTitle !== normalizedExpected
-              : !normalizedTitle.includes(normalizedExpected)
-          ) {
-            return false;
-          }
+          if (!titleFor(anchor)) return false;
           if (!requireVisible) return true;
           const rect = anchor.getBoundingClientRect();
           const style = window.getComputedStyle(anchor);
@@ -147,7 +156,7 @@ export async function findConversationCandidatesByQuery(
           );
         })
         .map((anchor) => ({
-          title: normalize(anchor.textContent) || normalize(anchor.getAttribute("aria-label")),
+          title: titleFor(anchor),
           url: anchor.href,
         }));
     },
@@ -626,7 +635,7 @@ export async function doctor() {
   };
 }
 
-export async function launchFirefox({ headless = false, profileDir = profileDirectory() } = {}) {
+export async function launchFirefox({ headless = false, profileDir = profileDirectory(), downloadPath } = {}) {
   const executablePath = await resolveFirefoxPath();
   if (!executablePath) {
     throw new Error(
@@ -641,6 +650,15 @@ export async function launchFirefox({ headless = false, profileDir = profileDire
     userDataDir: profileDir,
     headless,
     defaultViewport: { width: 1280, height: 900 },
+    ...(downloadPath ? {
+      extraPrefsFirefox: {
+        "browser.download.folderList": 2,
+        "browser.download.dir": downloadPath,
+        "browser.download.useDownloadDir": true,
+        "browser.download.alwaysOpenPanel": false,
+        "browser.helperApps.neverAsk.saveToDisk": "application/octet-stream,application/zip,application/x-zip-compressed,text/plain,text/csv,application/json,application/pdf",
+      },
+    } : {}),
     handleSIGINT: false,
     handleSIGTERM: false,
   });

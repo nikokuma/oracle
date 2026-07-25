@@ -3,13 +3,18 @@ import { access, mkdir, open, rm } from "node:fs/promises";
 import path from "node:path";
 import { BrowserManager } from "./browser-manager.mjs";
 import { emergencyLockPath } from "./config.mjs";
+import {
+  downloadAssistantArtifact,
+  listAssistantDownloadCandidates,
+  publicDownloadCandidates,
+} from "./downloads.mjs";
 import { codedError, structuredError } from "./errors.mjs";
 import {
   buildLocalDataReply,
   deriveEvidenceAuthorizationId,
   scanEvidenceForSecrets,
 } from "./evidence.mjs";
-import { attachmentManifestKey, assistantSnapshot, normalizeConversationUrl, openExistingConversation, semanticTextHash } from "./firefox.mjs";
+import { attachmentManifestKey, assistantSnapshot, normalizeConversationTitle, normalizeConversationUrl, openExistingConversation, projectUrlFromConversationUrl, semanticTextHash } from "./firefox.mjs";
 import { requestDigest, StateStore, TERMINAL_JOB_STATES } from "./state-store.mjs";
 import {
   conversationKeyFor,
@@ -94,7 +99,7 @@ export class Coordinator {
     return {
       ready: true,
       protocolVersion: 1,
-      buildVersion: "1.0.0",
+      buildVersion: "1.1.0",
       pid: process.pid,
       startedAt: this.startedAt,
       activeJobs: Array.from(this.active.keys()),
@@ -400,6 +405,94 @@ export class Coordinator {
     });
   }
 
+  async resolveReadOnlyConversation(input) {
+    if (input.conversationUrl) {
+      if (input.chatTitle || input.projectTitle || input.projectUrl) {
+        throw codedError("TARGET_CONFLICT", "conversationUrl is sufficient by itself; do not combine it with title or project selectors.");
+      }
+      const conversationUrl = normalizeConversationUrl(input.conversationUrl);
+      return {
+        chatTitle: null,
+        conversationUrl,
+        projectTitle: null,
+        projectUrl: projectUrlFromConversationUrl(conversationUrl),
+      };
+    }
+    const chatTitle = normalizeConversationTitle(input.chatTitle);
+    if (!chatTitle) {
+      throw codedError("CHAT_TARGET_REQUIRED", "Provide an exact conversationUrl or chatTitle for artifact discovery.");
+    }
+    const discovered = await discoverChats(this.browserManager, {
+      query: chatTitle,
+      projectTitle: input.projectTitle,
+      projectUrl: input.projectUrl,
+      timeoutSeconds: input.timeoutSeconds ?? 30,
+      headless: input.headless,
+    });
+    const expected = chatTitle.toLocaleLowerCase("en-US");
+    const matches = discovered.chats.filter((chat) =>
+      normalizeConversationTitle(chat.chatTitle).toLocaleLowerCase("en-US") === expected,
+    );
+    if (matches.length !== 1) {
+      throw codedError(
+        matches.length > 1 ? "TARGET_AMBIGUOUS" : "TARGET_NOT_FOUND",
+        matches.length > 1
+          ? `More than one ChatGPT conversation is titled ${JSON.stringify(chatTitle)}. Use conversationUrl.`
+          : `No ChatGPT conversation was found with the exact title ${JSON.stringify(chatTitle)}.`,
+        { details: { candidates: discovered.chats } },
+      );
+    }
+    return {
+      chatTitle: matches[0].chatTitle,
+      conversationUrl: matches[0].conversationUrl,
+      projectTitle: discovered.projectTitle,
+      projectUrl: matches[0].projectUrl || discovered.projectUrl,
+    };
+  }
+
+  async withReadOnlyConversation(input, callback) {
+    const target = await this.resolveReadOnlyConversation(input);
+    const lease = await this.browserManager.leasePage(`artifact-${randomUUID()}`, {
+      discovery: true,
+      headless: Boolean(input.headless),
+    });
+    try {
+      const opened = await openExistingConversation(lease.page, {
+        conversationUrl: target.conversationUrl,
+        title: target.chatTitle,
+      });
+      return await callback(lease.page, {
+        ...target,
+        chatTitle: target.chatTitle || opened.title || null,
+        conversationUrl: opened.url,
+        projectTitle: target.projectTitle || opened.projectTitle || null,
+        projectUrl: target.projectUrl || opened.projectUrl || null,
+      });
+    } finally {
+      await this.browserManager.releasePage(lease.jobId);
+    }
+  }
+
+  async listChatArtifacts(input) {
+    return this.withReadOnlyConversation(input, async (page, target) => {
+      const candidates = await listAssistantDownloadCandidates(page, { scope: input.scope });
+      return { ...target, scope: input.scope, downloads: publicDownloadCandidates(candidates) };
+    });
+  }
+
+  async downloadChatArtifact(input) {
+    return this.browserManager.withDownload(() =>
+      this.withReadOnlyConversation(input, async (page, target) => ({
+        ...target,
+        ...(await downloadAssistantArtifact(page, {
+          linkText: input.linkText,
+          scope: input.scope,
+          maxBytes: input.maxBytes,
+        })),
+      })),
+    );
+  }
+
   async methods() {
     return {
       "broker.status": () => this.statusAsync(),
@@ -409,6 +502,8 @@ export class Coordinator {
       "workflow.importSession": (params) => this.browserManager.withMaintenance(() => importFirefoxSession(params)),
       "workflow.listProjects": (params) => discoverProjects(this.browserManager, params),
       "workflow.findChats": (params) => discoverChats(this.browserManager, params),
+      "workflow.listChatArtifacts": (params) => this.listChatArtifacts(params),
+      "workflow.downloadChatArtifact": (params) => this.downloadChatArtifact(params),
       "jobs.startConsult": (params) => this.startJob("consult", params),
       "jobs.startContinue": (params) => this.startJob("continue_chat", params),
       "jobs.compatConsult": async (params) => this.waitCompatibility(await this.startJob("consult", params, { generatedAuthorization: !params.authorizationId }), 240),

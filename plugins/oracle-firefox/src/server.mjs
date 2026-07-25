@@ -7,7 +7,7 @@ import { callBroker } from "./broker-client.mjs";
 import { structuredError } from "./errors.mjs";
 
 const server = new McpServer(
-  { name: "oracle-firefox", version: "1.0.0" },
+  { name: "oracle-firefox", version: "1.1.0" },
   { capabilities: { logging: {} } },
 );
 
@@ -36,6 +36,14 @@ const continueFields = {
   ...projectFields,
   prompt: z.string().min(1),
   ...executionFields,
+};
+const artifactTargetFields = {
+  chatTitle: z.string().optional().describe("Exact chat title; omit when conversationUrl is provided."),
+  conversationUrl: z.string().url().optional().describe("Exact standalone or project ChatGPT conversation URL; sufficient by itself."),
+  ...projectFields,
+  scope: z.enum(["last-assistant", "all-assistant"]).default("last-assistant"),
+  timeoutSeconds: z.number().int().min(5).max(60).default(30),
+  headless: z.boolean().default(false),
 };
 
 function contentFor(result) {
@@ -105,6 +113,22 @@ register("find_chats", {
     headless: z.boolean().default(false),
   },
 }, "workflow.findChats", 90_000);
+
+register("list_chat_artifacts", {
+  title: "List downloadable files in a ChatGPT conversation",
+  description: "Read one exact conversation and list safe ChatGPT-generated file links without exposing signed URLs or sending a message.",
+  inputSchema: artifactTargetFields,
+}, "workflow.listChatArtifacts", 120_000);
+
+register("download_chat_artifact", {
+  title: "Download one exact ChatGPT-generated file",
+  description: "Download one exact assistant link into a private Oracle directory. Rejects ambiguous labels, external URLs, path traversal, oversize files, and overwrites; never sends a message.",
+  inputSchema: {
+    ...artifactTargetFields,
+    linkText: z.string().min(1).describe("Exact visible link text, matched case-insensitively after whitespace normalization."),
+    maxBytes: z.number().int().min(1).max(250_000_000).default(100_000_000),
+  },
+}, "workflow.downloadChatArtifact", 300_000);
 
 register("consult_start", {
   title: "Start a durable ChatGPT consultation",

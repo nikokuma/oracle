@@ -1,6 +1,6 @@
 ---
 name: oracle-firefox
-description: Get a durable second opinion from ChatGPT Pro through the user's authenticated Firefox, including standalone chats, project chats, exact existing-chat continuation, long background jobs, and safe local-evidence follow-ups. Use when the user asks to consult Oracle or ChatGPT Pro, review work with another model, continue a ChatGPT conversation, target a ChatGPT project, or automate subscription-backed ChatGPT without Chrome or an API key.
+description: Get a durable second opinion from ChatGPT Pro through the user's authenticated Firefox, including standalone chats, project chats, exact existing-chat continuation, generated-file downloads, long background jobs, and safe local-evidence follow-ups. Use when the user asks to consult Oracle or ChatGPT Pro, review work with another model, continue a ChatGPT conversation, target a ChatGPT project, download a file generated in a ChatGPT conversation, or automate subscription-backed ChatGPT without Chrome or an API key.
 ---
 
 # Oracle Firefox
@@ -59,6 +59,16 @@ Pro may finish with `assistantDisposition: "local_data_request"` and a parsed `O
 4. Call `reply_with_local_data` with structured facts, sources, and unavailable-item reasons. It re-verifies Pro and sends to the same conversation.
 5. Up to three safe rounds are covered by the original authorization. Ask the user before a fourth round, any write, sensitive request, or scope expansion.
 6. When Pro returns a final answer, verify it locally before acting.
+
+## Download generated files
+
+1. Resolve one exact existing conversation by URL, or by an exact title plus optional exact project. Prefer the URL when the title is duplicated.
+2. Call `list_chat_artifacts` first. Keep the default `last-assistant` scope. If an exact user-supplied label is absent because ChatGPT exposes a trailing status node, use `all-assistant` only to find that exact label; never select a different file.
+3. Select only one exact visible link label after case and whitespace normalization. If none or more than one match, show the safe candidates and ask; never guess.
+4. Call `download_chat_artifact` once with that exact label. It opens the chat read-only and never selects a model, edits the composer, or sends a message. A behavior-only Download button receives one click; download clicks are serialized across agents.
+5. Report the returned local path, filename, size, and SHA-256. Never expose or persist the underlying signed URL or Firefox cookies.
+
+Downloads use a new private directory under `~/.oracle-firefox/downloads/`, refuse overwrites and unsafe/external sources, and default to a 100 MB limit with a 250 MB hard maximum.
 
 ## Context and guardrails
 

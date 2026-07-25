@@ -152,6 +152,24 @@ test("finds partial chat titles and scopes project conversations by project URL"
   }
 });
 
+test("prefers the exact truncated-title node over concatenated history-link excerpts", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-firefox-title-node-"));
+  const browser = await launchFirefox({ headless: true, profileDir: path.join(directory, "profile") });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(`<!doctype html>
+      <a href="https://chatgpt.com/c/nono-id"><span class="truncate">Nono Ecosystem Reorganization</span><span>ok this is the first prompt excerpt</span></a>`);
+    assert.deepEqual(await findConversationCandidatesByQuery(page, "Nono Ecosystem Reorganization"), [{
+      title: "Nono Ecosystem Reorganization",
+      url: "https://chatgpt.com/c/nono-id",
+      projectUrl: null,
+    }]);
+  } finally {
+    await browser.close().catch(() => undefined);
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("loads every project conversation before scoped matching", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-firefox-project-pages-"));
   const browser = await launchFirefox({

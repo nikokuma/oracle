@@ -18,6 +18,14 @@ export function sessionsDirectory() {
   return path.join(oracleFirefoxHome(), "sessions");
 }
 
+export function downloadsDirectory() {
+  return path.join(oracleFirefoxHome(), "downloads");
+}
+
+export function browserDownloadStagingDirectory() {
+  return path.join(downloadsDirectory(), ".browser-staging");
+}
+
 export function coordinatorDirectory() {
   const configured = process.env.ORACLE_FIREFOX_COORDINATOR_HOME?.trim();
   if (configured) return path.resolve(configured);

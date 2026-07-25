@@ -41,3 +41,24 @@ test("releases the input-focus mutex when insertion fails", async () => {
   );
   await assert.doesNotReject(() => manager.withInputFocus(page, async () => undefined));
 });
+
+test("serializes browser download controls across agents and releases after failure", async () => {
+  const manager = new BrowserManager();
+  const events = [];
+  let active = 0;
+  const run = (name, wait, fail = false) => manager.withDownload(async () => {
+    active += 1;
+    assert.equal(active, 1);
+    events.push(`${name}:start`);
+    await delay(wait);
+    events.push(`${name}:end`);
+    active -= 1;
+    if (fail) throw new Error(`${name} failed`);
+  });
+
+  const first = run("first", 20, true).catch((error) => error.message);
+  const second = run("second", 0);
+  assert.equal(await first, "first failed");
+  await second;
+  assert.deepEqual(events, ["first:start", "first:end", "second:start", "second:end"]);
+});
