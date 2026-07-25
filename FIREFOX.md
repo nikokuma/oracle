@@ -40,7 +40,7 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.0.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.0.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Download and open [`oracle-firefox-1.1.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.1.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
 ## First login
 
@@ -68,6 +68,23 @@ Continue one chat:
 > Continue the ChatGPT chat “Firefox compatibility plan” with this message: …
 
 No chat target means a new chat. No project means standalone. “Continue” requires an exact existing title or URL. Partial and duplicate matches are shown for you to choose; Oracle never guesses.
+
+Download a file from an existing chat:
+
+> From the last reply in “Nono Ecosystem Reorganization,” download the link “Download the Codex-ready Nono Messages inputs.”
+
+Oracle resolves one exact conversation, lists safe ChatGPT-generated links or Download buttons, and downloads one exact label without sending a message. Behavior-only buttons receive one click, serialized across agents. Files land in a new private directory under `~/.oracle-firefox/downloads/`; the result includes the path, byte count, and SHA-256. Signed download URLs and Firefox cookies are never returned.
+
+The equivalent CLI flow is:
+
+```bash
+node plugins/oracle-firefox/dist/cli.mjs artifacts --url "https://chatgpt.com/c/..."
+node plugins/oracle-firefox/dist/cli.mjs download-artifact \
+  --url "https://chatgpt.com/c/..." \
+  --link-text "Exact visible download label"
+```
+
+Discovery defaults to the last assistant response. Add `--scope all-assistant` only when targeting an older response or when an exact requested label is hidden behind a trailing ChatGPT status node. Downloads default to 100 MB and have a 250 MB hard maximum.
 
 ## Long jobs
 

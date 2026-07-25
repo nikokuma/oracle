@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "oracle-firefox",
   "display_name": "Oracle Firefox",
-  "version": "1.0.0",
-  "description": "Durable, Pro-verified ChatGPT consultation through the user's authenticated Firefox.",
-  "long_description": "One per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one authenticated Firefox. Jobs are durable, same-chat FIFO, exact-turn correlated, fail closed at the submission boundary, and able to request safe local evidence.\n\nThe bundle never contains login cookies. It connects to the user's dedicated local Firefox profile and ChatGPT account.",
+  "version": "1.1.0",
+  "description": "Durable ChatGPT Pro consultation and generated-file downloads through authenticated Firefox.",
+  "long_description": "One per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one authenticated Firefox. Jobs are durable, same-chat FIFO, exact-turn correlated, fail closed at the submission boundary, and able to request safe local evidence. Existing chats can also be inspected read-only to download one exact ChatGPT-generated file.\n\nThe bundle never contains login cookies. It connects to the user's dedicated local Firefox profile and ChatGPT account.",
   "author": {
     "name": "nikokuma",
     "url": "https://github.com/nikokuma"
@@ -53,6 +53,14 @@
     {
       "name": "find_chats",
       "description": "Discover exact conversation targets read-only."
+    },
+    {
+      "name": "list_chat_artifacts",
+      "description": "List safe downloadable file links in one exact chat."
+    },
+    {
+      "name": "download_chat_artifact",
+      "description": "Download one exact ChatGPT-generated file without sending a message."
     },
     {
       "name": "consult",

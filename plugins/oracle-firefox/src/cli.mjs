@@ -48,6 +48,25 @@ try {
   else if (command === "import-session") result = await callBroker("workflow.importSession", { sourceProfile: option(args, ["--source-profile"]), confirmImport: bool(args, "--confirm") }, { harness: "cli" });
   else if (command === "projects") result = await callBroker("workflow.listProjects", { query: option(args, ["-q", "--query"], ""), headless: bool(args, "--headless") }, { harness: "cli" });
   else if (command === "find-chats") result = await callBroker("workflow.findChats", { query: option(args, ["-q", "--query"]), ...target(args), timeoutSeconds: number(args, ["--timeout-seconds"], 15), headless: bool(args, "--headless") }, { harness: "cli" });
+  else if (command === "artifacts" || command === "download-artifact") {
+    const params = {
+      chatTitle: option(args, ["--title"]),
+      conversationUrl: option(args, ["--url"]),
+      ...target(args),
+      scope: option(args, ["--scope"], "last-assistant"),
+      timeoutSeconds: number(args, ["--timeout-seconds"], 30),
+      headless: bool(args, "--headless"),
+    };
+    if (command === "download-artifact") {
+      params.linkText = option(args, ["--link-text"]);
+      params.maxBytes = number(args, ["--max-bytes"], 100000000);
+    }
+    result = await callBroker(
+      command === "artifacts" ? "workflow.listChatArtifacts" : "workflow.downloadChatArtifact",
+      params,
+      { timeoutMs: command === "artifacts" ? 120000 : 300000, harness: "cli" },
+    );
+  }
   else if (command === "consult" || command === "consult-start") {
     const params = { authorizationId: option(args, ["--authorization-id"], command === "consult-start" ? undefined : randomUUID()), prompt: option(args, ["-p", "--prompt"]), files: repeated(args, ["-f", "--file"]), cwd: option(args, ["--cwd"]), delivery: option(args, ["--delivery"], "auto"), ...target(args), ...common(args) };
     result = await callBroker(command === "consult" ? "jobs.compatConsult" : "jobs.startConsult", params, { timeoutMs: command === "consult" ? 245000 : 65000, harness: "cli" });
@@ -81,7 +100,7 @@ try {
     }
     if (bool(args, "--notify")) await notify("Oracle Firefox", `Job ${jobId} ${result.state}`);
   } else {
-    throw new Error("Usage: oracle-firefox doctor|broker-status|profiles|setup|import-session|projects|find-chats|consult|consult-start|continue-chat|continue-chat-start|status <job-id>|result <job-id>|jobs|watch <job-id> [--jsonl|--notify]|reconcile <job-id> [--url URL]|acknowledge <job-id>|cancel <job-id>|reply-local-data <job-id> --facts-json JSON [--unavailable-json JSON]|emergency-lock|emergency-unlock");
+    throw new Error("Usage: oracle-firefox doctor|broker-status|profiles|setup|import-session|projects|find-chats|artifacts --url URL|download-artifact --url URL --link-text TEXT|consult|consult-start|continue-chat|continue-chat-start|status <job-id>|result <job-id>|jobs|watch <job-id> [--jsonl|--notify]|reconcile <job-id> [--url URL]|acknowledge <job-id>|cancel <job-id>|reply-local-data <job-id> --facts-json JSON [--unavailable-json JSON]|emergency-lock|emergency-unlock");
   }
   if (command !== "watch" || !bool(args, "--jsonl")) print(result);
 } catch (error) {

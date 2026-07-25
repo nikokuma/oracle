@@ -37,6 +37,8 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
       "cancel_job",
       "broker_status",
       "reply_with_local_data",
+      "list_chat_artifacts",
+      "download_chat_artifact",
     ]) assert.equal(names.has(required), true, `missing MCP tool ${required}`);
     const status = await client.callTool({ name: "broker_status", arguments: {} });
     brokerPid = status.structuredContent.pid;

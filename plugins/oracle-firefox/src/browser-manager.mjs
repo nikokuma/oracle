@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, open, readFile, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { browserOwnerPath, coordinatorDirectory, profileDirectory } from "./config.mjs";
+import { browserDownloadStagingDirectory, browserOwnerPath, coordinatorDirectory, profileDirectory } from "./config.mjs";
 import { launchFirefox, openChatGpt } from "./firefox.mjs";
 import { codedError } from "./errors.mjs";
 
@@ -69,6 +69,7 @@ export class BrowserManager {
     this.maintenance = false;
     this.ownerChecked = false;
     this.inputGate = Promise.resolve();
+    this.downloadGate = Promise.resolve();
   }
 
   async ensureBrowser({ headless = false } = {}) {
@@ -77,7 +78,9 @@ export class BrowserManager {
       await stopOrphanedOwnedFirefox();
       this.ownerChecked = true;
     }
-    const browser = await launchFirefox({ headless });
+    const downloadPath = browserDownloadStagingDirectory();
+    await mkdir(downloadPath, { recursive: true, mode: 0o700 });
+    const browser = await launchFirefox({ headless, downloadPath });
     this.browser = browser;
     const browserPid = browser.process()?.pid;
     if (browserPid) await writeOwner({ brokerPid: process.pid, browserPid, profile: profileDirectory(), startedAt: new Date().toISOString() });
@@ -121,6 +124,18 @@ export class BrowserManager {
     await previous;
     try {
       await page.bringToFront();
+      return await callback();
+    } finally {
+      release();
+    }
+  }
+
+  async withDownload(callback) {
+    const previous = this.downloadGate;
+    let release;
+    this.downloadGate = new Promise((resolve) => { release = resolve; });
+    await previous;
+    try {
       return await callback();
     } finally {
       release();

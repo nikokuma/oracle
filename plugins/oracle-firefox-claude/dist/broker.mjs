@@ -2943,11 +2943,11 @@ function evaluationString(fun, ...args) {
   }
   return `(${fun})(${args.map(serializeArgument).join(",")})`;
 }
-async function getReadableAsTypedArray(readable, path24) {
+async function getReadableAsTypedArray(readable, path25) {
   const buffers = [];
   const reader = readable.getReader();
-  if (path24) {
-    const fileHandle = await environment.value.fs.promises.open(path24, "w+");
+  if (path25) {
+    const fileHandle = await environment.value.fs.promises.open(path25, "w+");
     try {
       while (true) {
         const { done, value } = await reader.read();
@@ -7485,14 +7485,14 @@ var init_Extension = __esm({
       /**
        * @internal
        */
-      constructor(id, version, name, path24, enabled) {
+      constructor(id, version, name, path25, enabled) {
         if (!id || !version) {
           throw new Error("Extension ID and version are required");
         }
         this.#id = id;
         this.#version = version;
         this.#name = name;
-        this.#path = path24;
+        this.#path = path25;
         this.#enabled = enabled;
       }
       /**
@@ -8113,13 +8113,13 @@ var init_Frame = __esm({
          */
         async addScriptTag(options) {
           let { content = "", type } = options;
-          const { path: path24 } = options;
-          if (+!!options.url + +!!path24 + +!!content !== 1) {
+          const { path: path25 } = options;
+          if (+!!options.url + +!!path25 + +!!content !== 1) {
             throw new Error("Exactly one of `url`, `path`, or `content` must be specified.");
           }
-          if (path24) {
-            content = await environment.value.fs.promises.readFile(path24, "utf8");
-            content += `//# sourceURL=${path24.replace(/\n/g, "")}`;
+          if (path25) {
+            content = await environment.value.fs.promises.readFile(path25, "utf8");
+            content += `//# sourceURL=${path25.replace(/\n/g, "")}`;
           }
           type = type ?? "text/javascript";
           return await this.mainRealm().transferHandle(await this.isolatedRealm().evaluateHandle(async ({ url, id, type: type2, content: content2 }) => {
@@ -8151,13 +8151,13 @@ var init_Frame = __esm({
          */
         async addStyleTag(options) {
           let { content = "" } = options;
-          const { path: path24 } = options;
-          if (+!!options.url + +!!path24 + +!!content !== 1) {
+          const { path: path25 } = options;
+          if (+!!options.url + +!!path25 + +!!content !== 1) {
             throw new Error("Exactly one of `url`, `path`, or `content` must be specified.");
           }
-          if (path24) {
-            content = await environment.value.fs.promises.readFile(path24, "utf8");
-            content += "/*# sourceURL=" + path24.replace(/\n/g, "") + "*/";
+          if (path25) {
+            content = await environment.value.fs.promises.readFile(path25, "utf8");
+            content += "/*# sourceURL=" + path25.replace(/\n/g, "") + "*/";
             options.content = content;
           }
           return await this.mainRealm().transferHandle(await this.isolatedRealm().evaluateHandle(async ({ url, content: content2 }) => {
@@ -9809,11 +9809,11 @@ var init_Page = __esm({
         /**
          * @internal
          */
-        async _maybeWriteTypedArrayToFile(path24, typedArray) {
-          if (!path24) {
+        async _maybeWriteTypedArrayToFile(path25, typedArray) {
+          if (!path25) {
             return;
           }
-          await environment.value.fs.promises.writeFile(path24, typedArray);
+          await environment.value.fs.promises.writeFile(path25, typedArray);
         }
         /**
          * Captures a screencast of this {@link Page | page}.
@@ -13621,13 +13621,13 @@ var init_ElementHandle2 = __esm({
             return element.multiple;
           });
           assert(files.length <= 1 || isMultiple, "Multiple file uploads only work with <input type=file multiple>");
-          const path24 = environment.value.path;
-          if (path24) {
+          const path25 = environment.value.path;
+          if (path25) {
             files = files.map((filePath) => {
-              if (path24.win32.isAbsolute(filePath) || path24.posix.isAbsolute(filePath)) {
+              if (path25.win32.isAbsolute(filePath) || path25.posix.isAbsolute(filePath)) {
                 return filePath;
               } else {
-                return path24.resolve(filePath);
+                return path25.resolve(filePath);
               }
             });
           }
@@ -17452,7 +17452,7 @@ var init_Tracing = __esm({
           "disabled-by-default-devtools.timeline.stack",
           "disabled-by-default-v8.cpu_profiler"
         ];
-        const { path: path24, screenshots = false, categories = defaultCategories } = options;
+        const { path: path25, screenshots = false, categories = defaultCategories } = options;
         if (screenshots) {
           categories.push("disabled-by-default-devtools.screenshot");
         }
@@ -17464,7 +17464,7 @@ var init_Tracing = __esm({
         const includedCategories = categories.filter((cat) => {
           return !cat.startsWith("-");
         });
-        this.#path = path24;
+        this.#path = path25;
         this.#recording = true;
         await this.#client.send("Tracing.start", {
           transferMode: "ReturnAsStream",
@@ -18656,9 +18656,9 @@ var init_Page2 = __esm({
         return await getReadableFromProtocolStream(this.#primaryTargetClient, result.stream);
       }
       async pdf(options = {}) {
-        const { path: path24 = void 0 } = options;
+        const { path: path25 = void 0 } = options;
         const readable = await this.createPDFStream(options);
-        const typedArray = await getReadableAsTypedArray(readable, path24);
+        const typedArray = await getReadableAsTypedArray(readable, path25);
         assert(typedArray, "Could not create typed array");
         return typedArray;
       }
@@ -18941,8 +18941,8 @@ var init_Extension2 = __esm({
       /*
        * @internal
        */
-      constructor(id, version, name, path24, enabled, browser) {
-        super(id, version, name, path24, enabled);
+      constructor(id, version, name, path25, enabled, browser) {
+        super(id, version, name, path25, enabled);
         this.#browser = browser;
       }
       async workers() {
@@ -20655,9 +20655,9 @@ var init_Browser2 = __esm({
         });
         return response.targetId;
       }
-      async installExtension(path24, options) {
+      async installExtension(path25, options) {
         const { id } = await this.#connection.send("Extensions.loadUnpacked", {
-          path: path24,
+          path: path25,
           enableInIncognito: options?.enabledInIncognito ?? false
         });
         this.#extensions.delete(id);
@@ -25902,16 +25902,16 @@ var init_InputProcessor = __esm({
           }
           const { handle } = result2.result;
           assert2(handle !== void 0);
-          const { path: path24 } = await hiddenSandboxRealm.cdpClient.sendCommand("DOM.getFileInfo", {
+          const { path: path25 } = await hiddenSandboxRealm.cdpClient.sendCommand("DOM.getFileInfo", {
             objectId: handle
           });
-          paths.push(path24);
+          paths.push(path25);
           void hiddenSandboxRealm.disown(handle).catch(void 0);
         }
         paths.sort();
         const sortedFiles = [...params.files].sort();
-        if (paths.length !== params.files.length || sortedFiles.some((path24, index) => {
-          return paths[index] !== path24;
+        if (paths.length !== params.files.length || sortedFiles.some((path25, index) => {
+          return paths[index] !== path25;
         })) {
           const { objectId } = await hiddenSandboxRealm.deserializeForCdp(params.element);
           assert2(objectId !== void 0);
@@ -36541,13 +36541,13 @@ var init_ElementHandle3 = __esm({
           }
         }
         async uploadFile(...files) {
-          const path24 = environment.value.path;
-          if (path24) {
+          const path25 = environment.value.path;
+          if (path25) {
             files = files.map((file) => {
-              if (path24.win32.isAbsolute(file) || path24.posix.isAbsolute(file)) {
+              if (path25.win32.isAbsolute(file) || path25.posix.isAbsolute(file)) {
                 return file;
               } else {
-                return path24.resolve(file);
+                return path25.resolve(file);
               }
             });
           }
@@ -39460,7 +39460,7 @@ var init_Page3 = __esm({
           return this.#viewport;
         }
         async pdf(options = {}) {
-          const { timeout: ms = this._timeoutSettings.timeout(), path: path24 = void 0 } = options;
+          const { timeout: ms = this._timeoutSettings.timeout(), path: path25 = void 0 } = options;
           const { printBackground: background, margin, landscape, width, height, pageRanges: ranges, scale, preferCSSPageSize } = parsePDFOptions(options, "cm");
           const pageRanges = ranges ? ranges.split(", ") : [];
           await firstValueFrom(from(this.mainFrame().isolatedRealm().evaluate(() => {
@@ -39479,7 +39479,7 @@ var init_Page3 = __esm({
             shrinkToFit: !preferCSSPageSize
           })).pipe(raceWith(timeout(ms))));
           const typedArray = stringToTypedArray(data, true);
-          await this._maybeWriteTypedArrayToFile(path24, typedArray);
+          await this._maybeWriteTypedArrayToFile(path25, typedArray);
           return typedArray;
         }
         async createPDFStream(options) {
@@ -40615,9 +40615,9 @@ var init_Browser3 = __esm({
           }
           return this.#createUserContext(userContext);
         }
-        async installExtension(path24) {
+        async installExtension(path25) {
           const { result: { extension: extension2 } } = await this.session.send("webExtension.install", {
-            extensionData: { type: "path", path: path24 }
+            extensionData: { type: "path", path: path25 }
           });
           return extension2;
         }
@@ -41104,8 +41104,8 @@ var init_Browser4 = __esm({
         newPage(options) {
           return this.defaultBrowserContext().newPage(options);
         }
-        installExtension(path24) {
-          return this.#browserCore.installExtension(path24);
+        installExtension(path25) {
+          return this.#browserCore.installExtension(path25);
         }
         async uninstallExtension(id) {
           await this.#browserCore.uninstallExtension(id);
@@ -43539,7 +43539,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net3 = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes2, createHash: createHash5 } = __require("crypto");
+    var { randomBytes: randomBytes2, createHash: createHash6 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -44207,7 +44207,7 @@ var require_websocket = __commonJS({
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest = createHash5("sha1").update(key + GUID).digest("base64");
+        const digest = createHash6("sha1").update(key + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -44488,7 +44488,7 @@ var require_stream = __commonJS({
       };
       duplex._final = function(callback) {
         if (ws.readyState === ws.CONNECTING) {
-          ws.once("open", function open7() {
+          ws.once("open", function open8() {
             duplex._final(callback);
           });
           return;
@@ -44509,7 +44509,7 @@ var require_stream = __commonJS({
       };
       duplex._write = function(chunk, encoding, callback) {
         if (ws.readyState === ws.CONNECTING) {
-          ws.once("open", function open7() {
+          ws.once("open", function open8() {
             duplex._write(chunk, encoding, callback);
           });
           return;
@@ -44576,7 +44576,7 @@ var require_websocket_server = __commonJS({
     var EventEmitter4 = __require("events");
     var http2 = __require("http");
     var { Duplex } = __require("stream");
-    var { createHash: createHash5 } = __require("crypto");
+    var { createHash: createHash6 } = __require("crypto");
     var extension2 = require_extension();
     var PerMessageDeflate2 = require_permessage_deflate();
     var subprotocol2 = require_subprotocol();
@@ -44883,7 +44883,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest = createHash5("sha1").update(key + GUID).digest("base64");
+        const digest = createHash6("sha1").update(key + GUID).digest("base64");
         const headers = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -45363,8 +45363,8 @@ function getWslLocation(channel) {
     }
   }
   const windowsPath = getChromeWindowsLocation(channel, wslPrefixes);
-  return windowsPath.map((path24) => {
-    return execSync(`wslpath "${path24}"`).toString().trim();
+  return windowsPath.map((path25) => {
+    return execSync(`wslpath "${path25}"`).toString().trim();
   });
 }
 function getChromeLinuxOrWslLocation(channel) {
@@ -46471,16 +46471,16 @@ function computeSystemExecutablePath(options) {
     throw new Error(`Cannot download a binary for the provided platform: ${os5.platform()} (${os5.arch()})`);
   }
   const paths = resolveSystemExecutablePaths2(options.browser, options.platform, options.channel);
-  for (const path24 of paths) {
+  for (const path25 of paths) {
     try {
-      accessSync(path24);
-      return path24;
+      accessSync(path25);
+      return path25;
     } catch {
     }
   }
-  throw new Error(`Could not find Google Chrome executable for channel '${options.channel}' at:${paths.map((path24) => {
+  throw new Error(`Could not find Google Chrome executable for channel '${options.channel}' at:${paths.map((path25) => {
     return `
- - ${path24}`;
+ - ${path25}`;
   })}.`);
 }
 function launch(opts) {
@@ -47076,13 +47076,13 @@ function generatePax(header) {
     paxBody
   };
 }
-function findUstarSplit(path24) {
-  const totalPathBytes = encoder.encode(path24).length;
+function findUstarSplit(path25) {
+  const totalPathBytes = encoder.encode(path25).length;
   if (totalPathBytes <= 100 || totalPathBytes > USTAR_SPLIT_MAX_SIZE) return null;
-  for (let i = path24.length - 1; i > 0; i--) {
-    if (path24[i] !== "/") continue;
-    const prefix = path24.slice(0, i);
-    const name = path24.slice(i + 1);
+  for (let i = path25.length - 1; i > 0; i--) {
+    if (path25[i] !== "/") continue;
+    const prefix = path25.slice(0, i);
+    const name = path25.slice(i + 1);
     if (encoder.encode(prefix).length <= 155 && encoder.encode(name).length <= 100) return {
       prefix,
       name
@@ -47503,9 +47503,9 @@ function validateBounds(targetPath, destDir, errorMessage) {
   if (target !== dest && !target.startsWith(dest + path9.sep)) throw new Error(errorMessage);
 }
 function normalizeName(name) {
-  const path24 = name.replace(/\\/g, "/");
-  if (path24.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path24)) throw new Error(`${name} points outside extraction directory`);
-  let relative3 = path24;
+  const path25 = name.replace(/\\/g, "/");
+  if (path25.split("/").includes("..") || /^[a-zA-Z]:\.\./.test(path25)) throw new Error(`${name} points outside extraction directory`);
+  let relative3 = path25;
   if (/^[a-zA-Z]:/.test(relative3)) relative3 = relative3.replace(/^[a-zA-Z]:[/\\]?/, "");
   else if (relative3.startsWith("/")) relative3 = relative3.replace(/^\/+/, "");
   if (process.platform === "win32") return relative3.replace(/[<>:"|?*]/g, (char) => win32Reserved[char]);
@@ -47623,7 +47623,7 @@ function packTar(sources, options = {}) {
             size = content.length;
             body2 = content;
           }
-          const stat7 = {
+          const stat8 = {
             size: isDir ? 0 : size,
             isFile: () => !isDir,
             isDirectory: () => isDir,
@@ -47633,15 +47633,15 @@ function packTar(sources, options = {}) {
             uid: job.uid ?? 0,
             gid: job.gid ?? 0
           };
-          if (filter2 && !filter2(target, stat7)) return;
+          if (filter2 && !filter2(target, stat8)) return;
           let header2 = {
             name: target,
             type: isDir ? DIRECTORY : FILE,
             size: isDir ? 0 : size,
-            mode: stat7.mode,
-            mtime: stat7.mtime,
-            uid: stat7.uid,
-            gid: stat7.gid,
+            mode: stat8.mode,
+            mtime: stat8.mtime,
+            uid: stat8.uid,
+            gid: stat8.gid,
             uname: job.uname,
             gname: job.gname
           };
@@ -47653,34 +47653,34 @@ function packTar(sources, options = {}) {
           return;
         }
         let source2 = job.source;
-        let stat6 = await fsp.lstat(source2, BIGINT_STAT);
-        if (dereference && stat6.isSymbolicLink()) {
+        let stat7 = await fsp.lstat(source2, BIGINT_STAT);
+        if (dereference && stat7.isSymbolicLink()) {
           source2 = await fsp.realpath(source2);
           const relativeToBase = path9.relative(realBaseDir ??= await fsp.realpath(baseDir ?? directoryPath ?? process.cwd()), source2);
           if (relativeToBase === ".." || relativeToBase.startsWith(".." + path9.sep) || path9.isAbsolute(relativeToBase)) return;
-          stat6 = await fsp.lstat(source2, BIGINT_STAT);
-          if (stat6.isSymbolicLink()) return;
+          stat7 = await fsp.lstat(source2, BIGINT_STAT);
+          if (stat7.isSymbolicLink()) return;
         }
-        if (filter2 && !filter2(job.source, stat6)) return;
+        if (filter2 && !filter2(job.source, stat7)) return;
         let header = {
           name: target,
           size: 0,
-          mode: job.mode ?? Number(stat6.mode),
-          mtime: job.mtime ?? stat6.mtime,
-          uid: job.uid ?? Number(stat6.uid),
-          gid: job.gid ?? Number(stat6.gid),
+          mode: job.mode ?? Number(stat7.mode),
+          mtime: job.mtime ?? stat7.mtime,
+          uid: job.uid ?? Number(stat7.uid),
+          gid: job.gid ?? Number(stat7.gid),
           uname: job.uname,
           gname: job.gname,
           type: FILE
         };
         let body;
-        if (stat6.isDirectory()) {
+        if (stat7.isDirectory()) {
           header.type = DIRECTORY;
           header.name = target.endsWith("/") ? target : `${target}/`;
           try {
             const entries = await fsp.readdir(source2, WITH_FILE_TYPES);
             const after = await fsp.lstat(source2, BIGINT_STAT);
-            if (!after.isDirectory() || stat6.dev !== after.dev || stat6.ino !== after.ino) return;
+            if (!after.isDirectory() || stat7.dev !== after.dev || stat7.ino !== after.ino) return;
             for (const d of entries) jobs.push({
               type: d.isDirectory() ? DIRECTORY : FILE,
               source: path9.join(source2, d.name),
@@ -47688,13 +47688,13 @@ function packTar(sources, options = {}) {
             });
           } catch {
           }
-        } else if (stat6.isSymbolicLink()) {
+        } else if (stat7.isSymbolicLink()) {
           header.type = SYMLINK;
           header.linkname = await fsp.readlink(job.source);
-        } else if (stat6.isFile()) {
-          header.size = Number(stat6.size);
+        } else if (stat7.isFile()) {
+          header.size = Number(stat7.size);
           let handleToClose;
-          let linkname = stat6.nlink > 1 ? seenInodes.get(stat6.ino) : void 0;
+          let linkname = stat7.nlink > 1 ? seenInodes.get(stat7.ino) : void 0;
           try {
             let after;
             try {
@@ -47706,18 +47706,18 @@ function packTar(sources, options = {}) {
               throw error;
             }
             if (after) {
-              if (!after.isFile() || stat6.dev !== after.dev || stat6.ino !== after.ino) return;
+              if (!after.isFile() || stat7.dev !== after.dev || stat7.ino !== after.ino) return;
             } else {
               const { dev, ino } = await handleToClose.stat(BIGINT_STAT);
-              if (stat6.dev !== dev || stat6.ino !== ino) return;
+              if (stat7.dev !== dev || stat7.ino !== ino) return;
             }
-            if (stat6.nlink > 1) linkname = seenInodes.get(stat6.ino);
+            if (stat7.nlink > 1) linkname = seenInodes.get(stat7.ino);
             if (linkname !== void 0) {
               header.type = LINK;
               header.linkname = linkname;
               header.size = 0;
             } else {
-              if (stat6.nlink > 1) seenInodes.set(stat6.ino, target);
+              if (stat7.nlink > 1) seenInodes.set(stat7.ino, target);
               if (header.size > 0) {
                 const handle = handleToClose;
                 if (header.size < 32 * 1024) {
@@ -47758,7 +47758,7 @@ function packTar(sources, options = {}) {
   })().catch((error) => stream.destroy(error));
   return stream;
 }
-function createFileSink(path24, { mode = 438, mtime } = {}) {
+function createFileSink(path25, { mode = 438, mtime } = {}) {
   let state = STATE_OPENING;
   let flushing = false;
   let fd = null;
@@ -47905,11 +47905,11 @@ function createFileSink(path24, { mode = 438, mtime } = {}) {
     }
     finish();
   };
-  fs4.open(path24, CREATE_FLAGS, mode, (err, openFd) => {
+  fs4.open(path25, CREATE_FLAGS, mode, (err, openFd) => {
     if (!err || err.code !== "EEXIST") return onOpen(err, openFd);
-    fs4.rm(path24, { force: true }, (rmErr) => {
+    fs4.rm(path25, { force: true }, (rmErr) => {
       if (rmErr) return fail(rmErr);
-      fs4.open(path24, CREATE_FLAGS, mode, onOpen);
+      fs4.open(path25, CREATE_FLAGS, mode, onOpen);
     });
   });
   return {
@@ -48164,9 +48164,9 @@ var init_fs = __esm({
           if (dirPath === (await destDirPromise).symbolic) return;
           await prepareDirectory(path9.dirname(dirPath));
           try {
-            const stat6 = await fsp.lstat(dirPath);
-            if (stat6.isDirectory()) return;
-            if (stat6.isSymbolicLink()) try {
+            const stat7 = await fsp.lstat(dirPath);
+            if (stat7.isDirectory()) return;
+            if (stat7.isSymbolicLink()) try {
               const realPath = await getRealDir(dirPath, `Symlink "${dirPath}" points outside the extraction directory.`);
               if ((await fsp.stat(realPath)).isDirectory()) return;
             } catch (err) {
@@ -48509,9 +48509,9 @@ async function extractZipWithYauzl(archivePath, folderPath) {
   ).catch(() => {
     throw new ArchiverUnavailableError("Extraction failed: The optional `yauzl` dependency is not installed.");
   });
-  const open7 = promisify(yauzl.open);
+  const open8 = promisify(yauzl.open);
   try {
-    const zipFile = await open7(archivePath, { lazyEntries: true });
+    const zipFile = await open8(archivePath, { lazyEntries: true });
     await new Promise((resolve7, reject) => {
       zipFile.on("error", reject).on("end", resolve7).on("entry", (entry) => {
         extractZipEntry(zipFile, entry, folderPath).then(() => {
@@ -50870,11 +50870,11 @@ var init_lib3 = __esm({
       format,
       normalize,
       resolve: resolve4,
-      require: (path24) => {
+      require: (path25) => {
         if (typeof require2 !== "undefined") {
-          return require2(path24);
-        } else if (path24.match(/\.json$/)) {
-          return JSON.parse(readFileSync2(path24, "utf8"));
+          return require2(path25);
+        } else if (path25.match(/\.json$/)) {
+          return JSON.parse(readFileSync2(path25, "utf8"));
         } else {
           throw Error("only .json config files are supported in ESM");
         }
@@ -55414,7 +55414,7 @@ var require_path = __commonJS({
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convertPosixPathToPattern = exports.convertWindowsPathToPattern = exports.convertPathToPattern = exports.escapePosixPath = exports.escapeWindowsPath = exports.escape = exports.removeLeadingDotSegment = exports.makeAbsolute = exports.unixify = void 0;
     var os12 = __require("os");
-    var path24 = __require("path");
+    var path25 = __require("path");
     var IS_WINDOWS_PLATFORM = os12.platform() === "win32";
     var LEADING_DOT_SEGMENT_CHARACTERS_COUNT = 2;
     var POSIX_UNESCAPED_GLOB_SYMBOLS_RE = /(\\?)([()*?[\]{|}]|^!|[!+@](?=\()|\\(?![!()*+?@[\]{|}]))/g;
@@ -55426,7 +55426,7 @@ var require_path = __commonJS({
     }
     exports.unixify = unixify;
     function makeAbsolute(cwd, filepath) {
-      return path24.resolve(cwd, filepath);
+      return path25.resolve(cwd, filepath);
     }
     exports.makeAbsolute = makeAbsolute;
     function removeLeadingDotSegment(entry) {
@@ -55546,9 +55546,9 @@ var require_is_glob = __commonJS({
           }
         }
         if (str[index] === "\\") {
-          var open7 = str[index + 1];
+          var open8 = str[index + 1];
           index += 2;
-          var close2 = chars[open7];
+          var close2 = chars[open8];
           if (close2) {
             var n = str.indexOf(close2, index);
             if (n !== -1) {
@@ -55574,9 +55574,9 @@ var require_is_glob = __commonJS({
           return true;
         }
         if (str[index] === "\\") {
-          var open7 = str[index + 1];
+          var open8 = str[index + 1];
           index += 2;
-          var close2 = chars[open7];
+          var close2 = chars[open8];
           if (close2) {
             var n = str.indexOf(close2, index);
             if (n !== -1) {
@@ -56540,7 +56540,7 @@ var require_parse = __commonJS({
           continue;
         }
         if (value === CHAR_DOUBLE_QUOTE || value === CHAR_SINGLE_QUOTE || value === CHAR_BACKTICK) {
-          const open7 = value;
+          const open8 = value;
           let next;
           if (options.keepQuotes !== true) {
             value = "";
@@ -56550,7 +56550,7 @@ var require_parse = __commonJS({
               value += next + advance();
               continue;
             }
-            if (next === open7) {
+            if (next === open8) {
               if (options.keepQuotes === true) value += next;
               break;
             }
@@ -56593,8 +56593,8 @@ var require_parse = __commonJS({
         if (value === CHAR_COMMA && depth > 0) {
           if (block.ranges > 0) {
             block.ranges = 0;
-            const open7 = block.nodes.shift();
-            block.nodes = [open7, { type: "text", value: stringify2(block) }];
+            const open8 = block.nodes.shift();
+            block.nodes = [open8, { type: "text", value: stringify2(block) }];
           }
           push({ type: "comma", value });
           block.commas++;
@@ -56723,7 +56723,7 @@ var require_braces = __commonJS({
 var require_constants3 = __commonJS({
   "node_modules/picomatch/lib/constants.js"(exports, module) {
     "use strict";
-    var path24 = __require("path");
+    var path25 = __require("path");
     var WIN_SLASH = "\\\\/";
     var WIN_NO_SLASH = `[^${WIN_SLASH}]`;
     var DEFAULT_MAX_EXTGLOB_RECURSION = 0;
@@ -56897,7 +56897,7 @@ var require_constants3 = __commonJS({
       /* | */
       CHAR_ZERO_WIDTH_NOBREAK_SPACE: 65279,
       /* \uFEFF */
-      SEP: path24.sep,
+      SEP: path25.sep,
       /**
        * Create EXTGLOB_CHARS
        */
@@ -56924,7 +56924,7 @@ var require_constants3 = __commonJS({
 var require_utils2 = __commonJS({
   "node_modules/picomatch/lib/utils.js"(exports) {
     "use strict";
-    var path24 = __require("path");
+    var path25 = __require("path");
     var win32 = process.platform === "win32";
     var {
       REGEX_BACKSLASH,
@@ -56953,7 +56953,7 @@ var require_utils2 = __commonJS({
       if (options && typeof options.windows === "boolean") {
         return options.windows;
       }
-      return win32 === true || path24.sep === "\\";
+      return win32 === true || path25.sep === "\\";
     };
     exports.escapeLast = (input2, char, lastIdx) => {
       const idx = input2.lastIndexOf(char, lastIdx);
@@ -57692,16 +57692,16 @@ var require_parse2 = __commonJS({
         const analysis = analyzeRepeatedExtglob(body, opts);
         if ((token2.type === "plus" || token2.type === "star") && analysis.risky) {
           const safeOutput = analysis.safeOutput ? (token2.output ? "" : ONE_CHAR) + (opts.capture ? `(${analysis.safeOutput})` : analysis.safeOutput) : void 0;
-          const open7 = tokens[token2.tokensIndex];
-          open7.type = "text";
-          open7.value = literal;
-          open7.output = safeOutput || utils.escapeRegex(literal);
+          const open8 = tokens[token2.tokensIndex];
+          open8.type = "text";
+          open8.value = literal;
+          open8.output = safeOutput || utils.escapeRegex(literal);
           for (let i = token2.tokensIndex + 1; i < tokens.length; i++) {
             tokens[i].value = "";
             tokens[i].output = "";
             delete tokens[i].suffix;
           }
-          state.output = token2.output + open7.output;
+          state.output = token2.output + open8.output;
           state.backtrack = true;
           push({ type: "paren", extglob: true, value, output: "" });
           decrement("parens");
@@ -57921,15 +57921,15 @@ var require_parse2 = __commonJS({
         }
         if (value === "{" && opts.nobrace !== true) {
           increment2("braces");
-          const open7 = {
+          const open8 = {
             type: "brace",
             value,
             output: "(",
             outputIndex: state.output.length,
             tokensIndex: state.tokens.length
           };
-          braces.push(open7);
-          push(open7);
+          braces.push(open8);
+          push(open8);
           continue;
         }
         if (value === "}") {
@@ -58317,7 +58317,7 @@ var require_parse2 = __commonJS({
 var require_picomatch = __commonJS({
   "node_modules/picomatch/lib/picomatch.js"(exports, module) {
     "use strict";
-    var path24 = __require("path");
+    var path25 = __require("path");
     var scan = require_scan();
     var parse3 = require_parse2();
     var utils = require_utils2();
@@ -58402,7 +58402,7 @@ var require_picomatch = __commonJS({
     };
     picomatch.matchBase = (input2, glob, options, posix = utils.isWindows(options)) => {
       const regex2 = glob instanceof RegExp ? glob : picomatch.makeRe(glob, options);
-      return regex2.test(path24.basename(input2));
+      return regex2.test(path25.basename(input2));
     };
     picomatch.isMatch = (str, patterns, options) => picomatch(patterns, options)(str);
     picomatch.parse = (pattern, options) => {
@@ -58629,7 +58629,7 @@ var require_pattern = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isAbsolute = exports.partitionAbsoluteAndRelative = exports.removeDuplicateSlashes = exports.matchAny = exports.convertPatternsToRe = exports.makeRe = exports.getPatternParts = exports.expandBraceExpansion = exports.expandPatternsWithBraceExpansion = exports.isAffectDepthOfReadingPattern = exports.endsWithSlashGlobStar = exports.hasGlobStar = exports.getBaseDirectory = exports.isPatternRelatedToParentDirectory = exports.getPatternsOutsideCurrentDirectory = exports.getPatternsInsideCurrentDirectory = exports.getPositivePatterns = exports.getNegativePatterns = exports.isPositivePattern = exports.isNegativePattern = exports.convertToNegativePattern = exports.convertToPositivePattern = exports.isDynamicPattern = exports.isStaticPattern = void 0;
-    var path24 = __require("path");
+    var path25 = __require("path");
     var globParent = require_glob_parent();
     var micromatch = require_micromatch();
     var GLOBSTAR = "**";
@@ -58724,7 +58724,7 @@ var require_pattern = __commonJS({
     }
     exports.endsWithSlashGlobStar = endsWithSlashGlobStar;
     function isAffectDepthOfReadingPattern(pattern) {
-      const basename3 = path24.basename(pattern);
+      const basename3 = path25.basename(pattern);
       return endsWithSlashGlobStar(pattern) || isStaticPattern(basename3);
     }
     exports.isAffectDepthOfReadingPattern = isAffectDepthOfReadingPattern;
@@ -58782,7 +58782,7 @@ var require_pattern = __commonJS({
     }
     exports.partitionAbsoluteAndRelative = partitionAbsoluteAndRelative;
     function isAbsolute3(pattern) {
-      return path24.isAbsolute(pattern);
+      return path25.isAbsolute(pattern);
     }
     exports.isAbsolute = isAbsolute3;
   }
@@ -58959,8 +58959,8 @@ var require_utils3 = __commonJS({
     exports.errno = errno;
     var fs9 = require_fs();
     exports.fs = fs9;
-    var path24 = require_path();
-    exports.path = path24;
+    var path25 = require_path();
+    exports.path = path25;
     var pattern = require_pattern();
     exports.pattern = pattern;
     var stream = require_stream2();
@@ -59072,8 +59072,8 @@ var require_async = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.read = void 0;
-    function read(path24, settings, callback) {
-      settings.fs.lstat(path24, (lstatError, lstat2) => {
+    function read(path25, settings, callback) {
+      settings.fs.lstat(path25, (lstatError, lstat2) => {
         if (lstatError !== null) {
           callFailureCallback(callback, lstatError);
           return;
@@ -59082,7 +59082,7 @@ var require_async = __commonJS({
           callSuccessCallback(callback, lstat2);
           return;
         }
-        settings.fs.stat(path24, (statError, stat6) => {
+        settings.fs.stat(path25, (statError, stat7) => {
           if (statError !== null) {
             if (settings.throwErrorOnBrokenSymbolicLink) {
               callFailureCallback(callback, statError);
@@ -59092,9 +59092,9 @@ var require_async = __commonJS({
             return;
           }
           if (settings.markSymbolicLink) {
-            stat6.isSymbolicLink = () => true;
+            stat7.isSymbolicLink = () => true;
           }
-          callSuccessCallback(callback, stat6);
+          callSuccessCallback(callback, stat7);
         });
       });
     }
@@ -59114,17 +59114,17 @@ var require_sync = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.read = void 0;
-    function read(path24, settings) {
-      const lstat2 = settings.fs.lstatSync(path24);
+    function read(path25, settings) {
+      const lstat2 = settings.fs.lstatSync(path25);
       if (!lstat2.isSymbolicLink() || !settings.followSymbolicLink) {
         return lstat2;
       }
       try {
-        const stat6 = settings.fs.statSync(path24);
+        const stat7 = settings.fs.statSync(path25);
         if (settings.markSymbolicLink) {
-          stat6.isSymbolicLink = () => true;
+          stat7.isSymbolicLink = () => true;
         }
-        return stat6;
+        return stat7;
       } catch (error) {
         if (!settings.throwErrorOnBrokenSymbolicLink) {
           return lstat2;
@@ -59191,17 +59191,17 @@ var require_out = __commonJS({
     var sync = require_sync();
     var settings_1 = require_settings();
     exports.Settings = settings_1.default;
-    function stat6(path24, optionsOrSettingsOrCallback, callback) {
+    function stat7(path25, optionsOrSettingsOrCallback, callback) {
       if (typeof optionsOrSettingsOrCallback === "function") {
-        async2.read(path24, getSettings(), optionsOrSettingsOrCallback);
+        async2.read(path25, getSettings(), optionsOrSettingsOrCallback);
         return;
       }
-      async2.read(path24, getSettings(optionsOrSettingsOrCallback), callback);
+      async2.read(path25, getSettings(optionsOrSettingsOrCallback), callback);
     }
-    exports.stat = stat6;
-    function statSync3(path24, optionsOrSettings) {
+    exports.stat = stat7;
+    function statSync3(path25, optionsOrSettings) {
       const settings = getSettings(optionsOrSettings);
-      return sync.read(path24, settings);
+      return sync.read(path25, settings);
     }
     exports.statSync = statSync3;
     function getSettings(settingsOrOptions = {}) {
@@ -59361,7 +59361,7 @@ var require_async2 = __commonJS({
         readdirWithFileTypes(directory, settings, callback);
         return;
       }
-      readdir3(directory, settings, callback);
+      readdir4(directory, settings, callback);
     }
     exports.read = read;
     function readdirWithFileTypes(directory, settings, callback) {
@@ -59410,23 +59410,23 @@ var require_async2 = __commonJS({
         });
       };
     }
-    function readdir3(directory, settings, callback) {
+    function readdir4(directory, settings, callback) {
       settings.fs.readdir(directory, (readdirError, names) => {
         if (readdirError !== null) {
           callFailureCallback(callback, readdirError);
           return;
         }
         const tasks = names.map((name) => {
-          const path24 = common.joinPathSegments(directory, name, settings.pathSegmentSeparator);
+          const path25 = common.joinPathSegments(directory, name, settings.pathSegmentSeparator);
           return (done) => {
-            fsStat.stat(path24, settings.fsStatSettings, (error, stats) => {
+            fsStat.stat(path25, settings.fsStatSettings, (error, stats) => {
               if (error !== null) {
                 done(error);
                 return;
               }
               const entry = {
                 name,
-                path: path24,
+                path: path25,
                 dirent: utils.fs.createDirentFromStats(name, stats)
               };
               if (settings.stats) {
@@ -59445,7 +59445,7 @@ var require_async2 = __commonJS({
         });
       });
     }
-    exports.readdir = readdir3;
+    exports.readdir = readdir4;
     function callFailureCallback(callback, error) {
       callback(error);
     }
@@ -59469,7 +59469,7 @@ var require_sync2 = __commonJS({
       if (!settings.stats && constants_1.IS_SUPPORT_READDIR_WITH_FILE_TYPES) {
         return readdirWithFileTypes(directory, settings);
       }
-      return readdir3(directory, settings);
+      return readdir4(directory, settings);
     }
     exports.read = read;
     function readdirWithFileTypes(directory, settings) {
@@ -59494,7 +59494,7 @@ var require_sync2 = __commonJS({
       });
     }
     exports.readdirWithFileTypes = readdirWithFileTypes;
-    function readdir3(directory, settings) {
+    function readdir4(directory, settings) {
       const names = settings.fs.readdirSync(directory);
       return names.map((name) => {
         const entryPath = common.joinPathSegments(directory, name, settings.pathSegmentSeparator);
@@ -59510,7 +59510,7 @@ var require_sync2 = __commonJS({
         return entry;
       });
     }
-    exports.readdir = readdir3;
+    exports.readdir = readdir4;
   }
 });
 
@@ -59544,7 +59544,7 @@ var require_settings2 = __commonJS({
   "node_modules/@nodelib/fs.scandir/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var path24 = __require("path");
+    var path25 = __require("path");
     var fsStat = require_out();
     var fs9 = require_fs4();
     var Settings = class {
@@ -59552,7 +59552,7 @@ var require_settings2 = __commonJS({
         this._options = _options;
         this.followSymbolicLinks = this._getValue(this._options.followSymbolicLinks, false);
         this.fs = fs9.createFileSystemAdapter(this._options.fs);
-        this.pathSegmentSeparator = this._getValue(this._options.pathSegmentSeparator, path24.sep);
+        this.pathSegmentSeparator = this._getValue(this._options.pathSegmentSeparator, path25.sep);
         this.stats = this._getValue(this._options.stats, false);
         this.throwErrorOnBrokenSymbolicLink = this._getValue(this._options.throwErrorOnBrokenSymbolicLink, true);
         this.fsStatSettings = new fsStat.Settings({
@@ -59579,17 +59579,17 @@ var require_out2 = __commonJS({
     var sync = require_sync2();
     var settings_1 = require_settings2();
     exports.Settings = settings_1.default;
-    function scandir(path24, optionsOrSettingsOrCallback, callback) {
+    function scandir(path25, optionsOrSettingsOrCallback, callback) {
       if (typeof optionsOrSettingsOrCallback === "function") {
-        async2.read(path24, getSettings(), optionsOrSettingsOrCallback);
+        async2.read(path25, getSettings(), optionsOrSettingsOrCallback);
         return;
       }
-      async2.read(path24, getSettings(optionsOrSettingsOrCallback), callback);
+      async2.read(path25, getSettings(optionsOrSettingsOrCallback), callback);
     }
     exports.scandir = scandir;
-    function scandirSync(path24, optionsOrSettings) {
+    function scandirSync(path25, optionsOrSettings) {
       const settings = getSettings(optionsOrSettings);
-      return sync.read(path24, settings);
+      return sync.read(path25, settings);
     }
     exports.scandirSync = scandirSync;
     function getSettings(settingsOrOptions = {}) {
@@ -60236,7 +60236,7 @@ var require_settings3 = __commonJS({
   "node_modules/@nodelib/fs.walk/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var path24 = __require("path");
+    var path25 = __require("path");
     var fsScandir = require_out2();
     var Settings = class {
       constructor(_options = {}) {
@@ -60246,7 +60246,7 @@ var require_settings3 = __commonJS({
         this.deepFilter = this._getValue(this._options.deepFilter, null);
         this.entryFilter = this._getValue(this._options.entryFilter, null);
         this.errorFilter = this._getValue(this._options.errorFilter, null);
-        this.pathSegmentSeparator = this._getValue(this._options.pathSegmentSeparator, path24.sep);
+        this.pathSegmentSeparator = this._getValue(this._options.pathSegmentSeparator, path25.sep);
         this.fsScandirSettings = new fsScandir.Settings({
           followSymbolicLinks: this._options.followSymbolicLinks,
           fs: this._options.fs,
@@ -60308,7 +60308,7 @@ var require_reader2 = __commonJS({
   "node_modules/fast-glob/out/readers/reader.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var path24 = __require("path");
+    var path25 = __require("path");
     var fsStat = require_out();
     var utils = require_utils3();
     var Reader = class {
@@ -60321,7 +60321,7 @@ var require_reader2 = __commonJS({
         });
       }
       _getFullEntryPath(filepath) {
-        return path24.resolve(this._settings.cwd, filepath);
+        return path25.resolve(this._settings.cwd, filepath);
       }
       _makeEntry(stats, pattern) {
         const entry = {
@@ -60737,7 +60737,7 @@ var require_provider = __commonJS({
   "node_modules/fast-glob/out/providers/provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var path24 = __require("path");
+    var path25 = __require("path");
     var deep_1 = require_deep();
     var entry_1 = require_entry();
     var error_1 = require_error();
@@ -60751,7 +60751,7 @@ var require_provider = __commonJS({
         this.entryTransformer = new entry_2.default(this._settings);
       }
       _getRootDirectory(task) {
-        return path24.resolve(this._settings.cwd, task.base);
+        return path25.resolve(this._settings.cwd, task.base);
       }
       _getReaderOptions(task) {
         const basePath = task.base === "." ? "" : task.base;
@@ -61089,8 +61089,8 @@ var require_out4 = __commonJS({
 
 // src/broker.mjs
 import net2 from "node:net";
-import { chmod as chmod4, mkdir as mkdir11, rm as rm9 } from "node:fs/promises";
-import path23 from "node:path";
+import { chmod as chmod5, mkdir as mkdir12, rm as rm10 } from "node:fs/promises";
+import path24 from "node:path";
 
 // src/config.mjs
 import { constants as fsConstants } from "node:fs";
@@ -61107,6 +61107,12 @@ function profileDirectory() {
 }
 function sessionsDirectory() {
   return path.join(oracleFirefoxHome(), "sessions");
+}
+function downloadsDirectory() {
+  return path.join(oracleFirefoxHome(), "downloads");
+}
+function browserDownloadStagingDirectory() {
+  return path.join(downloadsDirectory(), ".browser-staging");
 }
 function coordinatorDirectory() {
   const configured = process.env.ORACLE_FIREFOX_COORDINATOR_HOME?.trim();
@@ -61166,9 +61172,9 @@ async function resolveFirefoxPath() {
 }
 
 // src/coordinator.mjs
-import { randomUUID as randomUUID5 } from "node:crypto";
-import { access as access4, mkdir as mkdir9, open as open5, rm as rm7 } from "node:fs/promises";
-import path22 from "node:path";
+import { randomUUID as randomUUID6 } from "node:crypto";
+import { access as access4, mkdir as mkdir10, open as open6, rm as rm8 } from "node:fs/promises";
+import path23 from "node:path";
 
 // src/browser-manager.mjs
 import { execFile as execFile3 } from "node:child_process";
@@ -61426,9 +61432,9 @@ var BrowserLauncher = class {
     }
     if (Array.isArray(enableExtensions)) {
       await Promise.all([
-        enableExtensions.map((path24) => {
-          return browser.installExtension(path24, {
-            enabledInIncognito: extensionsEnabledInIncognito.includes(path24)
+        enableExtensions.map((path25) => {
+          return browser.installExtension(path25, {
+            enabledInIncognito: extensionsEnabledInIncognito.includes(path25)
           });
         })
       ]);
@@ -61602,8 +61608,8 @@ var rmOptions = {
   recursive: true,
   maxRetries: 5
 };
-async function rm3(path24) {
-  await fs6.promises.rm(path24, rmOptions);
+async function rm3(path25) {
+  await fs6.promises.rm(path25, rmOptions);
 }
 
 // node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
@@ -61683,10 +61689,10 @@ var ChromeLauncher = class extends BrowserLauncher {
   /**
    * @internal
    */
-  async cleanUserDataDir(path24, opts) {
+  async cleanUserDataDir(path25, opts) {
     if (opts.isTemp) {
       try {
-        await rm3(path24);
+        await rm3(path25);
       } catch (error) {
         debugError?.(error);
         throw error;
@@ -62285,7 +62291,7 @@ var ScreenRecorder = (() => {
     /**
      * @internal
      */
-    constructor(page, width, height, { ffmpegPath, speed, scale, crop, format: format3, fps, loop, delay: delay2, quality, colors, path: path24, overwrite } = {}) {
+    constructor(page, width, height, { ffmpegPath, speed, scale, crop, format: format3, fps, loop, delay: delay2, quality, colors, path: path25, overwrite } = {}) {
       super({ allowHalfOpen: false });
       ffmpegPath ??= "ffmpeg";
       format3 ??= "webm";
@@ -62318,8 +62324,8 @@ var ScreenRecorder = (() => {
       if (vf !== -1) {
         filters.push(formatArgs.splice(vf, 2).at(-1) ?? "");
       }
-      if (path24) {
-        fs8.mkdirSync(dirname5(path24), { recursive: overwrite });
+      if (path25) {
+        fs8.mkdirSync(dirname5(path25), { recursive: overwrite });
       }
       this.#process = spawn3(
         ffmpegPath,
@@ -62640,19 +62646,30 @@ async function findConversationCandidatesByQuery(page, query, { exact = false, v
   const candidates = await page.evaluate(
     ({ expectedQuery, requireExact, requireVisible }) => {
       const normalize3 = (value) => String(value || "").replace(/\s+/gu, " ").trim();
-      return Array.from(document.querySelectorAll("a")).filter((anchor) => {
-        const title = normalize3(anchor.textContent) || normalize3(anchor.getAttribute("aria-label"));
-        const normalizedTitle = title.toLowerCase();
+      const titleFor = (anchor) => {
+        const values = [
+          anchor.getAttribute("aria-label"),
+          anchor.getAttribute("title"),
+          anchor.getAttribute("data-chat-title"),
+          ...Array.from(anchor.querySelectorAll('[data-testid*="conversation-title"], [class*="truncate"], [title]')).flatMap((node) => [node.getAttribute("title"), node.textContent]),
+          ...Array.from(anchor.children).map((node) => node.textContent),
+          anchor.textContent
+        ].map(normalize3).filter(Boolean);
         const normalizedExpected = expectedQuery.toLowerCase();
-        if (requireExact ? normalizedTitle !== normalizedExpected : !normalizedTitle.includes(normalizedExpected)) {
-          return false;
-        }
+        const matching = [...new Set(values)].filter((value) => {
+          const normalized = value.toLowerCase();
+          return requireExact ? normalized === normalizedExpected : normalized.includes(normalizedExpected);
+        });
+        return matching.sort((left2, right2) => left2.length - right2.length)[0] || "";
+      };
+      return Array.from(document.querySelectorAll("a")).filter((anchor) => {
+        if (!titleFor(anchor)) return false;
         if (!requireVisible) return true;
         const rect = anchor.getBoundingClientRect();
         const style = window.getComputedStyle(anchor);
         return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
       }).map((anchor) => ({
-        title: normalize3(anchor.textContent) || normalize3(anchor.getAttribute("aria-label")),
+        title: titleFor(anchor),
         url: anchor.href
       }));
     },
@@ -63038,7 +63055,7 @@ async function doctor() {
     launchError
   };
 }
-async function launchFirefox({ headless = false, profileDir = profileDirectory() } = {}) {
+async function launchFirefox({ headless = false, profileDir = profileDirectory(), downloadPath } = {}) {
   const executablePath2 = await resolveFirefoxPath();
   if (!executablePath2) {
     throw new Error(
@@ -63053,6 +63070,15 @@ async function launchFirefox({ headless = false, profileDir = profileDirectory()
     userDataDir: profileDir,
     headless,
     defaultViewport: { width: 1280, height: 900 },
+    ...downloadPath ? {
+      extraPrefsFirefox: {
+        "browser.download.folderList": 2,
+        "browser.download.dir": downloadPath,
+        "browser.download.useDownloadDir": true,
+        "browser.download.alwaysOpenPanel": false,
+        "browser.helperApps.neverAsk.saveToDisk": "application/octet-stream,application/zip,application/x-zip-compressed,text/plain,text/csv,application/json,application/pdf"
+      }
+    } : {},
     handleSIGINT: false,
     handleSIGTERM: false
   });
@@ -63656,6 +63682,7 @@ var BrowserManager = class {
     this.maintenance = false;
     this.ownerChecked = false;
     this.inputGate = Promise.resolve();
+    this.downloadGate = Promise.resolve();
   }
   async ensureBrowser({ headless = false } = {}) {
     if (this.browser?.connected) return this.browser;
@@ -63663,7 +63690,9 @@ var BrowserManager = class {
       await stopOrphanedOwnedFirefox();
       this.ownerChecked = true;
     }
-    const browser = await launchFirefox({ headless });
+    const downloadPath = browserDownloadStagingDirectory();
+    await mkdir5(downloadPath, { recursive: true, mode: 448 });
+    const browser = await launchFirefox({ headless, downloadPath });
     this.browser = browser;
     const browserPid = browser.process()?.pid;
     if (browserPid) await writeOwner({ brokerPid: process.pid, browserPid, profile: profileDirectory(), startedAt: (/* @__PURE__ */ new Date()).toISOString() });
@@ -63711,6 +63740,19 @@ var BrowserManager = class {
       release();
     }
   }
+  async withDownload(callback) {
+    const previous = this.downloadGate;
+    let release;
+    this.downloadGate = new Promise((resolve7) => {
+      release = resolve7;
+    });
+    await previous;
+    try {
+      return await callback();
+    } finally {
+      release();
+    }
+  }
   async withMaintenance(callback) {
     if (this.maintenance || this.leases.size > 0) {
       throw codedError("MAINTENANCE_BUSY", "Setup or cookie import requires all Oracle Firefox job pages to be idle.");
@@ -63742,8 +63784,460 @@ var BrowserManager = class {
   }
 };
 
+// src/downloads.mjs
+import { createHash as createHash3, randomUUID as randomUUID2 } from "node:crypto";
+import { createReadStream as createReadStream2 } from "node:fs";
+import { chmod, mkdir as mkdir6, open as open4, readdir as readdir3, rename as rename3, rm as rm5, stat as stat3 } from "node:fs/promises";
+import path17 from "node:path";
+var CHATGPT_DOWNLOAD_BASE_URL = "https://chatgpt.com/";
+var MAX_REDIRECTS = 5;
+var DEFAULT_DOWNLOAD_MAX_BYTES = 1e8;
+var ABSOLUTE_DOWNLOAD_MAX_BYTES = 25e7;
+function normalizeLabel(value) {
+  return String(value ?? "").replace(/\s+/gu, " ").trim();
+}
+function normalizedMatch(value) {
+  return normalizeLabel(value).toLocaleLowerCase("en-US");
+}
+function isAllowedChatGptHost(hostname) {
+  const value = String(hostname ?? "").toLowerCase();
+  return value === "chatgpt.com" || value === "chat.openai.com";
+}
+function isSafeSandboxPath(value) {
+  const pathname = String(value ?? "");
+  return pathname.startsWith("/mnt/data/") && !pathname.includes("\\") && !pathname.includes("\0") && !pathname.split("/").includes("..");
+}
+function isKnownChatGptDownloadUrl(url) {
+  const pathname = url.pathname.toLowerCase();
+  if (pathname === "/backend-api/sandbox/download") {
+    return isSafeSandboxPath(url.searchParams.get("path"));
+  }
+  if (/^\/backend-api\/files\/[^/]+\/(?:download|content)\/?$/u.test(pathname)) return true;
+  return pathname === "/backend-api/estuary/content" && String(url.searchParams.get("id") ?? "").startsWith("file_");
+}
+function sandboxPath(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw.startsWith("sandbox:/mnt/data/")) return null;
+  let pathname;
+  try {
+    pathname = decodeURI(new URL(raw).pathname);
+  } catch {
+    pathname = raw.slice("sandbox:".length);
+  }
+  return isSafeSandboxPath(pathname) ? pathname : null;
+}
+function safeBasename(value) {
+  try {
+    return decodeURIComponent(path17.posix.basename(value));
+  } catch {
+    return path17.posix.basename(value);
+  }
+}
+function normalizeChatGptDownloadSource(value) {
+  const raw = String(value ?? "").trim();
+  const safeSandboxPath = sandboxPath(raw);
+  if (safeSandboxPath) {
+    const url2 = new URL("/backend-api/sandbox/download", CHATGPT_DOWNLOAD_BASE_URL);
+    url2.searchParams.set("path", safeSandboxPath);
+    return {
+      downloadUrl: url2.href,
+      sourceKind: "sandbox",
+      sourceFilename: path17.posix.basename(safeSandboxPath)
+    };
+  }
+  if (!raw || raw.startsWith("blob:") || raw.startsWith("data:")) return null;
+  let url;
+  try {
+    url = new URL(raw, CHATGPT_DOWNLOAD_BASE_URL);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" || url.port || !isAllowedChatGptHost(url.hostname) || !isKnownChatGptDownloadUrl(url)) return null;
+  return {
+    downloadUrl: url.href,
+    sourceKind: "chatgpt-file-endpoint",
+    sourceFilename: safeBasename(url.pathname)
+  };
+}
+function sanitizeFilename(value, fallback = "artifact.bin") {
+  let filename = String(value ?? "").normalize("NFKC").replace(/[\u0000-\u001f\u007f]/gu, "").replace(/[\\/]/gu, "_").trim().replace(/^\.+/u, "");
+  if (!filename || filename === "." || filename === "..") filename = fallback;
+  if (filename.length > 180) {
+    const extension2 = path17.extname(filename).slice(0, 24);
+    filename = `${path17.basename(filename, path17.extname(filename)).slice(0, 180 - extension2.length)}${extension2}`;
+  }
+  return filename;
+}
+function filenameFromContentDisposition(value) {
+  const header = String(value ?? "");
+  const encoded = /filename\*=UTF-8''([^;]+)/iu.exec(header)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded.trim().replace(/^"|"$/gu, ""));
+    } catch {
+      return encoded.trim().replace(/^"|"$/gu, "");
+    }
+  }
+  return /filename="?([^";]+)"?/iu.exec(header)?.[1]?.trim() ?? null;
+}
+function extensionForMimeType(value) {
+  const mime = String(value ?? "").toLowerCase();
+  if (mime.includes("zip")) return ".zip";
+  if (mime.includes("json")) return ".json";
+  if (mime.includes("csv")) return ".csv";
+  if (mime.includes("markdown")) return ".md";
+  if (mime.startsWith("text/")) return ".txt";
+  return "";
+}
+function publicCandidate(candidate) {
+  return {
+    linkId: candidate.linkId,
+    linkText: candidate.label,
+    filename: candidate.filename,
+    sourceKind: candidate.source.sourceKind,
+    assistantTurnId: candidate.assistantTurnId,
+    assistantTurnIndex: candidate.assistantTurnIndex
+  };
+}
+var CONTROL_SELECTOR = [
+  "a[href]",
+  "a[download]",
+  "button",
+  '[role="button"]',
+  "[data-testid]",
+  "[aria-label]",
+  "[title]"
+].join(",");
+async function listAssistantDownloadCandidates(page, { scope = "last-assistant" } = {}) {
+  if (!(/* @__PURE__ */ new Set(["last-assistant", "all-assistant"])).has(scope)) {
+    throw codedError("INVALID_DOWNLOAD_SCOPE", "scope must be last-assistant or all-assistant.");
+  }
+  const raw = await page.evaluate((requestedScope, selector) => {
+    const normalize3 = (value) => String(value || "").replace(/\s+/gu, " ").trim();
+    const turnCandidates = Array.from(document.querySelectorAll([
+      'main [data-testid^="conversation-turn-"]',
+      "main article",
+      "main [data-message-author-role]"
+    ].join(",")));
+    const turns = turnCandidates.filter(
+      (candidate) => !turnCandidates.some((other) => other !== candidate && other.contains(candidate))
+    );
+    const assistants = turns.flatMap((turn, turnIndex) => {
+      const roleNode = turn.matches("[data-message-author-role]") ? turn : turn.querySelector("[data-message-author-role]");
+      const role = roleNode?.getAttribute("data-message-author-role") || turn.getAttribute("data-message-author-role");
+      if (role !== "assistant") return [];
+      return [{ turn, turnIndex }];
+    });
+    const selected = requestedScope === "last-assistant" ? assistants.slice(-1) : assistants;
+    return selected.flatMap(({ turn, turnIndex }, selectedTurnIndex) => {
+      const turnId = turn.getAttribute("data-message-id") || turn.querySelector("[data-message-id]")?.getAttribute("data-message-id") || turn.getAttribute("data-testid") || turn.id || null;
+      const controls = Array.from(turn.querySelectorAll(selector));
+      const serialized = controls.flatMap((control, linkIndex) => {
+        const anchors = [
+          ...control.matches("a[href], a[download]") ? [control] : [],
+          ...Array.from(control.querySelectorAll("a[href], a[download]"))
+        ];
+        const values = [
+          ...Array.from(control.attributes || []).map((attribute) => attribute.value),
+          ...anchors.flatMap((anchor) => [
+            anchor.getAttribute("href") || "",
+            anchor.href || "",
+            anchor.getAttribute("download") || "",
+            ...Array.from(anchor.attributes || []).map((attribute) => attribute.value)
+          ])
+        ].map((value) => String(value || "").trim()).filter(Boolean);
+        const rawHref = values.find(
+          (value) => value.startsWith("sandbox:/mnt/data/") || value.includes("/backend-api/sandbox/download") || /\/backend-api\/files\/[^/]+\/(?:download|content)/iu.test(value) || value.includes("/backend-api/estuary/content")
+        );
+        const labels = [
+          control.textContent,
+          control.getAttribute("aria-label"),
+          control.getAttribute("title"),
+          ...anchors.flatMap((anchor) => [anchor.textContent, anchor.getAttribute("aria-label"), anchor.getAttribute("title")])
+        ].map(normalize3).filter(Boolean).sort((left2, right2) => left2.length - right2.length);
+        const label = labels[0] || "";
+        const tagName = String(control.tagName || "").toLowerCase();
+        const role = String(control.getAttribute("role") || "").toLowerCase();
+        const downloadSignal = [label, control.getAttribute("aria-label"), control.getAttribute("title"), control.getAttribute("data-testid")].map(normalize3).join(" ").toLowerCase();
+        const behaviorDownload = !rawHref && (tagName === "button" || role === "button") && downloadSignal.includes("download");
+        if (!rawHref && !behaviorDownload) return [];
+        return [{
+          label,
+          rawHref: rawHref || "",
+          behaviorDownload,
+          downloadName: anchors.map((anchor) => anchor.getAttribute("download") || "").find(Boolean) || "",
+          assistantTurnId: turnId,
+          assistantTurnIndex: turnIndex,
+          selectedTurnIndex,
+          linkIndex
+        }];
+      });
+      const bySource = /* @__PURE__ */ new Map();
+      for (const item of serialized) {
+        const key = item.rawHref || `browser-download:${item.linkIndex}:${item.label}`;
+        const current = bySource.get(key);
+        if (!current || item.label.length < current.label.length) bySource.set(key, item);
+      }
+      return Array.from(bySource.values());
+    });
+  }, scope, CONTROL_SELECTOR);
+  const candidates = [];
+  for (const item of raw) {
+    const source2 = item.behaviorDownload ? { downloadUrl: null, sourceKind: "browser-download", sourceFilename: item.label } : normalizeChatGptDownloadSource(item.rawHref);
+    if (!source2) continue;
+    const label = normalizeLabel(item.label || item.downloadName || source2.sourceFilename);
+    const filename = sanitizeFilename(item.downloadName || source2.sourceFilename || label);
+    const linkId = createHash3("sha256").update(`${item.assistantTurnId || ""}\0${item.linkIndex}\0${item.rawHref || item.label}`).digest("hex").slice(0, 20);
+    candidates.push({ ...item, label, filename, source: source2, linkId });
+  }
+  return candidates;
+}
+async function browserControlFor(page, candidate) {
+  const handle = await page.evaluateHandle((turnIndex, controlIndex, selector) => {
+    const turnCandidates = Array.from(document.querySelectorAll([
+      'main [data-testid^="conversation-turn-"]',
+      "main article",
+      "main [data-message-author-role]"
+    ].join(",")));
+    const turns = turnCandidates.filter(
+      (item) => !turnCandidates.some((other) => other !== item && other.contains(item))
+    );
+    const turn = turns[turnIndex];
+    return turn?.querySelectorAll(selector)?.[controlIndex] || null;
+  }, candidate.assistantTurnIndex, candidate.linkIndex, CONTROL_SELECTOR);
+  const element = handle.asElement();
+  if (!element) {
+    await handle.dispose();
+    throw codedError("DOWNLOAD_CONTROL_CHANGED", "The exact download control changed before it could be clicked. No download was attempted.");
+  }
+  const observed = await element.evaluate((control) => {
+    const normalize3 = (value) => String(value || "").replace(/\s+/gu, " ").trim();
+    const labels = [control.textContent, control.getAttribute("aria-label"), control.getAttribute("title")].map(normalize3).filter(Boolean).sort((left2, right2) => left2.length - right2.length);
+    return {
+      label: labels[0] || "",
+      tagName: String(control.tagName || "").toLowerCase(),
+      role: String(control.getAttribute("role") || "").toLowerCase()
+    };
+  });
+  if (normalizedMatch(observed.label) !== normalizedMatch(candidate.label) || observed.tagName !== "button" && observed.role !== "button") {
+    await element.dispose();
+    throw codedError("DOWNLOAD_CONTROL_CHANGED", "The exact download control changed before it could be clicked. No download was attempted.");
+  }
+  return element;
+}
+async function stagingSnapshot(directory) {
+  await mkdir6(directory, { recursive: true, mode: 448 });
+  await chmod(directory, 448);
+  const snapshot = /* @__PURE__ */ new Map();
+  for (const name of await readdir3(directory)) {
+    const info = await stat3(path17.join(directory, name)).catch(() => null);
+    if (info?.isFile()) snapshot.set(name, `${info.size}:${info.mtimeMs}`);
+  }
+  return snapshot;
+}
+async function waitForBrowserDownload(directory, before, timeoutMs = 6e4) {
+  const deadline = Date.now() + timeoutMs;
+  let stable = null;
+  let stableCount = 0;
+  while (Date.now() < deadline) {
+    const changed = [];
+    for (const name of await readdir3(directory)) {
+      if (/\.(?:part|crdownload)$/iu.test(name)) continue;
+      const filePath = path17.join(directory, name);
+      const info = await stat3(filePath).catch(() => null);
+      if (!info?.isFile()) continue;
+      if (before.get(name) !== `${info.size}:${info.mtimeMs}`) changed.push({ filePath, name, size: info.size, mtimeMs: info.mtimeMs });
+    }
+    if (changed.length > 1) {
+      throw codedError("DOWNLOAD_RESULT_AMBIGUOUS", "The browser produced more than one file for the exact download control. The files were left in private staging for manual inspection.");
+    }
+    if (changed.length === 1) {
+      const key = `${changed[0].name}:${changed[0].size}:${changed[0].mtimeMs}`;
+      if (key === stable) stableCount += 1;
+      else {
+        stable = key;
+        stableCount = 1;
+      }
+      if (changed[0].size > 0 && stableCount >= 3) return changed[0];
+    }
+    await new Promise((resolve7) => setTimeout(resolve7, 250));
+  }
+  throw codedError("DOWNLOAD_TIMEOUT", `The exact download control was clicked once, but Firefox did not finish one file within ${timeoutMs / 1e3} seconds. It was not clicked again.`);
+}
+async function hashFile(filePath) {
+  const hash = createHash3("sha256");
+  const prefix = [];
+  let prefixBytes = 0;
+  for await (const chunk of createReadStream2(filePath)) {
+    hash.update(chunk);
+    if (prefixBytes < 8) {
+      const slice = chunk.subarray(0, 8 - prefixBytes);
+      prefix.push(slice);
+      prefixBytes += slice.length;
+    }
+  }
+  return { sha256: hash.digest("hex"), prefix: Buffer.concat(prefix) };
+}
+async function downloadWithBrowserControl(page, selected, { maxBytes, rootDirectory, stagingDirectory }) {
+  const staging = stagingDirectory;
+  const before = await stagingSnapshot(staging);
+  const element = await browserControlFor(page, selected);
+  try {
+    await element.click();
+  } finally {
+    await element.dispose();
+  }
+  const downloaded = await waitForBrowserDownload(staging, before);
+  if (downloaded.size > maxBytes) {
+    throw codedError("DOWNLOAD_TOO_LARGE", `The browser-downloaded ChatGPT file is larger than the ${maxBytes}-byte limit. It was left in private staging for manual inspection.`);
+  }
+  const filename = sanitizeFilename(downloaded.name, selected.filename);
+  const downloadId = randomUUID2();
+  const directory = path17.join(path17.resolve(rootDirectory), downloadId);
+  const target = path17.join(directory, filename);
+  await mkdir6(directory, { recursive: true, mode: 448 });
+  await chmod(directory, 448);
+  const digest = await hashFile(downloaded.filePath);
+  assertArtifactSignature(filename, digest.prefix);
+  await rename3(downloaded.filePath, target);
+  await chmod(target, 384);
+  return {
+    downloadId,
+    path: target,
+    filename,
+    sizeBytes: downloaded.size,
+    sha256: digest.sha256,
+    mimeType: "application/octet-stream",
+    linkText: selected.label,
+    linkId: selected.linkId,
+    sourceKind: selected.source.sourceKind,
+    assistantTurnId: selected.assistantTurnId
+  };
+}
+function selectAssistantDownloadCandidate(candidates, linkText) {
+  const expected = normalizedMatch(linkText);
+  if (!expected) throw codedError("LINK_TEXT_REQUIRED", "An exact non-empty download link text is required.");
+  const matches = candidates.filter((candidate) => normalizedMatch(candidate.label) === expected);
+  if (matches.length === 1) return matches[0];
+  const details = { candidates: candidates.map(publicCandidate) };
+  if (matches.length > 1) {
+    throw codedError("DOWNLOAD_LINK_AMBIGUOUS", "More than one downloadable link has that exact text. Use a narrower conversation or message scope.", { details });
+  }
+  throw codedError("DOWNLOAD_LINK_NOT_FOUND", `No downloadable link has the exact text ${JSON.stringify(normalizeLabel(linkText))}.`, { details });
+}
+async function cookieHeaderFor(page, downloadUrl) {
+  const cookies = await page.cookies(downloadUrl);
+  return cookies.filter((cookie) => cookie.name && typeof cookie.value === "string").map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
+}
+async function fetchDownload(page, initialUrl, fetchImpl) {
+  let current = new URL(initialUrl);
+  for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
+    const headers = { "user-agent": "Mozilla/5.0" };
+    if (isAllowedChatGptHost(current.hostname) && isKnownChatGptDownloadUrl(current)) {
+      const cookieHeader = await cookieHeaderFor(page, current.href);
+      if (!cookieHeader) throw codedError("DOWNLOAD_AUTH_REQUIRED", "The authenticated Firefox page did not expose ChatGPT cookies for this file endpoint.");
+      headers.cookie = cookieHeader;
+    }
+    const response = await fetchImpl(current, { headers, redirect: "manual" });
+    if (response.status >= 300 && response.status < 400) {
+      const location2 = response.headers.get("location");
+      if (!location2) throw codedError("DOWNLOAD_REDIRECT_INVALID", "The ChatGPT file endpoint returned a redirect without a destination.");
+      const next = new URL(location2, current);
+      if (next.protocol !== "https:") throw codedError("DOWNLOAD_REDIRECT_INVALID", "The ChatGPT file endpoint redirected to a non-HTTPS destination.");
+      current = next;
+      continue;
+    }
+    if (!response.ok) {
+      throw codedError("DOWNLOAD_FAILED", `The ChatGPT file endpoint returned HTTP ${response.status}.`);
+    }
+    return response;
+  }
+  throw codedError("DOWNLOAD_REDIRECT_INVALID", `The ChatGPT file endpoint exceeded ${MAX_REDIRECTS} redirects.`);
+}
+function assertArtifactSignature(filename, prefix) {
+  if (path17.extname(filename).toLowerCase() !== ".zip") return;
+  const signature = prefix.subarray(0, 4).toString("hex");
+  if (!(/* @__PURE__ */ new Set(["504b0304", "504b0506", "504b0708"])).has(signature)) {
+    throw codedError("DOWNLOAD_CONTENT_INVALID", "The downloaded .zip file did not have a valid ZIP signature.");
+  }
+}
+async function downloadAssistantArtifact(page, { linkText, scope = "last-assistant", maxBytes = DEFAULT_DOWNLOAD_MAX_BYTES, rootDirectory = downloadsDirectory(), stagingDirectory = browserDownloadStagingDirectory(), fetchImpl = fetch } = {}) {
+  if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > ABSOLUTE_DOWNLOAD_MAX_BYTES) {
+    throw codedError("INVALID_DOWNLOAD_LIMIT", `maxBytes must be an integer from 1 to ${ABSOLUTE_DOWNLOAD_MAX_BYTES}.`);
+  }
+  const candidates = await listAssistantDownloadCandidates(page, { scope });
+  const selected = selectAssistantDownloadCandidate(candidates, linkText);
+  if (selected.source.sourceKind === "browser-download") {
+    return { ...await downloadWithBrowserControl(page, selected, { maxBytes, rootDirectory, stagingDirectory }), scope };
+  }
+  const response = await fetchDownload(page, selected.source.downloadUrl, fetchImpl);
+  const contentType = response.headers.get("content-type") || "application/octet-stream";
+  if (/text\/html/iu.test(contentType)) {
+    throw codedError("DOWNLOAD_CONTENT_INVALID", "The ChatGPT file endpoint returned an HTML page instead of a file.");
+  }
+  const declaredLength = Number(response.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    throw codedError("DOWNLOAD_TOO_LARGE", `The ChatGPT file is larger than the ${maxBytes}-byte limit.`);
+  }
+  const dispositionName = filenameFromContentDisposition(response.headers.get("content-disposition"));
+  let filename = sanitizeFilename(dispositionName || selected.filename);
+  if (!path17.extname(filename)) filename += extensionForMimeType(contentType);
+  const downloadId = randomUUID2();
+  const directory = path17.join(path17.resolve(rootDirectory), downloadId);
+  const target = path17.join(directory, filename);
+  const temporary = path17.join(directory, `.${filename}.${randomUUID2()}.tmp`);
+  await mkdir6(directory, { recursive: true, mode: 448 });
+  await chmod(directory, 448);
+  const handle = await open4(temporary, "wx", 384);
+  const hash = createHash3("sha256");
+  const prefixChunks = [];
+  let prefixBytes = 0;
+  let sizeBytes = 0;
+  try {
+    if (!response.body) throw codedError("DOWNLOAD_FAILED", "The ChatGPT file endpoint returned no response body.");
+    for await (const value of response.body) {
+      const chunk = Buffer.from(value);
+      sizeBytes += chunk.length;
+      if (sizeBytes > maxBytes) throw codedError("DOWNLOAD_TOO_LARGE", `The ChatGPT file exceeded the ${maxBytes}-byte limit while downloading.`);
+      if (prefixBytes < 8) {
+        const slice = chunk.subarray(0, 8 - prefixBytes);
+        prefixChunks.push(slice);
+        prefixBytes += slice.length;
+      }
+      hash.update(chunk);
+      await handle.write(chunk);
+    }
+    if (sizeBytes === 0) throw codedError("DOWNLOAD_CONTENT_INVALID", "The ChatGPT file endpoint returned an empty file.");
+    assertArtifactSignature(filename, Buffer.concat(prefixChunks));
+    await handle.sync();
+  } catch (error) {
+    await handle.close().catch(() => void 0);
+    await rm5(directory, { recursive: true, force: true }).catch(() => void 0);
+    throw error;
+  }
+  await handle.close();
+  await rename3(temporary, target);
+  await chmod(target, 384);
+  return {
+    downloadId,
+    path: target,
+    filename,
+    sizeBytes,
+    sha256: hash.digest("hex"),
+    mimeType: contentType,
+    linkText: selected.label,
+    linkId: selected.linkId,
+    sourceKind: selected.source.sourceKind,
+    assistantTurnId: selected.assistantTurnId,
+    scope
+  };
+}
+function publicDownloadCandidates(candidates) {
+  return candidates.map(publicCandidate);
+}
+
 // src/evidence.mjs
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 var LOCAL_DATA_SENTINEL = "ORACLE_LOCAL_DATA_REQUEST_V1";
 var LOCAL_DATA_PROTOCOL = `
 When forming conclusions, label material claims as verified, inferred, or proposed.
@@ -63865,15 +64359,15 @@ ${JSON.stringify(payload, null, 2)}
 \`\`\``;
 }
 function deriveEvidenceAuthorizationId(parentAuthorizationId, round) {
-  const hex = createHash3("sha256").update(`${parentAuthorizationId}:evidence:${round}`).digest("hex").slice(0, 32);
+  const hex = createHash4("sha256").update(`${parentAuthorizationId}:evidence:${round}`).digest("hex").slice(0, 32);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
 }
 
 // src/state-store.mjs
 import { DatabaseSync } from "node:sqlite";
-import { createHash as createHash4, randomUUID as randomUUID2 } from "node:crypto";
-import { chmod, mkdir as mkdir6 } from "node:fs/promises";
-import path17 from "node:path";
+import { createHash as createHash5, randomUUID as randomUUID3 } from "node:crypto";
+import { chmod as chmod2, mkdir as mkdir7 } from "node:fs/promises";
+import path18 from "node:path";
 var JOB_STATES = Object.freeze([
   "accepted",
   "snapshotted",
@@ -63961,7 +64455,7 @@ function requestDigest(request3) {
     }
     return value;
   };
-  return createHash4("sha256").update(JSON.stringify(canonicalize(request3))).digest("hex");
+  return createHash5("sha256").update(JSON.stringify(canonicalize(request3))).digest("hex");
 }
 var StateStore = class {
   constructor(databasePath = coordinatorDatabasePath()) {
@@ -63969,10 +64463,10 @@ var StateStore = class {
     this.db = null;
   }
   async open() {
-    await mkdir6(path17.dirname(this.databasePath), { recursive: true, mode: 448 });
-    await chmod(path17.dirname(this.databasePath), 448);
+    await mkdir7(path18.dirname(this.databasePath), { recursive: true, mode: 448 });
+    await chmod2(path18.dirname(this.databasePath), 448);
     this.db = new DatabaseSync(this.databasePath);
-    await chmod(this.databasePath, 384);
+    await chmod2(this.databasePath, 384);
     this.db.exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");
     this.migrate();
     return this;
@@ -64080,7 +64574,7 @@ var StateStore = class {
           { recoveryAction: `reconcile_job ${activeQuarantine.job_id}` }
         );
       }
-      const id = input2.id || randomUUID2();
+      const id = input2.id || randomUUID3();
       this.db.prepare(`
         INSERT INTO jobs (
           id, authorization_id, operation, state, request_json, request_digest,
@@ -64294,13 +64788,13 @@ var StateStore = class {
 
 // src/workflow.mjs
 import { access as access3, readFile as readFile4 } from "node:fs/promises";
-import { randomUUID as randomUUID4 } from "node:crypto";
-import path21 from "node:path";
+import { randomUUID as randomUUID5 } from "node:crypto";
+import path22 from "node:path";
 
 // src/bundle.mjs
 var import_fast_glob = __toESM(require_out4(), 1);
-import { readFile as readFile2, stat as stat3 } from "node:fs/promises";
-import path18 from "node:path";
+import { readFile as readFile2, stat as stat4 } from "node:fs/promises";
+import path19 from "node:path";
 var DEFAULT_IGNORES = [
   "**/.git/**",
   "**/node_modules/**",
@@ -64319,11 +64813,11 @@ var SENSITIVE_BASENAMES = [
 ];
 var SENSITIVE_EXTENSIONS = /* @__PURE__ */ new Set([".pem", ".p12", ".pfx", ".key", ".keystore"]);
 function slash(value) {
-  return value.split(path18.sep).join("/");
+  return value.split(path19.sep).join("/");
 }
 async function pathKind(candidate) {
   try {
-    const info = await stat3(candidate);
+    const info = await stat4(candidate);
     if (info.isFile()) return "file";
     if (info.isDirectory()) return "directory";
   } catch {
@@ -64331,8 +64825,8 @@ async function pathKind(candidate) {
   return null;
 }
 function assertNotSensitive(filePath) {
-  const basename3 = path18.basename(filePath);
-  if (SENSITIVE_BASENAMES.some((pattern) => pattern.test(basename3)) || SENSITIVE_EXTENSIONS.has(path18.extname(basename3).toLowerCase())) {
+  const basename3 = path19.basename(filePath);
+  if (SENSITIVE_BASENAMES.some((pattern) => pattern.test(basename3)) || SENSITIVE_EXTENSIONS.has(path19.extname(basename3).toLowerCase())) {
     throw new Error(`Refusing to bundle potentially sensitive file: ${filePath}`);
   }
 }
@@ -64370,10 +64864,10 @@ function languageFor(filePath) {
     ".xml": "xml",
     ".yaml": "yaml",
     ".yml": "yaml"
-  }[path18.extname(filePath).toLowerCase()] ?? "text";
+  }[path19.extname(filePath).toLowerCase()] ?? "text";
 }
 async function resolveFiles(patterns = [], options = {}) {
-  const cwd = path18.resolve(options.cwd ?? process.cwd());
+  const cwd = path19.resolve(options.cwd ?? process.cwd());
   const maxFiles = options.maxFiles ?? 200;
   const includes = [];
   const excludes = [...DEFAULT_IGNORES];
@@ -64385,14 +64879,14 @@ async function resolveFiles(patterns = [], options = {}) {
       excludes.push(slash(value.slice(1)));
       continue;
     }
-    const resolved = path18.resolve(cwd, value);
+    const resolved = path19.resolve(cwd, value);
     const kind = await pathKind(resolved);
     if (kind === "file") {
       literalFiles.push(resolved);
     } else if (kind === "directory") {
       includes.push(`${slash(resolved)}/**/*`);
     } else {
-      includes.push(path18.isAbsolute(value) ? slash(value) : value);
+      includes.push(path19.isAbsolute(value) ? slash(value) : value);
     }
   }
   const globbed = includes.length ? await (0, import_fast_glob.default)(includes, {
@@ -64404,7 +64898,7 @@ async function resolveFiles(patterns = [], options = {}) {
     followSymbolicLinks: false,
     ignore: excludes
   }) : [];
-  const files = Array.from(new Set([...literalFiles, ...globbed].map((file) => path18.resolve(file)))).sort();
+  const files = Array.from(new Set([...literalFiles, ...globbed].map((file) => path19.resolve(file)))).sort();
   if (files.length > maxFiles) {
     throw new Error(`Matched ${files.length} files; the safety limit is ${maxFiles}. Narrow the patterns.`);
   }
@@ -64426,7 +64920,7 @@ async function bundleContext({ prompt, files = [], cwd, maxFileBytes = 1e6, maxT
   let totalChars = sections.join("\n").length;
   for (const filePath of resolved.files) {
     assertNotSensitive(filePath);
-    const info = await stat3(filePath);
+    const info = await stat4(filePath);
     if (info.size > maxFileBytes) {
       throw new Error(`File exceeds the ${maxFileBytes}-byte safety limit: ${filePath}`);
     }
@@ -64436,7 +64930,7 @@ async function bundleContext({ prompt, files = [], cwd, maxFileBytes = 1e6, maxT
       skippedBinary.push(filePath);
       continue;
     }
-    const displayPath = slash(path18.relative(resolved.cwd, filePath) || path18.basename(filePath));
+    const displayPath = slash(path19.relative(resolved.cwd, filePath) || path19.basename(filePath));
     const numbered = text.split(/\r?\n/).map((line, index) => `${index + 1} | ${line}`).join("\n");
     const section = [
       "",
@@ -64467,9 +64961,9 @@ async function bundleContext({ prompt, files = [], cwd, maxFileBytes = 1e6, maxT
 // src/profiles.mjs
 import { execFile as execFile4 } from "node:child_process";
 import { constants as fsConstants2 } from "node:fs";
-import { access as access2, mkdtemp as mkdtemp3, mkdir as mkdir7, readFile as readFile3, rm as rm5, stat as stat4 } from "node:fs/promises";
+import { access as access2, mkdtemp as mkdtemp3, mkdir as mkdir8, readFile as readFile3, rm as rm6, stat as stat5 } from "node:fs/promises";
 import os11 from "node:os";
-import path19 from "node:path";
+import path20 from "node:path";
 import { promisify as promisify4 } from "node:util";
 var execFileAsync4 = promisify4(execFile4);
 var CHATGPT_COOKIE_PREDICATE = `(
@@ -64478,17 +64972,17 @@ var CHATGPT_COOKIE_PREDICATE = `(
 )`;
 function defaultFirefoxRoot() {
   if (process.platform === "darwin") {
-    return path19.join(os11.homedir(), "Library", "Application Support", "Firefox");
+    return path20.join(os11.homedir(), "Library", "Application Support", "Firefox");
   }
   if (process.platform === "win32") {
     const appData = process.env.APPDATA?.trim();
-    return path19.join(appData || path19.join(os11.homedir(), "AppData", "Roaming"), "Mozilla", "Firefox");
+    return path20.join(appData || path20.join(os11.homedir(), "AppData", "Roaming"), "Mozilla", "Firefox");
   }
-  return path19.join(os11.homedir(), ".mozilla", "firefox");
+  return path20.join(os11.homedir(), ".mozilla", "firefox");
 }
 function firefoxProfilesIniPath() {
   const configured = process.env.ORACLE_FIREFOX_PROFILES_INI?.trim();
-  return configured ? path19.resolve(configured) : path19.join(defaultFirefoxRoot(), "profiles.ini");
+  return configured ? path20.resolve(configured) : path20.join(defaultFirefoxRoot(), "profiles.ini");
 }
 function parseIniSections(contents) {
   const sections = [];
@@ -64509,20 +65003,20 @@ function parseIniSections(contents) {
   return sections;
 }
 function parseFirefoxProfilesIni(contents, { rootDirectory } = {}) {
-  const root = path19.resolve(rootDirectory || path19.dirname(firefoxProfilesIniPath()));
+  const root = path20.resolve(rootDirectory || path20.dirname(firefoxProfilesIniPath()));
   const sections = parseIniSections(contents);
   const installDefaults = new Set(
-    sections.filter(({ section }) => section.startsWith("Install")).map(({ values }) => values.Default).filter(Boolean).map((value) => path19.normalize(value))
+    sections.filter(({ section }) => section.startsWith("Install")).map(({ values }) => values.Default).filter(Boolean).map((value) => path20.normalize(value))
   );
   return sections.filter(({ section }) => /^Profile\d+$/u.test(section)).map(({ section, values }) => {
     const configuredPath = values.Path;
     if (!configuredPath) return null;
-    const profilePath = values.IsRelative === "0" ? path19.resolve(configuredPath) : path19.resolve(root, configuredPath);
+    const profilePath = values.IsRelative === "0" ? path20.resolve(configuredPath) : path20.resolve(root, configuredPath);
     return {
       section,
-      name: values.Name || path19.basename(profilePath),
+      name: values.Name || path20.basename(profilePath),
       path: profilePath,
-      isDefault: installDefaults.size > 0 ? installDefaults.has(path19.normalize(configuredPath)) : values.Default === "1"
+      isDefault: installDefaults.size > 0 ? installDefaults.has(path20.normalize(configuredPath)) : values.Default === "1"
     };
   }).filter(Boolean).sort((left2, right2) => Number(right2.isDefault) - Number(left2.isDefault));
 }
@@ -64539,7 +65033,7 @@ async function resolveSqlitePath() {
   const candidates = configured ? [configured] : process.platform === "win32" ? ["sqlite3.exe"] : ["/usr/bin/sqlite3", "/opt/homebrew/bin/sqlite3", "/usr/local/bin/sqlite3", "sqlite3"];
   for (const candidate of candidates) {
     try {
-      if (candidate.includes(path19.sep)) await access2(candidate, fsConstants2.X_OK);
+      if (candidate.includes(path20.sep)) await access2(candidate, fsConstants2.X_OK);
       else await execFileAsync4(candidate, ["--version"], { timeout: 5e3 });
       return candidate;
     } catch {
@@ -64579,11 +65073,11 @@ async function discoverFirefoxProfiles({ profilesIniPath = firefoxProfilesIniPat
     throw error;
   }
   const profiles = parseFirefoxProfilesIni(contents, {
-    rootDirectory: path19.dirname(profilesIniPath)
+    rootDirectory: path20.dirname(profilesIniPath)
   });
   return Promise.all(
     profiles.map(async (profile) => {
-      const cookiesPath = path19.join(profile.path, "cookies.sqlite");
+      const cookiesPath = path20.join(profile.path, "cookies.sqlite");
       return {
         ...profile,
         exists: await pathExists(profile.path),
@@ -64601,20 +65095,20 @@ async function resolveFirefoxProfile(selector, options = {}) {
   if (!selector) {
     return profiles.find((profile) => profile.isDefault && profile.chatGptCookieCount > 0) || profiles.find((profile) => profile.chatGptCookieCount > 0) || profiles.find((profile) => profile.isDefault) || profiles[0];
   }
-  const absoluteSelector = path19.isAbsolute(selector) ? path19.resolve(selector) : null;
+  const absoluteSelector = path20.isAbsolute(selector) ? path20.resolve(selector) : null;
   const selected = profiles.find(
-    (profile) => profile.name === selector || path19.basename(profile.path) === selector || absoluteSelector && profile.path === absoluteSelector
+    (profile) => profile.name === selector || path20.basename(profile.path) === selector || absoluteSelector && profile.path === absoluteSelector
   );
   if (selected) return selected;
   if (absoluteSelector && await pathExists(absoluteSelector)) {
     return {
       section: null,
-      name: path19.basename(absoluteSelector),
+      name: path20.basename(absoluteSelector),
       path: absoluteSelector,
       isDefault: false,
       exists: true,
       active: await isFirefoxProfileActive(absoluteSelector),
-      chatGptCookieCount: await relevantCookieCount(path19.join(absoluteSelector, "cookies.sqlite"))
+      chatGptCookieCount: await relevantCookieCount(path20.join(absoluteSelector, "cookies.sqlite"))
     };
   }
   throw new Error(
@@ -64622,10 +65116,10 @@ async function resolveFirefoxProfile(selector, options = {}) {
   );
 }
 async function isFirefoxProfileActive(profilePath) {
-  const resolved = path19.resolve(profilePath);
+  const resolved = path20.resolve(profilePath);
   if (process.platform === "win32") {
     const lockCandidates = ["parent.lock", ".parentlock", "lock"];
-    return (await Promise.all(lockCandidates.map((name) => pathExists(path19.join(resolved, name))))).some(Boolean);
+    return (await Promise.all(lockCandidates.map((name) => pathExists(path20.join(resolved, name))))).some(Boolean);
   }
   try {
     const { stdout } = await execFileAsync4("ps", ["-axo", "command="], {
@@ -64652,8 +65146,8 @@ async function importChatGptCookies({
   destinationProfileDir,
   sqlitePath
 } = {}) {
-  const source2 = path19.resolve(sourceProfileDir);
-  const destination = path19.resolve(destinationProfileDir);
+  const source2 = path20.resolve(sourceProfileDir);
+  const destination = path20.resolve(destinationProfileDir);
   if (source2 === destination) throw new Error("Source and destination Firefox profiles must differ.");
   if (await isFirefoxProfileActive(source2)) {
     throw new Error(
@@ -64665,8 +65159,8 @@ async function importChatGptCookies({
       `The dedicated Oracle Firefox window is still open. Close the Firefox window using ${destination}, then retry the session import.`
     );
   }
-  const sourceCookies = path19.join(source2, "cookies.sqlite");
-  const destinationCookies = path19.join(destination, "cookies.sqlite");
+  const sourceCookies = path20.join(source2, "cookies.sqlite");
+  const destinationCookies = path20.join(destination, "cookies.sqlite");
   if (!await pathExists(sourceCookies)) {
     throw new Error(`The source Firefox profile has no cookies database: ${sourceCookies}`);
   }
@@ -64676,9 +65170,9 @@ async function importChatGptCookies({
     );
   }
   const executable = sqlitePath || await resolveSqlitePath();
-  const temporaryDirectory = await mkdtemp3(path19.join(os11.tmpdir(), "oracle-firefox-cookie-import-"));
-  await mkdir7(temporaryDirectory, { recursive: true, mode: 448 });
-  const snapshotPath = path19.join(temporaryDirectory, "source-cookies.sqlite");
+  const temporaryDirectory = await mkdtemp3(path20.join(os11.tmpdir(), "oracle-firefox-cookie-import-"));
+  await mkdir8(temporaryDirectory, { recursive: true, mode: 448 });
+  const snapshotPath = path20.join(temporaryDirectory, "source-cookies.sqlite");
   try {
     await runSqlite(sourceCookies, `.backup ${quoteSqlString(snapshotPath)}`, {
       sqlitePath: executable
@@ -64710,25 +65204,25 @@ async function importChatGptCookies({
       domains: ["chatgpt.com", "openai.com"]
     };
   } finally {
-    await rm5(temporaryDirectory, { recursive: true, force: true });
+    await rm6(temporaryDirectory, { recursive: true, force: true });
   }
 }
 
 // src/sessions.mjs
-import { randomUUID as randomUUID3 } from "node:crypto";
-import { chmod as chmod2, mkdir as mkdir8, open as open4, rename as rename3, rm as rm6 } from "node:fs/promises";
-import path20 from "node:path";
+import { randomUUID as randomUUID4 } from "node:crypto";
+import { chmod as chmod3, mkdir as mkdir9, open as open5, rename as rename4, rm as rm7 } from "node:fs/promises";
+import path21 from "node:path";
 async function createSession() {
-  const id = randomUUID3();
-  const directory = path20.join(sessionsDirectory(), id);
-  await mkdir8(directory, { recursive: true, mode: 448 });
-  await chmod2(directory, 448);
+  const id = randomUUID4();
+  const directory = path21.join(sessionsDirectory(), id);
+  await mkdir9(directory, { recursive: true, mode: 448 });
+  await chmod3(directory, 448);
   return { id, directory };
 }
 async function writeSessionFile(session, filename, contents) {
-  const target = path20.join(session.directory, filename);
-  const temporary = path20.join(session.directory, `.${path20.basename(filename)}.${randomUUID3()}.tmp`);
-  const handle = await open4(temporary, "wx", 384);
+  const target = path21.join(session.directory, filename);
+  const temporary = path21.join(session.directory, `.${path21.basename(filename)}.${randomUUID4()}.tmp`);
+  const handle = await open5(temporary, "wx", 384);
   try {
     await handle.writeFile(contents);
     await handle.sync();
@@ -64736,10 +65230,10 @@ async function writeSessionFile(session, filename, contents) {
     await handle.close();
   }
   try {
-    await rename3(temporary, target);
-    await chmod2(target, 384);
+    await rename4(temporary, target);
+    await chmod3(target, 384);
   } catch (error) {
-    await rm6(temporary, { force: true }).catch(() => void 0);
+    await rm7(temporary, { force: true }).catch(() => void 0);
     throw error;
   }
   return target;
@@ -64893,7 +65387,7 @@ function triggerFailpoint(name) {
   process.kill(process.pid, "SIGKILL");
 }
 async function ensureDedicatedProfileInitialized() {
-  const cookiesPath = path21.join(profileDirectory(), "cookies.sqlite");
+  const cookiesPath = path22.join(profileDirectory(), "cookies.sqlite");
   try {
     await access3(cookiesPath);
     return;
@@ -65015,7 +65509,7 @@ async function prepareJobRequest(operation, input2) {
     const finalPrompt = input2.evidenceReply ? prompt : withLocalDataProtocol(prompt);
     context2 = {
       bundle: finalPrompt,
-      cwd: input2.cwd ? path21.resolve(input2.cwd) : process.cwd(),
+      cwd: input2.cwd ? path22.resolve(input2.cwd) : process.cwd(),
       included: [],
       skippedBinary: [],
       characterCount: finalPrompt.length
@@ -65050,7 +65544,7 @@ async function prepareJobRequest(operation, input2) {
   return prepared;
 }
 async function discoverProjects(browserManager, { query = "", headless = false } = {}) {
-  const lease = await browserManager.leasePage(`discovery-projects-${randomUUID4()}`, { discovery: true, headless });
+  const lease = await browserManager.leasePage(`discovery-projects-${randomUUID5()}`, { discovery: true, headless });
   try {
     await requireAuthenticatedPage(lease.page);
     const normalizedQuery = normalizeProjectTitle(query);
@@ -65061,7 +65555,7 @@ async function discoverProjects(browserManager, { query = "", headless = false }
 }
 async function resolveProjectTarget(browserManager, { projectTitle, projectUrl, headless = false } = {}) {
   assertProjectSelector(projectTitle, projectUrl);
-  const lease = await browserManager.leasePage(`resolve-project-${randomUUID4()}`, { discovery: true, headless });
+  const lease = await browserManager.leasePage(`resolve-project-${randomUUID5()}`, { discovery: true, headless });
   try {
     await requireAuthenticatedPage(lease.page);
     return await openProject(lease.page, { title: projectTitle, projectUrl });
@@ -65081,7 +65575,7 @@ async function discoverChats(browserManager, { query, projectTitle, projectUrl, 
   const normalizedQuery = normalizeConversationTitle(query);
   if (!normalizedQuery) throw codedError("QUERY_REQUIRED", "A non-empty chat search query is required.");
   assertProjectSelector(projectTitle, projectUrl);
-  const lease = await browserManager.leasePage(`discovery-chats-${randomUUID4()}`, { discovery: true, headless });
+  const lease = await browserManager.leasePage(`discovery-chats-${randomUUID5()}`, { discovery: true, headless });
   try {
     await requireAuthenticatedPage(lease.page);
     const result = await findChats(lease.page, normalizedQuery, {
@@ -65105,7 +65599,7 @@ async function discoverChats(browserManager, { query, projectTitle, projectUrl, 
 }
 async function writeFinalMetadata(job, result) {
   await writeSessionFile(
-    { id: path21.basename(job.sessionPath), directory: job.sessionPath },
+    { id: path22.basename(job.sessionPath), directory: job.sessionPath },
     "metadata.json",
     `${JSON.stringify(result, null, 2)}
 `
@@ -65129,7 +65623,7 @@ async function monitorSubmittedJob({ job, page, store }) {
 }
 async function finalizeResponse({ job, response, store }) {
   const answer = cleanAssistantText(response.text);
-  const responsePath = await writeSessionFile({ id: path21.basename(job.sessionPath), directory: job.sessionPath }, "response.md", `${answer}
+  const responsePath = await writeSessionFile({ id: path22.basename(job.sessionPath), directory: job.sessionPath }, "response.md", `${answer}
 `);
   triggerFailpoint("after_response_persistence");
   const localDataRequest = parseLocalDataRequest(answer);
@@ -65212,13 +65706,13 @@ async function executeJob({ jobId, store, browserManager, beforeSubmit }) {
     let attachmentManifest = [];
     if (job.request.delivery === "attachment") {
       const attachmentPath = await writeSessionFile(
-        { id: path21.basename(job.sessionPath), directory: job.sessionPath },
+        { id: path22.basename(job.sessionPath), directory: job.sessionPath },
         "oracle-context.md",
         `${authorized}
 `
       );
-      store.transition(job.id, "attachment_processing", { attachmentManifest: [path21.basename(attachmentPath)] });
-      attachmentManifest = [path21.basename(attachmentPath)];
+      store.transition(job.id, "attachment_processing", { attachmentManifest: [path22.basename(attachmentPath)] });
+      attachmentManifest = [path22.basename(attachmentPath)];
       composerPrompt = [
         "Read the attached oracle-context.md before answering.",
         "Follow the [USER] request and ORACLE LOCAL DATA PROTOCOL in that file.",
@@ -65389,7 +65883,7 @@ var Coordinator = class {
     return {
       ready: true,
       protocolVersion: 1,
-      buildVersion: "1.0.0",
+      buildVersion: "1.1.0",
       pid: process.pid,
       startedAt: this.startedAt,
       activeJobs: Array.from(this.active.keys()),
@@ -65409,7 +65903,7 @@ var Coordinator = class {
     if (!(/* @__PURE__ */ new Set(["consult", "continue_chat"])).has(operation)) {
       throw codedError("INVALID_OPERATION", `Unsupported job operation: ${operation}`);
     }
-    const authorizationId = input2.authorizationId || (generatedAuthorization ? randomUUID5() : null);
+    const authorizationId = input2.authorizationId || (generatedAuthorization ? randomUUID6() : null);
     if (!authorizationId || !UUID_PATTERN.test(authorizationId)) {
       throw codedError("AUTHORIZATION_REQUIRED", "authorizationId must be a UUID for asynchronous start tools.");
     }
@@ -65624,11 +66118,11 @@ var Coordinator = class {
   }
   async setEmergencyLock(enabled) {
     if (enabled) {
-      await mkdir9(path22.dirname(emergencyLockPath()), { recursive: true, mode: 448 });
-      const handle = await open5(emergencyLockPath(), "a", 384);
+      await mkdir10(path23.dirname(emergencyLockPath()), { recursive: true, mode: 448 });
+      const handle = await open6(emergencyLockPath(), "a", 384);
       await handle.close();
     } else {
-      await rm7(emergencyLockPath(), { force: true });
+      await rm8(emergencyLockPath(), { force: true });
     }
     return { emergencyLocked: enabled, path: emergencyLockPath() };
   }
@@ -65670,6 +66164,88 @@ var Coordinator = class {
       maxAutomaticEvidenceReplies: parent.maxAutomaticEvidenceReplies
     });
   }
+  async resolveReadOnlyConversation(input2) {
+    if (input2.conversationUrl) {
+      if (input2.chatTitle || input2.projectTitle || input2.projectUrl) {
+        throw codedError("TARGET_CONFLICT", "conversationUrl is sufficient by itself; do not combine it with title or project selectors.");
+      }
+      const conversationUrl = normalizeConversationUrl(input2.conversationUrl);
+      return {
+        chatTitle: null,
+        conversationUrl,
+        projectTitle: null,
+        projectUrl: projectUrlFromConversationUrl(conversationUrl)
+      };
+    }
+    const chatTitle = normalizeConversationTitle(input2.chatTitle);
+    if (!chatTitle) {
+      throw codedError("CHAT_TARGET_REQUIRED", "Provide an exact conversationUrl or chatTitle for artifact discovery.");
+    }
+    const discovered = await discoverChats(this.browserManager, {
+      query: chatTitle,
+      projectTitle: input2.projectTitle,
+      projectUrl: input2.projectUrl,
+      timeoutSeconds: input2.timeoutSeconds ?? 30,
+      headless: input2.headless
+    });
+    const expected = chatTitle.toLocaleLowerCase("en-US");
+    const matches = discovered.chats.filter(
+      (chat) => normalizeConversationTitle(chat.chatTitle).toLocaleLowerCase("en-US") === expected
+    );
+    if (matches.length !== 1) {
+      throw codedError(
+        matches.length > 1 ? "TARGET_AMBIGUOUS" : "TARGET_NOT_FOUND",
+        matches.length > 1 ? `More than one ChatGPT conversation is titled ${JSON.stringify(chatTitle)}. Use conversationUrl.` : `No ChatGPT conversation was found with the exact title ${JSON.stringify(chatTitle)}.`,
+        { details: { candidates: discovered.chats } }
+      );
+    }
+    return {
+      chatTitle: matches[0].chatTitle,
+      conversationUrl: matches[0].conversationUrl,
+      projectTitle: discovered.projectTitle,
+      projectUrl: matches[0].projectUrl || discovered.projectUrl
+    };
+  }
+  async withReadOnlyConversation(input2, callback) {
+    const target = await this.resolveReadOnlyConversation(input2);
+    const lease = await this.browserManager.leasePage(`artifact-${randomUUID6()}`, {
+      discovery: true,
+      headless: Boolean(input2.headless)
+    });
+    try {
+      const opened = await openExistingConversation(lease.page, {
+        conversationUrl: target.conversationUrl,
+        title: target.chatTitle
+      });
+      return await callback(lease.page, {
+        ...target,
+        chatTitle: target.chatTitle || opened.title || null,
+        conversationUrl: opened.url,
+        projectTitle: target.projectTitle || opened.projectTitle || null,
+        projectUrl: target.projectUrl || opened.projectUrl || null
+      });
+    } finally {
+      await this.browserManager.releasePage(lease.jobId);
+    }
+  }
+  async listChatArtifacts(input2) {
+    return this.withReadOnlyConversation(input2, async (page, target) => {
+      const candidates = await listAssistantDownloadCandidates(page, { scope: input2.scope });
+      return { ...target, scope: input2.scope, downloads: publicDownloadCandidates(candidates) };
+    });
+  }
+  async downloadChatArtifact(input2) {
+    return this.browserManager.withDownload(
+      () => this.withReadOnlyConversation(input2, async (page, target) => ({
+        ...target,
+        ...await downloadAssistantArtifact(page, {
+          linkText: input2.linkText,
+          scope: input2.scope,
+          maxBytes: input2.maxBytes
+        })
+      }))
+    );
+  }
   async methods() {
     return {
       "broker.status": () => this.statusAsync(),
@@ -65679,6 +66255,8 @@ var Coordinator = class {
       "workflow.importSession": (params) => this.browserManager.withMaintenance(() => importFirefoxSession(params)),
       "workflow.listProjects": (params) => discoverProjects(this.browserManager, params),
       "workflow.findChats": (params) => discoverChats(this.browserManager, params),
+      "workflow.listChatArtifacts": (params) => this.listChatArtifacts(params),
+      "workflow.downloadChatArtifact": (params) => this.downloadChatArtifact(params),
       "jobs.startConsult": (params) => this.startJob("consult", params),
       "jobs.startContinue": (params) => this.startJob("continue_chat", params),
       "jobs.compatConsult": async (params) => this.waitCompatibility(await this.startJob("consult", params, { generatedAuthorization: !params.authorizationId }), 240),
@@ -65698,9 +66276,9 @@ var Coordinator = class {
 
 // src/protocol.mjs
 import net from "node:net";
-import { randomUUID as randomUUID6, timingSafeEqual } from "node:crypto";
+import { randomUUID as randomUUID7, timingSafeEqual } from "node:crypto";
 var BROKER_PROTOCOL_VERSION = 1;
-var BROKER_BUILD_VERSION = "1.0.0";
+var BROKER_BUILD_VERSION = "1.1.0";
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
@@ -65742,7 +66320,7 @@ function attachRpcServer(socket, { token: token2, methods: methods2, serverInfo:
   socket.setNoDelay(true);
   const send = (value) => socket.write(encodeFrame(value));
   const decoder2 = createFrameDecoder(async (request3) => {
-    const id = request3?.id || randomUUID6();
+    const id = request3?.id || randomUUID7();
     try {
       if (!tokensEqual(request3?.token, token2)) {
         throw codedError("BROKER_UNAUTHORIZED", "Broker authentication failed.");
@@ -65770,7 +66348,7 @@ function attachRpcServer(socket, { token: token2, methods: methods2, serverInfo:
 }
 function rpcRequest(endpoint2, token2, method, params = {}, options = {}) {
   const timeoutMs = Math.max(250, options.timeoutMs ?? 1e4);
-  const id = randomUUID6();
+  const id = randomUUID7();
   return new Promise((resolve7, reject) => {
     const socket = net.createConnection(endpoint2);
     let settled = false;
@@ -65810,10 +66388,10 @@ function rpcRequest(endpoint2, token2, method, params = {}, options = {}) {
 
 // src/broker-client.mjs
 import { randomBytes } from "node:crypto";
-import { chmod as chmod3, mkdir as mkdir10, open as open6, readFile as readFile5, rm as rm8, stat as stat5 } from "node:fs/promises";
+import { chmod as chmod4, mkdir as mkdir11, open as open7, readFile as readFile5, rm as rm9, stat as stat6 } from "node:fs/promises";
 async function ensurePrivateDirectory(directory) {
-  await mkdir10(directory, { recursive: true, mode: 448 });
-  await chmod3(directory, 448);
+  await mkdir11(directory, { recursive: true, mode: 448 });
+  await chmod4(directory, 448);
 }
 async function readOrCreateBrokerToken() {
   await ensurePrivateDirectory(coordinatorDirectory());
@@ -65825,7 +66403,7 @@ async function readOrCreateBrokerToken() {
   }
   const candidate = randomBytes(32).toString("hex");
   try {
-    const handle = await open6(tokenPath, "wx", 384);
+    const handle = await open7(tokenPath, "wx", 384);
     try {
       await handle.writeFile(`${candidate}
 `, "utf8");
@@ -65852,8 +66430,8 @@ async function existingBroker() {
 }
 if (await existingBroker()) process.exit(0);
 if (process.platform !== "win32") {
-  await mkdir11(path23.dirname(endpoint), { recursive: true, mode: 448 });
-  await rm9(endpoint, { force: true });
+  await mkdir12(path24.dirname(endpoint), { recursive: true, mode: 448 });
+  await rm10(endpoint, { force: true });
 }
 var coordinator = await new Coordinator().open();
 var methods = await coordinator.methods();
@@ -65884,7 +66462,7 @@ await new Promise((resolve7, reject) => {
   server.once("error", reject);
   server.listen(endpoint, resolve7);
 });
-if (process.platform !== "win32") await chmod4(endpoint, 384);
+if (process.platform !== "win32") await chmod5(endpoint, 384);
 process.stdout.write(`${(/* @__PURE__ */ new Date()).toISOString()} oracle-firefox broker ready pid=${process.pid}
 `);
 var idleShutdownPoll = setInterval(async () => {
@@ -65902,7 +66480,7 @@ async function shutdown(signal) {
 `);
   await new Promise((resolve7) => server.close(resolve7));
   await coordinator.close();
-  if (process.platform !== "win32") await rm9(endpoint, { force: true }).catch(() => void 0);
+  if (process.platform !== "win32") await rm10(endpoint, { force: true }).catch(() => void 0);
   process.exit(0);
 }
 process.on("SIGTERM", () => void shutdown("SIGTERM"));

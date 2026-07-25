@@ -122,6 +122,6 @@ export async function callBroker(method, params = {}, options = {}) {
   }
   return rpcRequest(brokerEndpoint(), token, method, params, {
     timeoutMs: options.timeoutMs ?? 60_000,
-    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.0.0" },
+    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.1.0" },
   });
 }

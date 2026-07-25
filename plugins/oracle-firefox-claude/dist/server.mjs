@@ -31042,7 +31042,7 @@ function codedError(code, message, options) {
 import net from "node:net";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 var BROKER_PROTOCOL_VERSION = 1;
-var BROKER_BUILD_VERSION = "1.0.0";
+var BROKER_BUILD_VERSION = "1.1.0";
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
@@ -31222,13 +31222,13 @@ async function callBroker(method, params = {}, options = {}) {
   }
   return rpcRequest(brokerEndpoint(), token, method, params, {
     timeoutMs: options.timeoutMs ?? 6e4,
-    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.0.0" }
+    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.1.0" }
   });
 }
 
 // src/server.mjs
 var server = new McpServer(
-  { name: "oracle-firefox", version: "1.0.0" },
+  { name: "oracle-firefox", version: "1.1.0" },
   { capabilities: { logging: {} } }
 );
 var projectFields = {
@@ -31256,6 +31256,14 @@ var continueFields = {
   ...projectFields,
   prompt: external_exports.string().min(1),
   ...executionFields
+};
+var artifactTargetFields = {
+  chatTitle: external_exports.string().optional().describe("Exact chat title; omit when conversationUrl is provided."),
+  conversationUrl: external_exports.string().url().optional().describe("Exact standalone or project ChatGPT conversation URL; sufficient by itself."),
+  ...projectFields,
+  scope: external_exports.enum(["last-assistant", "all-assistant"]).default("last-assistant"),
+  timeoutSeconds: external_exports.number().int().min(5).max(60).default(30),
+  headless: external_exports.boolean().default(false)
 };
 function contentFor(result) {
   const text = result?.answer || JSON.stringify(result, null, 2);
@@ -31316,6 +31324,20 @@ register("find_chats", {
     headless: external_exports.boolean().default(false)
   }
 }, "workflow.findChats", 9e4);
+register("list_chat_artifacts", {
+  title: "List downloadable files in a ChatGPT conversation",
+  description: "Read one exact conversation and list safe ChatGPT-generated file links without exposing signed URLs or sending a message.",
+  inputSchema: artifactTargetFields
+}, "workflow.listChatArtifacts", 12e4);
+register("download_chat_artifact", {
+  title: "Download one exact ChatGPT-generated file",
+  description: "Download one exact assistant link into a private Oracle directory. Rejects ambiguous labels, external URLs, path traversal, oversize files, and overwrites; never sends a message.",
+  inputSchema: {
+    ...artifactTargetFields,
+    linkText: external_exports.string().min(1).describe("Exact visible link text, matched case-insensitively after whitespace normalization."),
+    maxBytes: external_exports.number().int().min(1).max(25e7).default(1e8)
+  }
+}, "workflow.downloadChatArtifact", 3e5);
 register("consult_start", {
   title: "Start a durable ChatGPT consultation",
   description: "Authorize exactly one asynchronous new-chat submission. Returns a durable job receipt immediately.",

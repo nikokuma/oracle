@@ -4,6 +4,7 @@
 
 ### Added
 
+- Oracle Firefox: list and safely download one exact ChatGPT-generated link or behavior-only Download button from an existing standalone or project conversation without sending a message, exposing signed URLs, or reusing output paths; serialize download clicks across agents.
 - Firefox plugin: discover ChatGPT projects and chats, create new consultations inside an exact project, and scope existing-chat continuation to a project while preserving fail-closed target selection.
 - Oracle Firefox 1.0: add a per-user authenticated JSON-RPC broker, WAL SQLite job store, asynchronous start/status/wait/result tools, job-specific CLI watchers, restart recovery, exact-turn reconciliation, quarantines, and private opaque session artifacts.
 - Oracle Firefox: add fail-closed ChatGPT Pro selection and verification, structured `ORACLE_LOCAL_DATA_REQUEST_V1` evidence rounds, and generated self-contained packages for Claude Code, Claudex, and Claude Desktop MCPB.
@@ -15,6 +16,7 @@
 
 ### Fixed
 
+- Oracle Firefox: prefer the exact truncated conversation-title node over concatenated sidebar prompt excerpts when resolving chat targets.
 - Oracle Firefox: replace partial composer-length checks with whole-message semantic equality, remove the blind Enter send fallback, enforce exact attachment readiness, and correlate completion to the exact new user turn.
 - Oracle Firefox: preserve exact fenced-code prompts, survive ChatGPT's long-thread DOM virtualization and duplicate attachment suffixes, recover a broker-owned orphaned Firefox after crashes, serialize trusted keyboard focus across concurrent pages, and classify visible ChatGPT throttling as `ACCOUNT_COOLDOWN` without retrying.
 

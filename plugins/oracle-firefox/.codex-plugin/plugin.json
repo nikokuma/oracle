@@ -1,6 +1,6 @@
 {
   "name": "oracle-firefox",
-  "version": "1.0.0+codex.20260724141659",
+  "version": "1.1.0+codex.20260725035330",
   "description": "Run durable, Pro-verified ChatGPT consultations through one shared Firefox broker from Codex, Claude, Claudex, or Desktop.",
   "author": {
     "name": "nikokuma",
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "Oracle Firefox",
     "shortDescription": "Durable ChatGPT Pro consultation through Firefox.",
-    "longDescription": "Oracle Firefox runs one authenticated Firefox and one durable broker per user. It safely queues standalone, project, and existing-chat messages, verifies Pro before sending, survives client timeouts and broker restarts, and supports structured local-evidence follow-ups.",
+    "longDescription": "Oracle Firefox runs one authenticated Firefox and one durable broker per user. It safely queues standalone, project, and existing-chat messages, verifies Pro before sending, survives client timeouts and broker restarts, supports structured local-evidence follow-ups, and downloads generated files read-only.",
     "developerName": "nikokuma",
     "category": "Developer Tools",
     "capabilities": [
@@ -30,6 +30,7 @@
       "ChatGPT Consultation",
       "ChatGPT Projects",
       "Existing Chat Continuation",
+      "Generated File Downloads",
       "Durable Background Jobs",
       "ChatGPT Pro Verification",
       "Multi-Harness Coordination"
