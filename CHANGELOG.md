@@ -12,6 +12,7 @@
 
 ### Changed
 
+- Oracle Firefox skill: default agent-driven consultations to one authorized response-failure recovery and one harness-appropriate completion handoff unless the user explicitly opts out; keep direct API/CLI defaults conservative.
 - Oracle Firefox: route Codex, CLI, Claude Code, Claudex, and Desktop calls through one broker-owned Firefox process; same-chat writes are FIFO and qualified different-chat concurrency is feature-flagged.
 - Oracle Firefox: compatibility calls wait at most 240 seconds and return a durable pending receipt instead of encouraging a duplicate submission.
 

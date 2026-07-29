@@ -40,7 +40,7 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.2.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.2.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Download and open [`oracle-firefox-1.2.1.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.2.1.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
 ## First login
 
@@ -103,6 +103,8 @@ node plugins/oracle-firefox/dist/cli.mjs result <job-id>
 ```
 
 MCP clients use `consult_start`, `continue_chat_start`, `job_status`, `job_wait`, and `job_result`. The compatibility `consult` and `continue_chat` tools wait at most 240 seconds, then return a pending receipt while the broker continues working.
+
+When an agent uses the bundled Oracle skill, the default is `responseFailurePolicy=retry-once`, recovery-chain following, and one harness-appropriate completion handoff. You do not need to repeat those instructions. Explicit requests such as “do not retry,” “notify me only,” or “no automation” override the skill default. Direct CLI/MCP callers that bypass the skill retain the conservative raw default `responseFailurePolicy=report`.
 
 `job_wait` is event-driven inside the broker; it sleeps until durable job state changes rather than repeatedly checking SQLite. The CLI watcher follows an authorized recovery child automatically and can display one macOS notification. A local watcher uses no model tokens while idle, but it cannot resume a stopped model turn unless its host provides a wake API. Codex currently handles automatic continuation with a task heartbeat scoped to the exact root job; without a heartbeat, use the notification and resume manually.
 

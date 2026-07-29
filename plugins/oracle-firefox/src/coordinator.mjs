@@ -122,7 +122,7 @@ export class Coordinator {
     return {
       ready: true,
       protocolVersion: BROKER_PROTOCOL_VERSION,
-      buildVersion: "1.2.0",
+      buildVersion: "1.2.1",
       pid: process.pid,
       startedAt: this.startedAt,
       activeJobs: Array.from(this.active.keys()),

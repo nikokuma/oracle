@@ -10,7 +10,7 @@
       "source": "./plugins/oracle-firefox-claude",
       "displayName": "Oracle Firefox",
       "description": "Durable ChatGPT Pro consultation, failure recovery, completion waiting, and generated-file downloads through authenticated Firefox.",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "author": {
         "name": "nikokuma",
         "url": "https://github.com/nikokuma"

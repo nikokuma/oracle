@@ -1,7 +1,7 @@
 interface:
   display_name: "Oracle Firefox"
   short_description: "Durable ChatGPT Pro consultation via Firefox"
-  default_prompt: "Use $oracle-firefox to start a durable ChatGPT Pro review and verify the result."
+  default_prompt: "Use $oracle-firefox to run a durable Pro review, retry one confirmed response failure, hand completion back automatically, and verify the result."
 dependencies:
   tools:
     - type: "mcp"

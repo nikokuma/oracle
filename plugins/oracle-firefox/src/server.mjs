@@ -7,7 +7,7 @@ import { callBroker } from "./broker-client.mjs";
 import { structuredError } from "./errors.mjs";
 
 const server = new McpServer(
-  { name: "oracle-firefox", version: "1.2.0" },
+  { name: "oracle-firefox", version: "1.2.1" },
   { capabilities: { logging: {} } },
 );
 

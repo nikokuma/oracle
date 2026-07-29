@@ -64967,7 +64967,7 @@ var StateStore = class extends EventEmitter4 {
 import net from "node:net";
 import { randomUUID as randomUUID5, timingSafeEqual } from "node:crypto";
 var BROKER_PROTOCOL_VERSION = 2;
-var BROKER_BUILD_VERSION = "1.2.0";
+var BROKER_BUILD_VERSION = "1.2.1";
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
@@ -66250,7 +66250,7 @@ var Coordinator = class {
     return {
       ready: true,
       protocolVersion: BROKER_PROTOCOL_VERSION,
-      buildVersion: "1.2.0",
+      buildVersion: "1.2.1",
       pid: process.pid,
       startedAt: this.startedAt,
       activeJobs: Array.from(this.active.keys()),

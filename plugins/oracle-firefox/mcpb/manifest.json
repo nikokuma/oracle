@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "oracle-firefox",
   "display_name": "Oracle Firefox",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Durable ChatGPT Pro consultation, failure recovery, completion waiting, and generated-file downloads through authenticated Firefox.",
   "long_description": "One per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one authenticated Firefox. Jobs are durable, same-chat FIFO, exact-turn correlated, fail closed at the submission boundary, classify terminal response failures, optionally authorize one idempotent recovery continuation, emit private completion records, and request safe local evidence. Existing chats can also be inspected read-only to download one exact ChatGPT-generated file.\n\nThe bundle never contains login cookies. It connects to the user's dedicated local Firefox profile and ChatGPT account.",
   "author": {

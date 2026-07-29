@@ -1,7 +1,7 @@
 {
   "name": "oracle-firefox",
   "displayName": "Oracle Firefox",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Durable ChatGPT Pro consultation, failure recovery, completion waiting, and generated-file downloads through authenticated Firefox.",
   "longDescription": "One per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one authenticated Firefox. Jobs are durable, same-chat FIFO, exact-turn correlated, fail closed at the submission boundary, classify terminal response failures, optionally authorize one idempotent recovery continuation, emit private completion records, and request safe local evidence. Existing chats can also be inspected read-only to download one exact ChatGPT-generated file.",
   "author": {

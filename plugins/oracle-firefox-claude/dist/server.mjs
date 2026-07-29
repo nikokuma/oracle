@@ -31042,7 +31042,7 @@ function codedError(code, message, options) {
 import net from "node:net";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 var BROKER_PROTOCOL_VERSION = 2;
-var BROKER_BUILD_VERSION = "1.2.0";
+var BROKER_BUILD_VERSION = "1.2.1";
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
@@ -31232,13 +31232,13 @@ async function callBroker(method, params = {}, options = {}) {
   }
   return rpcRequest(brokerEndpoint(), token, method, params, {
     timeoutMs: options.timeoutMs ?? 6e4,
-    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.2.0" }
+    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.2.1" }
   });
 }
 
 // src/server.mjs
 var server = new McpServer(
-  { name: "oracle-firefox", version: "1.2.0" },
+  { name: "oracle-firefox", version: "1.2.1" },
   { capabilities: { logging: {} } }
 );
 var projectFields = {

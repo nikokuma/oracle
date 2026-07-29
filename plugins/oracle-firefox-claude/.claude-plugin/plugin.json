@@ -1,7 +1,7 @@
 {
   "name": "oracle-firefox",
   "displayName": "Oracle Firefox",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Durable ChatGPT Pro consultation, failure recovery, completion waiting, and generated-file downloads through authenticated Firefox.",
   "author": {
     "name": "nikokuma",

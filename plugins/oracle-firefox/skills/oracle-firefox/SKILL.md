@@ -7,6 +7,18 @@ description: Get a durable second opinion from ChatGPT Pro through the user's au
 
 Use the Oracle Firefox MCP tools to coordinate one authenticated Firefox and one durable per-user broker across Codex, Claude Code, Claudex, and Claude Desktop.
 
+## Default operating mode
+
+Unless the user explicitly says otherwise, treat a request to use Oracle or ChatGPT Pro as authorization for this complete workflow:
+
+- Start a durable asynchronous job with `modelRequirement: "pro"`.
+- Set `responseFailurePolicy: "retry-once"`, permitting exactly one separately authorized recovery continuation after a positively classified retryable assistant failure.
+- Follow recovery children with `followRetries: true`.
+- Arrange one job-scoped completion handoff appropriate to the current harness instead of repeatedly waking the agent to poll.
+- Retrieve the final result and independently verify it locally.
+
+Honor explicit overrides. “Do not retry,” “report failures,” or equivalent means `responseFailurePolicy: "report"`. “Notify me only” means a local notification without claiming automatic model resumption. “Wait manually” or “no automation” means do not create a heartbeat or background monitor.
+
 ## Start safely
 
 1. Call `doctor` once per task. Stop if Firefox or the broker is not ready.
@@ -30,9 +42,9 @@ For work that may take longer than a normal tool call:
 
 1. Generate a fresh UUID authorization, then call `consult_start` or `continue_chat_start`.
 2. Leave `modelRequirement` as `pro` unless the user explicitly asks to keep the currently selected model.
-3. Keep the returned root `jobId`. One authorization permits at most one Send-button click. Set `responseFailurePolicy: "retry-once"` only when the user has authorized one automatic recovery continuation; it receives a separate deterministic child authorization. Otherwise leave the safe default `report`.
+3. Keep the returned root `jobId`. One authorization permits at most one Send-button click. Use the skill default `responseFailurePolicy: "retry-once"` unless the user opts out; the recovery receives a separate deterministic child authorization. The raw API default remains `report` for callers that bypass this skill.
 4. Prefer one completion handoff over repeated agent polling. `job_wait` sleeps on broker state-change events for at most 55 seconds and follows an authorized recovery child by default. For longer work:
-   - Codex: set `completionMode: "harness"` and create one heartbeat automation attached to the current task when available. It must monitor only the root job id, make no user-facing report while pending, call `job_result` once terminal, then delete itself. Codex heartbeats are scheduled rather than file-triggered, so do not claim zero-token automatic wake-up.
+   - Codex: by default set `completionMode: "harness"` and create one heartbeat automation attached to the current task when available. It must monitor only the root job id, make no user-facing report while pending, call `job_result` once terminal, then delete itself. Codex heartbeats are scheduled rather than file-triggered, so do not claim zero-token automatic wake-up.
    - Claude Code or Claudex: run one job-specific native Monitor/background task or `oracle-firefox watch <job-id> --jsonl`. The local watcher blocks event-first without model tokens and follows the recovery child.
    - Desktop or a harness without an automatic wake API: use `oracle-firefox watch <job-id> --notify`, then call `job_result` after the notification. A local process can notify the user but cannot independently resume a stopped model turn.
 5. A client timeout or pending receipt is not permission to start again. The broker keeps working.
