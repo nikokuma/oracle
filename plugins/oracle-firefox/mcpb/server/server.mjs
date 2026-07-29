@@ -31041,8 +31041,8 @@ function codedError(code, message, options) {
 // src/protocol.mjs
 import net from "node:net";
 import { randomUUID, timingSafeEqual } from "node:crypto";
-var BROKER_PROTOCOL_VERSION = 1;
-var BROKER_BUILD_VERSION = "1.1.0";
+var BROKER_PROTOCOL_VERSION = 2;
+var BROKER_BUILD_VERSION = "1.2.0";
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
@@ -31203,7 +31203,7 @@ async function callBroker(method, params = {}, options = {}) {
   const token = await readOrCreateBrokerToken();
   let status = await brokerResponds(token);
   if (!status) status = await startBrokerDetached();
-  if (status.protocolVersion !== 1) {
+  if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
     const shutdown = await rpcRequest(brokerEndpoint(), token, "broker.shutdownWhenIdle", {}, { timeoutMs: 2e3 }).catch(() => null);
     if (status.outstandingJobs === 0 && shutdown?.accepted) {
       const deadline = Date.now() + 1e4;
@@ -31212,7 +31212,7 @@ async function callBroker(method, params = {}, options = {}) {
       }
       status = await startBrokerDetached();
     }
-    if (status.protocolVersion !== 1) {
+    if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
       throw codedError(
         "BROKER_PROTOCOL_MISMATCH",
         `Running broker protocol ${status.protocolVersion} is incompatible. It will shut down after ${status.outstandingJobs} active job(s) finish; none were killed or resent.`,
@@ -31222,13 +31222,13 @@ async function callBroker(method, params = {}, options = {}) {
   }
   return rpcRequest(brokerEndpoint(), token, method, params, {
     timeoutMs: options.timeoutMs ?? 6e4,
-    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.1.0" }
+    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.2.0" }
   });
 }
 
 // src/server.mjs
 var server = new McpServer(
-  { name: "oracle-firefox", version: "1.1.0" },
+  { name: "oracle-firefox", version: "1.2.0" },
   { capabilities: { logging: {} } }
 );
 var projectFields = {
@@ -31240,6 +31240,8 @@ var executionFields = {
   responseTimeoutSeconds: external_exports.number().int().min(30).max(86400).default(10800),
   attachmentTimeoutSeconds: external_exports.number().int().min(30).max(1800).default(600),
   maxAutomaticEvidenceReplies: external_exports.number().int().min(0).max(3).default(3),
+  responseFailurePolicy: external_exports.enum(["report", "retry-once"]).default("report").describe("Report terminal response failures, or authorize one durable recovery continuation for narrowly classified retryable failures."),
+  completionMode: external_exports.enum(["manual", "notify", "harness"]).default("manual").describe("Record how the caller intends to receive completion; the broker always writes a durable terminal completion record."),
   headless: external_exports.boolean().default(false)
 };
 var consultFields = {
@@ -31340,12 +31342,12 @@ register("download_chat_artifact", {
 }, "workflow.downloadChatArtifact", 3e5);
 register("consult_start", {
   title: "Start a durable ChatGPT consultation",
-  description: "Authorize exactly one asynchronous new-chat submission. Returns a durable job receipt immediately.",
+  description: "Authorize one asynchronous new-chat submission, plus at most one derived recovery continuation only when responseFailurePolicy=retry-once. Returns a durable job receipt immediately.",
   inputSchema: { authorizationId: external_exports.string().uuid(), ...consultFields }
 }, "jobs.startConsult");
 register("continue_chat_start", {
   title: "Start a durable existing-chat continuation",
-  description: "Authorize exactly one asynchronous message to one exact existing conversation. Returns immediately.",
+  description: "Authorize one asynchronous message to one exact conversation, plus at most one derived recovery continuation only when responseFailurePolicy=retry-once. Returns immediately.",
   inputSchema: { authorizationId: external_exports.string().uuid(), ...continueFields }
 }, "jobs.startContinue");
 register("consult", {
@@ -31358,7 +31360,7 @@ register("consult", {
 }));
 register("continue_chat", {
   title: "Continue an existing ChatGPT conversation",
-  description: "Compatibility tool: sends at most one message, waits up to 240 seconds, then returns the result or a non-error pending receipt.",
+  description: "Compatibility tool: starts one durable continuation, waits up to 240 seconds, then returns the result or a non-error pending receipt. A derived recovery send occurs only when explicitly requested.",
   inputSchema: { authorizationId: external_exports.string().uuid().optional(), ...continueFields }
 }, "jobs.compatContinue", 245e3, (params) => ({
   ...params,
@@ -31367,17 +31369,17 @@ register("continue_chat", {
 register("job_status", {
   title: "Read Oracle Firefox job status",
   description: "Read durable state and recovery guidance without touching Firefox.",
-  inputSchema: { jobId: external_exports.string().uuid() }
+  inputSchema: { jobId: external_exports.string().uuid(), followRetries: external_exports.boolean().default(true) }
 }, "jobs.status");
 register("job_wait", {
   title: "Wait briefly for an Oracle Firefox job",
-  description: "Long-poll one exact job for up to 55 seconds. It never restarts or resubmits the job.",
-  inputSchema: { jobId: external_exports.string().uuid(), timeoutSeconds: external_exports.number().int().min(0).max(55).default(55) }
+  description: "Wait event-first on one logical job for up to 55 seconds, following its explicitly authorized recovery child by default. The waiter never initiates a retry.",
+  inputSchema: { jobId: external_exports.string().uuid(), timeoutSeconds: external_exports.number().int().min(0).max(55).default(55), followRetries: external_exports.boolean().default(true) }
 }, "jobs.wait", 6e4);
 register("job_result", {
   title: "Read an Oracle Firefox job result",
   description: "Return the completed answer, terminal failure, or a pending receipt.",
-  inputSchema: { jobId: external_exports.string().uuid() }
+  inputSchema: { jobId: external_exports.string().uuid(), followRetries: external_exports.boolean().default(true) }
 }, "jobs.result");
 register("list_jobs", {
   title: "List Oracle Firefox jobs",

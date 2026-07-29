@@ -22,6 +22,8 @@ function common(args) {
     responseTimeoutSeconds: number(args, ["--response-timeout-seconds", "--timeout-seconds"], 10800),
     attachmentTimeoutSeconds: number(args, ["--attachment-timeout-seconds"], 600),
     maxAutomaticEvidenceReplies: number(args, ["--max-evidence-replies"], 3),
+    responseFailurePolicy: option(args, ["--response-failure-policy"], "report"),
+    completionMode: option(args, ["--completion-mode"], "manual"),
     headless: bool(args, "--headless"),
   };
 }
@@ -73,8 +75,8 @@ try {
   } else if (command === "continue-chat" || command === "continue-chat-start") {
     const params = { authorizationId: option(args, ["--authorization-id"], command === "continue-chat-start" ? undefined : randomUUID()), chatTitle: option(args, ["--title"]), conversationUrl: option(args, ["--url"]), prompt: option(args, ["-p", "--prompt"]), ...target(args), ...common(args) };
     result = await callBroker(command === "continue-chat" ? "jobs.compatContinue" : "jobs.startContinue", params, { timeoutMs: command === "continue-chat" ? 245000 : 65000, harness: "cli" });
-  } else if (command === "status") result = await callBroker("jobs.status", { jobId: args[0] }, { harness: "cli" });
-  else if (command === "result") result = await callBroker("jobs.result", { jobId: args[0] }, { harness: "cli" });
+  } else if (command === "status") result = await callBroker("jobs.status", { jobId: args[0], followRetries: !bool(args, "--no-follow-retries") }, { harness: "cli" });
+  else if (command === "result") result = await callBroker("jobs.result", { jobId: args[0], followRetries: !bool(args, "--no-follow-retries") }, { harness: "cli" });
   else if (command === "jobs") result = await callBroker("jobs.list", { limit: number(args, ["--limit"], 50) }, { harness: "cli" });
   else if (command === "reconcile") result = await callBroker("jobs.reconcile", { jobId: args[0], conversationUrl: option(args, ["--url"]) }, { timeoutMs: 120000, harness: "cli" });
   else if (command === "acknowledge") result = await callBroker("jobs.acknowledge", { jobId: args[0] }, { harness: "cli" });
@@ -92,7 +94,7 @@ try {
     const jsonl = bool(args, "--jsonl");
     let lastVersion = "";
     for (;;) {
-      result = await callBroker("jobs.wait", { jobId, timeoutSeconds: 55 }, { timeoutMs: 60000, harness: "cli-watch" });
+      result = await callBroker("jobs.wait", { jobId, timeoutSeconds: 55, followRetries: !bool(args, "--no-follow-retries") }, { timeoutMs: 60000, harness: "cli-watch" });
       const key = `${result.state}:${result.updatedAt}`;
       if (jsonl && key !== lastVersion) process.stdout.write(`${JSON.stringify(result)}\n`);
       lastVersion = key;
@@ -100,7 +102,7 @@ try {
     }
     if (bool(args, "--notify")) await notify("Oracle Firefox", `Job ${jobId} ${result.state}`);
   } else {
-    throw new Error("Usage: oracle-firefox doctor|broker-status|profiles|setup|import-session|projects|find-chats|artifacts --url URL|download-artifact --url URL --link-text TEXT|consult|consult-start|continue-chat|continue-chat-start|status <job-id>|result <job-id>|jobs|watch <job-id> [--jsonl|--notify]|reconcile <job-id> [--url URL]|acknowledge <job-id>|cancel <job-id>|reply-local-data <job-id> --facts-json JSON [--unavailable-json JSON]|emergency-lock|emergency-unlock");
+    throw new Error("Usage: oracle-firefox doctor|broker-status|profiles|setup|import-session|projects|find-chats|artifacts --url URL|download-artifact --url URL --link-text TEXT|consult|consult-start|continue-chat|continue-chat-start [--response-failure-policy report|retry-once] [--completion-mode manual|notify|harness]|status <job-id>|result <job-id>|jobs|watch <job-id> [--jsonl|--notify|--no-follow-retries]|reconcile <job-id> [--url URL]|acknowledge <job-id>|cancel <job-id>|reply-local-data <job-id> --facts-json JSON [--unavailable-json JSON]|emergency-lock|emergency-unlock");
   }
   if (command !== "watch" || !bool(args, "--jsonl")) print(result);
 } catch (error) {

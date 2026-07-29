@@ -4,6 +4,7 @@
 
 ### Added
 
+- Oracle Firefox 1.2: classify terminal ChatGPT response failures such as “Stopped reasoning,” optionally authorize one idempotent same-chat recovery continuation, follow recovery chains through status/result/watch APIs, replace broker wait polling with state-change events, and write private atomic completion handoff records for Codex, Claude Code, Claudex, and Desktop notifications.
 - Oracle Firefox: list and safely download one exact ChatGPT-generated link or behavior-only Download button from an existing standalone or project conversation without sending a message, exposing signed URLs, or reusing output paths; serialize download clicks across agents.
 - Firefox plugin: discover ChatGPT projects and chats, create new consultations inside an exact project, and scope existing-chat continuation to a project while preserving fail-closed target selection.
 - Oracle Firefox 1.0: add a per-user authenticated JSON-RPC broker, WAL SQLite job store, asynchronous start/status/wait/result tools, job-specific CLI watchers, restart recovery, exact-turn reconciliation, quarantines, and private opaque session artifacts.

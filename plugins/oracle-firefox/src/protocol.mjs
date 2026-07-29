@@ -2,8 +2,8 @@ import net from "node:net";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { codedError, structuredError } from "./errors.mjs";
 
-export const BROKER_PROTOCOL_VERSION = 1;
-export const BROKER_BUILD_VERSION = "1.1.0";
+export const BROKER_PROTOCOL_VERSION = 2;
+export const BROKER_BUILD_VERSION = "1.2.0";
 const MAX_FRAME_BYTES = 8 * 1024 * 1024;
 
 export function encodeFrame(value) {

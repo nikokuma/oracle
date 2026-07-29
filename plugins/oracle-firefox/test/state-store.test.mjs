@@ -155,3 +155,47 @@ test("every durable crash phase recovers without creating a second submission", 
     }
   });
 });
+
+test("state waiters sleep until a committed change instead of polling", async () => {
+  await withStore(async (store) => {
+    const created = store.createJob(input()).job;
+    const waiting = store.waitForChange(2_000);
+    setTimeout(() => store.transition(created.id, "snapshotted"), 25);
+    const changed = await waiting;
+    assert.equal(changed.id, created.id);
+    assert.equal(changed.state, "snapshotted");
+  });
+});
+
+test("response recovery linkage and retry limits survive a database reopen", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-firefox-state-"));
+  const databasePath = path.join(directory, "state.sqlite");
+  let store = await new StateStore(databasePath).open();
+  try {
+    const root = store.createJob(input({
+      request: { responseFailurePolicy: "retry-once" },
+      maxAutomaticResponseRetries: 1,
+    })).job;
+    const child = store.createJob(input({
+      parentJobId: root.id,
+      rootJobId: root.id,
+      retryAttempt: 1,
+      maxAutomaticResponseRetries: 0,
+    })).job;
+    store.transition(root.id, "response_failed", {
+      replacementJobId: child.id,
+      responseDisposition: "reasoning_stopped",
+      responseFailure: { code: "PRO_REASONING_STOPPED", retryable: true },
+    });
+    store.close();
+    store = await new StateStore(databasePath).open();
+    const reopened = store.requireJob(root.id);
+    assert.equal(reopened.replacementJobId, child.id);
+    assert.equal(reopened.maxAutomaticResponseRetries, 1);
+    assert.equal(store.activeJob(root.id).id, child.id);
+    assert.deepEqual(store.jobChain(root.id).map((job) => job.id), [root.id, child.id]);
+  } finally {
+    store.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});

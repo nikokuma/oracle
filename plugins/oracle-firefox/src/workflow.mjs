@@ -159,6 +159,14 @@ export async function prepareJobRequest(operation, input) {
   if (!Number.isInteger(maxAutomaticEvidenceReplies) || maxAutomaticEvidenceReplies < 0 || maxAutomaticEvidenceReplies > 3) {
     throw codedError("INVALID_EVIDENCE_LIMIT", "maxAutomaticEvidenceReplies must be an integer from 0 to 3.");
   }
+  const responseFailurePolicy = input.responseFailurePolicy ?? "report";
+  if (!new Set(["report", "retry-once"]).has(responseFailurePolicy)) {
+    throw codedError("INVALID_RESPONSE_FAILURE_POLICY", 'responseFailurePolicy must be "report" or "retry-once".');
+  }
+  const completionMode = input.completionMode ?? "manual";
+  if (!new Set(["manual", "notify", "harness"]).has(completionMode)) {
+    throw codedError("INVALID_COMPLETION_MODE", 'completionMode must be "manual", "notify", or "harness".');
+  }
   const prompt = String(input.prompt ?? "").trim();
   if (!prompt) throw codedError("PROMPT_REQUIRED", "A non-empty prompt is required.");
   if (operation === "continue_chat" && !String(input.chatTitle ?? "").trim() && !String(input.conversationUrl ?? "").trim()) {
@@ -202,6 +210,9 @@ export async function prepareJobRequest(operation, input) {
     attachmentTimeoutSeconds,
     modelRequirement,
     maxAutomaticEvidenceReplies,
+    responseFailurePolicy,
+    maxAutomaticResponseRetries: responseFailurePolicy === "retry-once" ? 1 : 0,
+    completionMode,
     includedFiles: context.included.map((entry) => entry.displayPath),
     skippedBinaryFiles: context.skippedBinary,
     bundleCharacters: context.characterCount,
@@ -209,6 +220,8 @@ export async function prepareJobRequest(operation, input) {
     sessionPath: session.directory,
     evidenceReply: Boolean(input.evidenceReply),
     parentJobId: input.parentJobId ?? null,
+    rootJobId: input.rootJobId ?? null,
+    retryAttempt: input.retryAttempt ?? 0,
     evidenceRound: input.evidenceRound ?? 0,
   };
   await writeSessionFile(session, "request.json", `${JSON.stringify(prepared, null, 2)}\n`);
@@ -272,7 +285,7 @@ export async function discoverChats(browserManager, { query, projectTitle, proje
   }
 }
 
-async function writeFinalMetadata(job, result) {
+export async function writeFinalMetadata(job, result) {
   await writeSessionFile(
     { id: path.basename(job.sessionPath), directory: job.sessionPath },
     "metadata.json",
@@ -301,15 +314,61 @@ async function finalizeResponse({ job, response, store }) {
   const answer = cleanAssistantText(response.text);
   const responsePath = await writeSessionFile({ id: path.basename(job.sessionPath), directory: job.sessionPath }, "response.md", `${answer}\n`);
   triggerFailpoint("after_response_persistence");
+  if (response.responseFailure) {
+    const failure = response.responseFailure;
+    const error = {
+      code: failure.code,
+      message: failure.message,
+      jobState: "response_failed_detected",
+      safeToRetry: Boolean(failure.retryable),
+      submissionMayHaveOccurred: true,
+      recoveryAction: failure.retryable
+        ? (job.request.responseFailurePolicy === "retry-once" ? "schedule one authorized recovery continuation" : "report the failed response")
+        : "inspect the reported ChatGPT failure before starting another job",
+      details: { assistantTurnId: failure.assistantTurnId, classifierVersion: failure.classifierVersion },
+    };
+    store.transition(job.id, "response_failed_detected", {
+      assistantDisposition: "response_failed",
+      responseDisposition: failure.disposition,
+      responseFailure: failure,
+      error,
+      recoveryAction: error.recoveryAction,
+    });
+    return {
+      jobId: job.id,
+      rootJobId: job.rootJobId,
+      authorizationId: job.authorizationId,
+      state: "response_failed_detected",
+      status: "response_failed_detected",
+      mode: job.operation === "consult" ? "new-chat" : "continue-chat",
+      projectTitle: job.projectTitle,
+      projectUrl: job.projectUrl,
+      chatTitle: job.chatTitle,
+      conversationUrl: job.conversationUrl,
+      modelEvidence: job.modelEvidence,
+      assistantDisposition: "response_failed",
+      responseDisposition: failure.disposition,
+      responseFailure: failure,
+      responsePath,
+      sessionPath: job.sessionPath,
+      safeToRetry: Boolean(failure.retryable),
+      submissionMayHaveOccurred: true,
+      submissionCount: job.retryAttempt + 1,
+      recoveryAction: error.recoveryAction,
+      error,
+    };
+  }
   const localDataRequest = parseLocalDataRequest(answer);
   const disposition = localDataRequest ? "local_data_request" : "final";
   store.transition(job.id, "response_confirmed", {
     assistantDisposition: disposition,
+    responseDisposition: "completed",
     localDataRequest,
   });
   const completedAt = new Date().toISOString();
   const result = {
     jobId: job.id,
+    rootJobId: job.rootJobId,
     authorizationId: job.authorizationId,
     state: "completed",
     status: "completed",
@@ -320,6 +379,7 @@ async function finalizeResponse({ job, response, store }) {
     conversationUrl: job.conversationUrl,
     modelEvidence: job.modelEvidence,
     assistantDisposition: disposition,
+    responseDisposition: "completed",
     localDataRequest,
     evidenceRound: job.evidenceRound,
     maxAutomaticEvidenceReplies: job.maxAutomaticEvidenceReplies,
@@ -329,6 +389,7 @@ async function finalizeResponse({ job, response, store }) {
     completedAt,
     safeToRetry: false,
     submissionMayHaveOccurred: true,
+    submissionCount: job.retryAttempt + 1,
     recoveryAction: localDataRequest ? "perform approved read-only checks, then call reply_with_local_data" : null,
   };
   store.transition(job.id, "completed", { result, recoveryAction: result.recoveryAction });

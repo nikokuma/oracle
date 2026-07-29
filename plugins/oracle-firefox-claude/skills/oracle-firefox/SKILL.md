@@ -30,11 +30,11 @@ For work that may take longer than a normal tool call:
 
 1. Generate a fresh UUID authorization, then call `consult_start` or `continue_chat_start`.
 2. Leave `modelRequirement` as `pro` unless the user explicitly asks to keep the currently selected model.
-3. Keep the returned `jobId`. One authorization permits at most one automatic submission attempt.
-4. Use `job_wait` for at most 55 seconds per call, or attach a job-specific watcher:
-   - Codex: when task automations or heartbeats are available, monitor only that job id and call only `job_status` or `job_result`.
-   - Claude Code or Claudex: use a job-specific Monitor/background process, or `oracle-firefox watch <job-id> --jsonl`.
-   - Desktop: rely on `--notify` plus `job_status` or `job_result`; do not claim Desktop can wake its model automatically.
+3. Keep the returned root `jobId`. One authorization permits at most one Send-button click. Set `responseFailurePolicy: "retry-once"` only when the user has authorized one automatic recovery continuation; it receives a separate deterministic child authorization. Otherwise leave the safe default `report`.
+4. Prefer one completion handoff over repeated agent polling. `job_wait` sleeps on broker state-change events for at most 55 seconds and follows an authorized recovery child by default. For longer work:
+   - Codex: set `completionMode: "harness"` and create one heartbeat automation attached to the current task when available. It must monitor only the root job id, make no user-facing report while pending, call `job_result` once terminal, then delete itself. Codex heartbeats are scheduled rather than file-triggered, so do not claim zero-token automatic wake-up.
+   - Claude Code or Claudex: run one job-specific native Monitor/background task or `oracle-firefox watch <job-id> --jsonl`. The local watcher blocks event-first without model tokens and follows the recovery child.
+   - Desktop or a harness without an automatic wake API: use `oracle-firefox watch <job-id> --notify`, then call `job_result` after the notification. A local process can notify the user but cannot independently resume a stopped model turn.
 5. A client timeout or pending receipt is not permission to start again. The broker keeps working.
 
 Use compatibility `consult` or `continue_chat` only when a result is likely within 240 seconds. They still create a durable job and return a non-error pending receipt when the wait expires.
@@ -42,12 +42,15 @@ Use compatibility `consult` or `continue_chat` only when a result is likely with
 ## Handle completion and uncertainty
 
 - Read the final answer with `job_result` and independently verify it against local source and tests.
-- Never retry automatically after `submit_intent` or when `submissionMayHaveOccurred` is true.
+- `responseDisposition: "reasoning_stopped"` or `"transient_failure"` means ChatGPT produced a positively classified terminal failure instead of an answer. If `retry-once` was authorized, status/result calls follow the durable recovery child automatically; otherwise report the failure and ask before sending anything else.
+- Never treat ordinary answer prose containing words such as “stopped reasoning” or “something went wrong” as a failure. Oracle requires an exact short terminal message or visible error controls tied to the exact assistant turn.
+- Never replay the original submission after `submit_intent` or when `submissionMayHaveOccurred` is true. The only automatic response recovery is a new, explicitly authorized, one-shot continuation after a positively identified terminal assistant failure.
 - For `SUBMISSION_UNCERTAIN`, call `reconcile_job`. It performs read-only exact-turn matching and never sends.
 - For `ACCOUNT_COOLDOWN`, report that ChatGPT rejected the request, do not retry, and wait for the user to authorize a fresh job after the cooldown. If it happened after `submit_intent`, preserve the conservative uncertain state and reconcile read-only before acknowledging it.
 - If reconciliation cannot prove the turn, ask the user to inspect the reported conversation and session. Use `acknowledge_uncertain` only after that decision.
 - Respect `CONVERSATION_QUARANTINED`; it prevents another write into an unresolved scope.
 - Never click or ask Oracle to click Answer now, regenerate, continue generation, Stop, or clear a user draft.
+- Never manually duplicate a recovery message. `recoveryJobId`, `activeJobId`, and `recoveryChain` identify the one broker-created continuation.
 
 ## Local-evidence rounds
 
@@ -76,5 +79,6 @@ Downloads use a new private directory under `~/.oracle-firefox/downloads/`, refu
 - Never attach secrets. The bundler refuses common env, key, and credential files, but inspect selections too.
 - Attachment processing may legitimately take ten minutes. Do not resubmit while it is loading.
 - The database is authoritative; private request and response artifacts remain under `~/.oracle-firefox/sessions/<uuid>`.
+- Terminal logical jobs also receive an atomic private completion record under the coordinator `completions/` directory. It contains only safe job/result metadata, never prompts, cookies, or answer text.
 - Creating, renaming, or deleting ChatGPT projects is out of scope.
 - Deep Research, image generation, remote Claude.ai control, and network-exposed broker access are out of scope.

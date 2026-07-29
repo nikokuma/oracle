@@ -1,9 +1,9 @@
 {
   "name": "oracle-firefox",
   "displayName": "Oracle Firefox",
-  "version": "1.1.0",
-  "description": "Durable ChatGPT Pro consultation and generated-file downloads through authenticated Firefox.",
-  "longDescription": "One per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one authenticated Firefox. Jobs are durable, same-chat FIFO, exact-turn correlated, fail closed at the submission boundary, and able to request safe local evidence. Existing chats can also be inspected read-only to download one exact ChatGPT-generated file.",
+  "version": "1.2.0",
+  "description": "Durable ChatGPT Pro consultation, failure recovery, completion waiting, and generated-file downloads through authenticated Firefox.",
+  "longDescription": "One per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one authenticated Firefox. Jobs are durable, same-chat FIFO, exact-turn correlated, fail closed at the submission boundary, classify terminal response failures, optionally authorize one idempotent recovery continuation, emit private completion records, and request safe local evidence. Existing chats can also be inspected read-only to download one exact ChatGPT-generated file.",
   "author": {
     "name": "nikokuma",
     "url": "https://github.com/nikokuma"
@@ -26,7 +26,7 @@
     { "name": "consult_start", "description": "Start a durable consultation and return immediately." },
     { "name": "continue_chat_start", "description": "Start a durable existing-chat continuation and return immediately." },
     { "name": "job_status", "description": "Read durable job state." },
-    { "name": "job_wait", "description": "Long-poll one job for up to 55 seconds." },
+    { "name": "job_wait", "description": "Wait event-first on one logical job for up to 55 seconds and follow its recovery child." },
     { "name": "job_result", "description": "Read a completed answer or terminal outcome." },
     { "name": "list_jobs", "description": "List recent durable jobs without prompts." },
     { "name": "reconcile_job", "description": "Read-only reconciliation for an uncertain submission." },

@@ -7,7 +7,7 @@ import { callBroker } from "./broker-client.mjs";
 import { structuredError } from "./errors.mjs";
 
 const server = new McpServer(
-  { name: "oracle-firefox", version: "1.1.0" },
+  { name: "oracle-firefox", version: "1.2.0" },
   { capabilities: { logging: {} } },
 );
 
@@ -20,6 +20,8 @@ const executionFields = {
   responseTimeoutSeconds: z.number().int().min(30).max(86400).default(10800),
   attachmentTimeoutSeconds: z.number().int().min(30).max(1800).default(600),
   maxAutomaticEvidenceReplies: z.number().int().min(0).max(3).default(3),
+  responseFailurePolicy: z.enum(["report", "retry-once"]).default("report").describe("Report terminal response failures, or authorize one durable recovery continuation for narrowly classified retryable failures."),
+  completionMode: z.enum(["manual", "notify", "harness"]).default("manual").describe("Record how the caller intends to receive completion; the broker always writes a durable terminal completion record."),
   headless: z.boolean().default(false),
 };
 const consultFields = {
@@ -132,13 +134,13 @@ register("download_chat_artifact", {
 
 register("consult_start", {
   title: "Start a durable ChatGPT consultation",
-  description: "Authorize exactly one asynchronous new-chat submission. Returns a durable job receipt immediately.",
+  description: "Authorize one asynchronous new-chat submission, plus at most one derived recovery continuation only when responseFailurePolicy=retry-once. Returns a durable job receipt immediately.",
   inputSchema: { authorizationId: z.string().uuid(), ...consultFields },
 }, "jobs.startConsult");
 
 register("continue_chat_start", {
   title: "Start a durable existing-chat continuation",
-  description: "Authorize exactly one asynchronous message to one exact existing conversation. Returns immediately.",
+  description: "Authorize one asynchronous message to one exact conversation, plus at most one derived recovery continuation only when responseFailurePolicy=retry-once. Returns immediately.",
   inputSchema: { authorizationId: z.string().uuid(), ...continueFields },
 }, "jobs.startContinue");
 
@@ -153,7 +155,7 @@ register("consult", {
 
 register("continue_chat", {
   title: "Continue an existing ChatGPT conversation",
-  description: "Compatibility tool: sends at most one message, waits up to 240 seconds, then returns the result or a non-error pending receipt.",
+  description: "Compatibility tool: starts one durable continuation, waits up to 240 seconds, then returns the result or a non-error pending receipt. A derived recovery send occurs only when explicitly requested.",
   inputSchema: { authorizationId: z.string().uuid().optional(), ...continueFields },
 }, "jobs.compatContinue", 245_000, (params) => ({
   ...params,
@@ -163,19 +165,19 @@ register("continue_chat", {
 register("job_status", {
   title: "Read Oracle Firefox job status",
   description: "Read durable state and recovery guidance without touching Firefox.",
-  inputSchema: { jobId: z.string().uuid() },
+  inputSchema: { jobId: z.string().uuid(), followRetries: z.boolean().default(true) },
 }, "jobs.status");
 
 register("job_wait", {
   title: "Wait briefly for an Oracle Firefox job",
-  description: "Long-poll one exact job for up to 55 seconds. It never restarts or resubmits the job.",
-  inputSchema: { jobId: z.string().uuid(), timeoutSeconds: z.number().int().min(0).max(55).default(55) },
+  description: "Wait event-first on one logical job for up to 55 seconds, following its explicitly authorized recovery child by default. The waiter never initiates a retry.",
+  inputSchema: { jobId: z.string().uuid(), timeoutSeconds: z.number().int().min(0).max(55).default(55), followRetries: z.boolean().default(true) },
 }, "jobs.wait", 60_000);
 
 register("job_result", {
   title: "Read an Oracle Firefox job result",
   description: "Return the completed answer, terminal failure, or a pending receipt.",
-  inputSchema: { jobId: z.string().uuid() },
+  inputSchema: { jobId: z.string().uuid(), followRetries: z.boolean().default(true) },
 }, "jobs.result");
 
 register("list_jobs", {

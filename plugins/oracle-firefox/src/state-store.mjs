@@ -1,5 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { createHash, randomUUID } from "node:crypto";
+import { EventEmitter } from "node:events";
 import { chmod, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { coordinatorDatabasePath } from "./config.mjs";
@@ -17,12 +18,14 @@ export const JOB_STATES = Object.freeze([
   "submit_intent",
   "user_turn_confirmed",
   "awaiting_response",
+  "response_failed_detected",
   "response_confirmed",
   "completed",
   "cancelled_pre_submit",
   "failed_pre_submit",
   "submission_uncertain",
   "response_uncertain",
+  "response_failed",
   "quarantined",
 ]);
 
@@ -32,6 +35,7 @@ export const TERMINAL_JOB_STATES = new Set([
   "failed_pre_submit",
   "submission_uncertain",
   "response_uncertain",
+  "response_failed",
   "quarantined",
 ]);
 
@@ -72,6 +76,8 @@ function rowToJob(row) {
     attachmentManifest: parse(row.attachment_manifest_json) ?? [],
     modelEvidence: parse(row.model_evidence_json),
     assistantDisposition: row.assistant_disposition,
+    responseDisposition: row.response_disposition,
+    responseFailure: parse(row.response_failure_json),
     localDataRequest: parse(row.local_data_request_json),
     evidenceRound: row.evidence_round,
     maxAutomaticEvidenceReplies: row.max_evidence_replies,
@@ -80,6 +86,11 @@ function rowToJob(row) {
     result: parse(row.result_json),
     error: parse(row.error_json),
     recoveryAction: row.recovery_action,
+    parentJobId: row.parent_job_id,
+    rootJobId: row.root_job_id || row.id,
+    replacementJobId: row.replacement_job_id,
+    retryAttempt: row.retry_attempt ?? 0,
+    maxAutomaticResponseRetries: row.max_response_retries ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     startedAt: row.started_at,
@@ -104,8 +115,9 @@ export function requestDigest(request) {
   return createHash("sha256").update(JSON.stringify(canonicalize(request))).digest("hex");
 }
 
-export class StateStore {
+export class StateStore extends EventEmitter {
   constructor(databasePath = coordinatorDatabasePath()) {
+    super();
     this.databasePath = databasePath;
     this.db = null;
   }
@@ -145,6 +157,8 @@ export class StateStore {
         attachment_manifest_json TEXT,
         model_evidence_json TEXT,
         assistant_disposition TEXT,
+        response_disposition TEXT,
+        response_failure_json TEXT,
         local_data_request_json TEXT,
         evidence_round INTEGER NOT NULL DEFAULT 0,
         max_evidence_replies INTEGER NOT NULL DEFAULT 3,
@@ -153,6 +167,11 @@ export class StateStore {
         result_json TEXT,
         error_json TEXT,
         recovery_action TEXT,
+        parent_job_id TEXT,
+        root_job_id TEXT,
+        replacement_job_id TEXT,
+        retry_attempt INTEGER NOT NULL DEFAULT 0,
+        max_response_retries INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         started_at TEXT,
@@ -185,6 +204,21 @@ export class StateStore {
     }
     this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (2, ?)")
       .run(new Date().toISOString());
+    const durableColumns = [
+      ["response_disposition", "TEXT"],
+      ["response_failure_json", "TEXT"],
+      ["parent_job_id", "TEXT"],
+      ["root_job_id", "TEXT"],
+      ["replacement_job_id", "TEXT"],
+      ["retry_attempt", "INTEGER NOT NULL DEFAULT 0"],
+      ["max_response_retries", "INTEGER NOT NULL DEFAULT 0"],
+    ];
+    for (const [name, definition] of durableColumns) {
+      if (!jobColumns.has(name)) this.db.exec(`ALTER TABLE jobs ADD COLUMN ${name} ${definition}`);
+    }
+    this.db.exec("UPDATE jobs SET root_job_id = id WHERE root_job_id IS NULL");
+    this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (3, ?)")
+      .run(new Date().toISOString());
   }
 
   close() {
@@ -207,7 +241,7 @@ export class StateStore {
   createJob(input) {
     const now = new Date().toISOString();
     const digest = input.requestDigest || requestDigest(input.request);
-    return this.transaction(() => {
+    const created = this.transaction(() => {
       const existing = this.db.prepare("SELECT * FROM jobs WHERE authorization_id = ?").get(input.authorizationId);
       if (existing) {
         if (existing.request_digest !== digest) {
@@ -230,12 +264,14 @@ export class StateStore {
         );
       }
       const id = input.id || randomUUID();
+      const rootJobId = input.rootJobId || id;
       this.db.prepare(`
         INSERT INTO jobs (
           id, authorization_id, operation, state, request_json, request_digest,
           conversation_key, canonical_url, project_title, project_url, chat_title,
-          session_path, evidence_round, max_evidence_replies, created_at, updated_at
-        ) VALUES (?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          session_path, evidence_round, max_evidence_replies, parent_job_id, root_job_id,
+          retry_attempt, max_response_retries, created_at, updated_at
+        ) VALUES (?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         id,
         input.authorizationId,
@@ -250,6 +286,10 @@ export class StateStore {
         input.sessionPath,
         input.evidenceRound ?? 0,
         input.maxAutomaticEvidenceReplies ?? 3,
+        input.parentJobId ?? null,
+        rootJobId,
+        input.retryAttempt ?? 0,
+        input.maxAutomaticResponseRetries ?? 0,
         now,
         now,
       );
@@ -257,6 +297,8 @@ export class StateStore {
         .run(id, json({ operation: input.operation }), now);
       return { job: this.getJob(id), idempotent: false };
     });
+    if (!created.idempotent) this.emit("change", created.job);
+    return created;
   }
 
   getJob(id) {
@@ -287,6 +329,13 @@ export class StateStore {
     return this.db.prepare("SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?").all(capped).map(rowToJob);
   }
 
+  allRootJobIds() {
+    return this.db
+      .prepare("SELECT DISTINCT COALESCE(root_job_id, id) root_job_id FROM jobs")
+      .all()
+      .map((row) => row.root_job_id);
+  }
+
   queuedJobs() {
     return this.db.prepare("SELECT * FROM jobs WHERE state = 'queued' ORDER BY created_at ASC").all().map(rowToJob);
   }
@@ -299,7 +348,7 @@ export class StateStore {
 
   transition(id, nextState, patch = {}, details = null) {
     if (!STATE_INDEX.has(nextState)) throw new Error(`Unknown job state: ${nextState}`);
-    return this.transaction(() => {
+    const transitioned = this.transaction(() => {
       const current = this.requireJob(id);
       if (TERMINAL_JOB_STATES.has(current.state) && current.state !== nextState) {
         throw codedError("JOB_TERMINAL", `Job ${id} is already terminal in state ${current.state}.`);
@@ -314,10 +363,12 @@ export class StateStore {
         "submit_intent",
         "user_turn_confirmed",
         "awaiting_response",
+        "response_failed_detected",
         "response_confirmed",
         "completed",
         "submission_uncertain",
         "response_uncertain",
+        "response_failed",
         "quarantined",
       ]).has(nextState);
       const submitted = definitelyPostSubmit || current.submissionMayHaveOccurred;
@@ -335,15 +386,18 @@ export class StateStore {
         attachmentManifest: "attachment_manifest_json",
         modelEvidence: "model_evidence_json",
         assistantDisposition: "assistant_disposition",
+        responseDisposition: "response_disposition",
+        responseFailure: "response_failure_json",
         localDataRequest: "local_data_request_json",
         result: "result_json",
         error: "error_json",
         recoveryAction: "recovery_action",
+        replacementJobId: "replacement_job_id",
       };
       for (const [key, column] of Object.entries(columns)) {
         if (!(key in patch)) continue;
         assignments.push(`${column} = ?`);
-        values.push(["attachmentManifest", "modelEvidence", "localDataRequest", "result", "error"].includes(key) ? json(patch[key]) : patch[key]);
+        values.push(["attachmentManifest", "modelEvidence", "responseFailure", "localDataRequest", "result", "error"].includes(key) ? json(patch[key]) : patch[key]);
       }
       if (nextState === "page_leased" && !current.startedAt) {
         assignments.push("started_at = ?");
@@ -363,6 +417,8 @@ export class StateStore {
         .run(id, nextState, json(details ?? patch), now);
       return this.getJob(id);
     });
+    this.emit("change", transitioned);
+    return transitioned;
   }
 
   markFailure(id, error) {
@@ -426,7 +482,41 @@ export class StateStore {
       this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)")
         .run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
     });
-    return this.requireJob(jobId);
+    const reopened = this.requireJob(jobId);
+    this.emit("change", reopened);
+    return reopened;
+  }
+
+  jobChain(jobId) {
+    const chain = [];
+    const seen = new Set();
+    let job = this.requireJob(jobId);
+    while (job && !seen.has(job.id)) {
+      chain.push(job);
+      seen.add(job.id);
+      job = job.replacementJobId ? this.getJob(job.replacementJobId) : null;
+    }
+    return chain;
+  }
+
+  activeJob(jobId) {
+    return this.jobChain(jobId).at(-1);
+  }
+
+  waitForChange(timeoutMs) {
+    const bounded = Math.max(0, Number(timeoutMs) || 0);
+    if (bounded === 0) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      let timer;
+      const finish = (job) => {
+        clearTimeout(timer);
+        this.off("change", finish);
+        resolve(job ?? null);
+      };
+      this.on("change", finish);
+      timer = setTimeout(() => finish(null), bounded);
+      timer.unref?.();
+    });
   }
 
   eventsAfter(jobId, sequence = 0) {

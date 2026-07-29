@@ -6,6 +6,7 @@ import path from "node:path";
 import {
   attachmentManifestKey,
   assistantSnapshot,
+  classifyAssistantResponseFailure,
   inspectComposerState,
   insertComposerText,
   launchFirefox,
@@ -251,4 +252,46 @@ test("classifies a terminal ChatGPT throttle response as account cooldown", asyn
       (error) => error.code === "ACCOUNT_COOLDOWN" && error.submissionMayHaveOccurred === true,
     );
   });
+});
+
+test("classifies a stable Stopped reasoning turn as a retryable response failure", async () => {
+  await withPage(`
+    <main>
+      <article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="submitted-user"><div data-message-content>authorized prompt</div></article>
+      <article data-testid="conversation-turn-2" data-message-author-role="assistant" data-message-id="stopped-assistant"><div class="markdown">Stopped reasoning</div><button>Try again</button></article>
+    </main>
+  `, async (page) => {
+    const response = await waitForAssistantAfterTurn(
+      page,
+      { id: "submitted-user", hash: "unused" },
+      { timeoutMs: 4_000, stableMs: 100 },
+    );
+    assert.equal(response.responseFailure.code, "PRO_REASONING_STOPPED");
+    assert.equal(response.responseFailure.disposition, "reasoning_stopped");
+    assert.equal(response.responseFailure.retryable, true);
+    assert.deepEqual(response.responseFailure.visibleErrorControls, ["Try again"]);
+  });
+});
+
+test("does not mistake normal prose mentioning stopped reasoning for a failed response", () => {
+  assert.equal(classifyAssistantResponseFailure({
+    id: "normal-assistant",
+    text: "I stopped reasoning about the discarded option and completed the requested analysis.",
+    errorIndicators: [],
+  }), null);
+});
+
+test("classifies a visible generation error but never marks it retryable from prose alone", () => {
+  const failure = classifyAssistantResponseFailure({
+    id: "error-assistant",
+    text: "Something went wrong while generating the response.",
+    errorIndicators: ["Try again"],
+  });
+  assert.equal(failure.code, "CHATGPT_TRANSIENT_FAILURE");
+  assert.equal(failure.retryable, true);
+  assert.equal(classifyAssistantResponseFailure({
+    id: "prose-assistant",
+    text: "Something went wrong in the old implementation, so here is the corrected plan with all requested details.",
+    errorIndicators: [],
+  }), null);
 });

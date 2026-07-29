@@ -11,7 +11,7 @@ import {
   coordinatorLogPath,
 } from "./config.mjs";
 import { codedError } from "./errors.mjs";
-import { rpcRequest } from "./protocol.mjs";
+import { BROKER_PROTOCOL_VERSION, rpcRequest } from "./protocol.mjs";
 
 async function ensurePrivateDirectory(directory) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -103,7 +103,7 @@ export async function callBroker(method, params = {}, options = {}) {
   const token = await readOrCreateBrokerToken();
   let status = await brokerResponds(token);
   if (!status) status = await startBrokerDetached();
-  if (status.protocolVersion !== 1) {
+  if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
     const shutdown = await rpcRequest(brokerEndpoint(), token, "broker.shutdownWhenIdle", {}, { timeoutMs: 2_000 }).catch(() => null);
     if (status.outstandingJobs === 0 && shutdown?.accepted) {
       const deadline = Date.now() + 10_000;
@@ -112,7 +112,7 @@ export async function callBroker(method, params = {}, options = {}) {
       }
       status = await startBrokerDetached();
     }
-    if (status.protocolVersion !== 1) {
+    if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
       throw codedError(
         "BROKER_PROTOCOL_MISMATCH",
         `Running broker protocol ${status.protocolVersion} is incompatible. It will shut down after ${status.outstandingJobs} active job(s) finish; none were killed or resent.`,
@@ -122,6 +122,6 @@ export async function callBroker(method, params = {}, options = {}) {
   }
   return rpcRequest(brokerEndpoint(), token, method, params, {
     timeoutMs: options.timeoutMs ?? 60_000,
-    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.1.0" },
+    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.2.0" },
   });
 }

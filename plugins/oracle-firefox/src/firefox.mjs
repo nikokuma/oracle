@@ -33,6 +33,57 @@ export function semanticTextHash(value) {
   return createHash("sha256").update(normalizeSemanticText(value)).digest("hex");
 }
 
+export function classifyAssistantResponseFailure(assistant) {
+  if (!assistant) return null;
+  const text = normalizeSemanticText(assistant.text).replace(/^ChatGPT said:\s*/iu, "");
+  const compact = text.replace(/\s+/gu, " ").trim();
+  const controls = [...new Set((assistant.errorIndicators ?? []).map((value) => normalizeSemanticText(value)).filter(Boolean))];
+  const hasErrorUi = controls.length > 0;
+  const exactStopped = /^(?:stopped reasoning|reasoning stopped|response stopped)[.!]?(?:\s+(?:retry|try again))?$/iu.test(compact);
+  const transientPattern = /(?:something went wrong(?: while generating the response)?|there was an error generating (?:a|the) response|network error|failed to generate (?:a|the) response|unable to generate (?:a|the) response)/iu;
+  const exactTransient = new RegExp(`^(?:${transientPattern.source})[.!]?(?:\\s+(?:retry|try again))?$`, "iu").test(compact);
+  const authPattern = /(?:session expired|sign in to continue|authentication required)/iu;
+  const unavailablePattern = /(?:selected model|chatgpt pro|pro model).*(?:unavailable|not available)|model is (?:currently )?unavailable/iu;
+  let failure = null;
+  if (exactStopped || (hasErrorUi && /stopped reasoning/iu.test(compact))) {
+    failure = {
+      code: "PRO_REASONING_STOPPED",
+      disposition: "reasoning_stopped",
+      retryable: true,
+      message: "ChatGPT Pro stopped reasoning before producing a complete answer.",
+    };
+  } else if (exactTransient || (hasErrorUi && transientPattern.test(compact))) {
+    failure = {
+      code: "CHATGPT_TRANSIENT_FAILURE",
+      disposition: "transient_failure",
+      retryable: true,
+      message: "ChatGPT reported a terminal response-generation failure.",
+    };
+  } else if (hasErrorUi && authPattern.test(compact)) {
+    failure = {
+      code: "CHATGPT_AUTH_FAILURE",
+      disposition: "auth_failure",
+      retryable: false,
+      message: "ChatGPT reported an authentication failure while producing the response.",
+    };
+  } else if (hasErrorUi && unavailablePattern.test(compact)) {
+    failure = {
+      code: "CHATGPT_MODEL_UNAVAILABLE",
+      disposition: "model_unavailable",
+      retryable: false,
+      message: "ChatGPT reported that the required model was unavailable.",
+    };
+  }
+  if (!failure) return null;
+  return {
+    ...failure,
+    classifierVersion: 1,
+    assistantTurnId: assistant.id || null,
+    normalizedText: compact,
+    visibleErrorControls: controls,
+  };
+}
+
 export function attachmentManifestKey(values = []) {
   return [...values]
     .map((value) => String(value).trim().replace(/\(\d+\)(?=\.[^.]+$)/u, ""))
@@ -1091,12 +1142,24 @@ export async function assistantSnapshot(page) {
             const match = value.match(/([^/\\\n]+\.[a-z0-9]{1,12})/iu);
             return match ? [match[1].trim()] : [];
           });
+        const errorIndicators = Array.from(turn.querySelectorAll('[role="alert"], [data-testid*="error"], button'))
+          .filter((node) => {
+            if (!visible(node)) return false;
+            if (node.matches('[role="alert"], [data-testid*="error"]')) return true;
+            const label = String(node.getAttribute("aria-label") || node.textContent || "")
+              .replace(/\s+/gu, " ")
+              .trim();
+            return /^(?:retry|try again|regenerate|report)$/iu.test(label);
+          })
+          .map((node) => String(node.getAttribute("aria-label") || node.textContent || "").replace(/\s+/gu, " ").trim())
+          .filter(Boolean);
         orderedTurns.push({
           role: explicitRole,
           id,
           text,
           html: turn.innerHTML || "",
           attachments,
+          errorIndicators,
           completionVisible: explicitRole === "assistant" && Boolean(turn.querySelector(finishedSelector)),
         });
       }
@@ -1279,13 +1342,14 @@ export async function waitForAssistantAfterTurn(
     const assistant = userIndex >= 0
       ? snapshot.turns.slice(userIndex + 1).find((turn) => turn.role === "assistant")
       : null;
+    const responseFailure = classifyAssistantResponseFailure(assistant);
     const key = assistant ? `${assistant.id || ""}:${semanticTextHash(assistant.text)}` : "";
     if (key !== lastKey) {
       lastKey = key;
       stableSince = Date.now();
       terminalCycles = 0;
     }
-    const terminal = assistant && !isPlaceholder(assistant.text) && assistant.completionVisible && !snapshot.stopVisible;
+    const terminal = assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure) && !snapshot.stopVisible;
     if (terminal) {
       terminalCycles += 1;
       if (terminalCycles >= 3 && Date.now() - stableSince >= stableMs) {
@@ -1295,7 +1359,7 @@ export async function waitForAssistantAfterTurn(
             recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
           });
         }
-        return { ...snapshot, assistantTurn: assistant, text: assistant.text, html: assistant.html };
+        return { ...snapshot, assistantTurn: assistant, text: assistant.text, html: assistant.html, responseFailure };
       }
     } else {
       terminalCycles = 0;

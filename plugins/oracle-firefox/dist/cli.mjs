@@ -72,8 +72,8 @@ function codedError(code, message, options) {
 // src/protocol.mjs
 import net from "node:net";
 import { randomUUID, timingSafeEqual } from "node:crypto";
-var BROKER_PROTOCOL_VERSION = 1;
-var BROKER_BUILD_VERSION = "1.1.0";
+var BROKER_PROTOCOL_VERSION = 2;
+var BROKER_BUILD_VERSION = "1.2.0";
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
@@ -234,7 +234,7 @@ async function callBroker(method, params = {}, options = {}) {
   const token = await readOrCreateBrokerToken();
   let status = await brokerResponds(token);
   if (!status) status = await startBrokerDetached();
-  if (status.protocolVersion !== 1) {
+  if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
     const shutdown = await rpcRequest(brokerEndpoint(), token, "broker.shutdownWhenIdle", {}, { timeoutMs: 2e3 }).catch(() => null);
     if (status.outstandingJobs === 0 && shutdown?.accepted) {
       const deadline = Date.now() + 1e4;
@@ -243,7 +243,7 @@ async function callBroker(method, params = {}, options = {}) {
       }
       status = await startBrokerDetached();
     }
-    if (status.protocolVersion !== 1) {
+    if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
       throw codedError(
         "BROKER_PROTOCOL_MISMATCH",
         `Running broker protocol ${status.protocolVersion} is incompatible. It will shut down after ${status.outstandingJobs} active job(s) finish; none were killed or resent.`,
@@ -253,7 +253,7 @@ async function callBroker(method, params = {}, options = {}) {
   }
   return rpcRequest(brokerEndpoint(), token, method, params, {
     timeoutMs: options.timeoutMs ?? 6e4,
-    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.1.0" }
+    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.2.0" }
   });
 }
 
@@ -281,6 +281,8 @@ function common(args2) {
     responseTimeoutSeconds: number(args2, ["--response-timeout-seconds", "--timeout-seconds"], 10800),
     attachmentTimeoutSeconds: number(args2, ["--attachment-timeout-seconds"], 600),
     maxAutomaticEvidenceReplies: number(args2, ["--max-evidence-replies"], 3),
+    responseFailurePolicy: option(args2, ["--response-failure-policy"], "report"),
+    completionMode: option(args2, ["--completion-mode"], "manual"),
     headless: bool(args2, "--headless")
   };
 }
@@ -333,8 +335,8 @@ try {
   } else if (command === "continue-chat" || command === "continue-chat-start") {
     const params = { authorizationId: option(args, ["--authorization-id"], command === "continue-chat-start" ? void 0 : randomUUID2()), chatTitle: option(args, ["--title"]), conversationUrl: option(args, ["--url"]), prompt: option(args, ["-p", "--prompt"]), ...target(args), ...common(args) };
     result = await callBroker(command === "continue-chat" ? "jobs.compatContinue" : "jobs.startContinue", params, { timeoutMs: command === "continue-chat" ? 245e3 : 65e3, harness: "cli" });
-  } else if (command === "status") result = await callBroker("jobs.status", { jobId: args[0] }, { harness: "cli" });
-  else if (command === "result") result = await callBroker("jobs.result", { jobId: args[0] }, { harness: "cli" });
+  } else if (command === "status") result = await callBroker("jobs.status", { jobId: args[0], followRetries: !bool(args, "--no-follow-retries") }, { harness: "cli" });
+  else if (command === "result") result = await callBroker("jobs.result", { jobId: args[0], followRetries: !bool(args, "--no-follow-retries") }, { harness: "cli" });
   else if (command === "jobs") result = await callBroker("jobs.list", { limit: number(args, ["--limit"], 50) }, { harness: "cli" });
   else if (command === "reconcile") result = await callBroker("jobs.reconcile", { jobId: args[0], conversationUrl: option(args, ["--url"]) }, { timeoutMs: 12e4, harness: "cli" });
   else if (command === "acknowledge") result = await callBroker("jobs.acknowledge", { jobId: args[0] }, { harness: "cli" });
@@ -352,7 +354,7 @@ try {
     const jsonl = bool(args, "--jsonl");
     let lastVersion = "";
     for (; ; ) {
-      result = await callBroker("jobs.wait", { jobId, timeoutSeconds: 55 }, { timeoutMs: 6e4, harness: "cli-watch" });
+      result = await callBroker("jobs.wait", { jobId, timeoutSeconds: 55, followRetries: !bool(args, "--no-follow-retries") }, { timeoutMs: 6e4, harness: "cli-watch" });
       const key = `${result.state}:${result.updatedAt}`;
       if (jsonl && key !== lastVersion) process.stdout.write(`${JSON.stringify(result)}
 `);
@@ -361,7 +363,7 @@ try {
     }
     if (bool(args, "--notify")) await notify("Oracle Firefox", `Job ${jobId} ${result.state}`);
   } else {
-    throw new Error("Usage: oracle-firefox doctor|broker-status|profiles|setup|import-session|projects|find-chats|artifacts --url URL|download-artifact --url URL --link-text TEXT|consult|consult-start|continue-chat|continue-chat-start|status <job-id>|result <job-id>|jobs|watch <job-id> [--jsonl|--notify]|reconcile <job-id> [--url URL]|acknowledge <job-id>|cancel <job-id>|reply-local-data <job-id> --facts-json JSON [--unavailable-json JSON]|emergency-lock|emergency-unlock");
+    throw new Error("Usage: oracle-firefox doctor|broker-status|profiles|setup|import-session|projects|find-chats|artifacts --url URL|download-artifact --url URL --link-text TEXT|consult|consult-start|continue-chat|continue-chat-start [--response-failure-policy report|retry-once] [--completion-mode manual|notify|harness]|status <job-id>|result <job-id>|jobs|watch <job-id> [--jsonl|--notify|--no-follow-retries]|reconcile <job-id> [--url URL]|acknowledge <job-id>|cancel <job-id>|reply-local-data <job-id> --facts-json JSON [--unavailable-json JSON]|emergency-lock|emergency-unlock");
   }
   if (command !== "watch" || !bool(args, "--jsonl")) print(result);
 } catch (error) {

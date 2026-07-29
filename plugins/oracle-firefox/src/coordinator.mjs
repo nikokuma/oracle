@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { access, mkdir, open, rm } from "node:fs/promises";
 import path from "node:path";
 import { BrowserManager } from "./browser-manager.mjs";
+import { completionRecordPath, removeCompletionRecord, writeCompletionRecord } from "./completion-records.mjs";
 import { emergencyLockPath } from "./config.mjs";
 import {
   downloadAssistantArtifact,
@@ -12,10 +13,12 @@ import { codedError, structuredError } from "./errors.mjs";
 import {
   buildLocalDataReply,
   deriveEvidenceAuthorizationId,
+  deriveResponseRecoveryAuthorizationId,
   scanEvidenceForSecrets,
 } from "./evidence.mjs";
 import { attachmentManifestKey, assistantSnapshot, normalizeConversationTitle, normalizeConversationUrl, openExistingConversation, projectUrlFromConversationUrl, semanticTextHash } from "./firefox.mjs";
 import { requestDigest, StateStore, TERMINAL_JOB_STATES } from "./state-store.mjs";
+import { BROKER_PROTOCOL_VERSION } from "./protocol.mjs";
 import {
   conversationKeyFor,
   discoverChats,
@@ -27,11 +30,12 @@ import {
   resolveProjectTarget,
   setupLogin,
   doctor,
+  writeFinalMetadata,
 } from "./workflow.mjs";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
-function publicJob(job) {
+function publicJob(job, extras = {}) {
   if (!job) return null;
   return {
     jobId: job.id,
@@ -47,15 +51,25 @@ function publicJob(job) {
     chatTitle: job.chatTitle,
     conversationUrl: job.conversationUrl,
     assistantDisposition: job.assistantDisposition,
+    responseDisposition: job.responseDisposition,
+    responseFailure: job.responseFailure,
     localDataRequest: job.localDataRequest,
     evidenceRound: job.evidenceRound,
     maxAutomaticEvidenceReplies: job.maxAutomaticEvidenceReplies,
     sessionPath: job.sessionPath,
     error: job.error,
     recoveryAction: job.recoveryAction,
+    parentJobId: job.parentJobId,
+    rootJobId: job.rootJobId,
+    replacementJobId: job.replacementJobId,
+    retryAttempt: job.retryAttempt,
+    maxAutomaticResponseRetries: job.maxAutomaticResponseRetries,
+    responseFailurePolicy: job.request?.responseFailurePolicy ?? "report",
+    completionMode: job.request?.completionMode ?? "manual",
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
     completedAt: job.completedAt,
+    ...extras,
   };
 }
 
@@ -69,7 +83,7 @@ async function fileExists(candidate) {
 }
 
 export class Coordinator {
-  constructor({ store = new StateStore(), browserManager = new BrowserManager(), writeConcurrency, jobExecutor = executeJob } = {}) {
+  constructor({ store = new StateStore(), browserManager = new BrowserManager(), writeConcurrency, jobExecutor = executeJob, completionDirectory } = {}) {
     this.store = store;
     this.browserManager = browserManager;
     this.writeConcurrency = Math.max(1, Math.min(2, Number(writeConcurrency ?? process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY ?? 1)));
@@ -79,11 +93,18 @@ export class Coordinator {
     this.submitGate = Promise.resolve();
     this.startedAt = new Date().toISOString();
     this.closed = false;
+    this.completionDirectory = completionDirectory || path.join(path.dirname(this.store.databasePath), "completions");
+    this.completionWrites = new Map();
+    this.onStoreChange = (job) => this.queueCompletionRecord(job.rootJobId || job.id);
   }
 
   async open() {
     await this.store.open();
+    this.store.on("change", this.onStoreChange);
     this.recovery = this.store.recoverInterruptedJobs();
+    for (const rootJobId of this.store.allRootJobIds()) {
+      this.queueCompletionRecord(rootJobId);
+    }
     this.schedule();
     return this;
   }
@@ -91,6 +112,8 @@ export class Coordinator {
   async close() {
     this.closed = true;
     await Promise.allSettled(this.active.values());
+    this.store.off("change", this.onStoreChange);
+    await Promise.allSettled(this.completionWrites.values());
     await this.browserManager.close();
     this.store.close();
   }
@@ -98,8 +121,8 @@ export class Coordinator {
   status() {
     return {
       ready: true,
-      protocolVersion: 1,
-      buildVersion: "1.1.0",
+      protocolVersion: BROKER_PROTOCOL_VERSION,
+      buildVersion: "1.2.0",
       pid: process.pid,
       startedAt: this.startedAt,
       activeJobs: Array.from(this.active.keys()),
@@ -108,6 +131,7 @@ export class Coordinator {
       writeConcurrency: this.writeConcurrency,
       minimumSubmissionIntervalMs: 2_000,
       recovery: this.recovery,
+      completionDirectory: this.completionDirectory,
       browser: this.browserManager.status(),
       emergencyLocked: false,
     };
@@ -199,6 +223,10 @@ export class Coordinator {
       sessionPath: prepared.sessionPath,
       evidenceRound: prepared.evidenceRound,
       maxAutomaticEvidenceReplies: prepared.maxAutomaticEvidenceReplies,
+      parentJobId: prepared.parentJobId,
+      rootJobId: prepared.rootJobId,
+      retryAttempt: prepared.retryAttempt,
+      maxAutomaticResponseRetries: prepared.maxAutomaticResponseRetries,
     });
     this.store.transition(created.job.id, "snapshotted");
     const queued = this.store.transition(created.job.id, "queued");
@@ -253,41 +281,163 @@ export class Coordinator {
   }
 
   async runJob(job) {
-    return this.jobExecutor({
+    const result = await this.jobExecutor({
       jobId: job.id,
       store: this.store,
       browserManager: this.browserManager,
       beforeSubmit: () => this.beforeSubmit(),
     });
+    if (result?.state === "response_failed_detected") {
+      return this.finalizeResponseFailure(job.id, result);
+    }
+    return result;
   }
 
-  getJob(jobId) {
-    return publicJob(this.store.requireJob(jobId));
+  async finalizeResponseFailure(jobId, detectedResult) {
+    let parent = this.store.requireJob(jobId);
+    const failure = parent.responseFailure || detectedResult.responseFailure;
+    const mayRecover =
+      parent.request.responseFailurePolicy === "retry-once" &&
+      failure?.retryable === true &&
+      parent.retryAttempt < parent.maxAutomaticResponseRetries &&
+      Boolean(parent.conversationUrl);
+    let recoveryJob = null;
+    let recoverySchedulingError = null;
+    if (mayRecover) {
+      const root = this.store.requireJob(parent.rootJobId);
+      const retryAttempt = parent.retryAttempt + 1;
+      const prompt = [
+        "[ORACLE RESPONSE RECOVERY]",
+        `Your immediately preceding response ended with ${JSON.stringify(failure.normalizedText || failure.disposition)} before answering completely.`,
+        "Please answer the original request in full now. Do not merely explain the previous failure.",
+      ].join("\n");
+      try {
+        recoveryJob = await this.startJob("continue_chat", {
+          authorizationId: deriveResponseRecoveryAuthorizationId(root.authorizationId, retryAttempt),
+          conversationUrl: parent.conversationUrl,
+          prompt,
+          responseTimeoutSeconds: parent.request.responseTimeoutSeconds,
+          attachmentTimeoutSeconds: parent.request.attachmentTimeoutSeconds,
+          modelRequirement: parent.request.modelRequirement,
+          maxAutomaticEvidenceReplies: parent.maxAutomaticEvidenceReplies,
+          responseFailurePolicy: "report",
+          completionMode: parent.request.completionMode,
+          parentJobId: parent.id,
+          rootJobId: parent.rootJobId,
+          retryAttempt,
+        });
+      } catch (error) {
+        recoverySchedulingError = structuredError(error);
+      }
+    }
+    const recoveryAction = recoveryJob
+      ? `monitor recovery job ${recoveryJob.jobId}`
+      : recoverySchedulingError
+        ? "automatic recovery could not be queued; inspect the failure before authorizing another continuation"
+        : failure?.retryable
+          ? "authorize a new continuation if you want ChatGPT to try again"
+          : "inspect the reported ChatGPT failure before starting another job";
+    const result = {
+      ...detectedResult,
+      state: "response_failed",
+      status: "response_failed",
+      recoveryJobId: recoveryJob?.jobId ?? null,
+      activeJobId: recoveryJob?.jobId ?? parent.id,
+      recoverySchedulingError,
+      recoveryAction,
+    };
+    parent = this.store.transition(parent.id, "response_failed", {
+      replacementJobId: recoveryJob?.jobId ?? null,
+      result,
+      recoveryAction,
+    }, {
+      responseFailure: failure?.code,
+      recoveryJobId: recoveryJob?.jobId ?? null,
+      recoverySchedulingError,
+    });
+    await writeFinalMetadata(parent, result).catch(() => undefined);
+    return result;
+  }
+
+  queueCompletionRecord(rootJobId) {
+    const previous = this.completionWrites.get(rootJobId) || Promise.resolve();
+    const write = previous.then(() => this.refreshCompletionRecord(rootJobId)).catch(() => undefined);
+    this.completionWrites.set(rootJobId, write);
+    write.finally(() => {
+      if (this.completionWrites.get(rootJobId) === write) this.completionWrites.delete(rootJobId);
+    });
+  }
+
+  async refreshCompletionRecord(rootJobId) {
+    const chain = this.store.jobChain(rootJobId);
+    const active = chain.at(-1);
+    if (!active || !TERMINAL_JOB_STATES.has(active.state)) {
+      await removeCompletionRecord(this.completionDirectory, rootJobId);
+      return;
+    }
+    await writeCompletionRecord(this.completionDirectory, {
+      version: 1,
+      rootJobId,
+      activeJobId: active.id,
+      state: active.state,
+      responseDisposition: active.responseDisposition,
+      failureCode: active.error?.code ?? null,
+      conversationUrl: active.conversationUrl,
+      resultAvailable: active.state === "completed",
+      updatedAt: active.updatedAt,
+    });
+  }
+
+  jobView(jobId, followRetries = true) {
+    const requested = this.store.requireJob(jobId);
+    const chain = this.store.jobChain(requested.rootJobId);
+    const active = followRetries ? chain.at(-1) : requested;
+    return publicJob(active, {
+      requestedJobId: requested.id,
+      activeJobId: active.id,
+      recoveryChain: chain.map((job) => job.id),
+      completionPath: completionRecordPath(this.completionDirectory, requested.rootJobId),
+    });
+  }
+
+  getJob(jobId, followRetries = true) {
+    return this.jobView(jobId, followRetries);
   }
 
   listJobs(params) {
     return { jobs: this.store.listJobs(params).map(publicJob) };
   }
 
-  async waitForJob(jobId, timeoutSeconds = 55) {
+  async waitForJob(jobId, timeoutSeconds = 55, followRetries = true) {
     const bounded = Math.max(0, Math.min(55, Number(timeoutSeconds) || 55));
     const deadline = Date.now() + bounded * 1_000;
-    let job = this.store.requireJob(jobId);
+    let job = followRetries ? this.store.activeJob(jobId) : this.store.requireJob(jobId);
     const initialVersion = job.version;
-    while (!TERMINAL_JOB_STATES.has(job.state) && job.version === initialVersion && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      job = this.store.requireJob(jobId);
+    const initialJobId = job.id;
+    while (!TERMINAL_JOB_STATES.has(job.state) && job.id === initialJobId && job.version === initialVersion && Date.now() < deadline) {
+      await this.store.waitForChange(Math.max(0, deadline - Date.now()));
+      job = followRetries ? this.store.activeJob(jobId) : this.store.requireJob(jobId);
     }
-    return publicJob(job);
+    return this.jobView(jobId, followRetries);
   }
 
-  result(jobId) {
-    const job = this.store.requireJob(jobId);
-    if (job.state === "completed") return job.result;
-    if (TERMINAL_JOB_STATES.has(job.state)) {
-      return { ...publicJob(job), status: job.state };
+  result(jobId, followRetries = true) {
+    const requested = this.store.requireJob(jobId);
+    const chain = this.store.jobChain(requested.rootJobId);
+    const job = followRetries ? chain.at(-1) : requested;
+    if (job.state === "completed") {
+      return {
+        ...job.result,
+        requestedJobId: requested.id,
+        activeJobId: job.id,
+        recoveryChain: chain.map((entry) => entry.id),
+        completionPath: completionRecordPath(this.completionDirectory, chain[0].rootJobId),
+      };
     }
-    return { ...publicJob(job), status: "pending" };
+    if (TERMINAL_JOB_STATES.has(job.state)) {
+      return { ...this.jobView(jobId, followRetries), status: job.state };
+    }
+    return { ...this.jobView(jobId, followRetries), status: "pending" };
   }
 
   async waitCompatibility(receipt, waitSeconds = 240) {
@@ -508,9 +658,9 @@ export class Coordinator {
       "jobs.startContinue": (params) => this.startJob("continue_chat", params),
       "jobs.compatConsult": async (params) => this.waitCompatibility(await this.startJob("consult", params, { generatedAuthorization: !params.authorizationId }), 240),
       "jobs.compatContinue": async (params) => this.waitCompatibility(await this.startJob("continue_chat", params, { generatedAuthorization: !params.authorizationId }), 240),
-      "jobs.status": (params) => this.getJob(params.jobId),
-      "jobs.wait": (params) => this.waitForJob(params.jobId, params.timeoutSeconds),
-      "jobs.result": (params) => this.result(params.jobId),
+      "jobs.status": (params) => this.getJob(params.jobId, params.followRetries !== false),
+      "jobs.wait": (params) => this.waitForJob(params.jobId, params.timeoutSeconds, params.followRetries !== false),
+      "jobs.result": (params) => this.result(params.jobId, params.followRetries !== false),
       "jobs.list": (params) => this.listJobs(params),
       "jobs.reconcile": (params) => this.reconcile(params.jobId, params.conversationUrl),
       "jobs.acknowledge": (params) => this.acknowledge(params.jobId),

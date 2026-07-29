@@ -40,7 +40,7 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.1.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.1.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Download and open [`oracle-firefox-1.2.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.2.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
 ## First login
 
@@ -93,6 +93,8 @@ The durable flow returns a job id immediately:
 ```bash
 node plugins/oracle-firefox/dist/cli.mjs consult-start \
   --authorization-id "$(uuidgen | tr '[:upper:]' '[:lower:]')" \
+  --response-failure-policy retry-once \
+  --completion-mode notify \
   -p "Review this design" \
   -f FIREFOX.md
 
@@ -102,10 +104,22 @@ node plugins/oracle-firefox/dist/cli.mjs result <job-id>
 
 MCP clients use `consult_start`, `continue_chat_start`, `job_status`, `job_wait`, and `job_result`. The compatibility `consult` and `continue_chat` tools wait at most 240 seconds, then return a pending receipt while the broker continues working.
 
+`job_wait` is event-driven inside the broker; it sleeps until durable job state changes rather than repeatedly checking SQLite. The CLI watcher follows an authorized recovery child automatically and can display one macOS notification. A local watcher uses no model tokens while idle, but it cannot resume a stopped model turn unless its host provides a wake API. Codex currently handles automatic continuation with a task heartbeat scoped to the exact root job; without a heartbeat, use the notification and resume manually.
+
+Terminal logical jobs receive a private atomic completion record under the coordinator `completions/` directory. It contains job state and safe routing metadata, never the prompt, answer, cookies, or browser-profile contents.
+
+## Failed Pro responses
+
+Oracle distinguishes a real answer from short terminal failures such as **Stopped reasoning**, **Something went wrong**, and generation/network errors. Detection is bound to the exact assistant turn and requires an exact short failure or visible ChatGPT error controls, so normal prose containing those words is not treated as a failure.
+
+The default `responseFailurePolicy=report` sends nothing else. With `retry-once`, the initial authorization also permits one deterministic child authorization that sends a new continuation in the same conversation asking Pro to answer the original request. It never re-clicks the original Send action and never clicks Regenerate, Try again, Answer now, Continue generation, or Stop. Rate limits, authentication failures, unavailable models, ambiguous errors, and a failed recovery are never retried automatically.
+
+`job_status`, `job_wait`, `job_result`, and `watch` follow this recovery chain by default. Use `followRetries=false` or CLI `--no-follow-retries` only when inspecting the original failed job itself.
+
 ## Safety guarantees
 
 - Pro is selected and visibly verified before each message unless the caller explicitly requests `current`.
-- Each authorization allows at most one automatic Send-button click.
+- Each authorization allows at most one Send-button click. An explicitly enabled one-shot recovery receives its own deterministic child authorization.
 - The broker writes `submit_intent` to SQLite before clicking Send and never retries past that boundary.
 - Existing drafts and foreign attachments are never cleared or overwritten.
 - The whole composer message must match after Unicode and line-ending normalization.
@@ -115,12 +129,14 @@ MCP clients use `consult_start`, `continue_chat_start`, `job_status`, `job_wait`
 - Same-chat writes are FIFO across all harnesses. Different chats are serial by default; live-qualified two-chat overlap can be enabled with `ORACLE_FIREFOX_WRITE_CONCURRENCY=2`.
 - Firefox trusted keyboard input is foregrounded through a short broker-wide mutex; response generation on other leased pages continues concurrently.
 - A visible ChatGPT request throttle is reported as `ACCOUNT_COOLDOWN`; Oracle never retries it automatically.
+- Positively classified response failures expose `responseDisposition`, `responseFailure`, `recoveryJobId`, `activeJobId`, and the durable `recoveryChain`.
 - Uncertain submissions quarantine their exact conversation or creation scope until read-only reconciliation or user acknowledgement.
 
 Private state lives in:
 
 - Firefox profile and session artifacts: `~/.oracle-firefox/`
 - macOS coordinator database, token, and protected log: `~/Library/Application Support/oracle-firefox/coordinator/`
+- Private completion handoffs: `~/Library/Application Support/oracle-firefox/coordinator/completions/`
 - broker socket: `$TMPDIR/oracle-firefox-$UID/broker.sock`
 
 ## Local evidence
