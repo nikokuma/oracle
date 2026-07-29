@@ -66756,7 +66756,7 @@ var Coordinator = class {
 
 // src/broker-client.mjs
 import { randomBytes } from "node:crypto";
-import { chmod as chmod5, mkdir as mkdir12, open as open8, readFile as readFile5, rm as rm10, stat as stat6 } from "node:fs/promises";
+import { access as access5, chmod as chmod5, mkdir as mkdir12, open as open8, readFile as readFile5, rm as rm10, stat as stat6 } from "node:fs/promises";
 async function ensurePrivateDirectory(directory) {
   await mkdir12(directory, { recursive: true, mode: 448 });
   await chmod5(directory, 448);

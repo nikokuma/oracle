@@ -1,12 +1,32 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
+
+test("protocol upgrades wait for the old broker to unlink its endpoint", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "oracle-broker-release-"));
+  const endpoint = path.join(root, "broker.sock");
+  await writeFile(endpoint, "old socket placeholder");
+  const { waitForBrokerRelease } = await import("../src/broker-client.mjs");
+  const startedAt = Date.now();
+  setTimeout(() => void rm(endpoint, { force: true }), 75);
+  try {
+    const released = await waitForBrokerRelease("test-token", {
+      endpoint,
+      timeoutMs: 2_000,
+      probe: async () => null,
+    });
+    assert.equal(released, true);
+    assert.ok(Date.now() - startedAt >= 70);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 test("20 simultaneous clients converge on one broker", { timeout: 30_000 }, async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "oracle-broker-test-"));

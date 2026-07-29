@@ -7,7 +7,7 @@ import { spawn as spawn2 } from "node:child_process";
 
 // src/broker-client.mjs
 import { randomBytes } from "node:crypto";
-import { chmod, mkdir, open, readFile, rm, stat } from "node:fs/promises";
+import { access, chmod, mkdir, open, readFile, rm, stat } from "node:fs/promises";
 import path2 from "node:path";
 import { spawn } from "node:child_process";
 
@@ -182,6 +182,19 @@ async function brokerResponds(token, timeoutMs = 750) {
     return null;
   }
 }
+async function waitForBrokerRelease(token, { endpoint = brokerEndpoint(), timeoutMs = 3e4, probe = brokerResponds } = {}) {
+  const deadline = Date.now() + Math.max(0, timeoutMs);
+  while (Date.now() < deadline) {
+    const responds = await probe(token, 500);
+    let endpointExists = Boolean(responds);
+    if (!responds && process.platform !== "win32") {
+      endpointExists = await access(endpoint).then(() => true, () => false);
+    }
+    if (!responds && !endpointExists) return true;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return false;
+}
 async function startBrokerDetached() {
   const token = await readOrCreateBrokerToken();
   const existing = await brokerResponds(token);
@@ -237,11 +250,8 @@ async function callBroker(method, params = {}, options = {}) {
   if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
     const shutdown = await rpcRequest(brokerEndpoint(), token, "broker.shutdownWhenIdle", {}, { timeoutMs: 2e3 }).catch(() => null);
     if (status.outstandingJobs === 0 && shutdown?.accepted) {
-      const deadline = Date.now() + 1e4;
-      while (Date.now() < deadline && await brokerResponds(token, 500)) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-      status = await startBrokerDetached();
+      const released = await waitForBrokerRelease(token);
+      if (released) status = await startBrokerDetached();
     }
     if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
       throw codedError(

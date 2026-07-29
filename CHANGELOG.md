@@ -17,6 +17,7 @@
 
 ### Fixed
 
+- Oracle Firefox: wait for an incompatible idle broker to remove its Unix socket before launching the upgraded broker, preventing the old shutdown path from unlinking the replacement broker's endpoint.
 - Oracle Firefox: prefer the exact truncated conversation-title node over concatenated sidebar prompt excerpts when resolving chat targets.
 - Oracle Firefox: replace partial composer-length checks with whole-message semantic equality, remove the blind Enter send fallback, enforce exact attachment readiness, and correlate completion to the exact new user turn.
 - Oracle Firefox: preserve exact fenced-code prompts, survive ChatGPT's long-thread DOM virtualization and duplicate attachment suffixes, recover a broker-owned orphaned Firefox after crashes, serialize trusted keyboard focus across concurrent pages, and classify visible ChatGPT throttling as `ACCOUNT_COOLDOWN` without retrying.

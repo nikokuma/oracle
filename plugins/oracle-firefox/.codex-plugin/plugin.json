@@ -1,6 +1,6 @@
 {
   "name": "oracle-firefox",
-  "version": "1.2.0+codex.20260729110743",
+  "version": "1.2.0+codex.20260729111438",
   "description": "Run durable, Pro-verified ChatGPT consultations with safe failure recovery and completion handoffs through one shared Firefox broker.",
   "author": {
     "name": "nikokuma",
