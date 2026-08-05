@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { access, chmod, mkdir, open, readFile, rm, stat } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import {
   brokerEndpoint,
@@ -93,8 +94,12 @@ export async function startBrokerDetached() {
       if (afterLock) return afterLock;
       const log = await open(coordinatorLogPath(), "a", 0o600);
       try {
-        const brokerEntry = new URL("./broker.mjs", import.meta.url);
-        const child = spawn(brokerNodePath(), [brokerEntry.pathname, "--daemon"], {
+        // fileURLToPath, not URL.pathname: pathname keeps percent-encoding,
+        // so an install under a directory with spaces (the Claude Desktop
+        // extension dir "Application Support") spawned node against
+        // ".../Application%20Support/..." and died MODULE_NOT_FOUND.
+        const brokerEntry = fileURLToPath(new URL("./broker.mjs", import.meta.url));
+        const child = spawn(brokerNodePath(), [brokerEntry, "--daemon"], {
           detached: true,
           stdio: ["ignore", log.fd, log.fd],
           env: { ...process.env, ORACLE_FIREFOX_BROKER_CHILD: "1" },

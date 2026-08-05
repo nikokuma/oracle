@@ -9,6 +9,7 @@ import { spawn as spawn2 } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { access, chmod, mkdir, open, readFile, rm, stat } from "node:fs/promises";
 import path2 from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
 // src/config.mjs
@@ -221,8 +222,8 @@ async function startBrokerDetached() {
       if (afterLock) return afterLock;
       const log = await open(coordinatorLogPath(), "a", 384);
       try {
-        const brokerEntry = new URL("./broker.mjs", import.meta.url);
-        const child = spawn(brokerNodePath(), [brokerEntry.pathname, "--daemon"], {
+        const brokerEntry = fileURLToPath(new URL("./broker.mjs", import.meta.url));
+        const child = spawn(brokerNodePath(), [brokerEntry, "--daemon"], {
           detached: true,
           stdio: ["ignore", log.fd, log.fd],
           env: { ...process.env, ORACLE_FIREFOX_BROKER_CHILD: "1" }
