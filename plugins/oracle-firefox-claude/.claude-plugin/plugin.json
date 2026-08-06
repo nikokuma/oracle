@@ -1,8 +1,8 @@
 {
   "name": "oracle-firefox",
   "displayName": "Oracle Firefox",
-  "version": "1.2.1",
-  "description": "Durable ChatGPT Pro consultation, failure recovery, completion waiting, and generated-file downloads through authenticated Firefox.",
+  "version": "1.6.0",
+  "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
   "author": {
     "name": "nikokuma",
     "url": "https://github.com/nikokuma"
@@ -12,9 +12,11 @@
   "license": "MIT",
   "keywords": [
     "firefox",
+    "chrome",
+    "safari",
     "chatgpt",
     "pro",
-    "webdriver-bidi",
+    "webdriver",
     "mcp",
     "codex",
     "claude"

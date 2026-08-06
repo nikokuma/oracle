@@ -15,8 +15,14 @@ await mkdir(path.join(claudeRoot, "dist"), { recursive: true });
 await mkdir(path.join(claudeRoot, "skills", "oracle-firefox"), { recursive: true });
 await cp(path.join(pluginRoot, "dist"), path.join(claudeRoot, "dist"), { recursive: true });
 await cp(path.join(pluginRoot, "skills", "oracle-firefox", "SKILL.md"), path.join(claudeRoot, "skills", "oracle-firefox", "SKILL.md"));
+await cp(
+  path.join(pluginRoot, "skills", "oracle-firefox", "references"),
+  path.join(claudeRoot, "skills", "oracle-firefox", "references"),
+  { recursive: true },
+);
 await cp(path.join(pluginRoot, "LICENSE"), path.join(claudeRoot, "LICENSE"));
 await cp(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), path.join(claudeRoot, "THIRD_PARTY_NOTICES.md"));
+await cp(path.join(pluginRoot, "build-manifest.json"), path.join(claudeRoot, "build-manifest.json"));
 await writeFile(path.join(claudeRoot, ".claude-plugin", "plugin.json"), json({
   name: meta.name,
   displayName: meta.displayName,
@@ -45,7 +51,8 @@ await writeFile(path.join(claudeRoot, ".mcp.json"), json({
       command: "node",
       args: ["${CLAUDE_PLUGIN_ROOT}/dist/server.mjs"],
       env: {
-        ORACLE_FIREFOX_NODE_PATH: "${user_config.node_path}"
+        ORACLE_FIREFOX_NODE_PATH: "${user_config.node_path}",
+        ORACLE_FIREFOX_HARNESS: "claude-code-mcp"
       }
     }
   }
@@ -55,7 +62,7 @@ await mkdir(path.join(repositoryRoot, ".claude-plugin"), { recursive: true });
 await writeFile(path.join(repositoryRoot, ".claude-plugin", "marketplace.json"), json({
   name: "nikokuma-oracle",
   owner: { name: "nikokuma" },
-  description: "Firefox-native Oracle plugins by nikokuma.",
+  description: "Local-browser Oracle plugins by nikokuma.",
   plugins: [{
     name: meta.name,
     source: "./plugins/oracle-firefox-claude",
@@ -80,13 +87,14 @@ for (const name of ["server.mjs.LEGAL.txt", "broker.mjs.LEGAL.txt"]) {
 }
 await cp(path.join(pluginRoot, "LICENSE"), path.join(mcpbRoot, "LICENSE"));
 await cp(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), path.join(mcpbRoot, "THIRD_PARTY_NOTICES.md"));
+await cp(path.join(pluginRoot, "build-manifest.json"), path.join(mcpbRoot, "build-manifest.json"));
 await writeFile(path.join(mcpbRoot, "manifest.json"), json({
   manifest_version: "0.3",
   name: meta.name,
   display_name: meta.displayName,
   version: meta.version,
   description: meta.description,
-  long_description: `${meta.longDescription}\n\nThe bundle never contains login cookies. It connects to the user's dedicated local Firefox profile and ChatGPT account.`,
+  long_description: `${meta.longDescription}\n\nThe bundle never contains login cookies. Firefox and Chrome use separate dedicated local profiles; Safari uses an isolated automation session.`,
   author: meta.author,
   repository: { type: "git", url: `${meta.repository}.git` },
   homepage: meta.homepage,
@@ -98,14 +106,17 @@ await writeFile(path.join(mcpbRoot, "manifest.json"), json({
     mcp_config: {
       command: "node",
       args: ["${__dirname}/server/server.mjs"],
-      env: { ORACLE_FIREFOX_NODE_PATH: "${user_config.node_path}" }
+      env: {
+        ORACLE_FIREFOX_NODE_PATH: "${user_config.node_path}",
+        ORACLE_FIREFOX_HARNESS: "claude-desktop-mcp"
+      }
     }
   },
   tools: meta.tools,
   tools_generated: false,
   prompts: [{
     name: "consult-chatgpt-pro",
-    description: "Ask ChatGPT Pro for a durable second opinion through Firefox.",
+    description: "Ask ChatGPT Pro for a durable second opinion through the selected browser.",
     arguments: ["question"],
     text: "Use consult_start with a new UUID, monitor the returned job, and independently verify the answer: ${arguments.question}"
   }],

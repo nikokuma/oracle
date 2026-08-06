@@ -106,6 +106,23 @@ test("lists a behavior-only download button without exposing an invented URL", a
   });
 });
 
+test("Safari capability gate rejects a behavior-only download before clicking it", async () => {
+  await withPage(`<!doctype html><main>
+    <article data-testid="conversation-turn-1" data-message-author-role="assistant" data-message-id="assistant">
+      <button onclick="window.oracleClicked=true">Download behavior artifact</button>
+    </article>
+  </main>`, async (page) => {
+    await assert.rejects(
+      () => downloadAssistantArtifact(page, {
+        linkText: "Download behavior artifact",
+        allowBrowserDownload: false,
+      }),
+      (error) => error.code === "BROWSER_DOWNLOAD_UNSUPPORTED",
+    );
+    assert.equal(await page.evaluate(() => Boolean(window.oracleClicked)), false);
+  });
+});
+
 test("captures one behavior-only Firefox download into a private unique directory", { timeout: 30_000 }, async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-browser-download-"));
   const profile = path.join(directory, "profile");

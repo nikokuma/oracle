@@ -1,6 +1,8 @@
 import { build } from "esbuild";
 import { readdir, readFile, rm, writeFile } from "node:fs/promises";
 
+await import("./generate-build-info.mjs");
+
 await rm("dist", { recursive: true, force: true });
 
 await build({

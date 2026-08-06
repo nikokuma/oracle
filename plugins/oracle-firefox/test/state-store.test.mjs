@@ -69,7 +69,10 @@ test("submit-intent failures quarantine the exact scope", async () => {
       (error) => error.code === "CONVERSATION_QUARANTINED",
     );
     store.acknowledge(created.id);
-    assert.doesNotThrow(() => store.createJob(input({ conversationKey: original.conversationKey })));
+    const replacement = store.createJob(input({ conversationKey: original.conversationKey })).job;
+    store.transition(replacement.id, "snapshotted");
+    store.transition(replacement.id, "queued");
+    assert.equal(store.isRunnable(replacement.id), true, "an acknowledged terminal chain must not occupy the FIFO lane");
   });
 });
 

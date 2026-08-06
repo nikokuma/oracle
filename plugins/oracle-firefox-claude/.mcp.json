@@ -6,7 +6,8 @@
         "${CLAUDE_PLUGIN_ROOT}/dist/server.mjs"
       ],
       "env": {
-        "ORACLE_FIREFOX_NODE_PATH": "${user_config.node_path}"
+        "ORACLE_FIREFOX_NODE_PATH": "${user_config.node_path}",
+        "ORACLE_FIREFOX_HARNESS": "claude-code-mcp"
       }
     }
   }

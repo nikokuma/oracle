@@ -18,7 +18,11 @@ try {
 const args = ["--plugin-dir", pluginDirectory, ...process.argv.slice(2)];
 const child = spawn(process.env.CLAUDEX_PATH || "claudex", args, {
   stdio: "inherit",
-  env: { ...process.env, ORACLE_FIREFOX_NODE_PATH: process.env.ORACLE_FIREFOX_NODE_PATH || process.execPath },
+  env: {
+    ...process.env,
+    ORACLE_FIREFOX_NODE_PATH: process.env.ORACLE_FIREFOX_NODE_PATH || process.execPath,
+    ORACLE_FIREFOX_HARNESS: "claudex",
+  },
 });
 child.once("error", (error) => {
   process.stderr.write(`Unable to launch Claudex: ${error.message}\n`);

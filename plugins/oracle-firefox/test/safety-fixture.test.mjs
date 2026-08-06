@@ -12,6 +12,7 @@ import {
   launchFirefox,
   readComposerText,
   submitComposer,
+  uploadAttachmentFiles,
   uploadContextFile,
   waitForAssistantAfterTurn,
   waitForUserMessage,
@@ -110,6 +111,35 @@ test("accepts ChatGPT's duplicate suffix only for the authorized attachment", as
       </script>
     `, async (page) => {
       assert.equal(await uploadContextFile(page, attachment, { timeoutMs: 5_000 }), "oracle-context.md");
+    });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("waits for an exact multi-file attachment manifest", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-upload-multi-"));
+  const first = path.join(directory, "first.zip");
+  const second = path.join(directory, "second.zip");
+  await writeFile(first, "first");
+  await writeFile(second, "second");
+  try {
+    await withPage(`
+      <form><textarea id="prompt-textarea">ready prompt</textarea><input id="file" type="file" multiple><button data-testid="send-button" disabled>Send</button></form>
+      <script>
+        document.querySelector('#file').addEventListener('change', event => {
+          for (const file of event.target.files) {
+            const chip=document.createElement('div'); chip.dataset.testid='attachment-chip'; chip.dataset.state='uploading'; chip.textContent=file.name; document.querySelector('form').append(chip);
+          }
+          setTimeout(()=>{ document.querySelectorAll('[data-testid=attachment-chip]').forEach(chip => { chip.dataset.state='ready'; }); document.querySelector('[data-testid=send-button]').disabled=false; }, 150);
+        });
+      </script>
+    `, async (page) => {
+      assert.deepEqual(
+        await uploadAttachmentFiles(page, [first, second], { timeoutMs: 5_000 }),
+        ["first.zip", "second.zip"],
+      );
+      assert.deepEqual((await inspectComposerState(page)).attachments.sort(), ["first.zip", "second.zip"]);
     });
   } finally {
     await rm(directory, { recursive: true, force: true });

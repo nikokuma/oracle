@@ -1,18 +1,29 @@
-import { randomBytes } from "node:crypto";
-import { access, chmod, mkdir, open, readFile, rm, stat } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
+import { randomBytes, randomUUID } from "node:crypto";
+import { chmod, link, mkdir, open, readFile, rm } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import {
-  brokerEndpoint,
-  brokerLaunchLockPath,
-  brokerNodePath,
-  brokerTokenPath,
-  coordinatorDirectory,
-  coordinatorLogPath,
-} from "./config.mjs";
+  BROKER_BUILD_ID,
+  BROKER_PROTOCOL_VERSION,
+  BROKER_RELEASE_SEQUENCE,
+  ORACLE_FIREFOX_VERSION,
+} from "./build-info.mjs";
+import { readBrokerLocator } from "./broker-locator.mjs";
+import { BrokerLaunchLease } from "./broker-lease.mjs";
+import { brokerLaunchLockPath, brokerNodePath, brokerTokenPath, coordinatorDirectory, coordinatorLogPath } from "./config.mjs";
+import { resolveCoordinatorIdentity } from "./coordinator-identity.mjs";
 import { codedError } from "./errors.mjs";
-import { BROKER_PROTOCOL_VERSION, rpcRequest } from "./protocol.mjs";
+import { rpcRequest } from "./protocol.mjs";
+
+const clientInstanceId = randomUUID();
+const clientSessions = new Map();
+const KNOWN_RELEASE_SEQUENCES = new Map([
+  ["1.2.1", 1201],
+  ["1.3.0", 1300],
+  ["1.4.0", 1400],
+  ["1.4.1", 1401],
+  [ORACLE_FIREFOX_VERSION, BROKER_RELEASE_SEQUENCE],
+]);
 
 async function ensurePrivateDirectory(directory) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -22,125 +33,285 @@ async function ensurePrivateDirectory(directory) {
 export async function readOrCreateBrokerToken() {
   await ensurePrivateDirectory(coordinatorDirectory());
   const tokenPath = brokerTokenPath();
+  const readExisting = async () => {
+    const value = (await readFile(tokenPath, "utf8")).trim();
+    if (!/^[0-9a-f]{64}$/u.test(value)) {
+      throw codedError("BROKER_TOKEN_INVALID", "The Oracle Firefox broker token file is empty or invalid; it was not replaced automatically.");
+    }
+    return value;
+  };
   try {
-    return (await readFile(tokenPath, "utf8")).trim();
+    return await readExisting();
   } catch (error) {
     if (error?.code !== "ENOENT") throw error;
   }
   const candidate = randomBytes(32).toString("hex");
+  const temporary = `${tokenPath}.${process.pid}.${randomUUID()}.tmp`;
+  const handle = await open(temporary, "wx", 0o600);
   try {
-    const handle = await open(tokenPath, "wx", 0o600);
+    try { await handle.writeFile(`${candidate}\n`, "utf8"); await handle.sync(); }
+    finally { await handle.close(); }
     try {
-      await handle.writeFile(`${candidate}\n`, "utf8");
-      await handle.sync();
-    } finally {
-      await handle.close();
+      await link(temporary, tokenPath);
+      return candidate;
+    } catch (error) {
+      if (error?.code !== "EEXIST") throw error;
+      return await readExisting();
     }
-    return candidate;
   } catch (error) {
-    if (error?.code !== "EEXIST") throw error;
-    return (await readFile(tokenPath, "utf8")).trim();
+    try { await handle.close(); } catch {}
+    throw error;
+  } finally {
+    await rm(temporary, { force: true }).catch(() => undefined);
   }
 }
 
-async function brokerResponds(token, timeoutMs = 750) {
+function clientMetadata(harness, hostSessionHint = null, session = null) {
+  return {
+    pid: process.pid,
+    harness,
+    clientInstanceId,
+    buildVersion: ORACLE_FIREFOX_VERSION,
+    buildId: BROKER_BUILD_ID,
+    releaseSequence: BROKER_RELEASE_SEQUENCE,
+    hostSessionHint,
+    sessionId: session?.sessionId,
+    sessionHandle: session?.sessionHandle,
+  };
+}
+
+export function normalizeLegacyBrokerStatus(status, endpoint) {
+  const protocolVersion = Number(status?.protocolVersion || status?.protocol?.minimum || 0);
+  const buildVersion = status?.buildVersion || "unknown";
+  return {
+    ...status,
+    coordinatorId: status?.coordinatorId || null,
+    instanceId: status?.brokerInstanceId || `legacy:${status?.pid || "unknown"}:${endpoint}`,
+    leaseGeneration: Number(status?.leaseGeneration || 0),
+    state: status?.draining ? "draining" : "ready",
+    protocol: { minimum: protocolVersion, maximum: protocolVersion },
+    releaseSequence: KNOWN_RELEASE_SEQUENCES.get(buildVersion) || 0,
+    buildVersion,
+    legacy: true,
+  };
+}
+
+async function probeBroker(identity, token, timeoutMs = 750, endpointOverride = null) {
+  const locator = endpointOverride ? null : await readBrokerLocator(identity, token);
+  const endpoint = endpointOverride || locator?.endpoint?.path || identity.endpoint;
   try {
-    return await rpcRequest(brokerEndpoint(), token, "broker.status", {}, { timeoutMs });
-  } catch {
-    return null;
+    const hello = await rpcRequest(endpoint, token, "broker.hello", {}, {
+      timeoutMs,
+      client: clientMetadata("broker-probe"),
+    });
+    return { kind: hello.state === "starting" ? "starting" : "live", hello, endpoint };
+  } catch (error) {
+    if (error?.code === "BROKER_UNAUTHORIZED") return { kind: "auth-conflict", error, endpoint };
+    if (new Set(["METHOD_NOT_FOUND", "BROKER_PROTOCOL_MISMATCH"]).has(error?.code)) {
+      try {
+        const status = await rpcRequest(endpoint, token, "broker.status", {}, {
+          timeoutMs,
+          client: clientMetadata("legacy-broker-probe"),
+        });
+        return { kind: "live", hello: normalizeLegacyBrokerStatus(status, endpoint), endpoint };
+      } catch (legacyError) {
+        if (legacyError?.code === "BROKER_UNAUTHORIZED") return { kind: "auth-conflict", error: legacyError, endpoint };
+        if (!new Set(["ENOENT", "ECONNREFUSED", "ENOTSOCK", "EPIPE"]).has(legacyError?.code)) {
+          return { kind: "timeout", error: legacyError, endpoint };
+        }
+      }
+    }
+    if (new Set(["ENOENT", "ECONNREFUSED", "ENOTSOCK", "EPIPE"]).has(error?.code)) {
+      return { kind: "absent", error, endpoint };
+    }
+    return { kind: "timeout", error, endpoint };
   }
 }
 
 export async function waitForBrokerRelease(
   token,
-  { endpoint = brokerEndpoint(), timeoutMs = 30_000, probe = brokerResponds } = {},
+  { identity = null, expectedInstanceId = null, timeoutMs = 30_000, probe = null } = {},
 ) {
+  const resolved = identity || await resolveCoordinatorIdentity();
+  const inspect = probe || ((auth, wait) => probeBroker(resolved, auth, wait));
   const deadline = Date.now() + Math.max(0, timeoutMs);
   while (Date.now() < deadline) {
-    const responds = await probe(token, 500);
-    let endpointExists = Boolean(responds);
-    if (!responds && process.platform !== "win32") {
-      endpointExists = await access(endpoint).then(() => true, () => false);
-    }
-    if (!responds && !endpointExists) return true;
+    const result = await inspect(token, 500);
+    if (!result || result.kind === "absent") return true;
+    const hello = result.hello || result;
+    if (expectedInstanceId && hello.instanceId && hello.instanceId !== expectedInstanceId) return true;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   return false;
 }
 
-export async function startBrokerDetached() {
-  const token = await readOrCreateBrokerToken();
-  const existing = await brokerResponds(token);
-  if (existing) return existing;
-  if (process.platform !== "win32") await ensurePrivateDirectory(path.dirname(brokerEndpoint()));
-  await ensurePrivateDirectory(coordinatorDirectory());
-  const lockPath = brokerLaunchLockPath();
-  let ownsLock = false;
+export async function startBrokerDetached(identity = null, token = null) {
+  const resolved = identity || await resolveCoordinatorIdentity();
+  const auth = token || await readOrCreateBrokerToken();
+  const deadline = Date.now() + 20_000;
+  let launchLease = null;
   try {
-    try {
-      await mkdir(lockPath, { mode: 0o700 });
-      ownsLock = true;
-    } catch (error) {
-      if (error?.code !== "EEXIST") throw error;
-      const info = await stat(lockPath).catch(() => null);
-      if (info && Date.now() - info.mtimeMs > 30_000) {
-        await rm(lockPath, { recursive: true, force: true });
-        await mkdir(lockPath, { mode: 0o700 });
-        ownsLock = true;
+    while (!launchLease && Date.now() < deadline) {
+      const existing = await probeBroker(resolved, auth);
+      if (existing.kind === "live") return existing.hello;
+      if (existing.kind === "auth-conflict") {
+        throw codedError("BROKER_ENDPOINT_CONFLICT", "The canonical Oracle Firefox endpoint rejected this coordinator token.");
       }
-    }
-    if (ownsLock) {
-      const afterLock = await brokerResponds(token);
-      if (afterLock) return afterLock;
-      const log = await open(coordinatorLogPath(), "a", 0o600);
       try {
-        // fileURLToPath, not URL.pathname: pathname keeps percent-encoding,
-        // so an install under a directory with spaces (the Claude Desktop
-        // extension dir "Application Support") spawned node against
-        // ".../Application%20Support/..." and died MODULE_NOT_FOUND.
-        const brokerEntry = fileURLToPath(new URL("./broker.mjs", import.meta.url));
-        const child = spawn(brokerNodePath(), [brokerEntry, "--daemon"], {
-          detached: true,
-          stdio: ["ignore", log.fd, log.fd],
-          env: { ...process.env, ORACLE_FIREFOX_BROKER_CHILD: "1" },
+        launchLease = await BrokerLaunchLease.acquire(brokerLaunchLockPath());
+      } catch (error) {
+        if (error?.code !== "BROKER_LEASE_HELD") throw error;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        continue;
+      }
+      if (existing.kind === "timeout") {
+        throw codedError("BROKER_UNRESPONSIVE", "A broker endpoint or lifetime owner exists but did not answer. Oracle Firefox refused to launch a competitor.", {
+          safeToRetry: true,
+          details: { probeCode: existing.error?.code || null, probeMessage: existing.error?.message || null },
         });
-        child.unref();
-      } finally {
-        await log.close();
       }
     }
-    const deadline = Date.now() + 15_000;
+    if (!launchLease) throw codedError("BROKER_START_BUSY", "Another client is still coordinating broker startup.", { safeToRetry: true });
+
+    const afterLease = await probeBroker(resolved, auth);
+    if (new Set(["live", "starting"]).has(afterLease.kind)) return afterLease.hello;
+    if (afterLease.kind === "auth-conflict") throw codedError("BROKER_ENDPOINT_CONFLICT", "The broker endpoint changed authentication while starting.");
+    if (afterLease.kind === "timeout") throw codedError("BROKER_UNRESPONSIVE", "The canonical broker endpoint is occupied but unresponsive; no competitor was launched.", {
+      safeToRetry: true,
+      details: { probeCode: afterLease.error?.code || null, probeMessage: afterLease.error?.message || null },
+    });
+
+    const log = await open(coordinatorLogPath(), "a", 0o600);
+    try {
+      // fileURLToPath is required for install roots containing spaces.
+      const brokerEntry = fileURLToPath(new URL("./broker.mjs", import.meta.url));
+      const child = spawn(brokerNodePath(), [brokerEntry, "--daemon"], {
+        detached: true,
+        stdio: ["ignore", log.fd, log.fd],
+        env: { ...process.env, ORACLE_FIREFOX_BROKER_CHILD: "1" },
+      });
+      child.unref();
+    } finally {
+      await log.close();
+    }
     while (Date.now() < deadline) {
-      const status = await brokerResponds(token, 750);
-      if (status) return status;
+      const result = await probeBroker(resolved, auth, 750);
+      if (result.kind === "live") return result.hello;
+      if (result.kind === "auth-conflict") throw codedError("BROKER_ENDPOINT_CONFLICT", "The broker endpoint changed authentication while starting.");
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     throw codedError("BROKER_START_FAILED", `Oracle Firefox broker did not start. See ${coordinatorLogPath()}.`);
   } finally {
-    if (ownsLock) await rm(lockPath, { recursive: true, force: true }).catch(() => undefined);
+    launchLease?.release();
   }
 }
 
-export async function callBroker(method, params = {}, options = {}) {
-  const token = await readOrCreateBrokerToken();
-  let status = await brokerResponds(token);
-  if (!status) status = await startBrokerDetached();
-  if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
-    const shutdown = await rpcRequest(brokerEndpoint(), token, "broker.shutdownWhenIdle", {}, { timeoutMs: 2_000 }).catch(() => null);
-    if (status.outstandingJobs === 0 && shutdown?.accepted) {
-      const released = await waitForBrokerRelease(token);
-      if (released) status = await startBrokerDetached();
+async function compatibleBroker(identity, token) {
+  let observed = await probeBroker(identity, token);
+  if (observed.kind === "absent") {
+    for (const candidate of identity.legacyEndpoints || []) {
+      const legacy = await probeBroker(identity, token, 750, candidate);
+      // A legacy endpoint was global per OS user. A different coordinator's
+      // token rejection or stale socket does not establish shared identity.
+      if (!new Set(["live", "starting"]).has(legacy.kind)) continue;
+      observed = legacy;
+      break;
     }
-    if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
-      throw codedError(
-        "BROKER_PROTOCOL_MISMATCH",
-        `Running broker protocol ${status.protocolVersion} is incompatible. It will shut down after ${status.outstandingJobs} active job(s) finish; none were killed or resent.`,
-        { details: status, recoveryAction: "retry after the active broker becomes idle" },
-      );
+    if (observed.kind === "absent") {
+      const started = await startBrokerDetached(identity, token);
+      observed = {
+        kind: started?.state === "starting" ? "starting" : "live",
+        hello: started,
+        endpoint: identity.endpoint,
+      };
     }
   }
-  return rpcRequest(brokerEndpoint(), token, method, params, {
-    timeoutMs: options.timeoutMs ?? 60_000,
-    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.2.1" },
+  if (observed.kind === "timeout") {
+    const started = await startBrokerDetached(identity, token);
+    observed = {
+      kind: started?.state === "starting" ? "starting" : "live",
+      hello: started,
+      endpoint: identity.endpoint,
+    };
+  }
+  if (observed.kind === "auth-conflict") throw codedError("BROKER_ENDPOINT_CONFLICT", "The broker endpoint rejected this coordinator token.");
+  if (observed.kind === "starting") {
+    const deadline = Date.now() + 20_000;
+    while (Date.now() < deadline && observed.kind === "starting") {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      observed = await probeBroker(identity, token, 1_000);
+    }
+    if (observed.kind !== "live") {
+      throw codedError("BROKER_START_FAILED", "The Oracle Firefox lifetime owner did not reach ready state; no competitor was launched.", { safeToRetry: true });
+    }
+  }
+  const hello = observed.hello;
+  const acceptsProtocol = Number(hello?.protocol?.minimum) <= BROKER_PROTOCOL_VERSION && Number(hello?.protocol?.maximum) >= BROKER_PROTOCOL_VERSION;
+  if (acceptsProtocol) return { hello, endpoint: observed.endpoint };
+  const observedReleaseSequence = Number(hello?.releaseSequence || 0);
+  if (observedReleaseSequence > 0 && BROKER_RELEASE_SEQUENCE > observedReleaseSequence) {
+    const upgradeParams = {
+      expectedInstanceId: hello.instanceId,
+      expectedLeaseGeneration: hello.leaseGeneration,
+      requesterReleaseSequence: BROKER_RELEASE_SEQUENCE,
+      requesterBuildId: BROKER_BUILD_ID,
+      requesterProtocolMinimum: BROKER_PROTOCOL_VERSION,
+      requesterProtocolMaximum: BROKER_PROTOCOL_VERSION,
+    };
+    const upgrade = await rpcRequest(
+      observed.endpoint,
+      token,
+      hello.legacy ? "broker.shutdownWhenIdle" : "broker.requestUpgrade",
+      upgradeParams,
+      { timeoutMs: 2_000, client: clientMetadata("broker-upgrade") },
+    ).catch((error) => ({ accepted: false, error: { code: error.code, message: error.message } }));
+    if (upgrade?.accepted) {
+      const released = await waitForBrokerRelease(token, {
+        identity,
+        expectedInstanceId: hello.instanceId,
+        probe: (auth, wait) => probeBroker(identity, auth, wait, observed.endpoint),
+      });
+      if (released) return { hello: await startBrokerDetached(identity, token), endpoint: identity.endpoint };
+    }
+  }
+  throw codedError(
+    Number(hello?.releaseSequence || 0) > BROKER_RELEASE_SEQUENCE ? "CLIENT_UPGRADE_REQUIRED" : "BROKER_PROTOCOL_MISMATCH",
+    `Running Oracle Firefox broker ${hello?.buildVersion || "unknown"} uses protocol ${hello?.protocol?.minimum || "unknown"}. This client did not stop or downgrade it.`,
+    { details: hello, recoveryAction: "reload this host with the current Oracle Firefox package" },
+  );
+}
+
+export async function callBroker(method, params = {}, options = {}) {
+  const identity = await resolveCoordinatorIdentity();
+  const token = await readOrCreateBrokerToken();
+  const { hello, endpoint } = await compatibleBroker(identity, token);
+  const harness = options.harness || "unknown";
+  const hostSessionHint = options.hostSessionHint || null;
+  const sessionKey = [identity.coordinatorId, hello.instanceId, harness, hostSessionHint || ""].join(":");
+  let session = clientSessions.get(sessionKey);
+  const openSession = async () => rpcRequest(endpoint, token, "broker.openSession", {
+    harness,
+    clientInstanceId,
+    hostSessionHint,
+  }, {
+    timeoutMs: 10_000,
+    client: clientMetadata(harness, hostSessionHint),
   });
+  if (!session) {
+    session = await openSession();
+    clientSessions.set(sessionKey, session);
+  }
+  const invoke = () => rpcRequest(endpoint, token, method, params, {
+    timeoutMs: options.timeoutMs ?? 60_000,
+    client: clientMetadata(harness, hostSessionHint, session),
+  });
+  try {
+    return await invoke();
+  } catch (error) {
+    if (!new Set(["CLIENT_SESSION_REQUIRED", "OWNER_SESSION_NOT_FOUND"]).has(error?.code)) throw error;
+    clientSessions.delete(sessionKey);
+    session = await openSession();
+    clientSessions.set(sessionKey, session);
+    return invoke();
+  }
 }

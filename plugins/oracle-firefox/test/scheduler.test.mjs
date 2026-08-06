@@ -17,10 +17,10 @@ async function waitFor(predicate, timeoutMs = 5_000) {
   throw new Error("Timed out waiting for scheduler test.");
 }
 
-function queue(store, key) {
+function queue(store, key, operation = "continue_chat") {
   const created = store.createJob({
     authorizationId: crypto.randomUUID(),
-    operation: "continue_chat",
+    operation,
     request: {},
     conversationKey: key,
     sessionPath: "/tmp/test-session",
@@ -92,6 +92,110 @@ test("different conversations overlap only when the qualified concurrency flag i
   }
 });
 
+test("five explicitly qualified conversation lanes overlap without weakening per-chat FIFO", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-scheduler-three-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  let active = 0;
+  let maxActive = 0;
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    writeConcurrency: 5,
+    legacyCompletionFiles: false,
+    jobExecutor: async ({ jobId, store: state }) => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      active -= 1;
+      state.transition(jobId, "completed", { result: { jobId } });
+    },
+  });
+  try {
+    await coordinator.open();
+    assert.equal(coordinator.writeConcurrency, 5);
+    assert.equal(store.accountState().effectiveConcurrency, 5);
+    const jobs = ["a", "b", "c", "d", "e"].map((name) => queue(store, `https://chatgpt.com/c/${name}`));
+    coordinator.schedule();
+    await waitFor(() => jobs.every((job) => store.requireJob(job.id).state === "completed"));
+    assert.equal(maxActive, 5);
+  } finally {
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("a broker-global profile conflict stops scheduling instead of hot-looping the claim", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-scheduler-fatal-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  let executions = 0;
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    jobExecutor: async () => {
+      executions += 1;
+      throw Object.assign(new Error("profile is owned elsewhere"), { code: "PROFILE_IN_USE_EXTERNALLY" });
+    },
+  });
+  try {
+    await coordinator.open();
+    const job = queue(store, "https://chatgpt.com/c/profile-conflict");
+    coordinator.schedule();
+    await waitFor(() => coordinator.status().safeMode === true);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const durable = store.requireJob(job.id);
+    assert.equal(executions, 1);
+    assert.equal(durable.executionEpoch, 1);
+    assert.equal(coordinator.status().draining, true);
+    assert.equal(coordinator.status().brokerFatalError.code, "PROFILE_IN_USE_EXTERNALLY");
+  } finally {
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("new-chat qualification is exclusive, then other response lanes may overlap", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-creation-barrier-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  const starts = [];
+  let releaseCreator;
+  const creatorReleased = new Promise((resolve) => { releaseCreator = resolve; });
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    writeConcurrency: 3,
+    legacyCompletionFiles: false,
+    jobExecutor: async ({ jobId, store: state }) => {
+      starts.push(jobId);
+      const job = state.requireJob(jobId);
+      if (job.conversationKey === "new-standalone") {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        state.transition(jobId, "target_verified", {
+          conversationKey: "https://chatgpt.com/c/created-barrier",
+          conversationUrl: "https://chatgpt.com/c/created-barrier",
+        });
+        await creatorReleased;
+      }
+      state.transition(jobId, "completed", { result: { jobId } });
+    },
+  });
+  try {
+    await coordinator.open();
+    const creator = queue(store, "new-standalone", "consult");
+    const existing = queue(store, "https://chatgpt.com/c/existing-barrier");
+    coordinator.schedule();
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    assert.deepEqual(starts, [creator.id]);
+    await waitFor(() => starts.includes(existing.id));
+    assert.equal(store.requireJob(creator.id).state, "target_verified");
+    releaseCreator();
+    await waitFor(() => store.requireJob(creator.id).state === "completed" && store.requireJob(existing.id).state === "completed");
+  } finally {
+    releaseCreator?.();
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("a new chat's canonical URL remains leased until its response job finishes", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-scheduler-"));
   const store = new StateStore(path.join(directory, "state.sqlite"));
@@ -115,7 +219,7 @@ test("a new chat's canonical URL remains leased until its response job finishes"
   });
   try {
     await coordinator.open();
-    const creator = queue(store, "new-standalone");
+    const creator = queue(store, "new-standalone", "consult");
     coordinator.schedule();
     await waitFor(() => store.requireJob(creator.id).conversationKey === canonicalUrl);
 
@@ -134,6 +238,53 @@ test("a new chat's canonical URL remains leased until its response job finishes"
   }
 });
 
+test("browser selection cannot race ahead of accepting a standalone job", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-browser-selection-race-"));
+  const previousHome = process.env.ORACLE_FIREFOX_HOME;
+  process.env.ORACLE_FIREFOX_HOME = path.join(directory, "home");
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  let selected = false;
+  let releaseExecution;
+  const executionReleased = new Promise((resolve) => { releaseExecution = resolve; });
+  const browserManager = {
+    browserName: "firefox",
+    async selectBrowser() { selected = true; return { browser: "chrome" }; },
+    async close() {},
+    status: () => ({ browserRunning: false, browserName: "firefox" }),
+  };
+  const coordinator = new Coordinator({
+    store,
+    browserManager,
+    legacyCompletionFiles: false,
+    jobExecutor: async ({ jobId, store: state }) => {
+      await executionReleased;
+      state.transition(jobId, "completed", { result: { jobId } });
+    },
+  });
+  try {
+    await coordinator.open();
+    const start = coordinator.startJob("consult", {
+      authorizationId: crypto.randomUUID(),
+      prompt: "browser selection race fixture",
+      responseTimeoutSeconds: 300,
+      attachmentTimeoutSeconds: 300,
+    });
+    const selection = coordinator.selectBrowser("chrome").catch((error) => error);
+    const receipt = await start;
+    const error = await selection;
+    assert.equal(receipt.browser, "firefox");
+    assert.equal(error.code, "BROWSER_SELECTION_BUSY");
+    assert.equal(selected, false);
+  } finally {
+    releaseExecution?.();
+    await waitFor(() => store.listJobs({ limit: 1 })[0]?.state === "completed").catch(() => undefined);
+    await coordinator.close();
+    if (previousHome === undefined) delete process.env.ORACLE_FIREFOX_HOME;
+    else process.env.ORACLE_FIREFOX_HOME = previousHome;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("retry-once creates one durable child continuation and one root completion record", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-recovery-"));
   const store = new StateStore(path.join(directory, "state.sqlite"));
@@ -142,6 +293,7 @@ test("retry-once creates one durable child continuation and one root completion 
   const coordinator = new Coordinator({
     store,
     browserManager: fakeBrowser,
+    legacyCompletionFiles: true,
     jobExecutor: async ({ jobId, store: state }) => {
       state.transition(jobId, "completed", { result: { jobId, state: "completed", status: "completed" } });
       return state.requireJob(jobId).result;

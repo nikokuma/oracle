@@ -1,10 +1,10 @@
 # Oracle Firefox
 
-Oracle Firefox lets Codex, Claude Code, Claudex, and Claude Desktop consult ChatGPT Pro through your logged-in Firefox. It needs no Chrome and no OpenAI API key.
+Oracle Firefox keeps its original install name while letting Codex, Claude Code, Claudex, and Claude Desktop consult ChatGPT Pro through Firefox, native macOS Google Chrome, or Safari. It needs no OpenAI API key.
 
-One background broker owns one dedicated Firefox profile per OS user. Calls from every agent enter the same durable queue, so a client timeout, plugin reload, or agent disconnect does not restart the message.
+One background broker owns the selected browser backend per OS user. Firefox remains the default; Firefox and Chrome use separate dedicated profiles, while Safari uses one isolated automation session. Calls from every agent enter the same durable queue, so a client timeout, plugin reload, or agent disconnect does not restart the message.
 
-macOS with Firefox 153 and Node.js 24+ is the live-qualified platform. Linux and Windows share the portable broker, protocol, SQLite, and packaging tests but are not yet advertised as live-supported.
+macOS with Firefox 153 and Node.js 24+ remains the fully live-qualified path. Native macOS Chrome 151 is bundle/signature checked and headless-fixture qualified. Safari 26.5 has protocol-fixture coverage but still needs an explicitly approved live ChatGPT qualification. Linux and Windows share portable broker tests but are not advertised as live-supported.
 
 ## Install
 
@@ -40,9 +40,24 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.2.1.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.2.1.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Download and open [`oracle-firefox-1.6.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.6.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
-## First login
+## Choose a browser
+
+Firefox is the compatibility default. Ask the agent to use `select_browser`, or use the CLI while no Oracle jobs are outstanding:
+
+```bash
+node plugins/oracle-firefox/dist/cli.mjs browser-select firefox
+node plugins/oracle-firefox/dist/cli.mjs browser-select chrome
+node plugins/oracle-firefox/dist/cli.mjs browser-select safari
+node plugins/oracle-firefox/dist/cli.mjs doctor
+```
+
+The broker refuses to switch during queued, running, or otherwise nonterminal work. On macOS, Chrome is accepted only when its real path is a native app under `/Applications` or `~/Applications`, its bundle id is `com.google.Chrome`, and its code signature belongs to Google. Parallels, VM, Windows-app, mounted-volume, unsigned, and ambiguous copies are rejected before launch.
+
+Safari uses Apple's `safaridriver`. Its visible automation windows are isolated from normal Safari data, support only one driver session, block manual interaction, and cannot reuse normal Safari login. After explicit approval, `import_session` can inject only ChatGPT/OpenAI cookies from a closed Firefox profile; they last only while Oracle's Safari automation session remains alive. Enable Safari **Develop → Developer Settings → Allow remote automation** yourself when requested; Oracle never changes that setting automatically. Browser-managed Download buttons require Firefox or Chrome, though direct signed file links remain supported.
+
+## First login with Firefox
 
 Google often rejects login inside a WebDriver browser. The reliable path is:
 
@@ -73,6 +88,12 @@ Download a file from an existing chat:
 
 > From the last reply in “Nono Ecosystem Reorganization,” download the link “Download the Codex-ready Nono Messages inputs.”
 
+Send a ZIP to a new or existing chat:
+
+> Ask ChatGPT Pro to inspect `/absolute/path/review.zip` through Oracle Firefox.
+
+Agents pass raw archives with `zipFiles`; ordinary `files` remain UTF-8 text inputs. Oracle accepts up to five explicit `.zip` paths per message, snapshots them into the private durable session, validates their structure and hashes, rejects traversal, symlinks, encryption, common credential filenames, dangerous expansion, ambiguous names, and changed snapshots, then verifies the exact attachment set before Send. It never extracts the archive locally.
+
 Oracle resolves one exact conversation, lists safe ChatGPT-generated links or Download buttons, and downloads one exact label without sending a message. Behavior-only buttons receive one click, serialized across agents. Files land in a new private directory under `~/.oracle-firefox/downloads/`; the result includes the path, byte count, and SHA-256. Signed download URLs and Firefox cookies are never returned.
 
 The equivalent CLI flow is:
@@ -82,13 +103,18 @@ node plugins/oracle-firefox/dist/cli.mjs artifacts --url "https://chatgpt.com/c/
 node plugins/oracle-firefox/dist/cli.mjs download-artifact \
   --url "https://chatgpt.com/c/..." \
   --link-text "Exact visible download label"
+
+node plugins/oracle-firefox/dist/cli.mjs consult-start \
+  --authorization-id "$(uuidgen | tr '[:upper:]' '[:lower:]')" \
+  --zip-file /absolute/path/review.zip \
+  -p "Inspect the attached archive and summarize its contents."
 ```
 
 Discovery defaults to the last assistant response. Add `--scope all-assistant` only when targeting an older response or when an exact requested label is hidden behind a trailing ChatGPT status node. Downloads default to 100 MB and have a 250 MB hard maximum.
 
 ## Long jobs
 
-The durable flow returns a job id immediately:
+The durable flow returns a job id plus private job and completion handles immediately. Keep the handles with the originating task; another process must present the job handle to resume that exact chain.
 
 ```bash
 node plugins/oracle-firefox/dist/cli.mjs consult-start \
@@ -98,17 +124,20 @@ node plugins/oracle-firefox/dist/cli.mjs consult-start \
   -p "Review this design" \
   -f FIREFOX.md
 
-node plugins/oracle-firefox/dist/cli.mjs watch <job-id> --jsonl --notify
-node plugins/oracle-firefox/dist/cli.mjs result <job-id>
+node plugins/oracle-firefox/dist/cli.mjs watch <job-id> \
+  --handle '<job-handle>' \
+  --completion-handle '<completion-handle>' \
+  --jsonl --notify
+node plugins/oracle-firefox/dist/cli.mjs result <job-id> --handle '<job-handle>'
 ```
 
 MCP clients use `consult_start`, `continue_chat_start`, `job_status`, `job_wait`, and `job_result`. The compatibility `consult` and `continue_chat` tools wait at most 240 seconds, then return a pending receipt while the broker continues working.
 
 When an agent uses the bundled Oracle skill, the default is `responseFailurePolicy=retry-once`, recovery-chain following, and one harness-appropriate completion handoff. You do not need to repeat those instructions. Explicit requests such as “do not retry,” “notify me only,” or “no automation” override the skill default. Direct CLI/MCP callers that bypass the skill retain the conservative raw default `responseFailurePolicy=report`.
 
-`job_wait` is event-driven inside the broker; it sleeps until durable job state changes rather than repeatedly checking SQLite. The CLI watcher follows an authorized recovery child automatically and can display one macOS notification. A local watcher uses no model tokens while idle, but it cannot resume a stopped model turn unless its host provides a wake API. Codex currently handles automatic continuation with a task heartbeat scoped to the exact root job; without a heartbeat, use the notification and resume manually.
+`job_wait` and `completion_wait` are event-driven inside the broker; they sleep until durable state changes rather than repeatedly checking SQLite. The CLI watcher follows an authorized recovery/evidence chain and can display one macOS notification. A local watcher uses no model tokens while idle, but it cannot resume a stopped model turn unless its host provides a wake API. Codex can attach one task heartbeat to the exact chain; without a host wake API, use the notification and resume manually.
 
-Terminal logical jobs receive a private atomic completion record under the coordinator `completions/` directory. It contains job state and safe routing metadata, never the prompt, answer, cookies, or browser-profile contents.
+New logical jobs receive a capability-bound durable completion subscription with claim, delivered, and acknowledgement states. Completion events contain only safe routing state, never the prompt, answer, cookies, capability secrets, paths, or browser-profile contents. Legacy completion files are disabled unless `ORACLE_FIREFOX_LEGACY_COMPLETION_FILES=1` is explicitly set while operating serially.
 
 ## Failed Pro responses
 
@@ -128,18 +157,26 @@ The default `responseFailurePolicy=report` sends nothing else. With `retry-once`
 - Attachments must exactly match, finish processing, and leave the composer send-ready.
 - Assistant completion is bound to the exact submitted user turn, not the latest visible response or turn count.
 - Oracle never clicks Answer now, regenerate, continue generation, Stop, or Enter as a send fallback.
-- Same-chat writes are FIFO across all harnesses. Different chats are serial by default; live-qualified two-chat overlap can be enabled with `ORACLE_FIREFOX_WRITE_CONCURRENCY=2`.
-- Firefox trusted keyboard input is foregrounded through a short broker-wide mutex; response generation on other leased pages continues concurrently.
-- A visible ChatGPT request throttle is reported as `ACCOUNT_COOLDOWN`; Oracle never retries it automatically.
+- Every new logical chain is owned by a broker-minted capability. A bare UUID never grants access to another agent's new job; `list_jobs` is scoped to the current client session.
+- Same-chat writes are durable FIFO across all harnesses, including response recovery and local-evidence children. Version 1.5 starts with one active conversation as a conservative rollout. After live qualification, set both `ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS=1..5` and `ORACLE_FIREFOX_QUALIFIED_CONCURRENCY=1..5`; that qualified cap persists across clean broker restarts.
+- Normal broker runs are headless by default. Visible setup/login is exclusive and cannot overlap a job page. Set `ORACLE_FIREFOX_BROWSER_MODE=visible` only for broker-wide debugging.
+- Firefox launch, page slots, maintenance, trusted input, model selection, final verification, and Send are fenced by broker-owned locks, a profile-wide lifetime lease, broker generations, and page/execution epochs. Response generation on qualified isolated pages can continue concurrently.
+- A visible ChatGPT request throttle opens a durable broker-wide `ACCOUNT_COOLDOWN`, invalidates unused submit permits, pauses queued writes, and reopens through one paced probe. Oracle never replays a submitted message.
 - Positively classified response failures expose `responseDisposition`, `responseFailure`, `recoveryJobId`, `activeJobId`, and the durable `recoveryChain`.
 - Uncertain submissions quarantine their exact conversation or creation scope until read-only reconciliation or user acknowledgement.
 
 Private state lives in:
 
 - Firefox profile and session artifacts: `~/.oracle-firefox/`
+- Chrome's dedicated profile: `~/.oracle-firefox/browser-profiles/chrome/`
+- Persisted browser selection: `~/Library/Application Support/oracle-firefox/coordinator/browser-selection.json`
 - macOS coordinator database, token, and protected log: `~/Library/Application Support/oracle-firefox/coordinator/`
-- Private completion handoffs: `~/Library/Application Support/oracle-firefox/coordinator/completions/`
-- broker socket: `$TMPDIR/oracle-firefox-$UID/broker.sock`
+- Capability hashes, completion subscriptions, delivery acknowledgements, lanes, and cooldown state: the coordinator SQLite database
+- stable broker socket: `/tmp/oracle-firefox-<uid>-<coordinator-id>/broker.sock` (independent of each host's `TMPDIR`)
+
+The coordinator UUID, signed broker locator, coordinator lifetime lease, and profile lifetime lease make differently installed Codex, Claude, Claudex, and Desktop packages converge on one owner. A newer client may request a directional idle handoff from a known older broker. It never kills active work, unlinks an unverified socket, or lets an older client downgrade a newer broker. Schema 6 also fences pre-1.5 SQLite writers and writes a `coordinator.sqlite.pre-v6.bak` backup before migrating an existing production database.
+
+If startup reports a database or identity failure, stop before editing SQLite. `node plugins/oracle-firefox/dist/cli.mjs coordinator-inspect` performs an offline/read-only integrity, schema, backup, and broker-generation inspection without launching Firefox or a broker. Preserve both the database and its migration backup before any separately approved repair.
 
 ## Local evidence
 

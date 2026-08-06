@@ -8,6 +8,7 @@ import { promisify } from "node:util";
 import {
   importChatGptCookies,
   parseFirefoxProfilesIni,
+  readChatGptCookies,
 } from "../src/profiles.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -77,6 +78,15 @@ test("imports only ChatGPT and OpenAI cookies", async () => {
     await execFileAsync("/usr/bin/sqlite3", [
       path.join(destination, "cookies.sqlite"),
       "INSERT INTO moz_cookies (name,value,host,path) VALUES ('old','stale','.chatgpt.com','/');",
+    ]);
+
+    const readable = await readChatGptCookies({
+      sourceProfileDir: source,
+      sqlitePath: "/usr/bin/sqlite3",
+    });
+    assert.deepEqual(readable.map((cookie) => `${cookie.domain}|${cookie.name}`).sort(), [
+      ".chatgpt.com|chat",
+      "auth.openai.com|openai",
     ]);
 
     const result = await importChatGptCookies({

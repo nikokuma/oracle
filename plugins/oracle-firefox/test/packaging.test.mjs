@@ -23,6 +23,8 @@ test("canonical metadata matches Codex, Claude, marketplace, and MCPB packages",
   assert.equal(mcpb.version, meta.version);
   const claudeMcp = JSON.parse(await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", ".mcp.json"), "utf8"));
   assert.match(claudeMcp.mcpServers["oracle-firefox"].args[0], /\$\{CLAUDE_PLUGIN_ROOT\}/u);
+  assert.equal(claudeMcp.mcpServers["oracle-firefox"].env.ORACLE_FIREFOX_HARNESS, "claude-code-mcp");
+  assert.equal(mcpb.server.mcp_config.env.ORACLE_FIREFOX_HARNESS, "claude-desktop-mcp");
   const { stdout: tracked } = await execFileAsync("git", [
     "ls-files",
     "--error-unmatch",
@@ -31,6 +33,29 @@ test("canonical metadata matches Codex, Claude, marketplace, and MCPB packages",
   ], { cwd: repositoryRoot });
   assert.match(tracked, /plugins\/oracle-firefox-claude\/dist\/server\.mjs/u);
   assert.match(tracked, /plugins\/oracle-firefox-claude\/dist\/broker\.mjs/u);
+
+  const packageJson = JSON.parse(await readFile(path.join(pluginRoot, "package.json"), "utf8"));
+  const build = JSON.parse(await readFile(path.join(pluginRoot, "build-manifest.json"), "utf8"));
+  const claudeBuild = JSON.parse(await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", "build-manifest.json"), "utf8"));
+  const mcpbBuild = JSON.parse(await readFile(path.join(pluginRoot, "mcpb", "build-manifest.json"), "utf8"));
+  assert.equal(packageJson.version, meta.version);
+  assert.equal(build.packageVersion, meta.version);
+  assert.equal(build.protocolVersion, meta.protocolVersion);
+  assert.equal(build.schemaVersion, meta.schemaVersion);
+  assert.equal(build.releaseSequence, meta.releaseSequence);
+  assert.deepEqual(claudeBuild, build);
+  assert.deepEqual(mcpbBuild, build);
+  assert.match(build.sourceDigest, /^[0-9a-f]{64}$/u);
+  for (const artifact of [
+    path.join(pluginRoot, "dist", "server.mjs"),
+    path.join(pluginRoot, "dist", "broker.mjs"),
+    path.join(repositoryRoot, "plugins", "oracle-firefox-claude", "dist", "server.mjs"),
+    path.join(repositoryRoot, "plugins", "oracle-firefox-claude", "dist", "broker.mjs"),
+    path.join(pluginRoot, "mcpb", "server", "server.mjs"),
+    path.join(pluginRoot, "mcpb", "server", "broker.mjs"),
+  ]) {
+    assert.match(await readFile(artifact, "utf8"), new RegExp(build.buildId), `${artifact} must carry the canonical build id`);
+  }
 });
 
 test("generated Claude skill includes the canonical progressive-disclosure references", async () => {
@@ -78,15 +103,17 @@ test("Claudex wrapper adds only plugin-dir and preserves managed or Fable argume
   const fake = path.join(root, "fake-claudex.mjs");
   await mkdir(path.join(plugin, ".claude-plugin"), { recursive: true });
   await writeFile(path.join(plugin, ".claude-plugin", "plugin.json"), "{}\n");
-  await writeFile(fake, "#!/usr/bin/env node\nprocess.stdout.write(JSON.stringify(process.argv.slice(2)));\n");
+  await writeFile(fake, "#!/usr/bin/env node\nprocess.stdout.write(JSON.stringify({ args: process.argv.slice(2), harness: process.env.ORACLE_FIREFOX_HARNESS }));\n");
   await chmod(fake, 0o755);
   try {
     const wrapper = path.join(pluginRoot, "src", "oracle-claudex.mjs");
     const { stdout } = await execFileAsync(process.execPath, [wrapper, "--model", "fable", "-p", "hello"], {
       env: { ...process.env, ORACLE_FIREFOX_CLAUDE_PLUGIN: plugin, CLAUDEX_PATH: fake },
     });
-    assert.deepEqual(JSON.parse(stdout), ["--plugin-dir", plugin, "--model", "fable", "-p", "hello"]);
-    assert.equal(JSON.parse(stdout).includes("--mcp-config"), false);
+    const value = JSON.parse(stdout);
+    assert.deepEqual(value.args, ["--plugin-dir", plugin, "--model", "fable", "-p", "hello"]);
+    assert.equal(value.args.includes("--mcp-config"), false);
+    assert.equal(value.harness, "claudex");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

@@ -3230,8 +3230,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path3) {
-      let input = path3;
+    function removeDotSegments(path4) {
+      let input = path4;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3483,8 +3483,8 @@ var require_schemes = __commonJS({
         wsComponent.secure = void 0;
       }
       if (wsComponent.resourceName) {
-        const [path3, query] = wsComponent.resourceName.split("?");
-        wsComponent.path = path3 && path3 !== "/" ? path3 : void 0;
+        const [path4, query] = wsComponent.resourceName.split("?");
+        wsComponent.path = path4 && path4 !== "/" ? path4 : void 0;
         wsComponent.query = query;
         wsComponent.resourceName = void 0;
       }
@@ -6897,7 +6897,7 @@ var require_dist = __commonJS({
 });
 
 // src/server.mjs
-import { randomUUID as randomUUID2 } from "node:crypto";
+import { randomUUID as randomUUID5 } from "node:crypto";
 
 // node_modules/zod/v3/helpers/util.js
 var util;
@@ -7258,8 +7258,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path3, errorMaps, issueData } = params;
-  const fullPath = [...path3, ...issueData.path || []];
+  const { data, path: path4, errorMaps, issueData } = params;
+  const fullPath = [...path4, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -7374,11 +7374,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path3, key) {
+  constructor(parent, value, path4, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path3;
+    this._path = path4;
     this._key = key;
   }
   get path() {
@@ -11298,10 +11298,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path3) {
-  if (!path3)
+function getElementAtPath(obj, path4) {
+  if (!path4)
     return obj;
-  return path3.reduce((acc, key) => acc?.[key], obj);
+  return path4.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -11710,11 +11710,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path3, issues) {
+function prefixIssues(path4, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path3);
+    iss.path.unshift(path4);
     return iss;
   });
 }
@@ -11861,16 +11861,16 @@ function flattenError(error51, mapper = (issue2) => issue2.message) {
 }
 function formatError(error51, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error52, path3 = []) => {
+  const processError = (error52, path4 = []) => {
     for (const issue2 of error52.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path3, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path3, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path3, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
       } else {
-        const fullpath = [...path3, ...issue2.path];
+        const fullpath = [...path4, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -11897,17 +11897,17 @@ function formatError(error51, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error51, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error52, path3 = []) => {
+  const processError = (error52, path4 = []) => {
     var _a3, _b;
     for (const issue2 of error52.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path3, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path3, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path3, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
       } else {
-        const fullpath = [...path3, ...issue2.path];
+        const fullpath = [...path4, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -11939,8 +11939,8 @@ function treeifyError(error51, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path3 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path3) {
+  const path4 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path4) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -25065,13 +25065,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path3 = ref.slice(1).split("/").filter(Boolean);
-  if (path3.length === 0) {
+  const path4 = ref.slice(1).split("/").filter(Boolean);
+  if (path4.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path3[0] === defsKey) {
-    const key = path3[1];
+  if (path4[0] === defsKey) {
+    const key = path4[1];
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -30963,52 +30963,85 @@ var StdioServerTransport = class {
 };
 
 // src/broker-client.mjs
-import { randomBytes } from "node:crypto";
-import { access, chmod, mkdir, open, readFile, rm, stat } from "node:fs/promises";
-import path2 from "node:path";
-import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
+import { randomBytes, randomUUID as randomUUID4 } from "node:crypto";
+import { chmod as chmod3, link as link2, mkdir as mkdir4, open as open3, readFile as readFile3, rm as rm3 } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
-// src/config.mjs
-import os from "node:os";
-import path from "node:path";
-function coordinatorDirectory() {
-  const configured = process.env.ORACLE_FIREFOX_COORDINATOR_HOME?.trim();
-  if (configured) return path.resolve(configured);
-  if (process.platform === "darwin") {
-    return path.join(os.homedir(), "Library", "Application Support", "oracle-firefox", "coordinator");
-  }
-  if (process.platform === "win32") {
-    return path.join(
-      process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"),
-      "oracle-firefox",
-      "coordinator"
+// src/generated-build-info.mjs
+var GENERATED_BUILD_INFO = Object.freeze({
+  "packageVersion": "1.6.0",
+  "protocolVersion": 7,
+  "schemaVersion": 6,
+  "releaseSequence": 1600,
+  "sourceDigest": "84c819de58fa29ae63acdb46c6ad6a13b618985e070a016508ae5ea600f72193",
+  "buildId": "oracle-firefox-1.6.0-84c819de58fa29ae"
+});
+
+// src/build-info.mjs
+var ORACLE_FIREFOX_VERSION = GENERATED_BUILD_INFO.packageVersion;
+var BROKER_PROTOCOL_VERSION = GENERATED_BUILD_INFO.protocolVersion;
+var BROKER_SCHEMA_VERSION = GENERATED_BUILD_INFO.schemaVersion;
+var BROKER_RELEASE_SEQUENCE = GENERATED_BUILD_INFO.releaseSequence;
+var BROKER_BUILD_ID = GENERATED_BUILD_INFO.buildId;
+var BROKER_SOURCE_DIGEST = GENERATED_BUILD_INFO.sourceDigest;
+
+// src/atomic-json.mjs
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { chmod, mkdir, open, readFile, rename, rm } from "node:fs/promises";
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [key, canonicalize(value[key])])
     );
   }
-  return path.join(process.env.XDG_STATE_HOME || path.join(os.homedir(), ".local", "state"), "oracle-firefox", "coordinator");
+  return value;
 }
-function brokerEndpoint() {
-  if (process.env.ORACLE_FIREFOX_BROKER_ENDPOINT?.trim()) {
-    return process.env.ORACLE_FIREFOX_BROKER_ENDPOINT.trim();
+function canonicalJson(value) {
+  return JSON.stringify(canonicalize(value));
+}
+function jsonMac(value, token) {
+  return createHmac("sha256", token).update(canonicalJson(value)).digest("hex");
+}
+function verifyJsonMac(value, token, expected) {
+  const actual = Buffer.from(jsonMac(value, token));
+  const candidate = Buffer.from(String(expected || ""));
+  return actual.length === candidate.length && timingSafeEqual(actual, candidate);
+}
+async function readJson(target) {
+  return JSON.parse(await readFile(target, "utf8"));
+}
+async function readSignedJson(target, token) {
+  const value = await readJson(target);
+  const unsigned = { ...value };
+  const encoded = String(unsigned.mac || "");
+  delete unsigned.mac;
+  if (!encoded.startsWith("hmac-sha256:") || !verifyJsonMac(unsigned, token, encoded.slice(12))) {
+    const error51 = new Error(`Invalid authenticated JSON at ${target}`);
+    error51.code = "AUTHENTICATED_JSON_INVALID";
+    throw error51;
   }
-  if (process.platform === "win32") {
-    return `\\\\.\\pipe\\oracle-firefox-${process.env.USERNAME || "user"}`;
+  return value;
+}
+
+// src/broker-locator.mjs
+async function readBrokerLocator(identity, token) {
+  try {
+    const locator = await readSignedJson(identity.locatorPath, token);
+    if (locator.version !== 1 || locator.coordinatorId !== identity.coordinatorId || locator.endpoint?.path !== identity.endpoint) return null;
+    return locator;
+  } catch {
+    return null;
   }
-  const uid = typeof process.getuid === "function" ? process.getuid() : process.env.USER || "user";
-  return path.join(process.env.TMPDIR || os.tmpdir(), `oracle-firefox-${uid}`, "broker.sock");
 }
-function brokerTokenPath() {
-  return path.join(coordinatorDirectory(), "broker.token");
-}
-function coordinatorLogPath() {
-  return path.join(coordinatorDirectory(), "broker.log");
-}
-function brokerLaunchLockPath() {
-  return path.join(coordinatorDirectory(), "broker.start.lock");
-}
-function brokerNodePath() {
-  return process.env.ORACLE_FIREFOX_NODE_PATH?.trim() || process.execPath;
-}
+
+// src/broker-lease.mjs
+import { DatabaseSync } from "node:sqlite";
+import { execFile } from "node:child_process";
+import { lstat, mkdir as mkdir2 } from "node:fs/promises";
+import path from "node:path";
+import { promisify } from "node:util";
 
 // src/errors.mjs
 var OracleFirefoxError = class extends Error {
@@ -31023,27 +31056,313 @@ var OracleFirefoxError = class extends Error {
     this.details = options.details ?? null;
   }
 };
+var CAPABILITY_PATTERN = /ofx1\.(?:session|read|control|subscription|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu;
+function redact(value) {
+  if (typeof value === "string") return value.replace(CAPABILITY_PATTERN, "[REDACTED_CAPABILITY]");
+  if (Array.isArray(value)) return value.map(redact);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, redact(item)]));
+  }
+  return value;
+}
 function structuredError(error51, fallback = {}) {
   const value = error51 instanceof Error ? error51 : new Error(String(error51));
   return {
     code: value.code || fallback.code || "ORACLE_FIREFOX_ERROR",
-    message: value.message,
+    message: redact(value.message),
     jobState: value.jobState ?? fallback.jobState ?? null,
     safeToRetry: value.safeToRetry ?? fallback.safeToRetry ?? false,
     submissionMayHaveOccurred: value.submissionMayHaveOccurred ?? fallback.submissionMayHaveOccurred ?? false,
-    recoveryAction: value.recoveryAction ?? fallback.recoveryAction ?? null,
-    details: value.details ?? fallback.details ?? null
+    recoveryAction: redact(value.recoveryAction ?? fallback.recoveryAction ?? null),
+    details: redact(value.details ?? fallback.details ?? null)
   };
 }
 function codedError(code, message, options) {
   return new OracleFirefoxError(code, message, options);
 }
 
+// src/broker-lease.mjs
+var execFileAsync = promisify(execFile);
+async function assertLeaseTarget(pathname, label) {
+  const info = await lstat(pathname).catch((error51) => {
+    if (error51?.code === "ENOENT") return null;
+    throw error51;
+  });
+  if (info && (info.isSymbolicLink() || !info.isFile())) {
+    throw codedError("BROKER_LEASE_PATH_INVALID", `The ${label} lifetime lease path is not a regular file.`);
+  }
+}
+function acquireDatabaseLease(databasePath, label) {
+  let db;
+  try {
+    db = new DatabaseSync(databasePath);
+    db.exec(`
+      PRAGMA journal_mode=DELETE;
+      PRAGMA synchronous=FULL;
+      PRAGMA busy_timeout=0;
+      CREATE TABLE IF NOT EXISTS lease_guard (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        marker INTEGER NOT NULL DEFAULT 0
+      );
+      INSERT OR IGNORE INTO lease_guard(id, marker) VALUES (1, 0);
+      BEGIN EXCLUSIVE;
+      UPDATE lease_guard SET marker = marker WHERE id = 1;
+    `);
+    return db;
+  } catch (error51) {
+    try {
+      db?.close();
+    } catch {
+    }
+    throw codedError("BROKER_LEASE_HELD", `Another Oracle Firefox service holds the ${label} lifetime lease.`, {
+      safeToRetry: true,
+      details: { label },
+      cause: error51
+    });
+  }
+}
+var BrokerLaunchLease = class _BrokerLaunchLease {
+  static async acquire(databasePath) {
+    await mkdir2(path.dirname(databasePath), { recursive: true, mode: 448 });
+    await assertLeaseTarget(databasePath, "broker launch");
+    const db = acquireDatabaseLease(databasePath, "broker launch");
+    return new _BrokerLaunchLease(db);
+  }
+  constructor(db) {
+    this.db = db;
+    this.released = false;
+  }
+  release() {
+    if (this.released) return;
+    this.released = true;
+    try {
+      this.db.exec("ROLLBACK");
+    } catch {
+    }
+    try {
+      this.db.close();
+    } catch {
+    }
+  }
+};
+
+// src/config.mjs
+import { createHash } from "node:crypto";
+import os from "node:os";
+import path2 from "node:path";
+function oracleFirefoxHome() {
+  const configured = process.env.ORACLE_FIREFOX_HOME?.trim();
+  return configured ? path2.resolve(configured) : path2.join(os.homedir(), ".oracle-firefox");
+}
+function profileDirectory() {
+  return path2.join(oracleFirefoxHome(), "profile");
+}
+var SUPPORTED_BROWSERS = Object.freeze(["firefox", "chrome", "safari"]);
+function coordinatorDirectory() {
+  const configured = process.env.ORACLE_FIREFOX_COORDINATOR_HOME?.trim();
+  if (configured) return path2.resolve(configured);
+  if (process.platform === "darwin") {
+    return path2.join(os.homedir(), "Library", "Application Support", "oracle-firefox", "coordinator");
+  }
+  if (process.platform === "win32") {
+    return path2.join(
+      process.env.LOCALAPPDATA || path2.join(os.homedir(), "AppData", "Local"),
+      "oracle-firefox",
+      "coordinator"
+    );
+  }
+  return path2.join(process.env.XDG_STATE_HOME || path2.join(os.homedir(), ".local", "state"), "oracle-firefox", "coordinator");
+}
+function brokerRuntimeRoot() {
+  const configured = process.env.ORACLE_FIREFOX_RUNTIME_ROOT?.trim();
+  return configured ? path2.resolve(configured) : "/tmp";
+}
+function brokerEndpoint(options = {}) {
+  if (process.env.ORACLE_FIREFOX_BROKER_ENDPOINT?.trim()) {
+    return process.env.ORACLE_FIREFOX_BROKER_ENDPOINT.trim();
+  }
+  if (process.platform === "win32") {
+    const identity2 = options.coordinatorId || createHash("sha256").update(`${coordinatorDirectory()}\0${profileDirectory()}`).digest("hex");
+    return `\\\\.\\pipe\\oracle-firefox-${identity2.slice(0, 24)}`;
+  }
+  if (options.runtimeDirectory) return path2.join(options.runtimeDirectory, "broker.sock");
+  const uid = typeof process.getuid === "function" ? process.getuid() : process.env.USER || "user";
+  const identity = createHash("sha256").update(`${path2.resolve(coordinatorDirectory())}\0${path2.resolve(profileDirectory())}`).digest("hex");
+  return path2.join(brokerRuntimeRoot(), `oracle-firefox-${uid}-${identity.slice(0, 16)}`, "broker.sock");
+}
+function legacyBrokerEndpoints() {
+  if (process.env.ORACLE_FIREFOX_BROKER_ENDPOINT?.trim() || process.env.ORACLE_FIREFOX_DISABLE_LEGACY_DISCOVERY === "1") return [];
+  if (process.platform === "win32") {
+    return [`\\\\.\\pipe\\oracle-firefox-${process.env.USERNAME || "user"}`];
+  }
+  const uid = typeof process.getuid === "function" ? process.getuid() : process.env.USER || "user";
+  const roots = ["/tmp", os.tmpdir(), process.env.TMPDIR].filter(Boolean).map((entry) => path2.resolve(entry));
+  return [...new Set(roots.map((root) => path2.join(root, `oracle-firefox-${uid}`, "broker.sock")))];
+}
+function brokerCoordinatorIdPath() {
+  return path2.join(coordinatorDirectory(), "coordinator.id");
+}
+function brokerLeaseDatabasePath() {
+  return path2.join(coordinatorDirectory(), "broker.lease.sqlite");
+}
+function profileLeaseDatabasePath() {
+  return path2.join(oracleFirefoxHome(), "profile.lease.sqlite");
+}
+function brokerLocatorPath() {
+  return path2.join(coordinatorDirectory(), "broker.locator.json");
+}
+function brokerTokenPath() {
+  return path2.join(coordinatorDirectory(), "broker.token");
+}
+function coordinatorDatabasePath() {
+  return path2.join(coordinatorDirectory(), "coordinator.sqlite");
+}
+function coordinatorLogPath() {
+  return path2.join(coordinatorDirectory(), "broker.log");
+}
+function brokerLaunchLockPath() {
+  return path2.join(coordinatorDirectory(), "broker.start.v2.sqlite");
+}
+function brokerNodePath() {
+  return process.env.ORACLE_FIREFOX_NODE_PATH?.trim() || process.execPath;
+}
+
+// src/coordinator-identity.mjs
+import { createHash as createHash2, randomUUID as randomUUID2 } from "node:crypto";
+import { chmod as chmod2, link, lstat as lstat2, mkdir as mkdir3, open as open2, readFile as readFile2, realpath, rm as rm2, stat } from "node:fs/promises";
+import os2 from "node:os";
+import path3 from "node:path";
+var UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+function digest(value) {
+  return createHash2("sha256").update(value).digest("hex");
+}
+async function ensurePrivateDirectory(directory) {
+  await mkdir3(directory, { recursive: true, mode: 448 });
+  const info = await lstat2(directory);
+  if (!info.isDirectory() || info.isSymbolicLink()) {
+    throw codedError("PRIVATE_DIRECTORY_INVALID", `${directory} must be a private real directory.`);
+  }
+  if (typeof process.getuid === "function" && info.uid !== process.getuid()) {
+    throw codedError("PRIVATE_DIRECTORY_OWNER_MISMATCH", `${directory} is not owned by the current user.`);
+  }
+  await chmod2(directory, 448);
+  return realpath(directory);
+}
+async function canonicalPath(candidate, { directory = false } = {}) {
+  if (directory) return ensurePrivateDirectory(candidate);
+  const parent = await ensurePrivateDirectory(path3.dirname(candidate));
+  return path3.join(parent, path3.basename(candidate));
+}
+async function canonicalProfilePath(candidate) {
+  try {
+    const info = await lstat2(candidate);
+    if (info.isSymbolicLink() || !info.isDirectory()) {
+      throw codedError("PROFILE_PATH_INVALID", `${candidate} must be a private real directory.`);
+    }
+    return ensurePrivateDirectory(candidate);
+  } catch (error51) {
+    if (error51?.code !== "ENOENT") throw error51;
+    return canonicalPath(candidate);
+  }
+}
+async function canonicalRuntimeRoot(candidate) {
+  await mkdir3(candidate, { recursive: true });
+  const resolved = await realpath(candidate);
+  const info = await stat(resolved);
+  if (!info.isDirectory()) throw codedError("RUNTIME_ROOT_INVALID", `${candidate} is not a directory.`);
+  return resolved;
+}
+async function readOrCreateCoordinatorUuid() {
+  const target = brokerCoordinatorIdPath();
+  const readExisting = async () => {
+    const value2 = (await readFile2(target, "utf8")).trim();
+    if (!UUID_PATTERN.test(value2)) throw codedError("COORDINATOR_ID_INVALID", `Oracle Firefox cannot trust ${target}.`);
+    return value2.toLowerCase();
+  };
+  try {
+    return await readExisting();
+  } catch (error51) {
+    if (error51?.code !== "ENOENT") {
+      throw codedError("COORDINATOR_ID_INVALID", `Oracle Firefox cannot trust ${target}.`, { cause: error51 });
+    }
+  }
+  const value = randomUUID2();
+  const temporary = `${target}.${process.pid}.${randomUUID2()}.tmp`;
+  const handle = await open2(temporary, "wx", 384);
+  try {
+    try {
+      await handle.writeFile(`${value}
+`, "utf8");
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    try {
+      await link(temporary, target);
+      return value;
+    } catch (error51) {
+      if (error51?.code !== "EEXIST") throw error51;
+      return await readExisting();
+    }
+  } catch (error51) {
+    try {
+      await handle.close();
+    } catch {
+    }
+    throw error51;
+  } finally {
+    await rm2(temporary, { force: true }).catch(() => void 0);
+  }
+}
+async function resolveCoordinatorIdentity() {
+  const coordinatorPath = await canonicalPath(coordinatorDirectory(), { directory: true });
+  const homePath = await canonicalPath(oracleFirefoxHome(), { directory: true });
+  const profilePath = await canonicalProfilePath(profileDirectory());
+  const coordinatorUuid = await readOrCreateCoordinatorUuid();
+  const userIdentity = typeof process.getuid === "function" ? `uid:${process.getuid()}` : `user:${process.env.USERNAME || process.env.USER || os2.userInfo().username}`;
+  const coordinatorId = digest(`${userIdentity}\0${coordinatorPath}\0${profilePath}\0${coordinatorUuid}`);
+  const profileId = digest(`${userIdentity}\0${profilePath}`);
+  const runtimeRoot = await canonicalRuntimeRoot(brokerRuntimeRoot());
+  const runtimeDirectory = await canonicalPath(
+    path3.join(runtimeRoot, `oracle-firefox-${userIdentity.replace(/[^a-z0-9_-]/giu, "-")}-${coordinatorId.slice(0, 16)}`),
+    { directory: true }
+  );
+  const endpoint = brokerEndpoint({ runtimeDirectory, coordinatorId });
+  if (process.platform !== "win32") {
+    const maximumBytes = process.platform === "darwin" ? 103 : 107;
+    if (Buffer.byteLength(endpoint) > maximumBytes) {
+      throw codedError(
+        "BROKER_ENDPOINT_TOO_LONG",
+        `The canonical broker socket path is ${Buffer.byteLength(endpoint)} bytes; this platform permits at most ${maximumBytes}. Choose a shorter ORACLE_FIREFOX_RUNTIME_ROOT.`
+      );
+    }
+  }
+  const databaseExists = await stat(coordinatorDatabasePath()).then(() => true, () => false);
+  return {
+    version: 1,
+    userIdentity,
+    coordinatorUuid,
+    coordinatorId,
+    profileId,
+    coordinatorPath,
+    homePath,
+    profilePath,
+    runtimeRoot,
+    runtimeDirectory,
+    endpoint,
+    legacyEndpoints: legacyBrokerEndpoints().filter((candidate) => candidate !== endpoint),
+    locatorPath: brokerLocatorPath(),
+    coordinatorLeasePath: brokerLeaseDatabasePath(),
+    profileLeasePath: profileLeaseDatabasePath(),
+    databasePath: coordinatorDatabasePath(),
+    databaseExists
+  };
+}
+
 // src/protocol.mjs
 import net from "node:net";
-import { randomUUID, timingSafeEqual } from "node:crypto";
-var BROKER_PROTOCOL_VERSION = 2;
-var BROKER_BUILD_VERSION = "1.2.1";
+import { randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+var BROKER_BUILD_VERSION = ORACLE_FIREFOX_VERSION;
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
@@ -31078,7 +31397,7 @@ function createFrameDecoder(onMessage, onError) {
 }
 function rpcRequest(endpoint, token, method, params = {}, options = {}) {
   const timeoutMs = Math.max(250, options.timeoutMs ?? 1e4);
-  const id = randomUUID();
+  const id = randomUUID3();
   return new Promise((resolve, reject) => {
     const socket = net.createConnection(endpoint);
     let settled = false;
@@ -31117,21 +31436,38 @@ function rpcRequest(endpoint, token, method, params = {}, options = {}) {
 }
 
 // src/broker-client.mjs
-async function ensurePrivateDirectory(directory) {
-  await mkdir(directory, { recursive: true, mode: 448 });
-  await chmod(directory, 448);
+var clientInstanceId = randomUUID4();
+var clientSessions = /* @__PURE__ */ new Map();
+var KNOWN_RELEASE_SEQUENCES = /* @__PURE__ */ new Map([
+  ["1.2.1", 1201],
+  ["1.3.0", 1300],
+  ["1.4.0", 1400],
+  ["1.4.1", 1401],
+  [ORACLE_FIREFOX_VERSION, BROKER_RELEASE_SEQUENCE]
+]);
+async function ensurePrivateDirectory2(directory) {
+  await mkdir4(directory, { recursive: true, mode: 448 });
+  await chmod3(directory, 448);
 }
 async function readOrCreateBrokerToken() {
-  await ensurePrivateDirectory(coordinatorDirectory());
+  await ensurePrivateDirectory2(coordinatorDirectory());
   const tokenPath = brokerTokenPath();
+  const readExisting = async () => {
+    const value = (await readFile3(tokenPath, "utf8")).trim();
+    if (!/^[0-9a-f]{64}$/u.test(value)) {
+      throw codedError("BROKER_TOKEN_INVALID", "The Oracle Firefox broker token file is empty or invalid; it was not replaced automatically.");
+    }
+    return value;
+  };
   try {
-    return (await readFile(tokenPath, "utf8")).trim();
+    return await readExisting();
   } catch (error51) {
     if (error51?.code !== "ENOENT") throw error51;
   }
   const candidate = randomBytes(32).toString("hex");
+  const temporary = `${tokenPath}.${process.pid}.${randomUUID4()}.tmp`;
+  const handle = await open3(temporary, "wx", 384);
   try {
-    const handle = await open(tokenPath, "wx", 384);
     try {
       await handle.writeFile(`${candidate}
 `, "utf8");
@@ -31139,108 +31475,266 @@ async function readOrCreateBrokerToken() {
     } finally {
       await handle.close();
     }
-    return candidate;
+    try {
+      await link2(temporary, tokenPath);
+      return candidate;
+    } catch (error51) {
+      if (error51?.code !== "EEXIST") throw error51;
+      return await readExisting();
+    }
   } catch (error51) {
-    if (error51?.code !== "EEXIST") throw error51;
-    return (await readFile(tokenPath, "utf8")).trim();
+    try {
+      await handle.close();
+    } catch {
+    }
+    throw error51;
+  } finally {
+    await rm3(temporary, { force: true }).catch(() => void 0);
   }
 }
-async function brokerResponds(token, timeoutMs = 750) {
+function clientMetadata(harness, hostSessionHint = null, session = null) {
+  return {
+    pid: process.pid,
+    harness,
+    clientInstanceId,
+    buildVersion: ORACLE_FIREFOX_VERSION,
+    buildId: BROKER_BUILD_ID,
+    releaseSequence: BROKER_RELEASE_SEQUENCE,
+    hostSessionHint,
+    sessionId: session?.sessionId,
+    sessionHandle: session?.sessionHandle
+  };
+}
+function normalizeLegacyBrokerStatus(status, endpoint) {
+  const protocolVersion = Number(status?.protocolVersion || status?.protocol?.minimum || 0);
+  const buildVersion = status?.buildVersion || "unknown";
+  return {
+    ...status,
+    coordinatorId: status?.coordinatorId || null,
+    instanceId: status?.brokerInstanceId || `legacy:${status?.pid || "unknown"}:${endpoint}`,
+    leaseGeneration: Number(status?.leaseGeneration || 0),
+    state: status?.draining ? "draining" : "ready",
+    protocol: { minimum: protocolVersion, maximum: protocolVersion },
+    releaseSequence: KNOWN_RELEASE_SEQUENCES.get(buildVersion) || 0,
+    buildVersion,
+    legacy: true
+  };
+}
+async function probeBroker(identity, token, timeoutMs = 750, endpointOverride = null) {
+  const locator = endpointOverride ? null : await readBrokerLocator(identity, token);
+  const endpoint = endpointOverride || locator?.endpoint?.path || identity.endpoint;
   try {
-    return await rpcRequest(brokerEndpoint(), token, "broker.status", {}, { timeoutMs });
-  } catch {
-    return null;
+    const hello = await rpcRequest(endpoint, token, "broker.hello", {}, {
+      timeoutMs,
+      client: clientMetadata("broker-probe")
+    });
+    return { kind: hello.state === "starting" ? "starting" : "live", hello, endpoint };
+  } catch (error51) {
+    if (error51?.code === "BROKER_UNAUTHORIZED") return { kind: "auth-conflict", error: error51, endpoint };
+    if ((/* @__PURE__ */ new Set(["METHOD_NOT_FOUND", "BROKER_PROTOCOL_MISMATCH"])).has(error51?.code)) {
+      try {
+        const status = await rpcRequest(endpoint, token, "broker.status", {}, {
+          timeoutMs,
+          client: clientMetadata("legacy-broker-probe")
+        });
+        return { kind: "live", hello: normalizeLegacyBrokerStatus(status, endpoint), endpoint };
+      } catch (legacyError) {
+        if (legacyError?.code === "BROKER_UNAUTHORIZED") return { kind: "auth-conflict", error: legacyError, endpoint };
+        if (!(/* @__PURE__ */ new Set(["ENOENT", "ECONNREFUSED", "ENOTSOCK", "EPIPE"])).has(legacyError?.code)) {
+          return { kind: "timeout", error: legacyError, endpoint };
+        }
+      }
+    }
+    if ((/* @__PURE__ */ new Set(["ENOENT", "ECONNREFUSED", "ENOTSOCK", "EPIPE"])).has(error51?.code)) {
+      return { kind: "absent", error: error51, endpoint };
+    }
+    return { kind: "timeout", error: error51, endpoint };
   }
 }
-async function waitForBrokerRelease(token, { endpoint = brokerEndpoint(), timeoutMs = 3e4, probe = brokerResponds } = {}) {
+async function waitForBrokerRelease(token, { identity = null, expectedInstanceId = null, timeoutMs = 3e4, probe = null } = {}) {
+  const resolved = identity || await resolveCoordinatorIdentity();
+  const inspect = probe || ((auth, wait) => probeBroker(resolved, auth, wait));
   const deadline = Date.now() + Math.max(0, timeoutMs);
   while (Date.now() < deadline) {
-    const responds = await probe(token, 500);
-    let endpointExists = Boolean(responds);
-    if (!responds && process.platform !== "win32") {
-      endpointExists = await access(endpoint).then(() => true, () => false);
-    }
-    if (!responds && !endpointExists) return true;
+    const result = await inspect(token, 500);
+    if (!result || result.kind === "absent") return true;
+    const hello = result.hello || result;
+    if (expectedInstanceId && hello.instanceId && hello.instanceId !== expectedInstanceId) return true;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   return false;
 }
-async function startBrokerDetached() {
-  const token = await readOrCreateBrokerToken();
-  const existing = await brokerResponds(token);
-  if (existing) return existing;
-  if (process.platform !== "win32") await ensurePrivateDirectory(path2.dirname(brokerEndpoint()));
-  await ensurePrivateDirectory(coordinatorDirectory());
-  const lockPath = brokerLaunchLockPath();
-  let ownsLock = false;
+async function startBrokerDetached(identity = null, token = null) {
+  const resolved = identity || await resolveCoordinatorIdentity();
+  const auth = token || await readOrCreateBrokerToken();
+  const deadline = Date.now() + 2e4;
+  let launchLease = null;
   try {
-    try {
-      await mkdir(lockPath, { mode: 448 });
-      ownsLock = true;
-    } catch (error51) {
-      if (error51?.code !== "EEXIST") throw error51;
-      const info = await stat(lockPath).catch(() => null);
-      if (info && Date.now() - info.mtimeMs > 3e4) {
-        await rm(lockPath, { recursive: true, force: true });
-        await mkdir(lockPath, { mode: 448 });
-        ownsLock = true;
+    while (!launchLease && Date.now() < deadline) {
+      const existing = await probeBroker(resolved, auth);
+      if (existing.kind === "live") return existing.hello;
+      if (existing.kind === "auth-conflict") {
+        throw codedError("BROKER_ENDPOINT_CONFLICT", "The canonical Oracle Firefox endpoint rejected this coordinator token.");
       }
-    }
-    if (ownsLock) {
-      const afterLock = await brokerResponds(token);
-      if (afterLock) return afterLock;
-      const log = await open(coordinatorLogPath(), "a", 384);
       try {
-        const brokerEntry = fileURLToPath(new URL("./broker.mjs", import.meta.url));
-        const child = spawn(brokerNodePath(), [brokerEntry, "--daemon"], {
-          detached: true,
-          stdio: ["ignore", log.fd, log.fd],
-          env: { ...process.env, ORACLE_FIREFOX_BROKER_CHILD: "1" }
+        launchLease = await BrokerLaunchLease.acquire(brokerLaunchLockPath());
+      } catch (error51) {
+        if (error51?.code !== "BROKER_LEASE_HELD") throw error51;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        continue;
+      }
+      if (existing.kind === "timeout") {
+        throw codedError("BROKER_UNRESPONSIVE", "A broker endpoint or lifetime owner exists but did not answer. Oracle Firefox refused to launch a competitor.", {
+          safeToRetry: true,
+          details: { probeCode: existing.error?.code || null, probeMessage: existing.error?.message || null }
         });
-        child.unref();
-      } finally {
-        await log.close();
       }
     }
-    const deadline = Date.now() + 15e3;
+    if (!launchLease) throw codedError("BROKER_START_BUSY", "Another client is still coordinating broker startup.", { safeToRetry: true });
+    const afterLease = await probeBroker(resolved, auth);
+    if ((/* @__PURE__ */ new Set(["live", "starting"])).has(afterLease.kind)) return afterLease.hello;
+    if (afterLease.kind === "auth-conflict") throw codedError("BROKER_ENDPOINT_CONFLICT", "The broker endpoint changed authentication while starting.");
+    if (afterLease.kind === "timeout") throw codedError("BROKER_UNRESPONSIVE", "The canonical broker endpoint is occupied but unresponsive; no competitor was launched.", {
+      safeToRetry: true,
+      details: { probeCode: afterLease.error?.code || null, probeMessage: afterLease.error?.message || null }
+    });
+    const log = await open3(coordinatorLogPath(), "a", 384);
+    try {
+      const brokerEntry = fileURLToPath(new URL("./broker.mjs", import.meta.url));
+      const child = spawn(brokerNodePath(), [brokerEntry, "--daemon"], {
+        detached: true,
+        stdio: ["ignore", log.fd, log.fd],
+        env: { ...process.env, ORACLE_FIREFOX_BROKER_CHILD: "1" }
+      });
+      child.unref();
+    } finally {
+      await log.close();
+    }
     while (Date.now() < deadline) {
-      const status = await brokerResponds(token, 750);
-      if (status) return status;
+      const result = await probeBroker(resolved, auth, 750);
+      if (result.kind === "live") return result.hello;
+      if (result.kind === "auth-conflict") throw codedError("BROKER_ENDPOINT_CONFLICT", "The broker endpoint changed authentication while starting.");
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     throw codedError("BROKER_START_FAILED", `Oracle Firefox broker did not start. See ${coordinatorLogPath()}.`);
   } finally {
-    if (ownsLock) await rm(lockPath, { recursive: true, force: true }).catch(() => void 0);
+    launchLease?.release();
   }
 }
-async function callBroker(method, params = {}, options = {}) {
-  const token = await readOrCreateBrokerToken();
-  let status = await brokerResponds(token);
-  if (!status) status = await startBrokerDetached();
-  if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
-    const shutdown = await rpcRequest(brokerEndpoint(), token, "broker.shutdownWhenIdle", {}, { timeoutMs: 2e3 }).catch(() => null);
-    if (status.outstandingJobs === 0 && shutdown?.accepted) {
-      const released = await waitForBrokerRelease(token);
-      if (released) status = await startBrokerDetached();
+async function compatibleBroker(identity, token) {
+  let observed = await probeBroker(identity, token);
+  if (observed.kind === "absent") {
+    for (const candidate of identity.legacyEndpoints || []) {
+      const legacy = await probeBroker(identity, token, 750, candidate);
+      if (!(/* @__PURE__ */ new Set(["live", "starting"])).has(legacy.kind)) continue;
+      observed = legacy;
+      break;
     }
-    if (status.protocolVersion !== BROKER_PROTOCOL_VERSION) {
-      throw codedError(
-        "BROKER_PROTOCOL_MISMATCH",
-        `Running broker protocol ${status.protocolVersion} is incompatible. It will shut down after ${status.outstandingJobs} active job(s) finish; none were killed or resent.`,
-        { details: status, recoveryAction: "retry after the active broker becomes idle" }
-      );
+    if (observed.kind === "absent") {
+      const started = await startBrokerDetached(identity, token);
+      observed = {
+        kind: started?.state === "starting" ? "starting" : "live",
+        hello: started,
+        endpoint: identity.endpoint
+      };
     }
   }
-  return rpcRequest(brokerEndpoint(), token, method, params, {
-    timeoutMs: options.timeoutMs ?? 6e4,
-    client: { pid: process.pid, harness: options.harness || "unknown", buildVersion: "1.2.1" }
+  if (observed.kind === "timeout") {
+    const started = await startBrokerDetached(identity, token);
+    observed = {
+      kind: started?.state === "starting" ? "starting" : "live",
+      hello: started,
+      endpoint: identity.endpoint
+    };
+  }
+  if (observed.kind === "auth-conflict") throw codedError("BROKER_ENDPOINT_CONFLICT", "The broker endpoint rejected this coordinator token.");
+  if (observed.kind === "starting") {
+    const deadline = Date.now() + 2e4;
+    while (Date.now() < deadline && observed.kind === "starting") {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      observed = await probeBroker(identity, token, 1e3);
+    }
+    if (observed.kind !== "live") {
+      throw codedError("BROKER_START_FAILED", "The Oracle Firefox lifetime owner did not reach ready state; no competitor was launched.", { safeToRetry: true });
+    }
+  }
+  const hello = observed.hello;
+  const acceptsProtocol = Number(hello?.protocol?.minimum) <= BROKER_PROTOCOL_VERSION && Number(hello?.protocol?.maximum) >= BROKER_PROTOCOL_VERSION;
+  if (acceptsProtocol) return { hello, endpoint: observed.endpoint };
+  const observedReleaseSequence = Number(hello?.releaseSequence || 0);
+  if (observedReleaseSequence > 0 && BROKER_RELEASE_SEQUENCE > observedReleaseSequence) {
+    const upgradeParams = {
+      expectedInstanceId: hello.instanceId,
+      expectedLeaseGeneration: hello.leaseGeneration,
+      requesterReleaseSequence: BROKER_RELEASE_SEQUENCE,
+      requesterBuildId: BROKER_BUILD_ID,
+      requesterProtocolMinimum: BROKER_PROTOCOL_VERSION,
+      requesterProtocolMaximum: BROKER_PROTOCOL_VERSION
+    };
+    const upgrade = await rpcRequest(
+      observed.endpoint,
+      token,
+      hello.legacy ? "broker.shutdownWhenIdle" : "broker.requestUpgrade",
+      upgradeParams,
+      { timeoutMs: 2e3, client: clientMetadata("broker-upgrade") }
+    ).catch((error51) => ({ accepted: false, error: { code: error51.code, message: error51.message } }));
+    if (upgrade?.accepted) {
+      const released = await waitForBrokerRelease(token, {
+        identity,
+        expectedInstanceId: hello.instanceId,
+        probe: (auth, wait) => probeBroker(identity, auth, wait, observed.endpoint)
+      });
+      if (released) return { hello: await startBrokerDetached(identity, token), endpoint: identity.endpoint };
+    }
+  }
+  throw codedError(
+    Number(hello?.releaseSequence || 0) > BROKER_RELEASE_SEQUENCE ? "CLIENT_UPGRADE_REQUIRED" : "BROKER_PROTOCOL_MISMATCH",
+    `Running Oracle Firefox broker ${hello?.buildVersion || "unknown"} uses protocol ${hello?.protocol?.minimum || "unknown"}. This client did not stop or downgrade it.`,
+    { details: hello, recoveryAction: "reload this host with the current Oracle Firefox package" }
+  );
+}
+async function callBroker(method, params = {}, options = {}) {
+  const identity = await resolveCoordinatorIdentity();
+  const token = await readOrCreateBrokerToken();
+  const { hello, endpoint } = await compatibleBroker(identity, token);
+  const harness = options.harness || "unknown";
+  const hostSessionHint = options.hostSessionHint || null;
+  const sessionKey = [identity.coordinatorId, hello.instanceId, harness, hostSessionHint || ""].join(":");
+  let session = clientSessions.get(sessionKey);
+  const openSession = async () => rpcRequest(endpoint, token, "broker.openSession", {
+    harness,
+    clientInstanceId,
+    hostSessionHint
+  }, {
+    timeoutMs: 1e4,
+    client: clientMetadata(harness, hostSessionHint)
   });
+  if (!session) {
+    session = await openSession();
+    clientSessions.set(sessionKey, session);
+  }
+  const invoke = () => rpcRequest(endpoint, token, method, params, {
+    timeoutMs: options.timeoutMs ?? 6e4,
+    client: clientMetadata(harness, hostSessionHint, session)
+  });
+  try {
+    return await invoke();
+  } catch (error51) {
+    if (!(/* @__PURE__ */ new Set(["CLIENT_SESSION_REQUIRED", "OWNER_SESSION_NOT_FOUND"])).has(error51?.code)) throw error51;
+    clientSessions.delete(sessionKey);
+    session = await openSession();
+    clientSessions.set(sessionKey, session);
+    return invoke();
+  }
 }
 
 // src/server.mjs
 var server = new McpServer(
-  { name: "oracle-firefox", version: "1.2.1" },
-  { capabilities: { logging: {} } }
+  { name: "oracle-firefox", version: ORACLE_FIREFOX_VERSION },
+  {
+    capabilities: { logging: {} },
+    instructions: "Oracle uses one durable, identity-locked broker and one selected browser backend shared by all local harnesses. Never launch, kill, or replace its browser or broker directly. Start one authorized job, retain its private handles, and use status, wait, and result; a timeout or pending result never authorizes another send. Same-chat work is FIFO and stale broker generations fail closed. Firefox is the compatibility default; switch browsers only while no jobs are outstanding."
+  }
 );
 var projectFields = {
   projectTitle: external_exports.string().optional().describe("Exact project title; do not combine with projectUrl."),
@@ -31255,10 +31749,14 @@ var executionFields = {
   completionMode: external_exports.enum(["manual", "notify", "harness"]).default("manual").describe("Record how the caller intends to receive completion; the broker always writes a durable terminal completion record."),
   headless: external_exports.boolean().default(false)
 };
+var zipFields = {
+  zipFiles: external_exports.array(external_exports.string()).max(5).default([]).describe("Explicit .zip paths to snapshot, validate, and upload unchanged; paths are resolved from cwd."),
+  cwd: external_exports.string().optional().describe("Absolute working directory used to resolve files and zipFiles.")
+};
 var consultFields = {
   prompt: external_exports.string().min(1),
   files: external_exports.array(external_exports.string()).default([]),
-  cwd: external_exports.string().optional(),
+  ...zipFields,
   delivery: external_exports.enum(["auto", "inline", "attachment"]).default("auto"),
   ...projectFields,
   ...executionFields
@@ -31268,6 +31766,7 @@ var continueFields = {
   conversationUrl: external_exports.string().url().optional(),
   ...projectFields,
   prompt: external_exports.string().min(1),
+  ...zipFields,
   ...executionFields
 };
 var artifactTargetFields = {
@@ -31282,11 +31781,20 @@ function contentFor(result) {
   const text = result?.answer || JSON.stringify(result, null, 2);
   return [{ type: "text", text }];
 }
+var harnessName = process.env.ORACLE_FIREFOX_HARNESS || "codex-mcp";
+var jobReferenceFields = {
+  jobId: external_exports.string().uuid().optional().describe("Opaque job UUID; accessible only to its owner session or for legacy read-only jobs."),
+  jobHandle: external_exports.string().optional().describe("Broker-minted control/read handle used to resume a job from another process.")
+};
 function register(name, config2, method, timeoutMs = 65e3, prepareParams = null) {
-  server.registerTool(name, config2, async (params) => {
+  server.registerTool(name, config2, async (params, extra) => {
     try {
       const requestParams = prepareParams ? prepareParams(params) : params;
-      const result = await callBroker(method, requestParams, { timeoutMs, harness: "codex-mcp" });
+      const result = await callBroker(method, requestParams, {
+        timeoutMs,
+        harness: harnessName,
+        hostSessionHint: extra?.sessionId || extra?._meta?.sessionId || null
+      });
       return { content: contentFor(result), structuredContent: result };
     } catch (error51) {
       const value = structuredError(error51);
@@ -31300,23 +31808,28 @@ register("broker_status", {
   inputSchema: {}
 }, "broker.status");
 register("doctor", {
-  title: "Check Oracle Firefox readiness",
-  description: "Check Firefox, the dedicated profile, and the durable broker without sending a ChatGPT message.",
+  title: "Check Oracle browser readiness",
+  description: "Check native Firefox, Chrome, Safari, the selected backend, and the durable broker without sending a ChatGPT message.",
   inputSchema: {}
 }, "workflow.doctor");
+register("select_browser", {
+  title: "Select the Oracle browser",
+  description: "Persistently select Firefox, native macOS Chrome, or Safari. Refuses to switch while any job is outstanding and never launches a browser by itself.",
+  inputSchema: { browser: external_exports.enum(["firefox", "chrome", "safari"]) }
+}, "workflow.selectBrowser");
 register("setup", {
-  title: "Sign into ChatGPT in dedicated Firefox",
-  description: "Open the dedicated Firefox login page under an exclusive maintenance barrier.",
+  title: "Sign into ChatGPT in the selected browser",
+  description: "Open the selected browser's dedicated login page under an exclusive maintenance barrier. Safari login lasts only for its automation session.",
   inputSchema: { timeoutSeconds: external_exports.number().int().min(30).max(900).default(300) }
 }, "workflow.setup", 91e4);
 register("profiles", {
-  title: "Find Firefox profiles with ChatGPT cookies",
-  description: "Report only ChatGPT/OpenAI cookie counts; never cookie names or values.",
+  title: "Find Firefox source profiles with ChatGPT cookies",
+  description: "Report only ChatGPT/OpenAI cookie counts for possible session import; never cookie names or values.",
   inputSchema: {}
 }, "workflow.profiles");
 register("import_session", {
   title: "Import ChatGPT login from Firefox",
-  description: "After explicit approval, copy only ChatGPT/OpenAI cookies into the dedicated profile under an exclusive maintenance barrier.",
+  description: "After explicit approval, copy only ChatGPT/OpenAI cookies from a closed Firefox profile into the selected Oracle browser. Safari keeps them only for its current automation session.",
   inputSchema: {
     sourceProfile: external_exports.string().optional(),
     confirmImport: external_exports.boolean().describe("Must be true only after explicit user approval.")
@@ -31367,7 +31880,7 @@ register("consult", {
   inputSchema: { authorizationId: external_exports.string().uuid().optional(), ...consultFields }
 }, "jobs.compatConsult", 245e3, (params) => ({
   ...params,
-  authorizationId: params.authorizationId ?? randomUUID2()
+  authorizationId: params.authorizationId ?? randomUUID5()
 }));
 register("continue_chat", {
   title: "Continue an existing ChatGPT conversation",
@@ -31375,56 +31888,90 @@ register("continue_chat", {
   inputSchema: { authorizationId: external_exports.string().uuid().optional(), ...continueFields }
 }, "jobs.compatContinue", 245e3, (params) => ({
   ...params,
-  authorizationId: params.authorizationId ?? randomUUID2()
+  authorizationId: params.authorizationId ?? randomUUID5()
 }));
 register("job_status", {
   title: "Read Oracle Firefox job status",
   description: "Read durable state and recovery guidance without touching Firefox.",
-  inputSchema: { jobId: external_exports.string().uuid(), followRetries: external_exports.boolean().default(true) }
+  inputSchema: { ...jobReferenceFields, followRetries: external_exports.boolean().default(true) }
 }, "jobs.status");
 register("job_wait", {
   title: "Wait briefly for an Oracle Firefox job",
   description: "Wait event-first on one logical job for up to 55 seconds, following its explicitly authorized recovery child by default. The waiter never initiates a retry.",
-  inputSchema: { jobId: external_exports.string().uuid(), timeoutSeconds: external_exports.number().int().min(0).max(55).default(55), followRetries: external_exports.boolean().default(true) }
+  inputSchema: { ...jobReferenceFields, timeoutSeconds: external_exports.number().int().min(0).max(55).default(55), followRetries: external_exports.boolean().default(true) }
 }, "jobs.wait", 6e4);
 register("job_result", {
   title: "Read an Oracle Firefox job result",
   description: "Return the completed answer, terminal failure, or a pending receipt.",
-  inputSchema: { jobId: external_exports.string().uuid(), followRetries: external_exports.boolean().default(true) }
+  inputSchema: { ...jobReferenceFields, followRetries: external_exports.boolean().default(true) }
 }, "jobs.result");
 register("list_jobs", {
   title: "List Oracle Firefox jobs",
-  description: "List recent durable jobs without exposing prompt contents.",
+  description: "List only this client session's recent durable jobs without exposing prompt contents.",
   inputSchema: { limit: external_exports.number().int().min(1).max(200).default(50), states: external_exports.array(external_exports.string()).default([]) }
 }, "jobs.list");
 register("reconcile_job", {
   title: "Reconcile an uncertain Oracle Firefox submission",
   description: "Read the exact target conversation and look for the authorized user-turn hash. Never sends or retries a message.",
   inputSchema: {
-    jobId: external_exports.string().uuid(),
+    ...jobReferenceFields,
     conversationUrl: external_exports.string().url().optional().describe("Canonical ChatGPT URL discovered manually when an uncertain new chat failed before persisting its URL.")
   }
 }, "jobs.reconcile", 12e4);
 register("acknowledge_uncertain", {
   title: "Acknowledge an uncertain Oracle Firefox job",
   description: "Remove its quarantine after manual inspection. This never sends a message.",
-  inputSchema: { jobId: external_exports.string().uuid() }
+  inputSchema: jobReferenceFields
 }, "jobs.acknowledge");
 register("cancel_job", {
   title: "Cancel or detach from an Oracle Firefox job",
   description: "Cancel only before submit_intent. After that boundary it detaches the caller while monitoring continues and never retries.",
-  inputSchema: { jobId: external_exports.string().uuid() }
+  inputSchema: jobReferenceFields
 }, "jobs.cancel");
 register("reply_with_local_data", {
   title: "Reply to a safe Pro local-data request",
   description: "Send structured, secret-scanned facts to the same conversation under the original authorization, up to three rounds.",
   inputSchema: {
-    jobId: external_exports.string().uuid(),
+    ...jobReferenceFields,
     facts: external_exports.array(external_exports.object({ id: external_exports.string().min(1), value: external_exports.unknown(), source: external_exports.string().min(1) })).default([]),
     unavailable: external_exports.array(external_exports.object({ id: external_exports.string().min(1), reason: external_exports.string().min(1) })).default([]),
     responseTimeoutSeconds: external_exports.number().int().min(30).max(86400).optional()
   }
 }, "jobs.replyWithLocalData");
+register("completion_claim", {
+  title: "Claim one durable Oracle completion",
+  description: "Claim the next event from one exact capability-bound completion subscription. Event payloads never contain prompts or answers.",
+  inputSchema: {
+    completionHandle: external_exports.string().min(1),
+    claimSeconds: external_exports.number().int().min(10).max(300).default(90)
+  }
+}, "completion.claim");
+register("completion_wait", {
+  title: "Wait for one durable Oracle completion",
+  description: "Wait event-first for up to 55 seconds on one exact capability-bound completion subscription.",
+  inputSchema: {
+    completionHandle: external_exports.string().min(1),
+    timeoutSeconds: external_exports.number().int().min(0).max(55).default(55),
+    claimSeconds: external_exports.number().int().min(10).max(300).default(90)
+  }
+}, "completion.wait", 6e4);
+register("completion_mark_delivered", {
+  title: "Mark an Oracle completion delivered",
+  description: "Record that a claimed completion notification reached its destination; this does not acknowledge the answer.",
+  inputSchema: {
+    completionHandle: external_exports.string().min(1),
+    deliveryId: external_exports.number().int().positive(),
+    claimId: external_exports.string().uuid()
+  }
+}, "completion.delivered");
+register("completion_acknowledge", {
+  title: "Acknowledge an Oracle completion",
+  description: "Acknowledge one delivered completion event for one exact subscription.",
+  inputSchema: {
+    completionHandle: external_exports.string().min(1),
+    deliveryId: external_exports.number().int().positive()
+  }
+}, "completion.acknowledge");
 var transport = new StdioServerTransport();
 transport.onerror = (error51) => console.error("Oracle Firefox MCP transport error:", error51);
 await server.connect(transport);

@@ -3,14 +3,14 @@
   "owner": {
     "name": "nikokuma"
   },
-  "description": "Firefox-native Oracle plugins by nikokuma.",
+  "description": "Local-browser Oracle plugins by nikokuma.",
   "plugins": [
     {
       "name": "oracle-firefox",
       "source": "./plugins/oracle-firefox-claude",
       "displayName": "Oracle Firefox",
-      "description": "Durable ChatGPT Pro consultation, failure recovery, completion waiting, and generated-file downloads through authenticated Firefox.",
-      "version": "1.2.1",
+      "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
+      "version": "1.6.0",
       "author": {
         "name": "nikokuma",
         "url": "https://github.com/nikokuma"
@@ -18,7 +18,17 @@
       "homepage": "https://github.com/nikokuma/oracle/blob/main/FIREFOX.md",
       "repository": "https://github.com/nikokuma/oracle",
       "license": "MIT",
-      "keywords": ["firefox", "chatgpt", "pro", "webdriver-bidi", "mcp", "codex", "claude"],
+      "keywords": [
+        "firefox",
+        "chrome",
+        "safari",
+        "chatgpt",
+        "pro",
+        "webdriver",
+        "mcp",
+        "codex",
+        "claude"
+      ],
       "category": "developer-tools"
     }
   ]

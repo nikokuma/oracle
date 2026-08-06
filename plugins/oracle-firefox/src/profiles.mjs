@@ -299,6 +299,61 @@ export async function importChatGptCookies({
   }
 }
 
+export async function readChatGptCookies({ sourceProfileDir, sqlitePath } = {}) {
+  const source = path.resolve(sourceProfileDir);
+  if (await isFirefoxProfileActive(source)) {
+    throw new Error(
+      `The source Firefox profile is still open. Quit normal Firefox temporarily so its cookie database can be snapshotted consistently, then retry: ${source}`,
+    );
+  }
+  const sourceCookies = path.join(source, "cookies.sqlite");
+  if (!(await pathExists(sourceCookies))) {
+    throw new Error(`The source Firefox profile has no cookies database: ${sourceCookies}`);
+  }
+  const executable = sqlitePath || (await resolveSqlitePath());
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), "oracle-browser-cookie-read-"));
+  await mkdir(temporaryDirectory, { recursive: true, mode: 0o700 });
+  const snapshotPath = path.join(temporaryDirectory, "source-cookies.sqlite");
+  try {
+    await runSqlite(sourceCookies, `.backup ${quoteSqlString(snapshotPath)}`, { sqlitePath: executable });
+    const columns = new Set(await tableColumns(snapshotPath, { sqlitePath: executable }));
+    for (const required of ["host", "name", "value", "path"]) {
+      if (!columns.has(required)) throw new Error("The Firefox cookie database schema is not compatible with browser session import.");
+    }
+    const field = (name, fallback) => columns.has(name) ? quoteIdentifier(name) : fallback;
+    const originFilter = columns.has("originAttributes") ? "AND originAttributes = ''" : "";
+    const query = `
+      SELECT json_group_array(json_object(
+        'domain', host,
+        'name', name,
+        'value', value,
+        'path', path,
+        'expires', ${field("expiry", "0")},
+        'secure', ${field("isSecure", "0")},
+        'httpOnly', ${field("isHttpOnly", "0")},
+        'sameSite', ${field("sameSite", "0")}
+      ))
+      FROM moz_cookies
+      WHERE ${CHATGPT_COOKIE_PREDICATE} ${originFilter};
+    `;
+    const raw = await runSqlite(snapshotPath, query, { sqlitePath: executable });
+    const parsed = JSON.parse(raw || "[]");
+    if (!Array.isArray(parsed)) throw new Error("Firefox returned an invalid cookie snapshot.");
+    return parsed.slice(0, 500).map((cookie) => ({
+      domain: String(cookie.domain || ""),
+      name: String(cookie.name || ""),
+      value: String(cookie.value || ""),
+      path: String(cookie.path || "/") || "/",
+      expires: Number(cookie.expires) || undefined,
+      secure: Boolean(cookie.secure),
+      httpOnly: Boolean(cookie.httpOnly),
+      sameSite: Number(cookie.sameSite) === 2 ? "Strict" : Number(cookie.sameSite) === 1 ? "Lax" : "None",
+    })).filter((cookie) => cookie.domain && cookie.name);
+  } finally {
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  }
+}
+
 export async function directoryExists(candidate) {
   try {
     return (await stat(candidate)).isDirectory();

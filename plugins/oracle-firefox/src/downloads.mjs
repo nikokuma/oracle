@@ -428,7 +428,7 @@ function assertArtifactSignature(filename, prefix) {
 
 export async function downloadAssistantArtifact(
   page,
-  { linkText, scope = "last-assistant", maxBytes = DEFAULT_DOWNLOAD_MAX_BYTES, rootDirectory = downloadsDirectory(), stagingDirectory = browserDownloadStagingDirectory(), fetchImpl = fetch } = {},
+  { linkText, scope = "last-assistant", maxBytes = DEFAULT_DOWNLOAD_MAX_BYTES, rootDirectory = downloadsDirectory(), stagingDirectory = browserDownloadStagingDirectory(), fetchImpl = fetch, allowBrowserDownload = true } = {},
 ) {
   if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > ABSOLUTE_DOWNLOAD_MAX_BYTES) {
     throw codedError("INVALID_DOWNLOAD_LIMIT", `maxBytes must be an integer from 1 to ${ABSOLUTE_DOWNLOAD_MAX_BYTES}.`);
@@ -436,6 +436,12 @@ export async function downloadAssistantArtifact(
   const candidates = await listAssistantDownloadCandidates(page, { scope });
   const selected = selectAssistantDownloadCandidate(candidates, linkText);
   if (selected.source.sourceKind === "browser-download") {
+    if (!allowBrowserDownload) {
+      throw codedError(
+        "BROWSER_DOWNLOAD_UNSUPPORTED",
+        "This Safari file control requires a browser-managed download, which cannot be routed into Oracle's private staging directory. Use Firefox or Chrome for this download.",
+      );
+    }
     return { ...(await downloadWithBrowserControl(page, selected, { maxBytes, rootDirectory, stagingDirectory })), scope };
   }
   const response = await fetchDownload(page, selected.source.downloadUrl, fetchImpl);

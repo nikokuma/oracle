@@ -4,11 +4,15 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { callBroker } from "./broker-client.mjs";
+import { ORACLE_FIREFOX_VERSION } from "./build-info.mjs";
 import { structuredError } from "./errors.mjs";
 
 const server = new McpServer(
-  { name: "oracle-firefox", version: "1.2.1" },
-  { capabilities: { logging: {} } },
+  { name: "oracle-firefox", version: ORACLE_FIREFOX_VERSION },
+  {
+    capabilities: { logging: {} },
+    instructions: "Oracle uses one durable, identity-locked broker and one selected browser backend shared by all local harnesses. Never launch, kill, or replace its browser or broker directly. Start one authorized job, retain its private handles, and use status, wait, and result; a timeout or pending result never authorizes another send. Same-chat work is FIFO and stale broker generations fail closed. Firefox is the compatibility default; switch browsers only while no jobs are outstanding.",
+  },
 );
 
 const projectFields = {
@@ -24,10 +28,14 @@ const executionFields = {
   completionMode: z.enum(["manual", "notify", "harness"]).default("manual").describe("Record how the caller intends to receive completion; the broker always writes a durable terminal completion record."),
   headless: z.boolean().default(false),
 };
+const zipFields = {
+  zipFiles: z.array(z.string()).max(5).default([]).describe("Explicit .zip paths to snapshot, validate, and upload unchanged; paths are resolved from cwd."),
+  cwd: z.string().optional().describe("Absolute working directory used to resolve files and zipFiles."),
+};
 const consultFields = {
   prompt: z.string().min(1),
   files: z.array(z.string()).default([]),
-  cwd: z.string().optional(),
+  ...zipFields,
   delivery: z.enum(["auto", "inline", "attachment"]).default("auto"),
   ...projectFields,
   ...executionFields,
@@ -37,6 +45,7 @@ const continueFields = {
   conversationUrl: z.string().url().optional(),
   ...projectFields,
   prompt: z.string().min(1),
+  ...zipFields,
   ...executionFields,
 };
 const artifactTargetFields = {
@@ -53,11 +62,21 @@ function contentFor(result) {
   return [{ type: "text", text }];
 }
 
+const harnessName = process.env.ORACLE_FIREFOX_HARNESS || "codex-mcp";
+const jobReferenceFields = {
+  jobId: z.string().uuid().optional().describe("Opaque job UUID; accessible only to its owner session or for legacy read-only jobs."),
+  jobHandle: z.string().optional().describe("Broker-minted control/read handle used to resume a job from another process."),
+};
+
 function register(name, config, method, timeoutMs = 65_000, prepareParams = null) {
-  server.registerTool(name, config, async (params) => {
+  server.registerTool(name, config, async (params, extra) => {
     try {
       const requestParams = prepareParams ? prepareParams(params) : params;
-      const result = await callBroker(method, requestParams, { timeoutMs, harness: "codex-mcp" });
+      const result = await callBroker(method, requestParams, {
+        timeoutMs,
+        harness: harnessName,
+        hostSessionHint: extra?.sessionId || extra?._meta?.sessionId || null,
+      });
       return { content: contentFor(result), structuredContent: result };
     } catch (error) {
       const value = structuredError(error);
@@ -73,26 +92,32 @@ register("broker_status", {
 }, "broker.status");
 
 register("doctor", {
-  title: "Check Oracle Firefox readiness",
-  description: "Check Firefox, the dedicated profile, and the durable broker without sending a ChatGPT message.",
+  title: "Check Oracle browser readiness",
+  description: "Check native Firefox, Chrome, Safari, the selected backend, and the durable broker without sending a ChatGPT message.",
   inputSchema: {},
 }, "workflow.doctor");
 
+register("select_browser", {
+  title: "Select the Oracle browser",
+  description: "Persistently select Firefox, native macOS Chrome, or Safari. Refuses to switch while any job is outstanding and never launches a browser by itself.",
+  inputSchema: { browser: z.enum(["firefox", "chrome", "safari"]) },
+}, "workflow.selectBrowser");
+
 register("setup", {
-  title: "Sign into ChatGPT in dedicated Firefox",
-  description: "Open the dedicated Firefox login page under an exclusive maintenance barrier.",
+  title: "Sign into ChatGPT in the selected browser",
+  description: "Open the selected browser's dedicated login page under an exclusive maintenance barrier. Safari login lasts only for its automation session.",
   inputSchema: { timeoutSeconds: z.number().int().min(30).max(900).default(300) },
 }, "workflow.setup", 910_000);
 
 register("profiles", {
-  title: "Find Firefox profiles with ChatGPT cookies",
-  description: "Report only ChatGPT/OpenAI cookie counts; never cookie names or values.",
+  title: "Find Firefox source profiles with ChatGPT cookies",
+  description: "Report only ChatGPT/OpenAI cookie counts for possible session import; never cookie names or values.",
   inputSchema: {},
 }, "workflow.profiles");
 
 register("import_session", {
   title: "Import ChatGPT login from Firefox",
-  description: "After explicit approval, copy only ChatGPT/OpenAI cookies into the dedicated profile under an exclusive maintenance barrier.",
+  description: "After explicit approval, copy only ChatGPT/OpenAI cookies from a closed Firefox profile into the selected Oracle browser. Safari keeps them only for its current automation session.",
   inputSchema: {
     sourceProfile: z.string().optional(),
     confirmImport: z.boolean().describe("Must be true only after explicit user approval."),
@@ -165,24 +190,24 @@ register("continue_chat", {
 register("job_status", {
   title: "Read Oracle Firefox job status",
   description: "Read durable state and recovery guidance without touching Firefox.",
-  inputSchema: { jobId: z.string().uuid(), followRetries: z.boolean().default(true) },
+  inputSchema: { ...jobReferenceFields, followRetries: z.boolean().default(true) },
 }, "jobs.status");
 
 register("job_wait", {
   title: "Wait briefly for an Oracle Firefox job",
   description: "Wait event-first on one logical job for up to 55 seconds, following its explicitly authorized recovery child by default. The waiter never initiates a retry.",
-  inputSchema: { jobId: z.string().uuid(), timeoutSeconds: z.number().int().min(0).max(55).default(55), followRetries: z.boolean().default(true) },
+  inputSchema: { ...jobReferenceFields, timeoutSeconds: z.number().int().min(0).max(55).default(55), followRetries: z.boolean().default(true) },
 }, "jobs.wait", 60_000);
 
 register("job_result", {
   title: "Read an Oracle Firefox job result",
   description: "Return the completed answer, terminal failure, or a pending receipt.",
-  inputSchema: { jobId: z.string().uuid(), followRetries: z.boolean().default(true) },
+  inputSchema: { ...jobReferenceFields, followRetries: z.boolean().default(true) },
 }, "jobs.result");
 
 register("list_jobs", {
   title: "List Oracle Firefox jobs",
-  description: "List recent durable jobs without exposing prompt contents.",
+  description: "List only this client session's recent durable jobs without exposing prompt contents.",
   inputSchema: { limit: z.number().int().min(1).max(200).default(50), states: z.array(z.string()).default([]) },
 }, "jobs.list");
 
@@ -190,7 +215,7 @@ register("reconcile_job", {
   title: "Reconcile an uncertain Oracle Firefox submission",
   description: "Read the exact target conversation and look for the authorized user-turn hash. Never sends or retries a message.",
   inputSchema: {
-    jobId: z.string().uuid(),
+    ...jobReferenceFields,
     conversationUrl: z.string().url().optional().describe("Canonical ChatGPT URL discovered manually when an uncertain new chat failed before persisting its URL."),
   },
 }, "jobs.reconcile", 120_000);
@@ -198,25 +223,63 @@ register("reconcile_job", {
 register("acknowledge_uncertain", {
   title: "Acknowledge an uncertain Oracle Firefox job",
   description: "Remove its quarantine after manual inspection. This never sends a message.",
-  inputSchema: { jobId: z.string().uuid() },
+  inputSchema: jobReferenceFields,
 }, "jobs.acknowledge");
 
 register("cancel_job", {
   title: "Cancel or detach from an Oracle Firefox job",
   description: "Cancel only before submit_intent. After that boundary it detaches the caller while monitoring continues and never retries.",
-  inputSchema: { jobId: z.string().uuid() },
+  inputSchema: jobReferenceFields,
 }, "jobs.cancel");
 
 register("reply_with_local_data", {
   title: "Reply to a safe Pro local-data request",
   description: "Send structured, secret-scanned facts to the same conversation under the original authorization, up to three rounds.",
   inputSchema: {
-    jobId: z.string().uuid(),
+    ...jobReferenceFields,
     facts: z.array(z.object({ id: z.string().min(1), value: z.unknown(), source: z.string().min(1) })).default([]),
     unavailable: z.array(z.object({ id: z.string().min(1), reason: z.string().min(1) })).default([]),
     responseTimeoutSeconds: z.number().int().min(30).max(86400).optional(),
   },
 }, "jobs.replyWithLocalData");
+
+register("completion_claim", {
+  title: "Claim one durable Oracle completion",
+  description: "Claim the next event from one exact capability-bound completion subscription. Event payloads never contain prompts or answers.",
+  inputSchema: {
+    completionHandle: z.string().min(1),
+    claimSeconds: z.number().int().min(10).max(300).default(90),
+  },
+}, "completion.claim");
+
+register("completion_wait", {
+  title: "Wait for one durable Oracle completion",
+  description: "Wait event-first for up to 55 seconds on one exact capability-bound completion subscription.",
+  inputSchema: {
+    completionHandle: z.string().min(1),
+    timeoutSeconds: z.number().int().min(0).max(55).default(55),
+    claimSeconds: z.number().int().min(10).max(300).default(90),
+  },
+}, "completion.wait", 60_000);
+
+register("completion_mark_delivered", {
+  title: "Mark an Oracle completion delivered",
+  description: "Record that a claimed completion notification reached its destination; this does not acknowledge the answer.",
+  inputSchema: {
+    completionHandle: z.string().min(1),
+    deliveryId: z.number().int().positive(),
+    claimId: z.string().uuid(),
+  },
+}, "completion.delivered");
+
+register("completion_acknowledge", {
+  title: "Acknowledge an Oracle completion",
+  description: "Acknowledge one delivered completion event for one exact subscription.",
+  inputSchema: {
+    completionHandle: z.string().min(1),
+    deliveryId: z.number().int().positive(),
+  },
+}, "completion.acknowledge");
 
 const transport = new StdioServerTransport();
 transport.onerror = (error) => console.error("Oracle Firefox MCP transport error:", error);

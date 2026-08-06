@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { access, mkdir, open, rm } from "node:fs/promises";
 import path from "node:path";
+import { AsyncMutex } from "./async-lock.mjs";
 import { BrowserManager } from "./browser-manager.mjs";
+import { mintCapability } from "./capabilities.mjs";
 import { completionRecordPath, removeCompletionRecord, writeCompletionRecord } from "./completion-records.mjs";
 import { emergencyLockPath } from "./config.mjs";
 import {
@@ -18,13 +20,14 @@ import {
 } from "./evidence.mjs";
 import { attachmentManifestKey, assistantSnapshot, normalizeConversationTitle, normalizeConversationUrl, openExistingConversation, projectUrlFromConversationUrl, semanticTextHash } from "./firefox.mjs";
 import { requestDigest, StateStore, TERMINAL_JOB_STATES } from "./state-store.mjs";
-import { BROKER_PROTOCOL_VERSION } from "./protocol.mjs";
+import { BROKER_BUILD_VERSION, BROKER_PROTOCOL_VERSION } from "./protocol.mjs";
 import {
   conversationKeyFor,
   discoverChats,
   discoverProjects,
   executeJob,
   importFirefoxSession,
+  importSessionIntoManagedBrowser,
   listFirefoxProfiles,
   prepareJobRequest,
   resolveProjectTarget,
@@ -41,10 +44,19 @@ function publicJob(job, extras = {}) {
     jobId: job.id,
     authorizationId: job.authorizationId,
     operation: job.operation,
+    browser: job.request?.browser ?? null,
     state: job.state,
     terminal: TERMINAL_JOB_STATES.has(job.state),
     safeToRetry: job.error?.safeToRetry ?? false,
     submissionMayHaveOccurred: job.submissionMayHaveOccurred,
+    attachmentManifest: job.attachmentManifest,
+    zipAttachments: (job.request?.zipAttachments ?? []).map(({ filename, sizeBytes, sha256, entryCount, uncompressedBytes }) => ({
+      filename,
+      sizeBytes,
+      sha256,
+      entryCount,
+      uncompressedBytes,
+    })),
     modelEvidence: job.modelEvidence,
     projectTitle: job.projectTitle,
     projectUrl: job.projectUrl,
@@ -64,6 +76,8 @@ function publicJob(job, extras = {}) {
     replacementJobId: job.replacementJobId,
     retryAttempt: job.retryAttempt,
     maxAutomaticResponseRetries: job.maxAutomaticResponseRetries,
+    chainId: job.chainId,
+    attemptKind: job.attemptKind,
     responseFailurePolicy: job.request?.responseFailurePolicy ?? "report",
     completionMode: job.request?.completionMode ?? "manual",
     createdAt: job.createdAt,
@@ -83,55 +97,114 @@ async function fileExists(candidate) {
 }
 
 export class Coordinator {
-  constructor({ store = new StateStore(), browserManager = new BrowserManager(), writeConcurrency, jobExecutor = executeJob, completionDirectory } = {}) {
+  constructor({ store = new StateStore(), browserManager = null, brokerContext = null, writeConcurrency, jobExecutor = executeJob, completionDirectory, legacyCompletionFiles } = {}) {
     this.store = store;
-    this.browserManager = browserManager;
-    this.writeConcurrency = Math.max(1, Math.min(2, Number(writeConcurrency ?? process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY ?? 1)));
+    this.brokerContext = brokerContext || store.brokerContext;
+    this.browserManager = browserManager || new BrowserManager({ brokerContext: this.brokerContext });
+    this.browserSelectionGate = new AsyncMutex("browser-selection", { timeoutMs: 120_000 });
+    this.writeConcurrency = Math.max(1, Math.min(5, Number(
+      writeConcurrency ?? process.env.ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS ?? process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY ?? 1,
+    )));
+    this.explicitWriteConcurrency = writeConcurrency !== undefined;
+    this.qualifiedConcurrencyOverride = process.env.ORACLE_FIREFOX_QUALIFIED_CONCURRENCY?.trim() || null;
     this.jobExecutor = jobExecutor;
     this.active = new Map();
-    this.lastSubmissionAt = 0;
     this.submitGate = Promise.resolve();
     this.startedAt = new Date().toISOString();
+    this.brokerInstanceId = this.brokerContext?.instanceId || randomUUID();
     this.closed = false;
+    this.draining = false;
+    this.brokerFatalError = null;
     this.completionDirectory = completionDirectory || path.join(path.dirname(this.store.databasePath), "completions");
+    this.legacyCompletionFiles = legacyCompletionFiles ?? (
+      process.env.ORACLE_FIREFOX_LEGACY_COMPLETION_FILES === "1" ||
+      Boolean(completionDirectory)
+    );
     this.completionWrites = new Map();
-    this.onStoreChange = (job) => this.queueCompletionRecord(job.rootJobId || job.id);
+    this.accountWakeTimer = null;
+    this.executionWakeTimer = null;
+    this.onStoreChange = (job) => {
+      if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
+      this.schedule();
+    };
   }
 
   async open() {
     await this.store.open();
-    this.store.on("change", this.onStoreChange);
-    this.recovery = this.store.recoverInterruptedJobs();
-    for (const rootJobId of this.store.allRootJobIds()) {
-      this.queueCompletionRecord(rootJobId);
+    this.brokerContext = this.store.brokerContext;
+    if (
+      this.explicitWriteConcurrency &&
+      (!this.store.productionFencing || process.env.ORACLE_FIREFOX_ALLOW_UNQUALIFIED_CONCURRENCY === "1")
+    ) this.store.setQualifiedConcurrency(this.writeConcurrency);
+    if (this.qualifiedConcurrencyOverride) {
+      const qualified = Number(this.qualifiedConcurrencyOverride);
+      if (!Number.isInteger(qualified) || qualified < 1 || qualified > 5) {
+        throw codedError("INVALID_QUALIFIED_CONCURRENCY", "ORACLE_FIREFOX_QUALIFIED_CONCURRENCY must be an integer from 1 to 5.");
+      }
+      this.store.setQualifiedConcurrency(Math.min(qualified, this.writeConcurrency));
     }
-    this.schedule();
+    this.store.on("change", this.onStoreChange);
+    this.database = this.store.databaseStatus();
+    this.invariants = this.store.checkInvariants();
+    this.safeMode = !this.invariants.ok;
+    this.recovery = this.safeMode ? [] : this.store.recoverInterruptedJobs();
+    if (this.legacyCompletionFiles) {
+      for (const rootJobId of this.store.allRootJobIds()) this.queueCompletionRecord(rootJobId);
+    }
+    if (!this.safeMode) this.schedule();
+    this.scheduleAccountWake(this.store.accountState().cooldownUntil);
     return this;
   }
 
   async close() {
     this.closed = true;
+    this.draining = true;
     await Promise.allSettled(this.active.values());
     this.store.off("change", this.onStoreChange);
     await Promise.allSettled(this.completionWrites.values());
+    clearTimeout(this.accountWakeTimer);
+    clearTimeout(this.executionWakeTimer);
     await this.browserManager.close();
+    this.store.markBrokerReleased?.("coordinator closed cleanly");
     this.store.close();
+  }
+
+  beginDrain(reason = "upgrade requested") {
+    this.draining = true;
+    return { draining: true, reason, activeExecutors: this.active.size };
   }
 
   status() {
     return {
       ready: true,
       protocolVersion: BROKER_PROTOCOL_VERSION,
-      buildVersion: "1.2.1",
+      buildVersion: BROKER_BUILD_VERSION,
       pid: process.pid,
+      brokerInstanceId: this.brokerInstanceId,
+      coordinatorId: this.brokerContext?.coordinatorId || null,
+      leaseGeneration: this.brokerContext?.leaseGeneration || null,
       startedAt: this.startedAt,
-      activeJobs: Array.from(this.active.keys()),
+      activeJobCount: this.active.size,
       queuedJobs: this.store.queuedJobs().length,
       outstandingJobs: this.store.countOutstanding(),
       writeConcurrency: this.writeConcurrency,
       minimumSubmissionIntervalMs: 2_000,
-      recovery: this.recovery,
-      completionDirectory: this.completionDirectory,
+      account: this.store.accountState(),
+      recovery: {
+        count: this.recovery?.length ?? 0,
+        actions: Object.fromEntries(
+          Object.entries((this.recovery || []).reduce((counts, entry) => {
+            counts[entry.action] = (counts[entry.action] || 0) + 1;
+            return counts;
+          }, {})),
+        ),
+      },
+      safeMode: Boolean(this.safeMode),
+      draining: this.draining,
+      brokerFatalError: this.brokerFatalError,
+      invariantViolations: this.invariants?.violations ?? [],
+      database: this.database,
+      completionDelivery: this.legacyCompletionFiles ? "legacy-files-and-subscriptions" : "subscriptions",
       browser: this.browserManager.status(),
       emergencyLocked: false,
     };
@@ -141,7 +214,60 @@ export class Coordinator {
     return { ...this.status(), emergencyLocked: await fileExists(emergencyLockPath()) };
   }
 
-  async startJob(operation, input, { generatedAuthorization = false } = {}) {
+  openClientSession(client = {}) {
+    return this.store.createOwnerSession({
+      harness: client.harness || "unknown",
+      clientInstanceId: client.clientInstanceId || null,
+      hostSessionHint: client.hostSessionHint || null,
+      metadata: {
+        pid: Number.isInteger(client.pid) ? client.pid : null,
+        buildVersion: client.buildVersion || null,
+      },
+    });
+  }
+
+  callerFromContext(context, { optional = false } = {}) {
+    try {
+      return this.store.authenticateOwnerSession(context?.client);
+    } catch (error) {
+      if (optional) return null;
+      throw error;
+    }
+  }
+
+  accessibleJob(params, context, { control = false } = {}) {
+    const caller = this.callerFromContext(context);
+    return this.store.authorizeJob({
+      jobId: params.jobId || null,
+      jobHandle: params.jobHandle || null,
+      caller,
+      control,
+      allowLegacyRead: !control && this.writeConcurrency === 1 && process.env.ORACLE_FIREFOX_LEGACY_UUID_READ !== "0",
+    });
+  }
+
+  requireWritable() {
+    if (this.safeMode) {
+      throw codedError("BROKER_SAFE_MODE", "Oracle Firefox is read/monitor-only because a durable-state invariant failed.", {
+        details: { invariantViolations: this.invariants?.violations ?? [] },
+      });
+    }
+  }
+
+  async startJob(operation, input, options = {}) {
+    return this.browserSelectionGate.run(
+      () => this.startJobWithSelectedBrowser(operation, input, options),
+      { owner: `start-job:${operation}` },
+    );
+  }
+
+  async startJobWithSelectedBrowser(operation, input, { generatedAuthorization = false, caller = null, internalChain = null } = {}) {
+    if (this.draining) throw codedError("BROKER_DRAINING", "Oracle Firefox is draining for a safe broker handoff; no new job was accepted.", { safeToRetry: true });
+    if (this.safeMode) {
+      throw codedError("BROKER_SAFE_MODE", "Oracle Firefox detected a durable-state invariant violation and is read/monitor-only until it is repaired.", {
+        details: { invariantViolations: this.invariants?.violations ?? [] },
+      });
+    }
     if (!new Set(["consult", "continue_chat"]).has(operation)) {
       throw codedError("INVALID_OPERATION", `Unsupported job operation: ${operation}`);
     }
@@ -152,6 +278,8 @@ export class Coordinator {
     const digest = requestDigest({ operation, ...input, authorizationId: undefined });
     const existing = this.store.getJobByAuthorization(authorizationId);
     if (existing) {
+      if (!caller) throw codedError("CLIENT_SESSION_REQUIRED", "A client session is required to resume an idempotent job.");
+      this.store.authorizeJob({ jobId: existing.id, caller, control: false });
       if (existing.requestDigest !== digest) {
         throw codedError("AUTHORIZATION_REUSED", "This authorizationId was already used for a different request.");
       }
@@ -163,7 +291,7 @@ export class Coordinator {
     if (await fileExists(emergencyLockPath())) {
       throw codedError("EMERGENCY_LOCKED", `Oracle Firefox submissions are disabled by ${emergencyLockPath()}.`);
     }
-    let resolvedInput = { ...input };
+    let resolvedInput = { ...input, browserBackend: this.browserManager.browserName };
     if (operation === "consult" && input.projectTitle && !input.projectUrl) {
       const project = await resolveProjectTarget(this.browserManager, {
         projectTitle: input.projectTitle,
@@ -210,7 +338,15 @@ export class Coordinator {
     }
     const prepared = await prepareJobRequest(operation, resolvedInput);
     const conversationKey = conversationKeyFor(operation, prepared);
+    const chainId = internalChain?.id || null;
+    const rootJobId = prepared.rootJobId || randomUUID();
+    // Capabilities are minted only after the opaque root identity is fixed.
+    const finalReadCapability = chainId ? null : mintCapability("read", rootJobId);
+    const finalControlCapability = chainId ? null : mintCapability("control", rootJobId);
+    const subscriptionId = chainId ? null : randomUUID();
+    const subscriptionCapability = chainId ? null : mintCapability("subscription", subscriptionId);
     const created = this.store.createJob({
+      id: chainId ? undefined : rootJobId,
       authorizationId,
       operation,
       request: prepared,
@@ -224,46 +360,130 @@ export class Coordinator {
       evidenceRound: prepared.evidenceRound,
       maxAutomaticEvidenceReplies: prepared.maxAutomaticEvidenceReplies,
       parentJobId: prepared.parentJobId,
-      rootJobId: prepared.rootJobId,
+      rootJobId: internalChain?.rootJobId || rootJobId,
+      chainId,
+      ownerSessionId: internalChain?.originSessionId || caller?.id,
+      attemptKind: prepared.evidenceReply ? "evidence_reply" : (prepared.retryAttempt > 0 ? "response_recovery" : "initial"),
+      readCapabilityHash: finalReadCapability?.hash,
+      controlCapabilityHash: finalControlCapability?.hash,
+      subscriptionId,
+      subscriptionCapabilityHash: subscriptionCapability?.hash,
+      completionMode: prepared.completionMode,
       retryAttempt: prepared.retryAttempt,
       maxAutomaticResponseRetries: prepared.maxAutomaticResponseRetries,
     });
     this.store.transition(created.job.id, "snapshotted");
     const queued = this.store.transition(created.job.id, "queued");
     this.schedule();
-    return { ...publicJob(queued), idempotent: false, authorizationGenerated: generatedAuthorization };
+    return {
+      ...publicJob(queued),
+      idempotent: false,
+      authorizationGenerated: generatedAuthorization,
+      ...(finalControlCapability ? {
+        jobHandle: finalControlCapability.handle,
+        readHandle: finalReadCapability.handle,
+        completionHandle: subscriptionCapability.handle,
+      } : {}),
+    };
   }
 
   schedule() {
-    if (this.closed) return;
+    if (this.closed || this.safeMode || this.draining) return;
     queueMicrotask(() => this.drain());
   }
 
+  scheduleAccountWake(when) {
+    clearTimeout(this.accountWakeTimer);
+    this.accountWakeTimer = null;
+    if (!when) return;
+    const waitMs = Math.max(0, Date.parse(when) - Date.now());
+    this.accountWakeTimer = setTimeout(() => {
+      this.accountWakeTimer = null;
+      this.schedule();
+    }, waitMs);
+    this.accountWakeTimer.unref?.();
+  }
+
   drain() {
-    if (this.closed) return;
-    const queued = this.store.queuedJobs();
-    // Conversation keys may change while a job is active: new-chat jobs are
-    // re-keyed from their creation scope to ChatGPT's canonical URL as soon as
-    // the submitted turn is proven. Always consult the authoritative rows so a
-    // continuation cannot overlap the still-running creator job.
-    const reservedKeys = new Set(
-      Array.from(this.active.keys(), (jobId) => this.store.getJob(jobId)?.conversationKey).filter(Boolean),
-    );
-    for (const job of queued) {
-      if (this.active.size >= this.writeConcurrency) break;
-      if (reservedKeys.has(job.conversationKey)) continue;
-      reservedKeys.add(job.conversationKey);
-      const running = this.runJob(job)
-        .catch(() => undefined)
+    if (this.closed || this.safeMode || this.draining) return;
+    const account = this.store.accountState();
+    const cooldownActive = account.cooldownUntil && Date.parse(account.cooldownUntil) > Date.now();
+    const preSubmitLimit = cooldownActive
+      ? 0
+      : Math.max(1, Math.min(this.writeConcurrency, Number(account.effectiveConcurrency) || 1));
+    let activePreSubmit = Array.from(this.active.keys())
+      .map((jobId) => this.store.getJob(jobId))
+      .filter((job) => job && !job.submissionMayHaveOccurred).length;
+    while (this.active.size < this.writeConcurrency) {
+      const executionClaim = this.store.claimNextRunnable({ allowPreSubmit: activePreSubmit < preSubmitLimit });
+      if (!executionClaim) break;
+      const job = this.store.requireJob(executionClaim.jobId);
+      if (!job.submissionMayHaveOccurred) activePreSubmit += 1;
+      const running = this.runJob(job, executionClaim)
+        .catch((error) => this.handleExecutorError(job, executionClaim, error))
         .finally(() => {
           this.active.delete(job.id);
+          this.store.releaseExecutionClaim(executionClaim);
+          this.scheduleExecutionWake();
           this.schedule();
         });
       this.active.set(job.id, running);
     }
+    this.scheduleExecutionWake();
   }
 
-  async beforeSubmit() {
+  handleExecutorError(job, claim, error) {
+    const brokerFatal = new Set([
+      "PROFILE_IN_USE_EXTERNALLY",
+      "BROKER_DATABASE_OWNED",
+      "BROKER_ENDPOINT_CONFLICT",
+      "BROKER_LEASE_LOST",
+      "BROKER_INSTANCE_REPLACED",
+    ]);
+    if (brokerFatal.has(error?.code)) {
+      this.safeMode = true;
+      this.draining = true;
+      this.brokerFatalError = structuredError(error);
+      return;
+    }
+    const current = this.store.requireJob(job.id);
+    if (current.state === "queued" && current.executionState === "running") {
+      this.store.releaseExecutionWithBackoff(claim, error);
+    }
+  }
+
+  scheduleExecutionWake() {
+    clearTimeout(this.executionWakeTimer);
+    this.executionWakeTimer = null;
+    if (this.closed || this.safeMode || this.draining) return;
+    const when = this.store.earliestExecutionWake();
+    if (!when) return;
+    this.executionWakeTimer = setTimeout(() => {
+      this.executionWakeTimer = null;
+      this.schedule();
+    }, Math.max(1, Date.parse(when) - Date.now()));
+    this.executionWakeTimer.unref?.();
+  }
+
+  async beforeSubmit(jobId, { waitOnly = false } = {}) {
+    if (waitOnly) {
+      for (;;) {
+        if (await fileExists(emergencyLockPath())) {
+          throw codedError("EMERGENCY_LOCKED", "The user-wide emergency lock was enabled before submission.", { safeToRetry: true });
+        }
+        const account = this.store.accountState();
+        const readyAt = Math.max(
+          account.nextSubmitNotBefore ? Date.parse(account.nextSubmitNotBefore) : 0,
+          account.cooldownUntil ? Date.parse(account.cooldownUntil) : 0,
+        );
+        const waitMs = readyAt - Date.now();
+        if (waitMs <= 0) return { ready: true };
+        await new Promise((resolve) => {
+          const timer = setTimeout(resolve, Math.min(waitMs, 55_000));
+          timer.unref?.();
+        });
+      }
+    }
     const previous = this.submitGate;
     let release;
     this.submitGate = new Promise((resolve) => { release = resolve; });
@@ -272,30 +492,46 @@ export class Coordinator {
       if (await fileExists(emergencyLockPath())) {
         throw codedError("EMERGENCY_LOCKED", "The user-wide emergency lock was enabled before submission.", { safeToRetry: true });
       }
-      const waitMs = Math.max(0, 2_000 - (Date.now() - this.lastSubmissionAt));
-      if (waitMs) await new Promise((resolve) => setTimeout(resolve, waitMs));
-      this.lastSubmissionAt = Date.now();
+      for (;;) {
+        try {
+          return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: 2_000 });
+        } catch (error) {
+          if (error?.code !== "SUBMIT_PACING_WAIT") throw error;
+          const retryAt = Date.parse(error.details?.retryAt || 0);
+          await new Promise((resolve) => setTimeout(resolve, Math.max(1, retryAt - Date.now())));
+        }
+      }
     } finally {
       release();
     }
   }
 
-  async runJob(job) {
-    const result = await this.jobExecutor({
-      jobId: job.id,
-      store: this.store,
-      browserManager: this.browserManager,
-      beforeSubmit: () => this.beforeSubmit(),
-    });
-    if (result?.state === "response_failed_detected") {
-      return this.finalizeResponseFailure(job.id, result);
+  async runJob(job, executionClaim) {
+    try {
+      const result = await this.jobExecutor({
+        jobId: job.id,
+        store: this.store,
+        browserManager: this.browserManager,
+        executionClaim,
+        beforeSubmit: (jobId, options) => this.beforeSubmit(jobId, options),
+      });
+      if (result?.state === "response_failed_detected") {
+        return this.finalizeResponseFailure(job.id, result, executionClaim);
+      }
+      return result;
+    } catch (error) {
+      if (error?.code === "ACCOUNT_COOLDOWN") {
+        const account = this.store.recordAccountCooldown(error);
+        this.scheduleAccountWake(account.cooldownUntil);
+      }
+      throw error;
     }
-    return result;
   }
 
-  async finalizeResponseFailure(jobId, detectedResult) {
+  async finalizeResponseFailure(jobId, detectedResult, executionClaim = null) {
     let parent = this.store.requireJob(jobId);
     const failure = parent.responseFailure || detectedResult.responseFailure;
+    const logicalChain = this.store.getChain(parent.chainId);
     const mayRecover =
       parent.request.responseFailurePolicy === "retry-once" &&
       failure?.retryable === true &&
@@ -303,6 +539,18 @@ export class Coordinator {
       Boolean(parent.conversationUrl);
     let recoveryJob = null;
     let recoverySchedulingError = null;
+    const provisionalAction = mayRecover
+      ? "queue the one authorized response-recovery continuation"
+      : failure?.retryable
+        ? "authorize a new continuation if you want ChatGPT to try again"
+        : "inspect the reported ChatGPT failure before starting another job";
+    parent = executionClaim
+      ? this.store.transitionClaimed(executionClaim, "response_failed", {
+          recoveryAction: provisionalAction,
+        }, { responseFailure: failure?.code })
+      : this.store.transition(parent.id, "response_failed", {
+          recoveryAction: provisionalAction,
+        }, { responseFailure: failure?.code });
     if (mayRecover) {
       const root = this.store.requireJob(parent.rootJobId);
       const retryAttempt = parent.retryAttempt + 1;
@@ -325,6 +573,9 @@ export class Coordinator {
           parentJobId: parent.id,
           rootJobId: parent.rootJobId,
           retryAttempt,
+        }, {
+          caller: { id: logicalChain.originSessionId },
+          internalChain: logicalChain,
         });
       } catch (error) {
         recoverySchedulingError = structuredError(error);
@@ -369,14 +620,20 @@ export class Coordinator {
   }
 
   async refreshCompletionRecord(rootJobId) {
+    this.brokerContext?.assertCurrentLease?.();
     const chain = this.store.jobChain(rootJobId);
     const active = chain.at(-1);
     if (!active || !TERMINAL_JOB_STATES.has(active.state)) {
+      this.brokerContext?.assertCurrentLease?.();
       await removeCompletionRecord(this.completionDirectory, rootJobId);
       return;
     }
+    this.brokerContext?.assertCurrentLease?.();
     await writeCompletionRecord(this.completionDirectory, {
-      version: 1,
+      version: 2,
+      coordinatorId: this.brokerContext?.coordinatorId || null,
+      brokerInstanceId: this.brokerContext?.instanceId || null,
+      leaseGeneration: this.brokerContext?.leaseGeneration || 0,
       rootJobId,
       activeJobId: active.id,
       state: active.state,
@@ -396,7 +653,9 @@ export class Coordinator {
       requestedJobId: requested.id,
       activeJobId: active.id,
       recoveryChain: chain.map((job) => job.id),
-      completionPath: completionRecordPath(this.completionDirectory, requested.rootJobId),
+      completionPath: this.legacyCompletionFiles
+        ? completionRecordPath(this.completionDirectory, requested.rootJobId)
+        : null,
     });
   }
 
@@ -404,8 +663,8 @@ export class Coordinator {
     return this.jobView(jobId, followRetries);
   }
 
-  listJobs(params) {
-    return { jobs: this.store.listJobs(params).map(publicJob) };
+  listJobs(params, caller) {
+    return { jobs: this.store.listJobsForSession(caller.id, params).map(publicJob) };
   }
 
   async waitForJob(jobId, timeoutSeconds = 55, followRetries = true) {
@@ -431,7 +690,9 @@ export class Coordinator {
         requestedJobId: requested.id,
         activeJobId: job.id,
         recoveryChain: chain.map((entry) => entry.id),
-        completionPath: completionRecordPath(this.completionDirectory, chain[0].rootJobId),
+        completionPath: this.legacyCompletionFiles
+          ? completionRecordPath(this.completionDirectory, chain[0].rootJobId)
+          : null,
       };
     }
     if (TERMINAL_JOB_STATES.has(job.state)) {
@@ -446,10 +707,18 @@ export class Coordinator {
     while (!status.terminal && Date.now() < deadline) {
       status = await this.waitForJob(receipt.jobId, Math.min(55, Math.ceil((deadline - Date.now()) / 1_000)));
     }
-    return status.state === "completed" ? this.result(receipt.jobId) : { ...status, status: status.terminal ? status.state : "pending" };
+    const handles = {
+      ...(receipt.jobHandle ? { jobHandle: receipt.jobHandle } : {}),
+      ...(receipt.readHandle ? { readHandle: receipt.readHandle } : {}),
+      ...(receipt.completionHandle ? { completionHandle: receipt.completionHandle } : {}),
+    };
+    return status.state === "completed"
+      ? { ...this.result(receipt.jobId), ...handles }
+      : { ...status, status: status.terminal ? status.state : "pending", ...handles };
   }
 
   async reconcile(jobId, conversationUrl) {
+    this.requireWritable();
     let job = this.store.requireJob(jobId);
     if (!new Set(["submission_uncertain", "response_uncertain", "quarantined"]).has(job.state)) {
       return { ...publicJob(job), reconciled: false, reason: "Job is not uncertain." };
@@ -497,12 +766,32 @@ export class Coordinator {
   }
 
   acknowledge(jobId) {
+    this.requireWritable();
     return this.store.acknowledge(jobId);
   }
 
   cancel(jobId) {
+    this.requireWritable();
     const result = this.store.cancel(jobId);
     return { ...publicJob(result), cancelled: result.cancelled, detached: result.detached };
+  }
+
+  claimCompletion(params, context) {
+    const caller = this.callerFromContext(context);
+    const delivery = this.store.claimCompletion(params.completionHandle, caller, {
+      claimSeconds: params.claimSeconds,
+    });
+    return { delivery };
+  }
+
+  async waitCompletion(params, context) {
+    const bounded = Math.max(0, Math.min(55, Number(params.timeoutSeconds) || 55));
+    const deadline = Date.now() + bounded * 1_000;
+    for (;;) {
+      const claimed = this.claimCompletion(params, context);
+      if (claimed.delivery || Date.now() >= deadline) return claimed;
+      await this.store.waitForChange(Math.max(0, deadline - Date.now()));
+    }
   }
 
   async setEmergencyLock(enabled) {
@@ -516,8 +805,19 @@ export class Coordinator {
     return { emergencyLocked: enabled, path: emergencyLockPath() };
   }
 
-  async replyWithLocalData(input) {
-    const parent = this.store.requireJob(input.jobId);
+  async selectBrowser(browser) {
+    return this.browserSelectionGate.run(async () => {
+      this.requireWritable();
+      if (this.store.countOutstanding() > 0 || this.active.size > 0) {
+        throw codedError("BROWSER_SELECTION_BUSY", "Browser selection is locked while Oracle jobs are outstanding.");
+      }
+      return this.browserManager.selectBrowser(browser);
+    }, { owner: "select-browser" });
+  }
+
+  async replyWithLocalData(input, context) {
+    this.requireWritable();
+    const { job: parent, chain } = this.accessibleJob(input, context, { control: true });
     if (parent.state !== "completed" || parent.assistantDisposition !== "local_data_request" || !parent.localDataRequest) {
       throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected job did not complete with a valid local-data request.");
     }
@@ -547,11 +847,17 @@ export class Coordinator {
       prompt,
       evidenceReply: true,
       parentJobId: parent.id,
+      rootJobId: chain.rootJobId,
       evidenceRound: round,
       responseTimeoutSeconds: input.responseTimeoutSeconds ?? parent.request.responseTimeoutSeconds,
       attachmentTimeoutSeconds: parent.request.attachmentTimeoutSeconds,
       modelRequirement: "pro",
       maxAutomaticEvidenceReplies: parent.maxAutomaticEvidenceReplies,
+      responseFailurePolicy: parent.request.responseFailurePolicy,
+      completionMode: chain.completionMode,
+    }, {
+      caller: this.callerFromContext(context),
+      internalChain: chain,
     });
   }
 
@@ -638,6 +944,7 @@ export class Coordinator {
           linkText: input.linkText,
           scope: input.scope,
           maxBytes: input.maxBytes,
+          allowBrowserDownload: this.browserManager.browserName !== "safari",
         })),
       })),
     );
@@ -645,27 +952,87 @@ export class Coordinator {
 
   async methods() {
     return {
+      "broker.openSession": (params, context) => this.openClientSession({ ...(context?.client || {}), ...params }),
       "broker.status": () => this.statusAsync(),
       "workflow.doctor": async () => ({ ...(await doctor()), broker: await this.statusAsync() }),
+      "workflow.selectBrowser": (params) => this.selectBrowser(params.browser),
       "workflow.profiles": async () => ({ profiles: await listFirefoxProfiles() }),
-      "workflow.setup": (params) => this.browserManager.withMaintenance(() => setupLogin({ timeoutMs: (params.timeoutSeconds ?? 300) * 1_000 })),
-      "workflow.importSession": (params) => this.browserManager.withMaintenance(() => importFirefoxSession(params)),
+      "workflow.setup": (params) => {
+        if (this.browserManager.browserName === "safari") {
+          throw codedError(
+            "SAFARI_INTERACTIVE_LOGIN_UNAVAILABLE",
+            "Safari blocks manual interaction with WebDriver automation windows. Explicitly approve import_session from a closed Firefox profile instead.",
+          );
+        }
+        return this.browserManager.withManagedSetup((browser) => setupLogin({
+          browser,
+          browserName: this.browserManager.browserName,
+          timeoutMs: (params.timeoutSeconds ?? 300) * 1_000,
+        }));
+      },
+      "workflow.importSession": (params) => {
+        if (params.confirmImport !== true) {
+          throw codedError(
+            "IMPORT_CONFIRMATION_REQUIRED",
+            "Session import requires explicit confirmation before Oracle reads or copies ChatGPT/OpenAI cookies.",
+          );
+        }
+        if (this.browserManager.browserName === "firefox") {
+          return this.browserManager.withMaintenance(() => importFirefoxSession(params));
+        }
+        return this.browserManager.withManagedSetup((browser) => importSessionIntoManagedBrowser({
+          browser,
+          browserName: this.browserManager.browserName,
+          ...params,
+        }));
+      },
       "workflow.listProjects": (params) => discoverProjects(this.browserManager, params),
       "workflow.findChats": (params) => discoverChats(this.browserManager, params),
       "workflow.listChatArtifacts": (params) => this.listChatArtifacts(params),
       "workflow.downloadChatArtifact": (params) => this.downloadChatArtifact(params),
-      "jobs.startConsult": (params) => this.startJob("consult", params),
-      "jobs.startContinue": (params) => this.startJob("continue_chat", params),
-      "jobs.compatConsult": async (params) => this.waitCompatibility(await this.startJob("consult", params, { generatedAuthorization: !params.authorizationId }), 240),
-      "jobs.compatContinue": async (params) => this.waitCompatibility(await this.startJob("continue_chat", params, { generatedAuthorization: !params.authorizationId }), 240),
-      "jobs.status": (params) => this.getJob(params.jobId, params.followRetries !== false),
-      "jobs.wait": (params) => this.waitForJob(params.jobId, params.timeoutSeconds, params.followRetries !== false),
-      "jobs.result": (params) => this.result(params.jobId, params.followRetries !== false),
-      "jobs.list": (params) => this.listJobs(params),
-      "jobs.reconcile": (params) => this.reconcile(params.jobId, params.conversationUrl),
-      "jobs.acknowledge": (params) => this.acknowledge(params.jobId),
-      "jobs.cancel": (params) => this.cancel(params.jobId),
-      "jobs.replyWithLocalData": (params) => this.replyWithLocalData(params),
+      "jobs.startConsult": (params, context) => this.startJob("consult", params, { caller: this.callerFromContext(context) }),
+      "jobs.startContinue": (params, context) => this.startJob("continue_chat", params, { caller: this.callerFromContext(context) }),
+      "jobs.compatConsult": async (params, context) => this.waitCompatibility(await this.startJob("consult", params, { generatedAuthorization: !params.authorizationId, caller: this.callerFromContext(context) }), 240),
+      "jobs.compatContinue": async (params, context) => this.waitCompatibility(await this.startJob("continue_chat", params, { generatedAuthorization: !params.authorizationId, caller: this.callerFromContext(context) }), 240),
+      "jobs.status": (params, context) => {
+        const { job } = this.accessibleJob(params, context);
+        return this.getJob(job.id, params.followRetries !== false);
+      },
+      "jobs.wait": (params, context) => {
+        const { job } = this.accessibleJob(params, context);
+        return this.waitForJob(job.id, params.timeoutSeconds, params.followRetries !== false);
+      },
+      "jobs.result": (params, context) => {
+        const { job } = this.accessibleJob(params, context);
+        return this.result(job.id, params.followRetries !== false);
+      },
+      "jobs.list": (params, context) => this.listJobs(params, this.callerFromContext(context)),
+      "jobs.reconcile": (params, context) => {
+        const { job } = this.accessibleJob(params, context, { control: true });
+        return this.reconcile(job.id, params.conversationUrl);
+      },
+      "jobs.acknowledge": (params, context) => {
+        const { job } = this.accessibleJob(params, context, { control: true });
+        return this.acknowledge(job.id);
+      },
+      "jobs.cancel": (params, context) => {
+        const { job } = this.accessibleJob(params, context, { control: true });
+        return this.cancel(job.id);
+      },
+      "jobs.replyWithLocalData": (params, context) => this.replyWithLocalData(params, context),
+      "completion.claim": (params, context) => this.claimCompletion(params, context),
+      "completion.wait": (params, context) => this.waitCompletion(params, context),
+      "completion.delivered": (params, context) => this.store.markCompletionDelivered(
+        params.completionHandle,
+        this.callerFromContext(context),
+        params.deliveryId,
+        params.claimId,
+      ),
+      "completion.acknowledge": (params, context) => this.store.acknowledgeCompletion(
+        params.completionHandle,
+        this.callerFromContext(context),
+        params.deliveryId,
+      ),
       "broker.setEmergencyLock": (params) => this.setEmergencyLock(Boolean(params.enabled)),
     };
   }

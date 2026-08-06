@@ -1,9 +1,12 @@
 {
   "name": "oracle-firefox",
   "displayName": "Oracle Firefox",
-  "version": "1.2.1",
-  "description": "Durable ChatGPT Pro consultation, failure recovery, completion waiting, and generated-file downloads through authenticated Firefox.",
-  "longDescription": "One per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one authenticated Firefox. Jobs are durable, same-chat FIFO, exact-turn correlated, fail closed at the submission boundary, classify terminal response failures, optionally authorize one idempotent recovery continuation, emit private completion records, and request safe local evidence. Existing chats can also be inspected read-only to download one exact ChatGPT-generated file.",
+  "version": "1.6.0",
+  "protocolVersion": 7,
+  "schemaVersion": 6,
+  "releaseSequence": 1600,
+  "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
+  "longDescription": "One identity-locked per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one safely selected browser backend. Firefox remains the compatibility default, native macOS Chrome is bundle-and-signature verified so Parallels or VM copies are rejected, and Safari uses a serialized visible WebDriver session with explicit session-only authentication. Capability-owned logical chains retain same-chat FIFO, durable completion, cooldown control, exact-turn correlation, and the one-send boundary across up to five qualified different-chat jobs.",
   "author": {
     "name": "nikokuma",
     "url": "https://github.com/nikokuma"
@@ -11,12 +14,13 @@
   "homepage": "https://github.com/nikokuma/oracle/blob/main/FIREFOX.md",
   "repository": "https://github.com/nikokuma/oracle",
   "license": "MIT",
-  "keywords": ["firefox", "chatgpt", "pro", "webdriver-bidi", "mcp", "codex", "claude"],
+  "keywords": ["firefox", "chrome", "safari", "chatgpt", "pro", "webdriver", "mcp", "codex", "claude"],
   "tools": [
-    { "name": "doctor", "description": "Check Firefox and broker readiness." },
-    { "name": "setup", "description": "Open the dedicated Firefox login flow." },
-    { "name": "profiles", "description": "Find Firefox profiles with ChatGPT cookies without exposing values." },
-    { "name": "import_session", "description": "Import only ChatGPT/OpenAI cookies after explicit approval." },
+    { "name": "doctor", "description": "Check Firefox, native Chrome, Safari, and broker readiness." },
+    { "name": "select_browser", "description": "Safely select Firefox, Chrome, or Safari while Oracle is idle." },
+    { "name": "setup", "description": "Open interactive login for Firefox or Chrome; Safari uses approved session import." },
+    { "name": "profiles", "description": "Find Firefox source profiles with ChatGPT cookies without exposing values." },
+    { "name": "import_session", "description": "Import only ChatGPT/OpenAI cookies into the selected browser after explicit approval." },
     { "name": "list_projects", "description": "Discover ChatGPT projects read-only." },
     { "name": "find_chats", "description": "Discover exact conversation targets read-only." },
     { "name": "list_chat_artifacts", "description": "List safe downloadable file links in one exact chat." },
@@ -28,11 +32,15 @@
     { "name": "job_status", "description": "Read durable job state." },
     { "name": "job_wait", "description": "Wait event-first on one logical job for up to 55 seconds and follow its recovery child." },
     { "name": "job_result", "description": "Read a completed answer or terminal outcome." },
-    { "name": "list_jobs", "description": "List recent durable jobs without prompts." },
+    { "name": "list_jobs", "description": "List only the current client session's durable jobs without prompts." },
     { "name": "reconcile_job", "description": "Read-only reconciliation for an uncertain submission." },
     { "name": "acknowledge_uncertain", "description": "Remove a quarantine after manual inspection." },
     { "name": "cancel_job", "description": "Cancel before submit-intent or detach afterward." },
     { "name": "broker_status", "description": "Inspect broker, browser, and queue health." },
-    { "name": "reply_with_local_data", "description": "Send one safe structured local-evidence reply." }
+    { "name": "reply_with_local_data", "description": "Send one safe structured local-evidence reply." },
+    { "name": "completion_claim", "description": "Claim one exact subscription-scoped completion event." },
+    { "name": "completion_wait", "description": "Wait event-first for one exact subscription-scoped completion event." },
+    { "name": "completion_mark_delivered", "description": "Mark a claimed completion notification delivered." },
+    { "name": "completion_acknowledge", "description": "Acknowledge one exact completion delivery." }
   ]
 }

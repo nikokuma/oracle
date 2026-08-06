@@ -302,13 +302,17 @@ async function searchConversationCandidates(
   );
   if (!input) throw new Error("ChatGPT's chat-search input was not found.");
   await input.click();
-  await input.evaluate((node) => {
+  await input.evaluate((node, value) => {
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-    if (setter) setter.call(node, "");
-    else node.value = "";
-    node.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteContent" }));
-  });
-  await page.keyboard.type(query);
+    if (setter) setter.call(node, value);
+    else node.value = value;
+    node.dispatchEvent(new InputEvent("input", {
+      bubbles: true,
+      data: value,
+      inputType: value ? "insertFromPaste" : "deleteContent",
+    }));
+    node.dispatchEvent(new Event("change", { bubbles: true }));
+  }, query);
   const deadline = Date.now() + timeoutMs;
   let candidates = [];
   let lastKey = "";
@@ -1058,10 +1062,16 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
   return observed.length;
 }
 
-export async function uploadContextFile(page, filePath, { timeoutMs = 600_000 } = {}) {
+export async function uploadAttachmentFiles(page, filePaths, { timeoutMs = 600_000 } = {}) {
   const boundedTimeout = Math.max(1_000, Math.min(1_800_000, timeoutMs));
   const testReadyDelayMs = Math.max(0, Number(process.env.ORACLE_FIREFOX_TEST_ATTACHMENT_READY_DELAY_MS) || 0);
   const uploadStartedAt = Date.now();
+  const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
+  if (paths.length < 1) throw codedError("ATTACHMENT_REQUIRED", "At least one attachment path is required.");
+  const filenames = paths.map((filePath) => path.basename(filePath));
+  if (new Set(filenames.map((name) => name.toLocaleLowerCase("en-US"))).size !== filenames.length) {
+    throw codedError("ATTACHMENT_FILENAME_DUPLICATE", "Attachment filenames must be unique.");
+  }
   const initial = await inspectComposerState(page);
   if (initial.attachments.length > 0) {
     throw new Error(`ChatGPT composer already contains foreign attachments: ${initial.attachments.join(", ")}.`);
@@ -1076,23 +1086,29 @@ export async function uploadContextFile(page, filePath, { timeoutMs = 600_000 } 
       "ChatGPT file input was not found. Retry with delivery=inline or update the selector set.",
     );
   }
-  await input.uploadFile(filePath);
-  const filename = path.basename(filePath);
+  await input.uploadFile(...paths);
   const deadline = Date.now() + boundedTimeout;
   while (Date.now() < deadline) {
     const state = await inspectComposerState(page);
     const send = await findVisibleHandle(page, SEND_BUTTON_SELECTORS, { enabled: true });
     if (send) await send.dispose();
     const exactAttachments =
-      state.attachments.length === 1 &&
-      attachmentManifestKey(state.attachments) === attachmentManifestKey([filename]);
+      state.attachments.length === filenames.length &&
+      attachmentManifestKey(state.attachments) === attachmentManifestKey(filenames);
     if (exactAttachments && !state.uploading && Boolean(send) && Date.now() - uploadStartedAt >= testReadyDelayMs) {
-      ORACLE_APPROVED_ATTACHMENTS.set(page, [filename]);
-      return filename;
+      ORACLE_APPROVED_ATTACHMENTS.set(page, filenames);
+      return filenames;
     }
     await delay(500);
   }
-  throw new Error(`Attachment did not become ready before the ${Math.round(boundedTimeout / 1000)}-second timeout: ${filename}`);
+  throw new Error(
+    `Attachments did not become ready before the ${Math.round(boundedTimeout / 1000)}-second timeout: ${filenames.join(", ")}`,
+  );
+}
+
+export async function uploadContextFile(page, filePath, options = {}) {
+  const [filename] = await uploadAttachmentFiles(page, [filePath], options);
+  return filename;
 }
 
 export async function assistantSnapshot(page) {

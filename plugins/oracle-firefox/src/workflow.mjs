@@ -1,13 +1,14 @@
 import { access, readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { prepareZipAttachments, verifyPreparedZipAttachments } from "./archives.mjs";
+import { browserDoctor as doctor, setupBrowserLogin as setupLogin } from "./browser-backends.mjs";
 import { bundleContext } from "./bundle.mjs";
-import { profileDirectory } from "./config.mjs";
+import { browserProfileDirectory, profileDirectory } from "./config.mjs";
 import { codedError, structuredError } from "./errors.mjs";
 import {
   attachmentManifestKey,
   assistantSnapshot,
-  doctor,
   findChats,
   insertComposerText,
   inspectComposerState,
@@ -16,14 +17,14 @@ import {
   normalizeConversationTitle,
   normalizeConversationUrl,
   normalizeProjectTitle,
+  openChatGpt,
   openExistingConversation,
   openProject,
   probeLogin,
   projectUrlFromConversationUrl,
   semanticTextHash,
-  setupLogin,
   submitComposer,
-  uploadContextFile,
+  uploadAttachmentFiles,
   waitForAssistantAfterTurn,
   waitForComposer,
   waitForUserMessage,
@@ -32,6 +33,7 @@ import {
   discoverFirefoxProfiles,
   importChatGptCookies,
   isFirefoxProfileActive,
+  readChatGptCookies,
   resolveFirefoxProfile,
 } from "./profiles.mjs";
 import { createSession, writeSessionFile } from "./sessions.mjs";
@@ -98,6 +100,75 @@ export async function importFirefoxSession({ sourceProfile, confirmImport = fals
   };
 }
 
+export async function importSessionIntoManagedBrowser({
+  browser,
+  browserName,
+  sourceProfile,
+  confirmImport = false,
+} = {}) {
+  if (confirmImport !== true) {
+    throw codedError(
+      "IMPORT_CONFIRMATION_REQUIRED",
+      "Session import requires explicit confirmation before reading ChatGPT/OpenAI cookies from Firefox.",
+    );
+  }
+  if (!new Set(["chrome", "safari"]).has(browserName)) {
+    throw codedError("IMPORT_UNSUPPORTED_FOR_BROWSER", `Managed cookie injection is not supported for ${browserName}.`);
+  }
+  const source = await resolveFirefoxProfile(sourceProfile);
+  if (source.chatGptCookieCount === 0) {
+    throw codedError("NO_CHATGPT_COOKIES", `Firefox profile ${source.name} has no ChatGPT/OpenAI cookies.`);
+  }
+  const cookies = await readChatGptCookies({ sourceProfileDir: source.path });
+  if (!cookies.length) throw codedError("NO_CHATGPT_COOKIES", "The selected Firefox profile yielded no importable ChatGPT/OpenAI cookies.");
+  const page = await openChatGpt(browser);
+  const targets = [
+    { url: "https://chatgpt.com/", suffix: "chatgpt.com" },
+    { url: "https://openai.com/", suffix: "openai.com" },
+  ];
+  let importedCookieCount = 0;
+  let rejectedCookieCount = 0;
+  for (const target of targets) {
+    const selected = cookies.filter((cookie) => {
+      const domain = cookie.domain.replace(/^\./u, "").toLowerCase();
+      return domain === target.suffix || domain.endsWith(`.${target.suffix}`);
+    });
+    if (!selected.length) continue;
+    await page.goto(target.url, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    for (const cookie of selected) {
+      try {
+        await page.setCookie(cookie);
+        importedCookieCount += 1;
+      } catch {
+        rejectedCookieCount += 1;
+      }
+    }
+  }
+  if (importedCookieCount === 0) {
+    throw codedError("COOKIE_IMPORT_FAILED", `${browserName} rejected every ChatGPT/OpenAI cookie. No session was imported.`);
+  }
+  await page.goto("https://chatgpt.com/", { waitUntil: "domcontentloaded", timeout: 60_000 });
+  const login = await probeLogin(page);
+  if (!login.authenticated) {
+    throw codedError(
+      "IMPORTED_SESSION_NOT_AUTHENTICATED",
+      `${browserName} accepted ${importedCookieCount} cookies, but ChatGPT did not confirm an authenticated session. No message was sent.`,
+      { details: { importedCookieCount, rejectedCookieCount } },
+    );
+  }
+  return {
+    imported: true,
+    authenticated: true,
+    browser: browserName,
+    importedCookieCount,
+    rejectedCookieCount,
+    domains: ["chatgpt.com", "openai.com"],
+    sourceProfile: { name: source.name, path: source.path },
+    destinationProfile: browserName === "chrome" ? browserProfileDirectory("chrome") : null,
+    authenticationPersistence: browserName === "safari" ? "automation-session-only" : "profile",
+  };
+}
+
 function resolveDelivery(requested, bundle) {
   if (requested === "inline" || requested === "attachment") return requested;
   return bundle.included.length > 0 && bundle.characterCount > 25_000 ? "attachment" : "inline";
@@ -105,6 +176,16 @@ function resolveDelivery(requested, bundle) {
 
 function cleanAssistantText(text) {
   return String(text ?? "").replace(/^ChatGPT said:\s*/iu, "").trim();
+}
+
+function publicZipAttachments(request) {
+  return (request?.zipAttachments ?? []).map(({ filename, sizeBytes, sha256, entryCount, uncompressedBytes }) => ({
+    filename,
+    sizeBytes,
+    sha256,
+    entryCount,
+    uncompressedBytes,
+  }));
 }
 
 function assertProjectSelector(projectTitle, projectUrl) {
@@ -196,9 +277,15 @@ export async function prepareJobRequest(operation, input) {
       characterCount: finalPrompt.length,
     };
   }
+  const zipAttachments = await prepareZipAttachments({
+    zipFiles: input.zipFiles ?? [],
+    cwd: input.cwd,
+    session,
+  });
   const requestPath = await writeSessionFile(session, "request.md", `${context.bundle}\n`);
   const prepared = {
     operation,
+    browser: input.browserBackend || "firefox",
     prompt,
     requestPath,
     delivery: selectedDelivery,
@@ -215,6 +302,7 @@ export async function prepareJobRequest(operation, input) {
     completionMode,
     includedFiles: context.included.map((entry) => entry.displayPath),
     skippedBinaryFiles: context.skippedBinary,
+    zipAttachments,
     bundleCharacters: context.characterCount,
     sessionId: session.id,
     sessionPath: session.directory,
@@ -293,7 +381,13 @@ export async function writeFinalMetadata(job, result) {
   );
 }
 
-async function monitorSubmittedJob({ job, page, store }) {
+function transitionExecution(store, executionClaim, jobId, state, patch = {}, details = null) {
+  return executionClaim
+    ? store.transitionClaimed(executionClaim, state, patch, details)
+    : store.transition(jobId, state, patch, details);
+}
+
+async function monitorSubmittedJob({ job, page, store, executionClaim }) {
   if (!job.conversationUrl || (!job.userTurnId && !job.userTurnHash)) {
     throw codedError("SUBMISSION_UNCERTAIN", "A submitted job lacks enough durable evidence for monitor-only recovery.", {
       submissionMayHaveOccurred: true,
@@ -301,16 +395,16 @@ async function monitorSubmittedJob({ job, page, store }) {
     });
   }
   await openExistingConversation(page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
-  store.transition(job.id, "awaiting_response", { recoveryAction: "monitoring proven submitted turn" });
+  transitionExecution(store, executionClaim, job.id, "awaiting_response", { recoveryAction: "monitoring proven submitted turn" });
   const response = await waitForAssistantAfterTurn(
     page,
     { id: job.userTurnId, hash: job.userTurnHash },
     { timeoutMs: job.request.responseTimeoutSeconds * 1_000 },
   );
-  return finalizeResponse({ job: store.requireJob(job.id), response, store });
+  return finalizeResponse({ job: store.requireJob(job.id), response, store, executionClaim });
 }
 
-async function finalizeResponse({ job, response, store }) {
+async function finalizeResponse({ job, response, store, executionClaim }) {
   const answer = cleanAssistantText(response.text);
   const responsePath = await writeSessionFile({ id: path.basename(job.sessionPath), directory: job.sessionPath }, "response.md", `${answer}\n`);
   triggerFailpoint("after_response_persistence");
@@ -327,7 +421,7 @@ async function finalizeResponse({ job, response, store }) {
         : "inspect the reported ChatGPT failure before starting another job",
       details: { assistantTurnId: failure.assistantTurnId, classifierVersion: failure.classifierVersion },
     };
-    store.transition(job.id, "response_failed_detected", {
+    transitionExecution(store, executionClaim, job.id, "response_failed_detected", {
       assistantDisposition: "response_failed",
       responseDisposition: failure.disposition,
       responseFailure: failure,
@@ -346,6 +440,7 @@ async function finalizeResponse({ job, response, store }) {
       chatTitle: job.chatTitle,
       conversationUrl: job.conversationUrl,
       modelEvidence: job.modelEvidence,
+      zipAttachments: publicZipAttachments(job.request),
       assistantDisposition: "response_failed",
       responseDisposition: failure.disposition,
       responseFailure: failure,
@@ -360,7 +455,7 @@ async function finalizeResponse({ job, response, store }) {
   }
   const localDataRequest = parseLocalDataRequest(answer);
   const disposition = localDataRequest ? "local_data_request" : "final";
-  store.transition(job.id, "response_confirmed", {
+  transitionExecution(store, executionClaim, job.id, "response_confirmed", {
     assistantDisposition: disposition,
     responseDisposition: "completed",
     localDataRequest,
@@ -373,11 +468,13 @@ async function finalizeResponse({ job, response, store }) {
     state: "completed",
     status: "completed",
     mode: job.operation === "consult" ? "new-chat" : "continue-chat",
+    browser: job.request.browser || "firefox",
     projectTitle: job.projectTitle,
     projectUrl: job.projectUrl,
     chatTitle: job.chatTitle,
     conversationUrl: job.conversationUrl,
     modelEvidence: job.modelEvidence,
+    zipAttachments: publicZipAttachments(job.request),
     assistantDisposition: disposition,
     responseDisposition: "completed",
     localDataRequest,
@@ -392,20 +489,22 @@ async function finalizeResponse({ job, response, store }) {
     submissionCount: job.retryAttempt + 1,
     recoveryAction: localDataRequest ? "perform approved read-only checks, then call reply_with_local_data" : null,
   };
-  store.transition(job.id, "completed", { result, recoveryAction: result.recoveryAction });
+  transitionExecution(store, executionClaim, job.id, "completed", { result, recoveryAction: result.recoveryAction });
   await writeFinalMetadata(store.requireJob(job.id), result);
   return result;
 }
 
-export async function executeJob({ jobId, store, browserManager, beforeSubmit }) {
+export async function executeJob({ jobId, store, browserManager, beforeSubmit, executionClaim }) {
   let job = store.requireJob(jobId);
-  const lease = await browserManager.leasePage(job.id, { headless: Boolean(job.request.headless) });
+  if (executionClaim) store.assertExecution(executionClaim);
+  const lease = await browserManager.leasePage(job.id);
   try {
-    store.transition(job.id, "page_leased");
+    if (executionClaim) store.assertExecution(executionClaim);
+    transitionExecution(store, executionClaim, job.id, "page_leased");
     job = store.requireJob(job.id);
     await requireAuthenticatedPage(lease.page);
     if (job.submitIntentAt && (job.userTurnId || job.userTurnHash)) {
-      return await monitorSubmittedJob({ job, page: lease.page, store });
+      return await monitorSubmittedJob({ job, page: lease.page, store, executionClaim });
     }
 
     let target = null;
@@ -417,7 +516,7 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
         projectTitle: job.request.conversationUrl ? undefined : job.request.projectTitle,
         projectUrl: job.request.conversationUrl ? undefined : job.request.projectUrl,
       });
-      store.transition(job.id, "target_verified", {
+      transitionExecution(store, executionClaim, job.id, "target_verified", {
         conversationKey: target.url,
         conversationUrl: target.url,
         projectTitle: target.projectTitle,
@@ -432,7 +531,7 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
         });
       }
       await waitForComposer(lease.page);
-      store.transition(job.id, "target_verified", {
+      transitionExecution(store, executionClaim, job.id, "target_verified", {
         projectTitle: project?.title || null,
         projectUrl: project?.url || null,
       });
@@ -442,26 +541,29 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
     triggerFailpoint("before_insertion");
     const authorized = (await readFile(job.request.requestPath, "utf8")).trimEnd();
     let composerPrompt = authorized;
-    let attachmentManifest = [];
+    const archivePaths = await verifyPreparedZipAttachments(job.request.zipAttachments ?? [], job.sessionPath);
+    const attachmentPaths = [...archivePaths];
     if (job.request.delivery === "attachment") {
       const attachmentPath = await writeSessionFile(
         { id: path.basename(job.sessionPath), directory: job.sessionPath },
         "oracle-context.md",
         `${authorized}\n`,
       );
-      store.transition(job.id, "attachment_processing", { attachmentManifest: [path.basename(attachmentPath)] });
-      attachmentManifest = [path.basename(attachmentPath)];
+      attachmentPaths.unshift(attachmentPath);
       composerPrompt = [
         "Read the attached oracle-context.md before answering.",
         "Follow the [USER] request and ORACLE LOCAL DATA PROTOCOL in that file.",
         "Return only the substantive answer or the strict local-data request block.",
       ].join("\n");
-      await browserManager.withInputFocus(lease.page, () => insertComposerText(lease.page, composerPrompt));
-      await uploadContextFile(lease.page, attachmentPath, { timeoutMs: job.request.attachmentTimeoutSeconds * 1_000 });
+    }
+    const attachmentManifest = attachmentPaths.map((attachmentPath) => path.basename(attachmentPath));
+    transitionExecution(store, executionClaim, job.id, "attachment_processing", { attachmentManifest });
+    await browserManager.withInputFocus(lease, () => insertComposerText(lease.page, composerPrompt));
+    if (attachmentPaths.length > 0) {
+      await uploadAttachmentFiles(lease.page, attachmentPaths, {
+        timeoutMs: job.request.attachmentTimeoutSeconds * 1_000,
+      });
       triggerFailpoint("after_attachment_readiness");
-    } else {
-      store.transition(job.id, "attachment_processing", { attachmentManifest: [] });
-      await browserManager.withInputFocus(lease.page, () => insertComposerText(lease.page, composerPrompt));
     }
     triggerFailpoint("after_insertion");
     const composerState = await inspectComposerState(lease.page);
@@ -474,26 +576,47 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
     ) {
       throw codedError("ATTACHMENT_MISMATCH", "The composer attachment set changed before submission.", { safeToRetry: true });
     }
-    store.transition(job.id, "composer_verified", { attachmentManifest });
-    const selectedModel = await ensureModelRequirement(lease.page, job.request.modelRequirement);
-    store.transition(job.id, "model_verified", { modelEvidence: selectedModel });
-    const finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
-    triggerFailpoint("after_model_verification");
-    await beforeSubmit?.(job.id);
-
-    if (store.requireJob(job.id).state === "cancelled_pre_submit") {
-      throw codedError("JOB_CANCELLED", "The job was cancelled before submission; no message was sent.", { safeToRetry: false });
-    }
-
-    store.transition(
-      job.id,
-      "submit_intent",
-      { modelEvidence: finalModelEvidence, submittedMessageHash: semanticTextHash(composerPrompt) },
-      { authorizedMessageHash: semanticTextHash(composerPrompt) },
-    );
-    triggerFailpoint("after_submit_intent");
-    await submitComposer(lease.page);
-    triggerFailpoint("after_click");
+    transitionExecution(store, executionClaim, job.id, "composer_verified", { attachmentManifest });
+    await beforeSubmit?.(job.id, { waitOnly: true });
+    await browserManager.withTrustedAction(lease, async () => {
+      if (executionClaim) store.assertExecution(executionClaim);
+      const selectedModel = await ensureModelRequirement(lease.page, job.request.modelRequirement);
+      transitionExecution(store, executionClaim, job.id, "model_verified", { modelEvidence: selectedModel });
+      let finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
+      triggerFailpoint("after_model_verification");
+      const finalComposer = await inspectComposerState(lease.page);
+      if (semanticTextHash(finalComposer.text) !== semanticTextHash(composerPrompt)) {
+        throw codedError("COMPOSER_MISMATCH", "The composer changed after model selection; no message was sent.", { safeToRetry: true });
+      }
+      if (
+        finalComposer.uploading ||
+        attachmentManifestKey(finalComposer.attachments) !== attachmentManifestKey(attachmentManifest)
+      ) {
+        throw codedError("ATTACHMENT_MISMATCH", "The attachment set changed after model selection; no message was sent.", { safeToRetry: true });
+      }
+      const submitPermit = await beforeSubmit?.(job.id, { waitOnly: false });
+      if (store.requireJob(job.id).state === "cancelled_pre_submit") {
+        throw codedError("JOB_CANCELLED", "The job was cancelled before submission; no message was sent.", { safeToRetry: false });
+      }
+      if (executionClaim) store.assertExecution(executionClaim);
+      const preClickComposer = await inspectComposerState(lease.page);
+      if (
+        semanticTextHash(preClickComposer.text) !== semanticTextHash(composerPrompt) ||
+        preClickComposer.uploading ||
+        attachmentManifestKey(preClickComposer.attachments) !== attachmentManifestKey(attachmentManifest)
+      ) {
+        throw codedError("COMPOSER_MISMATCH", "The exact composer state changed while waiting for the submit permit; no message was sent.", { safeToRetry: true });
+      }
+      finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
+      (executionClaim ? store.consumeSubmitPermitClaimed.bind(store, executionClaim) : store.consumeSubmitPermit.bind(store, job.id))(
+        submitPermit.id,
+        { modelEvidence: finalModelEvidence, submittedMessageHash: semanticTextHash(composerPrompt) },
+        { authorizedMessageHash: semanticTextHash(composerPrompt), executionEpoch: executionClaim?.executionEpoch ?? null },
+      );
+      triggerFailpoint("after_submit_intent");
+      await submitComposer(lease.page);
+      triggerFailpoint("after_click");
+    }, { owner: `submit:${job.id}` });
     const confirmed = await waitForUserMessage(lease.page, baseline.userCount, composerPrompt, {
       timeoutMs: 30_000,
       expectedAttachments: attachmentManifest,
@@ -510,15 +633,16 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
     if (target?.url && observedUrl !== target.url) {
       throw codedError("WRONG_CONVERSATION", "ChatGPT navigated away from the selected conversation after submission.", { submissionMayHaveOccurred: true });
     }
-    store.transition(job.id, "user_turn_confirmed", {
+    transitionExecution(store, executionClaim, job.id, "user_turn_confirmed", {
       conversationKey: observedUrl,
       conversationUrl: observedUrl,
       projectUrl: resultingProjectUrl,
       userTurnId: confirmed.userTurn.id,
       userTurnHash: confirmed.userTurn.hash,
     });
+    store.recordSubmissionSuccess();
     triggerFailpoint("after_user_turn_discovery");
-    store.transition(job.id, "awaiting_response");
+    transitionExecution(store, executionClaim, job.id, "awaiting_response");
     job = store.requireJob(job.id);
     const response = await waitForAssistantAfterTurn(
       lease.page,
@@ -526,13 +650,14 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
       { timeoutMs: job.request.responseTimeoutSeconds * 1_000 },
     );
     triggerFailpoint("after_assistant_completion");
-    return await finalizeResponse({ job: store.requireJob(job.id), response, store });
+    return await finalizeResponse({ job: store.requireJob(job.id), response, store, executionClaim });
   } catch (error) {
+    if (new Set(["STALE_EXECUTION", "BROKER_LEASE_LOST", "BROKER_INSTANCE_REPLACED"]).has(error?.code)) throw error;
     let current = store.requireJob(job.id);
     if (current.submitIntentAt && !current.conversationUrl && error?.details?.conversationUrl) {
       try {
         const observedUrl = normalizeConversationUrl(error.details.conversationUrl);
-        current = store.transition(current.id, current.state, {
+        current = transitionExecution(store, executionClaim, current.id, current.state, {
           conversationKey: observedUrl,
           conversationUrl: observedUrl,
         }, { recoveredCanonicalUrl: true });
@@ -541,12 +666,13 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit })
       }
     }
     if (current.state === "cancelled_pre_submit") throw error;
-    const failed = store.markFailure(job.id, error);
+    const failed = executionClaim ? store.markFailureClaimed(executionClaim, error) : store.markFailure(job.id, error);
     await writeFinalMetadata(failed, {
       jobId: failed.id,
       authorizationId: failed.authorizationId,
       state: failed.state,
       status: failed.state,
+      browser: failed.request?.browser || "firefox",
       error: failed.error || structuredError(error),
       conversationUrl: failed.conversationUrl,
       projectUrl: failed.projectUrl,

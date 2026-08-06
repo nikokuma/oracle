@@ -4,6 +4,10 @@
 
 ### Added
 
+- Oracle Firefox 1.6: add a persisted idle-only browser selector, full native macOS Chrome launch through the Google-signed `/Applications` bundle with Parallels/VM rejection, and a visible serialized Safari WebDriver backend with explicit session-only authentication and capability limits.
+- Oracle Firefox 1.5: add a canonical TMPDIR-independent endpoint, coordinator and profile lifetime leases, signed instance locators, broker generations, SQLite writer fencing, atomic execution claims, generation-scoped recovery, directional idle upgrades, and one source-derived build identity across Codex, Claude Code, Claudex, and Desktop artifacts.
+- Oracle Firefox 1.4: accept up to five explicit raw ZIP attachments for new or existing chats, snapshot and hash them durably, reject unsafe or ambiguous archives, and correlate the exact multi-file manifest before and after submission.
+- Oracle Firefox 1.3: capability-owned logical chains and client sessions, scoped job listing/access, durable completion subscriptions with claim/deliver/ack, chain-retained same-chat FIFO, broker-wide cooldown state, atomic browser/page leasing, stale-execution fencing, headless normal lifecycle, and qualified three-chat scheduling across Codex, Claude Code, Claudex, and Claude Desktop.
 - Oracle Firefox 1.2: classify terminal ChatGPT response failures such as “Stopped reasoning,” optionally authorize one idempotent same-chat recovery continuation, follow recovery chains through status/result/watch APIs, replace broker wait polling with state-change events, and write private atomic completion handoff records for Codex, Claude Code, Claudex, and Desktop notifications.
 - Oracle Firefox: list and safely download one exact ChatGPT-generated link or behavior-only Download button from an existing standalone or project conversation without sending a message, exposing signed URLs, or reusing output paths; serialize download clicks across agents.
 - Firefox plugin: discover ChatGPT projects and chats, create new consultations inside an exact project, and scope existing-chat continuation to a project while preserving fail-closed target selection.
@@ -12,12 +16,18 @@
 
 ### Changed
 
+- Oracle Firefox: conservatively start 1.5 with one active conversation; retain explicit, persistent qualification for up to five isolated different-chat jobs while preserving same-chat FIFO, a two-second account-wide submission interval, serialized trusted input/model/Send actions, and cooldown backpressure.
+- Oracle Firefox: default ordinary broker runs to headless Firefox and make visible setup/login an exclusive maintenance operation.
+- Oracle Firefox skill: reduce always-loaded instructions by 38% while preserving submission, targeting, recovery, evidence, download, and multi-harness handoff safeguards through tested progressive-disclosure references.
 - Oracle Firefox skill: default agent-driven consultations to one authorized response-failure recovery and one harness-appropriate completion handoff unless the user explicitly opts out; keep direct API/CLI defaults conservative.
 - Oracle Firefox: route Codex, CLI, Claude Code, Claudex, and Desktop calls through one broker-owned Firefox process; same-chat writes are FIFO and qualified different-chat concurrency is feature-flagged.
 - Oracle Firefox: compatibility calls wait at most 240 seconds and return a durable pending receipt instead of encouraging a duplicate submission.
 
 ### Fixed
 
+- Oracle Firefox: prevent differently installed or TMPDIR-scoped clients from launching competing brokers, prevent an older client from downgrading a newer broker, fence stale browser/executor callbacks after takeover, stop permanent profile conflicts from hot-looping, and fix a timed-out mutex waiter releasing another caller's lock.
+- Oracle Firefox: prevent acknowledged or legacy terminal uncertainty records from occupying a same-scope FIFO lane forever; active quarantine records remain the fail-closed authority.
+- Oracle Firefox: preserve root/owner/completion policy through local-evidence and response-recovery children; prevent another agent from reading or mutating a new job by UUID; serialize first browser launch, page reservations, maintenance, search/model keyboard actions, and the final verified submit critical section.
 - Oracle Firefox: wait for an incompatible idle broker to remove its Unix socket before launching the upgraded broker, preventing the old shutdown path from unlinking the replacement broker's endpoint.
 - Oracle Firefox: prefer the exact truncated conversation-title node over concatenated sidebar prompt excerpts when resolving chat targets.
 - Oracle Firefox: replace partial composer-length checks with whole-message semantic equality, remove the blind Enter send fallback, enforce exact attachment readiness, and correlate completion to the exact new user turn.
