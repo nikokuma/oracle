@@ -174,6 +174,19 @@ test("binds completion to the exact new user turn and ignores Pro-thinking place
   });
 });
 
+test("a hung assistant DOM probe fails closed without waiting for the response deadline", async () => {
+  const page = { evaluate: () => new Promise(() => {}) };
+  const started = Date.now();
+  await assert.rejects(
+    () => waitForAssistantAfterTurn(page, { id: "submitted-turn", hash: "hash" }, {
+      timeoutMs: 60_000,
+      probeTimeoutMs: 25,
+    }),
+    (error) => error.code === "RESPONSE_MONITOR_STALLED" && error.submissionMayHaveOccurred === true && error.safeToRetry === false,
+  );
+  assert.ok(Date.now() - started < 1_000);
+});
+
 test("excludes ChatGPT's Show more control from long user-turn correlation", async () => {
   await withPage(`
     <main id="thread">

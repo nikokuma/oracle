@@ -23,7 +23,7 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
   let brokerPid = null;
   try {
     await client.connect(transport);
-    assert.equal(client.getServerVersion()?.version, "1.6.0");
+    assert.equal(client.getServerVersion()?.version, "1.6.1");
     assert.match(client.getInstructions() || "", /one durable, identity-locked broker/u);
     assert.match(client.getInstructions() || "", /pending result never authorizes another send/u);
     const listed = await client.listTools();

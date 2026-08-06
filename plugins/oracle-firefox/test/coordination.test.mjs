@@ -140,6 +140,36 @@ test("completion outbox is exact-subscription, claimable, delivered, and acknowl
   });
 });
 
+test("manual completion does not accumulate a delivery and closes at terminal state", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex" });
+    const caller = authenticate(store, session, "codex");
+    const owned = ownedJob(store, caller, { completionMode: "manual" });
+    store.transition(owned.job.id, "completed", { result: { answer: "private" } });
+    assert.equal(store.maxCompletionDeliveryId(), 0);
+    const parsedId = owned.subscription.handle.split(".")[2];
+    assert.equal(store.db.prepare("SELECT state FROM completion_subscriptions WHERE id=?").get(parsedId).state, "closed");
+    assert.equal(store.claimCompletion(owned.subscription.handle, caller), null);
+  });
+});
+
+test("Desktop harness completions are eligible for one broker-owned notification", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "claude-desktop-mcp" });
+    const caller = authenticate(store, session, "claude-desktop-mcp");
+    const owned = ownedJob(store, caller, { completionMode: "harness" });
+    store.transition(owned.job.id, "completed", { result: { answer: "private" } });
+    const pending = store.pendingSystemNotifications(0);
+    assert.equal(pending.length, 1);
+    assert.equal(pending[0].harness, "claude-desktop-mcp");
+    assert.equal(store.markSystemNotificationDelivered(pending[0].deliveryId), true);
+    const delivered = store.claimCompletion(owned.subscription.handle, caller);
+    assert.equal(delivered.deliveryState, "delivered");
+    store.acknowledgeCompletion(owned.subscription.handle, caller, delivered.deliveryId);
+    assert.equal(store.claimCompletion(owned.subscription.handle, caller), null);
+  });
+});
+
 test("durable account cooldown invalidates open permits across database reopen", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-account-gate-"));
   const databasePath = path.join(directory, "state.sqlite");

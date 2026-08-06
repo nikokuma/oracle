@@ -45,7 +45,7 @@ Honor overrides: “current model” means `modelRequirement: "current"`; “do 
 4. Choose the completion handoff before starting:
    - **Codex:** set `completionMode: "harness"`; when supported, attach one heartbeat to the root job. Stay silent while pending, retrieve/report once terminal, then delete it.
    - **Claude Code/Claudex:** set `completionMode: "harness"`; use one job-specific Monitor or `oracle-firefox watch <job-id> --handle <job-handle> --completion-handle <completion-handle> --jsonl`. Without auto-resume, use notification mode.
-   - **Claude Desktop/no wake API:** set `completionMode: "notify"`; use the same watcher with `--notify`, then resume manually and call `job_result`.
+   - **Claude Desktop/no wake API:** set `completionMode: "notify"`; the broker posts one generic macOS notification, then the user resumes the chat and the agent calls `job_result`. A notification cannot wake Claude's model.
    - **Explicit manual mode:** set `completionMode: "manual"` and create no watcher.
    Never combine handoffs or poll repeatedly.
 5. Call `consult_start` for a new chat or `continue_chat_start` for an existing chat. Keep the root `jobId`, private `jobHandle`, and `completionHandle`; the broker follows the logical chain across recovery/evidence children. Optionally make one event-first `job_wait` or `completion_wait`; a pending result leaves the broker job running.

@@ -13,12 +13,12 @@ import { fileURLToPath } from "node:url";
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.0",
+  "packageVersion": "1.6.1",
   "protocolVersion": 7,
   "schemaVersion": 6,
-  "releaseSequence": 1600,
-  "sourceDigest": "84c819de58fa29ae63acdb46c6ad6a13b618985e070a016508ae5ea600f72193",
-  "buildId": "oracle-firefox-1.6.0-84c819de58fa29ae"
+  "releaseSequence": 1602,
+  "sourceDigest": "8b360aec80aceddccec1a03f5b46790389c42a184879fef5a4e58d2d83f9d399",
+  "buildId": "oracle-firefox-1.6.1-8b360aec80aceddc"
 });
 
 // src/build-info.mjs
@@ -542,6 +542,11 @@ function normalizeLegacyBrokerStatus(status, endpoint) {
     legacy: true
   };
 }
+function canRequestIdleUpgrade(hello, status) {
+  return Boolean(
+    status && !status.draining && BROKER_RELEASE_SEQUENCE > Number(hello?.releaseSequence || 0) && Number(status.activeJobCount || 0) === 0 && Number(status.outstandingJobs || 0) === 0
+  );
+}
 async function probeBroker(identity, token, timeoutMs = 750, endpointOverride = null) {
   const locator = endpointOverride ? null : await readBrokerLocator(identity, token);
   const endpoint = endpointOverride || locator?.endpoint?.path || identity.endpoint;
@@ -682,8 +687,41 @@ async function compatibleBroker(identity, token) {
   }
   const hello = observed.hello;
   const acceptsProtocol = Number(hello?.protocol?.minimum) <= BROKER_PROTOCOL_VERSION && Number(hello?.protocol?.maximum) >= BROKER_PROTOCOL_VERSION;
-  if (acceptsProtocol) return { hello, endpoint: observed.endpoint };
   const observedReleaseSequence = Number(hello?.releaseSequence || 0);
+  if (acceptsProtocol) {
+    if (observedReleaseSequence > 0 && BROKER_RELEASE_SEQUENCE > observedReleaseSequence) {
+      const status = await rpcRequest(observed.endpoint, token, "broker.status", {}, {
+        timeoutMs: 2e3,
+        client: clientMetadata("broker-upgrade-check")
+      }).catch(() => null);
+      const safelyIdle = canRequestIdleUpgrade(hello, status);
+      if (safelyIdle) {
+        const upgrade = await rpcRequest(observed.endpoint, token, "broker.requestUpgrade", {
+          expectedInstanceId: hello.instanceId,
+          expectedLeaseGeneration: hello.leaseGeneration,
+          requesterReleaseSequence: BROKER_RELEASE_SEQUENCE,
+          requesterBuildId: BROKER_BUILD_ID,
+          requesterProtocolMinimum: BROKER_PROTOCOL_VERSION,
+          requesterProtocolMaximum: BROKER_PROTOCOL_VERSION
+        }, {
+          timeoutMs: 2e3,
+          client: clientMetadata("broker-upgrade")
+        }).catch(() => null);
+        if (upgrade?.accepted) {
+          const released = await waitForBrokerRelease(token, {
+            identity,
+            expectedInstanceId: hello.instanceId,
+            probe: (auth, wait) => probeBroker(identity, auth, wait, observed.endpoint)
+          });
+          if (released) return { hello: await startBrokerDetached(identity, token), endpoint: identity.endpoint };
+          throw codedError("BROKER_UPGRADE_PENDING", "The idle Oracle Firefox broker accepted an upgrade but did not release its lifetime lease in time.", {
+            safeToRetry: true
+          });
+        }
+      }
+    }
+    return { hello, endpoint: observed.endpoint };
+  }
   if (observedReleaseSequence > 0 && BROKER_RELEASE_SEQUENCE > observedReleaseSequence) {
     const upgradeParams = {
       expectedInstanceId: hello.instanceId,

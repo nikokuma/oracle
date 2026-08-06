@@ -61290,12 +61290,12 @@ import { chmod as chmod3, link as link2, mkdir as mkdir4, open as open3, readFil
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.0",
+  "packageVersion": "1.6.1",
   "protocolVersion": 7,
   "schemaVersion": 6,
-  "releaseSequence": 1600,
-  "sourceDigest": "84c819de58fa29ae63acdb46c6ad6a13b618985e070a016508ae5ea600f72193",
-  "buildId": "oracle-firefox-1.6.0-84c819de58fa29ae"
+  "releaseSequence": 1602,
+  "sourceDigest": "8b360aec80aceddccec1a03f5b46790389c42a184879fef5a4e58d2d83f9d399",
+  "buildId": "oracle-firefox-1.6.1-8b360aec80aceddc"
 });
 
 // src/build-info.mjs
@@ -63243,6 +63243,81 @@ import { mkdir as mkdir8, stat as stat3 } from "node:fs/promises";
 import path18 from "node:path";
 import { promisify as promisify3 } from "node:util";
 
+// src/owned-browser.mjs
+function processAlive(child) {
+  if (!child?.pid || child.exitCode != null || child.signalCode != null) return false;
+  try {
+    process.kill(child.pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function waitForExit(child, timeoutMs) {
+  if (!processAlive(child)) return Promise.resolve(true);
+  return new Promise((resolve7) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer2);
+      child.off?.("exit", onExit);
+      child.off?.("close", onExit);
+      resolve7(value);
+    };
+    const onExit = () => finish(true);
+    child.once?.("exit", onExit);
+    child.once?.("close", onExit);
+    const timer2 = setTimeout(() => finish(!processAlive(child)), Math.max(1, timeoutMs));
+    timer2.unref?.();
+  });
+}
+function signalOwnedChild(child, signal) {
+  if (!processAlive(child)) return false;
+  try {
+    child.kill?.(signal);
+    if (processAlive(child)) process.kill(child.pid, signal);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function wrapOwnedBrowser(browser, { gracefulCloseMs = 5e3, terminateMs = 5e3 } = {}) {
+  if (!browser?.close || browser.__oracleOwnedClose) return browser;
+  const originalClose = browser.close.bind(browser);
+  let closing2 = null;
+  Object.defineProperty(browser, "__oracleOwnedClose", { value: true });
+  browser.close = () => {
+    if (closing2) return closing2;
+    closing2 = (async () => {
+      const child = browser.process?.() || null;
+      let closeError = null;
+      try {
+        await Promise.race([
+          Promise.resolve(originalClose()),
+          new Promise((resolve7) => {
+            const timer2 = setTimeout(resolve7, Math.max(1, gracefulCloseMs));
+            timer2.unref?.();
+          })
+        ]);
+      } catch (error) {
+        closeError = error;
+      }
+      if (processAlive(child)) {
+        signalOwnedChild(child, "SIGTERM");
+        await waitForExit(child, terminateMs);
+      }
+      if (processAlive(child)) {
+        signalOwnedChild(child, "SIGKILL");
+        await waitForExit(child, 1e3);
+      }
+      if (closeError) throw closeError;
+    })();
+    return closing2;
+  };
+  return browser;
+}
+
 // src/selectors.mjs
 var INPUT_SELECTORS = [
   'textarea[data-id="prompt-textarea"]',
@@ -63793,7 +63868,7 @@ async function launchFirefox({ headless = false, profileDir = profileDirectory()
     );
   }
   await mkdir8(profileDir, { recursive: true, mode: 448 });
-  return puppeteer_core_default.launch({
+  return wrapOwnedBrowser(await puppeteer_core_default.launch({
     browser: "firefox",
     protocol: "webDriverBiDi",
     executablePath: executablePath2,
@@ -63811,7 +63886,7 @@ async function launchFirefox({ headless = false, profileDir = profileDirectory()
     } : {},
     handleSIGINT: false,
     handleSIGTERM: false
-  });
+  }));
 }
 async function openChatGpt(browser, { newPage = false, foreground = true } = {}) {
   const pages = await browser.pages();
@@ -64287,13 +64362,36 @@ function isPlaceholder(text) {
   const normalized = String(text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
   return !normalized || normalized === "chatgpt said:" || normalized === "chatgpt said" || normalized.includes("answer now") && normalized.includes("pro thinking");
 }
-async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, stableMs = 2500 } = {}) {
+async function boundedAssistantSnapshot(page, probeTimeoutMs = 3e4) {
+  let timer2;
+  try {
+    return await Promise.race([
+      assistantSnapshot(page),
+      new Promise((_2, reject) => {
+        timer2 = setTimeout(() => reject(codedError(
+          "RESPONSE_MONITOR_STALLED",
+          `The browser stopped responding for ${probeTimeoutMs}ms while Oracle monitored the submitted turn. Oracle did not retry or resend.`,
+          {
+            submissionMayHaveOccurred: true,
+            safeToRetry: false,
+            recoveryAction: "inspect the exact conversation and reconcile this job without resending",
+            details: { probeTimeoutMs }
+          }
+        )), Math.max(1, probeTimeoutMs));
+        timer2.unref?.();
+      })
+    ]);
+  } finally {
+    clearTimeout(timer2);
+  }
+}
+async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, stableMs = 2500, probeTimeoutMs = 3e4 } = {}) {
   const deadline = Date.now() + timeoutMs;
   let lastKey = "";
   let stableSince = Date.now();
   let terminalCycles = 0;
   while (Date.now() < deadline) {
-    const snapshot = await assistantSnapshot(page);
+    const snapshot = await boundedAssistantSnapshot(page, Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now())));
     let userIndex = -1;
     if (userTurn.id) userIndex = snapshot.turns.findIndex((turn) => turn.role === "user" && turn.id === userTurn.id);
     if (userIndex < 0) {
@@ -64324,7 +64422,11 @@ async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, st
     }
     await delay(500);
   }
-  throw new Error("The assistant response bound to the submitted user turn could not be confirmed complete before timeout.");
+  throw codedError(
+    "RESPONSE_TIMEOUT",
+    "The assistant response bound to the submitted user turn could not be confirmed complete before timeout.",
+    { submissionMayHaveOccurred: true, recoveryAction: "inspect the exact conversation and reconcile this job without resending" }
+  );
 }
 function isChatGptCooldownText(value) {
   const normalized = String(value ?? "").replace(/\s+/gu, " ").trim();
@@ -65027,7 +65129,7 @@ async function launchChrome({ headless = false, profileDir = browserProfileDirec
     );
   }
   await mkdir9(profileDir, { recursive: true, mode: 448 });
-  const browser = await puppeteer_core_default.launch({
+  const browser = wrapOwnedBrowser(await puppeteer_core_default.launch({
     browser: "chrome",
     protocol: "cdp",
     executablePath: resolved.path,
@@ -65037,7 +65139,7 @@ async function launchChrome({ headless = false, profileDir = browserProfileDirec
     handleSIGINT: false,
     handleSIGTERM: false,
     args: ["--no-first-run", "--no-default-browser-check"]
-  });
+  }));
   await configureChromeDownloads(browser, downloadPath);
   return browser;
 }
@@ -65081,6 +65183,22 @@ async function setupBrowserLogin({ browser = null, browserName = configuredBrows
 
 // src/browser-manager.mjs
 var execFileAsync5 = promisify5(execFile5);
+async function boundedClose(target, timeoutMs = 1e4) {
+  if (!target?.close) return;
+  let timer2;
+  try {
+    await Promise.race([
+      Promise.resolve(target.close()),
+      new Promise((resolve7) => {
+        timer2 = setTimeout(resolve7, timeoutMs);
+        timer2.unref?.();
+      })
+    ]);
+  } catch {
+  } finally {
+    clearTimeout(timer2);
+  }
+}
 function pidAlive(pid) {
   try {
     process.kill(Number(pid), 0);
@@ -65177,6 +65295,8 @@ var BrowserManager = class {
     launcher = launchBrowser,
     pageOpener = openChatGpt,
     lockTimeoutMs = 3e4,
+    pageCloseTimeoutMs = 1e4,
+    browserCloseTimeoutMs = 12e3,
     ownerFileEnabled = true,
     brokerContext = null
   } = {}) {
@@ -65188,6 +65308,8 @@ var BrowserManager = class {
     this.launcher = launcher;
     this.pageOpener = pageOpener;
     this.ownerFileEnabled = ownerFileEnabled;
+    this.pageCloseTimeoutMs = Math.max(1, Number(pageCloseTimeoutMs) || 1e4);
+    this.browserCloseTimeoutMs = Math.max(1, Number(browserCloseTimeoutMs) || 12e3);
     this.brokerContext = brokerContext || {
       instanceId: `test-browser-${randomUUID5()}`,
       leaseGeneration: 1,
@@ -65286,7 +65408,7 @@ var BrowserManager = class {
       const generation = this.browserGeneration;
       const page = await this.pageOpener(browser, { newPage: true, foreground: false });
       if (generation !== this.browserGeneration || browser !== this.browser || !browser.connected) {
-        await Promise.resolve(page.close?.()).catch(() => void 0);
+        await boundedClose(page, this.pageCloseTimeoutMs);
         throw codedError("BROWSER_EPOCH_CHANGED", `${this.browserName} restarted while a page was opening; the stale page was discarded.`, { safeToRetry: true });
       }
       const lease = {
@@ -65316,7 +65438,7 @@ var BrowserManager = class {
       this.leases.delete(jobId);
       lease.invalidated = true;
       if (lease.discovery) this.discoveryCount = Math.max(0, this.discoveryCount - 1);
-      await Promise.resolve(lease.page.close?.()).catch(() => void 0);
+      await boundedClose(lease.page, this.pageCloseTimeoutMs);
     }, { owner: `release:${jobId}` });
   }
   async withTrustedAction(leaseOrPage, callback, options = {}) {
@@ -65393,7 +65515,7 @@ var BrowserManager = class {
   async closeLocked() {
     for (const lease of this.leases.values()) {
       lease.invalidated = true;
-      await Promise.resolve(lease.page.close?.()).catch(() => void 0);
+      await boundedClose(lease.page, this.pageCloseTimeoutMs);
     }
     this.leases.clear();
     this.discoveryCount = 0;
@@ -65401,7 +65523,7 @@ var BrowserManager = class {
     this.browser = null;
     this.controlPage = null;
     this.browserGeneration += 1;
-    await Promise.resolve(browser?.close?.()).catch(() => void 0);
+    await boundedClose(browser, this.browserCloseTimeoutMs);
     if (this.ownerFileEnabled) await removeOwnerIfOwned(this.currentOwner);
     this.currentOwner = null;
   }
@@ -65446,6 +65568,7 @@ var BrowserManager = class {
 
 // src/coordinator.mjs
 import { randomUUID as randomUUID11 } from "node:crypto";
+import { execFile as execFile7 } from "node:child_process";
 import { access as access5, mkdir as mkdir16, open as open9, rm as rm13 } from "node:fs/promises";
 import path29 from "node:path";
 
@@ -66311,6 +66434,7 @@ var StateStore = class extends EventEmitter4 {
         this.migrateSix({ existing: false });
         this.registerBrokerTakeover();
       }
+      this.backfillUntrackedUncertaintyQuarantines();
       return this;
     } catch (error) {
       try {
@@ -66709,6 +66833,18 @@ var StateStore = class extends EventEmitter4 {
         "The coordinator identity file does not match the durable database. Oracle Firefox stopped before recovery or scheduling."
       );
     }
+  }
+  backfillUntrackedUncertaintyQuarantines() {
+    this.assertCurrentBroker();
+    this.db.prepare(`
+      INSERT OR IGNORE INTO quarantines(scope_key, job_id, reason, active, created_at)
+      SELECT conversation_key, id,
+             'Uncertain submission imported from an older Oracle Firefox build; reconcile it before another send.',
+             1, COALESCE(completed_at, updated_at, created_at)
+      FROM jobs
+      WHERE state IN ('submission_uncertain', 'response_uncertain', 'quarantined')
+        AND conversation_key IS NOT NULL
+    `).run();
   }
   registerBrokerTakeover() {
     const context2 = this.brokerContext;
@@ -67386,8 +67522,15 @@ var StateStore = class extends EventEmitter4 {
         )
         SELECT id, ?, 'pending', ?
         FROM completion_subscriptions
-        WHERE chain_id = ? AND state = 'open'
+        WHERE chain_id = ? AND state = 'open' AND mode != 'manual'
       `).run(sequence, now, chainId);
+    }
+    if (TERMINAL_CHAIN_STATES.has(state)) {
+      this.db.prepare(`
+        UPDATE completion_subscriptions
+        SET state = 'closed', closed_at = ?
+        WHERE chain_id = ? AND state = 'open' AND mode = 'manual'
+      `).run(now, chainId);
     }
     return sequence;
   }
@@ -67401,12 +67544,12 @@ var StateStore = class extends EventEmitter4 {
       });
     }
     const state = job.userTurnId || job.userTurnHash ? "response_uncertain" : "submission_uncertain";
-    const recoveryAction = state === "submission_uncertain" ? `reconcile_job ${id}` : `job_status ${id}`;
+    const recoveryAction = `reconcile_job ${id}`;
     const result = this.transition(id, state, {
       error: { ...structured, submissionMayHaveOccurred: true },
       recoveryAction
     });
-    if (state === "submission_uncertain") this.quarantine(job.conversationKey, id, structured.message);
+    this.quarantine(job.conversationKey, id, structured.message);
     return result;
   }
   markFailureClaimed(claim, error) {
@@ -67419,12 +67562,12 @@ var StateStore = class extends EventEmitter4 {
       });
     }
     const state = job.userTurnId || job.userTurnHash ? "response_uncertain" : "submission_uncertain";
-    const recoveryAction = state === "submission_uncertain" ? `reconcile_job ${job.id}` : `job_status ${job.id}`;
+    const recoveryAction = `reconcile_job ${job.id}`;
     const result = this.transitionClaimed(claim, state, {
       error: { ...structured, submissionMayHaveOccurred: true },
       recoveryAction
     });
-    if (state === "submission_uncertain") this.quarantine(job.conversationKey, job.id, structured.message);
+    this.quarantine(job.conversationKey, job.id, structured.message);
     return result;
   }
   quarantine(scopeKey, jobId, reason) {
@@ -67463,7 +67606,15 @@ var StateStore = class extends EventEmitter4 {
             updated_at=?, version=version+1
         WHERE id=?
       `).run(userTurnId ?? null, userTurnHash, now, jobId);
+      this.db.prepare(`
+        UPDATE job_attempts
+        SET execution_state='idle', execution_owner_instance_id=NULL,
+            execution_lease_generation=NULL, execution_heartbeat_at=NULL,
+            next_execution_not_before=NULL
+        WHERE job_id=?
+      `).run(jobId);
       this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)").run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
+      this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
     });
     const reopened = this.requireJob(jobId);
     this.emit("change", reopened);
@@ -67597,6 +67748,20 @@ var StateStore = class extends EventEmitter4 {
       throw codedError("STALE_EXECUTION", "This browser executor no longer owns the logical job. No browser action was attempted.");
     }
     return true;
+  }
+  heartbeatExecution(claim) {
+    return this.transaction(() => {
+      this.assertExecution(claim);
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET execution_heartbeat_at = ?
+        WHERE job_id = ? AND execution_epoch = ? AND execution_state = 'running'
+      `).run(now, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("STALE_EXECUTION", "The Oracle Firefox execution heartbeat no longer owns this job.");
+      }
+      return now;
+    });
   }
   transitionClaimed(claim, nextState, patch = {}, details = null) {
     let transitioned;
@@ -67850,7 +68015,7 @@ var StateStore = class extends EventEmitter4 {
   authorizeSubscription({ subscriptionHandle, caller }) {
     const parsed = parseCapability(subscriptionHandle, "subscription");
     let row = null;
-    if (parsed) row = this.db.prepare("SELECT * FROM completion_subscriptions WHERE id = ? AND state = 'open'").get(parsed.subjectId);
+    if (parsed) row = this.db.prepare("SELECT * FROM completion_subscriptions WHERE id = ?").get(parsed.subjectId);
     if (!row || !verifyCapability(subscriptionHandle, row.capability_hash, { kind: "subscription", subjectId: row.id })) {
       throw codedError("COMPLETION_NOT_FOUND", "No accessible Oracle Firefox completion subscription matches that reference.");
     }
@@ -67859,6 +68024,7 @@ var StateStore = class extends EventEmitter4 {
   claimCompletion(subscriptionHandle, caller, { claimSeconds = 90 } = {}) {
     return this.transaction(() => {
       const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
+      if (subscription.state !== "open") return null;
       const staleBefore = new Date(Date.now() - Math.max(10, claimSeconds) * 1e3).toISOString();
       this.db.prepare(`
         UPDATE completion_deliveries
@@ -67912,15 +68078,60 @@ var StateStore = class extends EventEmitter4 {
     return this.transaction(() => {
       const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
       const now = (/* @__PURE__ */ new Date()).toISOString();
-      const row = this.db.prepare("SELECT * FROM completion_deliveries WHERE id = ? AND subscription_id = ?").get(deliveryId, subscription.id);
+      const row = this.db.prepare(`
+        SELECT d.*, e.state AS event_state
+        FROM completion_deliveries d
+        JOIN chain_events e ON e.sequence = d.chain_event_sequence
+        WHERE d.id = ? AND d.subscription_id = ?
+      `).get(deliveryId, subscription.id);
       if (!row) throw codedError("COMPLETION_NOT_FOUND", "No accessible completion delivery matches that reference.");
       if (row.state !== "acknowledged") {
         this.db.prepare(`
           UPDATE completion_deliveries SET state = 'acknowledged', acknowledged_at = ? WHERE id = ?
         `).run(now, deliveryId);
       }
+      if (TERMINAL_CHAIN_STATES.has(row.event_state)) {
+        this.db.prepare(`
+          UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
+          WHERE id = ? AND state = 'open'
+        `).run(now, subscription.id);
+      }
       return { deliveryId, delivered: Boolean(row.delivered_at), acknowledged: true };
     });
+  }
+  maxCompletionDeliveryId() {
+    return Number(this.db.prepare("SELECT COALESCE(MAX(id), 0) AS id FROM completion_deliveries").get()?.id || 0);
+  }
+  pendingSystemNotifications(afterId = 0) {
+    return this.db.prepare(`
+      SELECT d.id AS delivery_id, d.subscription_id, d.state AS delivery_state,
+             e.chain_id, e.active_job_id, e.state AS event_state, e.created_at AS event_created_at,
+             s.mode, o.harness
+      FROM completion_deliveries d
+      JOIN completion_subscriptions s ON s.id = d.subscription_id
+      JOIN owner_sessions o ON o.id = s.owner_session_id
+      JOIN chain_events e ON e.sequence = d.chain_event_sequence
+      WHERE d.id > ? AND d.state = 'pending' AND s.state = 'open'
+        AND (s.mode = 'notify' OR (s.mode = 'harness' AND o.harness = 'claude-desktop-mcp'))
+      ORDER BY d.id
+    `).all(Math.max(0, Number(afterId) || 0)).map((row) => ({
+      deliveryId: Number(row.delivery_id),
+      subscriptionId: row.subscription_id,
+      chainId: row.chain_id,
+      activeJobId: row.active_job_id,
+      state: row.event_state,
+      createdAt: row.event_created_at,
+      mode: row.mode,
+      harness: row.harness
+    }));
+  }
+  markSystemNotificationDelivered(deliveryId) {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const changed = this.db.prepare(`
+      UPDATE completion_deliveries SET state = 'delivered', delivered_at = ?
+      WHERE id = ? AND state = 'pending'
+    `).run(now, deliveryId);
+    return Number(changed.changes) === 1;
   }
   waitForChange(timeoutMs) {
     const bounded = Math.max(0, Number(timeoutMs) || 0);
@@ -69583,18 +69794,32 @@ async function fileExists(candidate) {
     return false;
   }
 }
+function notifyMacOsCompletion(delivery) {
+  if (process.platform !== "darwin") return Promise.resolve(false);
+  const terminal = /* @__PURE__ */ new Set(["completed", "failed", "cancelled", "submission_uncertain", "response_uncertain", "quarantined"]);
+  const body = terminal.has(delivery.state) ? "An Oracle job finished. Reopen your agent and retrieve the durable result." : "An Oracle job needs your attention. Reopen your agent and check its durable status.";
+  return new Promise((resolve7) => {
+    execFile7("/usr/bin/osascript", [
+      "-e",
+      `display notification ${JSON.stringify(body)} with title ${JSON.stringify("Oracle Firefox")}`
+    ], { timeout: 1e4 }, (error) => resolve7(!error));
+  });
+}
 var Coordinator = class {
-  constructor({ store: store2 = new StateStore(), browserManager = null, brokerContext = null, writeConcurrency, jobExecutor = executeJob, completionDirectory, legacyCompletionFiles } = {}) {
+  constructor({ store: store2 = new StateStore(), browserManager = null, brokerContext = null, writeConcurrency, minimumSubmissionIntervalMs, jobExecutor = executeJob, completionDirectory, legacyCompletionFiles, completionNotifier = notifyMacOsCompletion } = {}) {
     this.store = store2;
     this.brokerContext = brokerContext || store2.brokerContext;
     this.browserManager = browserManager || new BrowserManager({ brokerContext: this.brokerContext });
     this.browserSelectionGate = new AsyncMutex("browser-selection", { timeoutMs: 12e4 });
     this.writeConcurrency = Math.max(1, Math.min(5, Number(
-      writeConcurrency ?? process.env.ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS ?? process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY ?? 1
+      writeConcurrency ?? process.env.ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS ?? process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY ?? 5
     )));
     this.explicitWriteConcurrency = writeConcurrency !== void 0;
     this.qualifiedConcurrencyOverride = process.env.ORACLE_FIREFOX_QUALIFIED_CONCURRENCY?.trim() || null;
     this.jobExecutor = jobExecutor;
+    this.minimumSubmissionIntervalMs = Math.max(2e3, Math.min(3e5, Number(
+      minimumSubmissionIntervalMs ?? process.env.ORACLE_FIREFOX_MINIMUM_SUBMISSION_INTERVAL_MS ?? 1e4
+    ) || 1e4));
     this.active = /* @__PURE__ */ new Map();
     this.submitGate = Promise.resolve();
     this.startedAt = (/* @__PURE__ */ new Date()).toISOString();
@@ -69605,15 +69830,20 @@ var Coordinator = class {
     this.completionDirectory = completionDirectory || path29.join(path29.dirname(this.store.databasePath), "completions");
     this.legacyCompletionFiles = legacyCompletionFiles ?? (process.env.ORACLE_FIREFOX_LEGACY_COMPLETION_FILES === "1" || Boolean(completionDirectory));
     this.completionWrites = /* @__PURE__ */ new Map();
+    this.completionNotifier = completionNotifier;
+    this.notificationCursor = 0;
+    this.notificationPump = Promise.resolve();
     this.accountWakeTimer = null;
     this.executionWakeTimer = null;
     this.onStoreChange = (job) => {
       if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
+      this.queueSystemNotifications();
       this.schedule();
     };
   }
   async open() {
     await this.store.open();
+    this.notificationCursor = this.store.maxCompletionDeliveryId();
     this.brokerContext = this.store.brokerContext;
     if (this.explicitWriteConcurrency && (!this.store.productionFencing || process.env.ORACLE_FIREFOX_ALLOW_UNQUALIFIED_CONCURRENCY === "1")) this.store.setQualifiedConcurrency(this.writeConcurrency);
     if (this.qualifiedConcurrencyOverride) {
@@ -69641,6 +69871,7 @@ var Coordinator = class {
     await Promise.allSettled(this.active.values());
     this.store.off("change", this.onStoreChange);
     await Promise.allSettled(this.completionWrites.values());
+    await this.notificationPump.catch(() => void 0);
     clearTimeout(this.accountWakeTimer);
     clearTimeout(this.executionWakeTimer);
     await this.browserManager.close();
@@ -69665,7 +69896,7 @@ var Coordinator = class {
       queuedJobs: this.store.queuedJobs().length,
       outstandingJobs: this.store.countOutstanding(),
       writeConcurrency: this.writeConcurrency,
-      minimumSubmissionIntervalMs: 2e3,
+      minimumSubmissionIntervalMs: this.minimumSubmissionIntervalMs,
       account: this.store.accountState(),
       recovery: {
         count: this.recovery?.length ?? 0,
@@ -69681,7 +69912,7 @@ var Coordinator = class {
       brokerFatalError: this.brokerFatalError,
       invariantViolations: this.invariants?.violations ?? [],
       database: this.database,
-      completionDelivery: this.legacyCompletionFiles ? "legacy-files-and-subscriptions" : "subscriptions",
+      completionDelivery: this.legacyCompletionFiles ? "legacy-files-subscriptions-and-system-notifications" : "subscriptions-and-system-notifications",
       browser: this.browserManager.status(),
       emergencyLocked: false
     };
@@ -69951,7 +70182,7 @@ var Coordinator = class {
       }
       for (; ; ) {
         try {
-          return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: 2e3 });
+          return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: this.minimumSubmissionIntervalMs });
         } catch (error) {
           if (error?.code !== "SUBMIT_PACING_WAIT") throw error;
           const retryAt = Date.parse(error.details?.retryAt || 0);
@@ -69963,6 +70194,16 @@ var Coordinator = class {
     }
   }
   async runJob(job, executionClaim) {
+    let heartbeatError = null;
+    const executionHeartbeat = setInterval(() => {
+      if (heartbeatError) return;
+      try {
+        this.store.heartbeatExecution(executionClaim);
+      } catch (error) {
+        heartbeatError = error;
+      }
+    }, 5e3);
+    executionHeartbeat.unref?.();
     try {
       const result = await this.jobExecutor({
         jobId: job.id,
@@ -69981,6 +70222,21 @@ var Coordinator = class {
         this.scheduleAccountWake(account.cooldownUntil);
       }
       throw error;
+    } finally {
+      clearInterval(executionHeartbeat);
+    }
+  }
+  queueSystemNotifications() {
+    if (!this.completionNotifier || this.closed) return;
+    this.notificationPump = this.notificationPump.then(() => this.deliverSystemNotifications()).catch(() => void 0);
+  }
+  async deliverSystemNotifications() {
+    const deliveries = this.store.pendingSystemNotifications(this.notificationCursor);
+    for (const delivery of deliveries) {
+      this.notificationCursor = Math.max(this.notificationCursor, delivery.deliveryId);
+      if (await this.completionNotifier(delivery)) {
+        this.store.markSystemNotificationDelivered(delivery.deliveryId);
+      }
     }
   }
   async finalizeResponseFailure(jobId, detectedResult, executionClaim = null) {

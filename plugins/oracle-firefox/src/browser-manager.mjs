@@ -21,6 +21,25 @@ import { codedError } from "./errors.mjs";
 
 const execFileAsync = promisify(execFile);
 
+async function boundedClose(target, timeoutMs = 10_000) {
+  if (!target?.close) return;
+  let timer;
+  try {
+    await Promise.race([
+      Promise.resolve(target.close()),
+      new Promise((resolve) => {
+        timer = setTimeout(resolve, timeoutMs);
+        timer.unref?.();
+      }),
+    ]);
+  } catch {
+    // Closing is best-effort; the browser-level owned-process wrapper provides
+    // the final cleanup boundary for launched browser children.
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function pidAlive(pid) {
   try { process.kill(Number(pid), 0); return true; } catch { return false; }
 }
@@ -123,6 +142,8 @@ export class BrowserManager {
     launcher = launchBrowser,
     pageOpener = openChatGpt,
     lockTimeoutMs = 30_000,
+    pageCloseTimeoutMs = 10_000,
+    browserCloseTimeoutMs = 12_000,
     ownerFileEnabled = true,
     brokerContext = null,
   } = {}) {
@@ -134,6 +155,8 @@ export class BrowserManager {
     this.launcher = launcher;
     this.pageOpener = pageOpener;
     this.ownerFileEnabled = ownerFileEnabled;
+    this.pageCloseTimeoutMs = Math.max(1, Number(pageCloseTimeoutMs) || 10_000);
+    this.browserCloseTimeoutMs = Math.max(1, Number(browserCloseTimeoutMs) || 12_000);
     this.brokerContext = brokerContext || {
       instanceId: `test-browser-${randomUUID()}`,
       leaseGeneration: 1,
@@ -234,7 +257,7 @@ export class BrowserManager {
       const generation = this.browserGeneration;
       const page = await this.pageOpener(browser, { newPage: true, foreground: false });
       if (generation !== this.browserGeneration || browser !== this.browser || !browser.connected) {
-        await Promise.resolve(page.close?.()).catch(() => undefined);
+        await boundedClose(page, this.pageCloseTimeoutMs);
         throw codedError("BROWSER_EPOCH_CHANGED", `${this.browserName} restarted while a page was opening; the stale page was discarded.`, { safeToRetry: true });
       }
       const lease = {
@@ -270,7 +293,7 @@ export class BrowserManager {
       this.leases.delete(jobId);
       lease.invalidated = true;
       if (lease.discovery) this.discoveryCount = Math.max(0, this.discoveryCount - 1);
-      await Promise.resolve(lease.page.close?.()).catch(() => undefined);
+      await boundedClose(lease.page, this.pageCloseTimeoutMs);
     }, { owner: `release:${jobId}` });
   }
 
@@ -350,7 +373,7 @@ export class BrowserManager {
   async closeLocked() {
     for (const lease of this.leases.values()) {
       lease.invalidated = true;
-      await Promise.resolve(lease.page.close?.()).catch(() => undefined);
+      await boundedClose(lease.page, this.pageCloseTimeoutMs);
     }
     this.leases.clear();
     this.discoveryCount = 0;
@@ -358,7 +381,7 @@ export class BrowserManager {
     this.browser = null;
     this.controlPage = null;
     this.browserGeneration += 1;
-    await Promise.resolve(browser?.close?.()).catch(() => undefined);
+    await boundedClose(browser, this.browserCloseTimeoutMs);
     if (this.ownerFileEnabled) await removeOwnerIfOwned(this.currentOwner);
     this.currentOwner = null;
   }

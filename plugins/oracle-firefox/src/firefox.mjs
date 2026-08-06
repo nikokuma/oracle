@@ -4,6 +4,7 @@ import { mkdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import puppeteer from "puppeteer-core";
+import { wrapOwnedBrowser } from "./owned-browser.mjs";
 import { CHATGPT_URL, profileDirectory, resolveFirefoxPath } from "./config.mjs";
 import { codedError } from "./errors.mjs";
 import {
@@ -698,7 +699,7 @@ export async function launchFirefox({ headless = false, profileDir = profileDire
     );
   }
   await mkdir(profileDir, { recursive: true, mode: 0o700 });
-  return puppeteer.launch({
+  return wrapOwnedBrowser(await puppeteer.launch({
     browser: "firefox",
     protocol: "webDriverBiDi",
     executablePath,
@@ -716,7 +717,7 @@ export async function launchFirefox({ headless = false, profileDir = profileDire
     } : {}),
     handleSIGINT: false,
     handleSIGTERM: false,
-  });
+  }));
 }
 
 export async function openChatGpt(browser, { newPage = false, foreground = true } = {}) {
@@ -1310,13 +1311,13 @@ function isPlaceholder(text) {
   );
 }
 
-export async function waitForAssistant(page, baselineCount, { timeoutMs = 600_000 } = {}) {
+export async function waitForAssistant(page, baselineCount, { timeoutMs = 600_000, probeTimeoutMs = 30_000 } = {}) {
   const deadline = Date.now() + timeoutMs;
   let lastKey = "";
   let lastChangeAt = Date.now();
   let terminalCycles = 0;
   while (Date.now() < deadline) {
-    const snapshot = await assistantSnapshot(page);
+    const snapshot = await boundedAssistantSnapshot(page, Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now())));
     const key = `${snapshot.count}:${snapshot.text}`;
     if (key !== lastKey) {
       lastKey = key;
@@ -1334,22 +1335,48 @@ export async function waitForAssistant(page, baselineCount, { timeoutMs = 600_00
     }
     await delay(500);
   }
-  throw new Error(
+  throw codedError(
+    "RESPONSE_TIMEOUT",
     "ChatGPT response could not be confirmed complete before timeout; refusing to return a possibly incomplete answer.",
+    { submissionMayHaveOccurred: true, recoveryAction: "inspect the exact conversation and reconcile this job without resending" },
   );
+}
+
+async function boundedAssistantSnapshot(page, probeTimeoutMs = 30_000) {
+  let timer;
+  try {
+    return await Promise.race([
+      assistantSnapshot(page),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(codedError(
+          "RESPONSE_MONITOR_STALLED",
+          `The browser stopped responding for ${probeTimeoutMs}ms while Oracle monitored the submitted turn. Oracle did not retry or resend.`,
+          {
+            submissionMayHaveOccurred: true,
+            safeToRetry: false,
+            recoveryAction: "inspect the exact conversation and reconcile this job without resending",
+            details: { probeTimeoutMs },
+          },
+        )), Math.max(1, probeTimeoutMs));
+        timer.unref?.();
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function waitForAssistantAfterTurn(
   page,
   userTurn,
-  { timeoutMs = 10_800_000, stableMs = 2_500 } = {},
+  { timeoutMs = 10_800_000, stableMs = 2_500, probeTimeoutMs = 30_000 } = {},
 ) {
   const deadline = Date.now() + timeoutMs;
   let lastKey = "";
   let stableSince = Date.now();
   let terminalCycles = 0;
   while (Date.now() < deadline) {
-    const snapshot = await assistantSnapshot(page);
+    const snapshot = await boundedAssistantSnapshot(page, Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now())));
     let userIndex = -1;
     if (userTurn.id) userIndex = snapshot.turns.findIndex((turn) => turn.role === "user" && turn.id === userTurn.id);
     if (userIndex < 0) {
@@ -1382,7 +1409,11 @@ export async function waitForAssistantAfterTurn(
     }
     await delay(500);
   }
-  throw new Error("The assistant response bound to the submitted user turn could not be confirmed complete before timeout.");
+  throw codedError(
+    "RESPONSE_TIMEOUT",
+    "The assistant response bound to the submitted user turn could not be confirmed complete before timeout.",
+    { submissionMayHaveOccurred: true, recoveryAction: "inspect the exact conversation and reconcile this job without resending" },
+  );
 }
 
 function isChatGptCooldownText(value) {

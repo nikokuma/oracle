@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { mintCapability } from "../src/capabilities.mjs";
 import { Coordinator } from "../src/coordinator.mjs";
 import { StateStore } from "../src/state-store.mjs";
 
@@ -118,6 +119,95 @@ test("five explicitly qualified conversation lanes overlap without weakening per
     coordinator.schedule();
     await waitFor(() => jobs.every((job) => store.requireJob(job.id).state === "completed"));
     assert.equal(maxActive, 5);
+  } finally {
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("default scheduling admits a second chat after the first crosses submit-intent while pre-submit remains serial", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-response-monitor-overlap-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  const starts = [];
+  let preSubmit = 0;
+  let maxPreSubmit = 0;
+  let releaseFirst;
+  const firstReleased = new Promise((resolve) => { releaseFirst = resolve; });
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    legacyCompletionFiles: false,
+    jobExecutor: async ({ jobId, store: state }) => {
+      starts.push(jobId);
+      preSubmit += 1;
+      maxPreSubmit = Math.max(maxPreSubmit, preSubmit);
+      for (const next of ["page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified", "submit_intent"]) {
+        state.transition(jobId, next);
+      }
+      preSubmit -= 1;
+      state.transition(jobId, "user_turn_confirmed", { userTurnId: `turn-${jobId}`, userTurnHash: `hash-${jobId}` });
+      state.transition(jobId, "awaiting_response");
+      if (starts.length === 1) await firstReleased;
+      state.transition(jobId, "completed", { result: { jobId } });
+    },
+  });
+  try {
+    await coordinator.open();
+    assert.equal(coordinator.writeConcurrency, 5);
+    assert.equal(store.accountState().qualifiedConcurrency, 1);
+    const first = queue(store, "https://chatgpt.com/c/monitor-one");
+    const second = queue(store, "https://chatgpt.com/c/monitor-two");
+    coordinator.schedule();
+    await waitFor(() => starts.length === 2);
+    assert.equal(store.requireJob(first.id).state, "awaiting_response");
+    assert.equal(maxPreSubmit, 1);
+    releaseFirst();
+    await waitFor(() => store.requireJob(first.id).state === "completed" && store.requireJob(second.id).state === "completed");
+  } finally {
+    releaseFirst?.();
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("the broker delivers one best-effort Desktop notification and leaves result acknowledgement explicit", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-desktop-notify-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  const notifications = [];
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    legacyCompletionFiles: false,
+    completionNotifier: async (delivery) => { notifications.push(delivery); return true; },
+    jobExecutor: async ({ jobId, store: state }) => state.transition(jobId, "completed", { result: { jobId } }),
+  });
+  try {
+    await coordinator.open();
+    const session = store.createOwnerSession({ harness: "claude-desktop-mcp" });
+    const caller = store.authenticateOwnerSession({ sessionId: session.sessionId, sessionHandle: session.sessionHandle });
+    const subscriptionId = crypto.randomUUID();
+    const subscription = mintCapability("subscription", subscriptionId);
+    const job = store.createJob({
+      authorizationId: crypto.randomUUID(),
+      operation: "continue_chat",
+      request: { completionMode: "notify" },
+      conversationKey: "https://chatgpt.com/c/desktop-notify",
+      conversationUrl: "https://chatgpt.com/c/desktop-notify",
+      sessionPath: "/tmp/desktop-notify",
+      ownerSessionId: caller.id,
+      subscriptionId,
+      subscriptionCapabilityHash: subscription.hash,
+      completionMode: "notify",
+    }).job;
+    store.transition(job.id, "snapshotted");
+    store.transition(job.id, "queued");
+    coordinator.schedule();
+    await waitFor(() => notifications.length === 1);
+    const delivery = store.claimCompletion(subscription.handle, caller);
+    assert.equal(delivery.deliveryState, "delivered");
+    assert.equal(store.db.prepare("SELECT state FROM completion_subscriptions WHERE id=?").get(subscriptionId).state, "open");
+    store.acknowledgeCompletion(subscription.handle, caller, delivery.deliveryId);
+    assert.equal(store.db.prepare("SELECT state FROM completion_subscriptions WHERE id=?").get(subscriptionId).state, "closed");
   } finally {
     await coordinator.close();
     await rm(directory, { recursive: true, force: true });

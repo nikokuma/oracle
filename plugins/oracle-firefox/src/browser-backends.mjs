@@ -13,6 +13,7 @@ import {
 } from "./config.mjs";
 import { codedError } from "./errors.mjs";
 import { launchFirefox, openChatGpt, probeLogin, waitForLogin } from "./firefox.mjs";
+import { wrapOwnedBrowser } from "./owned-browser.mjs";
 import { launchSafari } from "./safari-webdriver.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -289,7 +290,7 @@ export async function launchChrome({ headless = false, profileDir = browserProfi
     );
   }
   await mkdir(profileDir, { recursive: true, mode: 0o700 });
-  const browser = await puppeteer.launch({
+  const browser = wrapOwnedBrowser(await puppeteer.launch({
     browser: "chrome",
     protocol: "cdp",
     executablePath: resolved.path,
@@ -299,7 +300,7 @@ export async function launchChrome({ headless = false, profileDir = browserProfi
     handleSIGINT: false,
     handleSIGTERM: false,
     args: ["--no-first-run", "--no-default-browser-check"],
-  });
+  }));
   await configureChromeDownloads(browser, downloadPath);
   return browser;
 }

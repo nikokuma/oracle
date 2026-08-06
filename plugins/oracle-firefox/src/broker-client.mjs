@@ -96,6 +96,15 @@ export function normalizeLegacyBrokerStatus(status, endpoint) {
   };
 }
 
+export function canRequestIdleUpgrade(hello, status) {
+  return Boolean(
+    status && !status.draining &&
+    BROKER_RELEASE_SEQUENCE > Number(hello?.releaseSequence || 0) &&
+    Number(status.activeJobCount || 0) === 0 &&
+    Number(status.outstandingJobs || 0) === 0
+  );
+}
+
 async function probeBroker(identity, token, timeoutMs = 750, endpointOverride = null) {
   const locator = endpointOverride ? null : await readBrokerLocator(identity, token);
   const endpoint = endpointOverride || locator?.endpoint?.path || identity.endpoint;
@@ -247,8 +256,41 @@ async function compatibleBroker(identity, token) {
   }
   const hello = observed.hello;
   const acceptsProtocol = Number(hello?.protocol?.minimum) <= BROKER_PROTOCOL_VERSION && Number(hello?.protocol?.maximum) >= BROKER_PROTOCOL_VERSION;
-  if (acceptsProtocol) return { hello, endpoint: observed.endpoint };
   const observedReleaseSequence = Number(hello?.releaseSequence || 0);
+  if (acceptsProtocol) {
+    if (observedReleaseSequence > 0 && BROKER_RELEASE_SEQUENCE > observedReleaseSequence) {
+      const status = await rpcRequest(observed.endpoint, token, "broker.status", {}, {
+        timeoutMs: 2_000,
+        client: clientMetadata("broker-upgrade-check"),
+      }).catch(() => null);
+      const safelyIdle = canRequestIdleUpgrade(hello, status);
+      if (safelyIdle) {
+        const upgrade = await rpcRequest(observed.endpoint, token, "broker.requestUpgrade", {
+          expectedInstanceId: hello.instanceId,
+          expectedLeaseGeneration: hello.leaseGeneration,
+          requesterReleaseSequence: BROKER_RELEASE_SEQUENCE,
+          requesterBuildId: BROKER_BUILD_ID,
+          requesterProtocolMinimum: BROKER_PROTOCOL_VERSION,
+          requesterProtocolMaximum: BROKER_PROTOCOL_VERSION,
+        }, {
+          timeoutMs: 2_000,
+          client: clientMetadata("broker-upgrade"),
+        }).catch(() => null);
+        if (upgrade?.accepted) {
+          const released = await waitForBrokerRelease(token, {
+            identity,
+            expectedInstanceId: hello.instanceId,
+            probe: (auth, wait) => probeBroker(identity, auth, wait, observed.endpoint),
+          });
+          if (released) return { hello: await startBrokerDetached(identity, token), endpoint: identity.endpoint };
+          throw codedError("BROKER_UPGRADE_PENDING", "The idle Oracle Firefox broker accepted an upgrade but did not release its lifetime lease in time.", {
+            safeToRetry: true,
+          });
+        }
+      }
+    }
+    return { hello, endpoint: observed.endpoint };
+  }
   if (observedReleaseSequence > 0 && BROKER_RELEASE_SEQUENCE > observedReleaseSequence) {
     const upgradeParams = {
       expectedInstanceId: hello.instanceId,

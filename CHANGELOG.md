@@ -16,7 +16,8 @@
 
 ### Changed
 
-- Oracle Firefox: conservatively start 1.5 with one active conversation; retain explicit, persistent qualification for up to five isolated different-chat jobs while preserving same-chat FIFO, a two-second account-wide submission interval, serialized trusted input/model/Send actions, and cooldown backpressure.
+- Oracle Firefox 1.6.1: allow five different conversations to remain in response monitoring while account-wide trusted submission remains serialized and paced at ten seconds; idle same-protocol clients now hand off safely to a newer broker without interrupting outstanding work.
+- Oracle Firefox 1.5 initially started with one active conversation and retained explicit qualification for up to five isolated different-chat jobs while preserving same-chat FIFO, serialized trusted input/model/Send actions, and cooldown backpressure.
 - Oracle Firefox: default ordinary broker runs to headless Firefox and make visible setup/login an exclusive maintenance operation.
 - Oracle Firefox skill: reduce always-loaded instructions by 38% while preserving submission, targeting, recovery, evidence, download, and multi-harness handoff safeguards through tested progressive-disclosure references.
 - Oracle Firefox skill: default agent-driven consultations to one authorized response-failure recovery and one harness-appropriate completion handoff unless the user explicitly opts out; keep direct API/CLI defaults conservative.
@@ -25,6 +26,8 @@
 
 ### Fixed
 
+- Oracle Firefox 1.6.1: bound every assistant DOM probe and page close, heartbeat active executors, quarantine response-monitor uncertainty by conversation, terminate only Puppeteer's exact owned browser child after close, and deliver best-effort macOS notifications for Claude Desktop without claiming its model can wake automatically.
+- Oracle Firefox 1.6.1: stop creating undeliverable manual completion rows and close terminal subscriptions after acknowledgement, preventing stale completion backlogs from looking like failed result delivery.
 - Oracle Firefox: prevent differently installed or TMPDIR-scoped clients from launching competing brokers, prevent an older client from downgrading a newer broker, fence stale browser/executor callbacks after takeover, stop permanent profile conflicts from hot-looping, and fix a timed-out mutex waiter releasing another caller's lock.
 - Oracle Firefox: prevent acknowledged or legacy terminal uncertainty records from occupying a same-scope FIFO lane forever; active quarantine records remain the fail-closed authority.
 - Oracle Firefox: preserve root/owner/completion policy through local-evidence and response-recovery children; prevent another agent from reading or mutating a new job by UUID; serialize first browser launch, page reservations, maintenance, search/model keyboard actions, and the final verified submit critical section.

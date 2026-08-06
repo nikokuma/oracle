@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createFrameDecoder, encodeFrame, tokensEqual } from "../src/protocol.mjs";
-import { normalizeLegacyBrokerStatus } from "../src/broker-client.mjs";
+import { canRequestIdleUpgrade, normalizeLegacyBrokerStatus } from "../src/broker-client.mjs";
 
 test("length-prefixed JSON framing survives fragmented and combined chunks", () => {
   const observed = [];
@@ -35,4 +35,11 @@ test("known legacy status is normalized for directional upgrade without inventin
 
 test("unknown legacy builds are not assigned an upgrade ordering", () => {
   assert.equal(normalizeLegacyBrokerStatus({ protocolVersion: 5, buildVersion: "dev" }, "fixture").releaseSequence, 0);
+});
+
+test("same-protocol upgrade is requested only after the older broker is truly idle", () => {
+  const hello = { releaseSequence: 1600 };
+  assert.equal(canRequestIdleUpgrade(hello, { activeJobCount: 0, outstandingJobs: 0, draining: false }), true);
+  assert.equal(canRequestIdleUpgrade(hello, { activeJobCount: 1, outstandingJobs: 1, draining: false }), false);
+  assert.equal(canRequestIdleUpgrade(hello, { activeJobCount: 0, outstandingJobs: 0, draining: true }), false);
 });

@@ -1,7 +1,7 @@
 {
   "name": "oracle-firefox",
-  "version": "1.6.0",
-  "description": "Run capability-isolated ChatGPT Pro consultations through safely selected Firefox, native macOS Chrome, or Safari backends.",
+  "version": "1.6.1",
+  "description": "Run durable, capability-isolated ChatGPT Pro consultations through safely selected Firefox, native macOS Chrome, or Safari backends.",
   "author": {
     "name": "nikokuma",
     "url": "https://github.com/nikokuma"

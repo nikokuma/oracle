@@ -20,6 +20,8 @@ For `ACCOUNT_COOLDOWN`, do not create another send. The broker persists one acco
 
 Never replay after `submit_intent` or when `submissionMayHaveOccurred` is true.
 
+`RESPONSE_MONITOR_STALLED` and `RESPONSE_TIMEOUT` mean the authorized turn may still finish in ChatGPT. Oracle stops the hung monitor, marks the exact conversation `response_uncertain`, and quarantines only that lane; other conversations may continue.
+
 1. Call `reconcile_job`; it searches the exact conversation read-only and never sends.
 2. If proven, reattach or monitor the existing submission.
 3. If unproven, ask the user to inspect the reported conversation/session.

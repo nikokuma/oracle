@@ -76,6 +76,74 @@ test("submit-intent failures quarantine the exact scope", async () => {
   });
 });
 
+test("response-monitor failures quarantine only their exact conversation", async () => {
+  await withStore(async (store) => {
+    const conversationKey = "https://chatgpt.com/c/response-stalled";
+    const created = store.createJob(input({ conversationKey, conversationUrl: conversationKey })).job;
+    for (const state of ["snapshotted", "queued", "page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified", "submit_intent"]) {
+      store.transition(created.id, state, state === "submit_intent" ? { submittedMessageHash: "abc" } : {});
+    }
+    store.transition(created.id, "user_turn_confirmed", { userTurnId: "turn", userTurnHash: "abc" });
+    store.transition(created.id, "awaiting_response");
+    const failed = store.markFailure(created.id, Object.assign(new Error("probe stalled"), { code: "RESPONSE_MONITOR_STALLED" }));
+    assert.equal(failed.state, "response_uncertain");
+    assert.match(failed.recoveryAction, /reconcile_job/u);
+    assert.throws(
+      () => store.createJob(input({ conversationKey, conversationUrl: conversationKey })),
+      (error) => error.code === "CONVERSATION_QUARANTINED",
+    );
+    store.reopenForMonitoring(created.id, { userTurnId: "turn", userTurnHash: "abc" });
+    store.acknowledge(created.id);
+    assert.equal(store.getChain(created.chainId).state, "queued");
+    assert.equal(store.isRunnable(created.id), true);
+    const different = store.createJob(input({ conversationKey: "https://chatgpt.com/c/different" })).job;
+    assert.equal(different.state, "accepted");
+  });
+});
+
+test("database reopen backfills only missing legacy uncertainty quarantines", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-firefox-state-"));
+  const databasePath = path.join(directory, "state.sqlite");
+  let store = await new StateStore(databasePath).open();
+  try {
+    const conversationKey = "https://chatgpt.com/c/legacy-response-uncertain";
+    const created = store.createJob(input({ conversationKey, conversationUrl: conversationKey })).job;
+    for (const state of ["snapshotted", "queued", "page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified", "submit_intent"]) store.transition(created.id, state);
+    store.transition(created.id, "user_turn_confirmed", { userTurnId: "turn", userTurnHash: "hash" });
+    store.transition(created.id, "awaiting_response");
+    store.markFailure(created.id, new Error("legacy response timeout"));
+    store.db.prepare("DELETE FROM quarantines WHERE job_id=?").run(created.id);
+    store.close();
+    store = await new StateStore(databasePath).open();
+    assert.throws(
+      () => store.createJob(input({ conversationKey, conversationUrl: conversationKey })),
+      (error) => error.code === "CONVERSATION_QUARANTINED",
+    );
+    store.acknowledge(created.id);
+    store.close();
+    store = await new StateStore(databasePath).open();
+    const acknowledged = store.db.prepare("SELECT active FROM quarantines WHERE job_id=?").get(created.id);
+    assert.equal(acknowledged.active, 0, "an acknowledged quarantine must not be reactivated");
+  } finally {
+    store.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("running execution heartbeats advance under the exact fenced claim", async () => {
+  await withStore(async (store) => {
+    const created = store.createJob(input()).job;
+    store.transition(created.id, "snapshotted");
+    store.transition(created.id, "queued");
+    const claim = store.beginExecution(created.id);
+    const before = store.db.prepare("SELECT execution_heartbeat_at FROM job_attempts WHERE job_id=?").get(created.id).execution_heartbeat_at;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    const heartbeat = store.heartbeatExecution(claim);
+    assert.ok(heartbeat > before);
+    assert.equal(store.db.prepare("SELECT execution_heartbeat_at FROM job_attempts WHERE job_id=?").get(created.id).execution_heartbeat_at, heartbeat);
+  });
+});
+
 test("post-click account cooldown remains conservative without losing its cause", async () => {
   await withStore(async (store) => {
     const created = store.createJob(input({ conversationKey: "new-standalone:cooldown" })).job;

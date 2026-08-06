@@ -1,10 +1,10 @@
 {
   "name": "oracle-firefox",
   "displayName": "Oracle Firefox",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "protocolVersion": 7,
   "schemaVersion": 6,
-  "releaseSequence": 1600,
+  "releaseSequence": 1602,
   "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
   "longDescription": "One identity-locked per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one safely selected browser backend. Firefox remains the compatibility default, native macOS Chrome is bundle-and-signature verified so Parallels or VM copies are rejected, and Safari uses a serialized visible WebDriver session with explicit session-only authentication. Capability-owned logical chains retain same-chat FIFO, durable completion, cooldown control, exact-turn correlation, and the one-send boundary across up to five qualified different-chat jobs.",
   "author": {

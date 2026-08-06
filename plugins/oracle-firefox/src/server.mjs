@@ -7,6 +7,18 @@ import { callBroker } from "./broker-client.mjs";
 import { ORACLE_FIREFOX_VERSION } from "./build-info.mjs";
 import { structuredError } from "./errors.mjs";
 
+const harnessName = process.env.ORACLE_FIREFOX_HARNESS || "codex-mcp";
+const defaultCompletionMode = harnessName === "claude-desktop-mcp" ? "notify" : "manual";
+
+function prepareExecutionParams(params) {
+  return {
+    ...params,
+    completionMode: harnessName === "claude-desktop-mcp" && params.completionMode === "harness"
+      ? "notify"
+      : params.completionMode,
+  };
+}
+
 const server = new McpServer(
   { name: "oracle-firefox", version: ORACLE_FIREFOX_VERSION },
   {
@@ -25,7 +37,7 @@ const executionFields = {
   attachmentTimeoutSeconds: z.number().int().min(30).max(1800).default(600),
   maxAutomaticEvidenceReplies: z.number().int().min(0).max(3).default(3),
   responseFailurePolicy: z.enum(["report", "retry-once"]).default("report").describe("Report terminal response failures, or authorize one durable recovery continuation for narrowly classified retryable failures."),
-  completionMode: z.enum(["manual", "notify", "harness"]).default("manual").describe("Record how the caller intends to receive completion; the broker always writes a durable terminal completion record."),
+  completionMode: z.enum(["manual", "notify", "harness"]).default(defaultCompletionMode).describe("Choose manual retrieval, a local OS notification, or a harness-owned completion watcher. Claude Desktop defaults to notify because a notification cannot wake its model."),
   headless: z.boolean().default(false),
 };
 const zipFields = {
@@ -62,7 +74,6 @@ function contentFor(result) {
   return [{ type: "text", text }];
 }
 
-const harnessName = process.env.ORACLE_FIREFOX_HARNESS || "codex-mcp";
 const jobReferenceFields = {
   jobId: z.string().uuid().optional().describe("Opaque job UUID; accessible only to its owner session or for legacy read-only jobs."),
   jobHandle: z.string().optional().describe("Broker-minted control/read handle used to resume a job from another process."),
@@ -161,20 +172,20 @@ register("consult_start", {
   title: "Start a durable ChatGPT consultation",
   description: "Authorize one asynchronous new-chat submission, plus at most one derived recovery continuation only when responseFailurePolicy=retry-once. Returns a durable job receipt immediately.",
   inputSchema: { authorizationId: z.string().uuid(), ...consultFields },
-}, "jobs.startConsult");
+}, "jobs.startConsult", 65_000, prepareExecutionParams);
 
 register("continue_chat_start", {
   title: "Start a durable existing-chat continuation",
   description: "Authorize one asynchronous message to one exact conversation, plus at most one derived recovery continuation only when responseFailurePolicy=retry-once. Returns immediately.",
   inputSchema: { authorizationId: z.string().uuid(), ...continueFields },
-}, "jobs.startContinue");
+}, "jobs.startContinue", 65_000, prepareExecutionParams);
 
 register("consult", {
   title: "Consult ChatGPT through Firefox",
   description: "Compatibility tool: starts one durable consultation, waits up to 240 seconds, then returns either the result or a non-error pending receipt.",
   inputSchema: { authorizationId: z.string().uuid().optional(), ...consultFields },
 }, "jobs.compatConsult", 245_000, (params) => ({
-  ...params,
+  ...prepareExecutionParams(params),
   authorizationId: params.authorizationId ?? randomUUID(),
 }));
 
@@ -183,7 +194,7 @@ register("continue_chat", {
   description: "Compatibility tool: starts one durable continuation, waits up to 240 seconds, then returns the result or a non-error pending receipt. A derived recovery send occurs only when explicitly requested.",
   inputSchema: { authorizationId: z.string().uuid().optional(), ...continueFields },
 }, "jobs.compatContinue", 245_000, (params) => ({
-  ...params,
+  ...prepareExecutionParams(params),
   authorizationId: params.authorizationId ?? randomUUID(),
 }));
 

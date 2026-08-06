@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { execFile } from "node:child_process";
 import { access, mkdir, open, rm } from "node:fs/promises";
 import path from "node:path";
 import { AsyncMutex } from "./async-lock.mjs";
@@ -96,18 +97,35 @@ async function fileExists(candidate) {
   }
 }
 
+function notifyMacOsCompletion(delivery) {
+  if (process.platform !== "darwin") return Promise.resolve(false);
+  const terminal = new Set(["completed", "failed", "cancelled", "submission_uncertain", "response_uncertain", "quarantined"]);
+  const body = terminal.has(delivery.state)
+    ? "An Oracle job finished. Reopen your agent and retrieve the durable result."
+    : "An Oracle job needs your attention. Reopen your agent and check its durable status.";
+  return new Promise((resolve) => {
+    execFile("/usr/bin/osascript", [
+      "-e",
+      `display notification ${JSON.stringify(body)} with title ${JSON.stringify("Oracle Firefox")}`,
+    ], { timeout: 10_000 }, (error) => resolve(!error));
+  });
+}
+
 export class Coordinator {
-  constructor({ store = new StateStore(), browserManager = null, brokerContext = null, writeConcurrency, jobExecutor = executeJob, completionDirectory, legacyCompletionFiles } = {}) {
+  constructor({ store = new StateStore(), browserManager = null, brokerContext = null, writeConcurrency, minimumSubmissionIntervalMs, jobExecutor = executeJob, completionDirectory, legacyCompletionFiles, completionNotifier = notifyMacOsCompletion } = {}) {
     this.store = store;
     this.brokerContext = brokerContext || store.brokerContext;
     this.browserManager = browserManager || new BrowserManager({ brokerContext: this.brokerContext });
     this.browserSelectionGate = new AsyncMutex("browser-selection", { timeoutMs: 120_000 });
     this.writeConcurrency = Math.max(1, Math.min(5, Number(
-      writeConcurrency ?? process.env.ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS ?? process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY ?? 1,
+      writeConcurrency ?? process.env.ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS ?? process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY ?? 5,
     )));
     this.explicitWriteConcurrency = writeConcurrency !== undefined;
     this.qualifiedConcurrencyOverride = process.env.ORACLE_FIREFOX_QUALIFIED_CONCURRENCY?.trim() || null;
     this.jobExecutor = jobExecutor;
+    this.minimumSubmissionIntervalMs = Math.max(2_000, Math.min(300_000, Number(
+      minimumSubmissionIntervalMs ?? process.env.ORACLE_FIREFOX_MINIMUM_SUBMISSION_INTERVAL_MS ?? 10_000,
+    ) || 10_000));
     this.active = new Map();
     this.submitGate = Promise.resolve();
     this.startedAt = new Date().toISOString();
@@ -121,16 +139,21 @@ export class Coordinator {
       Boolean(completionDirectory)
     );
     this.completionWrites = new Map();
+    this.completionNotifier = completionNotifier;
+    this.notificationCursor = 0;
+    this.notificationPump = Promise.resolve();
     this.accountWakeTimer = null;
     this.executionWakeTimer = null;
     this.onStoreChange = (job) => {
       if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
+      this.queueSystemNotifications();
       this.schedule();
     };
   }
 
   async open() {
     await this.store.open();
+    this.notificationCursor = this.store.maxCompletionDeliveryId();
     this.brokerContext = this.store.brokerContext;
     if (
       this.explicitWriteConcurrency &&
@@ -162,6 +185,7 @@ export class Coordinator {
     await Promise.allSettled(this.active.values());
     this.store.off("change", this.onStoreChange);
     await Promise.allSettled(this.completionWrites.values());
+    await this.notificationPump.catch(() => undefined);
     clearTimeout(this.accountWakeTimer);
     clearTimeout(this.executionWakeTimer);
     await this.browserManager.close();
@@ -188,7 +212,7 @@ export class Coordinator {
       queuedJobs: this.store.queuedJobs().length,
       outstandingJobs: this.store.countOutstanding(),
       writeConcurrency: this.writeConcurrency,
-      minimumSubmissionIntervalMs: 2_000,
+      minimumSubmissionIntervalMs: this.minimumSubmissionIntervalMs,
       account: this.store.accountState(),
       recovery: {
         count: this.recovery?.length ?? 0,
@@ -204,7 +228,7 @@ export class Coordinator {
       brokerFatalError: this.brokerFatalError,
       invariantViolations: this.invariants?.violations ?? [],
       database: this.database,
-      completionDelivery: this.legacyCompletionFiles ? "legacy-files-and-subscriptions" : "subscriptions",
+      completionDelivery: this.legacyCompletionFiles ? "legacy-files-subscriptions-and-system-notifications" : "subscriptions-and-system-notifications",
       browser: this.browserManager.status(),
       emergencyLocked: false,
     };
@@ -494,7 +518,7 @@ export class Coordinator {
       }
       for (;;) {
         try {
-          return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: 2_000 });
+          return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: this.minimumSubmissionIntervalMs });
         } catch (error) {
           if (error?.code !== "SUBMIT_PACING_WAIT") throw error;
           const retryAt = Date.parse(error.details?.retryAt || 0);
@@ -507,6 +531,16 @@ export class Coordinator {
   }
 
   async runJob(job, executionClaim) {
+    let heartbeatError = null;
+    const executionHeartbeat = setInterval(() => {
+      if (heartbeatError) return;
+      try {
+        this.store.heartbeatExecution(executionClaim);
+      } catch (error) {
+        heartbeatError = error;
+      }
+    }, 5_000);
+    executionHeartbeat.unref?.();
     try {
       const result = await this.jobExecutor({
         jobId: job.id,
@@ -525,6 +559,25 @@ export class Coordinator {
         this.scheduleAccountWake(account.cooldownUntil);
       }
       throw error;
+    } finally {
+      clearInterval(executionHeartbeat);
+    }
+  }
+
+  queueSystemNotifications() {
+    if (!this.completionNotifier || this.closed) return;
+    this.notificationPump = this.notificationPump
+      .then(() => this.deliverSystemNotifications())
+      .catch(() => undefined);
+  }
+
+  async deliverSystemNotifications() {
+    const deliveries = this.store.pendingSystemNotifications(this.notificationCursor);
+    for (const delivery of deliveries) {
+      this.notificationCursor = Math.max(this.notificationCursor, delivery.deliveryId);
+      if (await this.completionNotifier(delivery)) {
+        this.store.markSystemNotificationDelivered(delivery.deliveryId);
+      }
     }
   }
 

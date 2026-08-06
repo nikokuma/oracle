@@ -176,6 +176,26 @@ test("stale leases cannot perform trusted actions after a browser generation cha
   );
 });
 
+test("releasing a page is bounded even when its close promise never settles", async () => {
+  const fixture = fakeBrowserHarness();
+  const manager = new BrowserManager({
+    launcher: fixture.launcher,
+    pageOpener: async (...args) => {
+      const page = await fixture.opener(...args);
+      if (fixture.counts().pages === 2) page.close = () => new Promise(() => {});
+      return page;
+    },
+    ownerFileEnabled: false,
+    pageCloseTimeoutMs: 25,
+  });
+  const lease = await manager.leasePage("hung-close");
+  const started = Date.now();
+  await manager.releasePage(lease.jobId);
+  assert.ok(Date.now() - started < 500);
+  assert.equal(manager.status().pagesLeased, 0);
+  await manager.close();
+});
+
 test("a stale browser callback cannot remove a newer broker's owner record", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-browser-owner-"));
   const ownerPath = path.join(directory, "browser-owner.json");

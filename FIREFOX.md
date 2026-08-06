@@ -40,7 +40,7 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.6.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.6.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Download and open [`oracle-firefox-1.6.1.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.6.1.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
 ## Choose a browser
 
@@ -115,6 +115,10 @@ Discovery defaults to the last assistant response. Add `--scope all-assistant` o
 ## Long jobs
 
 The durable flow returns a job id plus private job and completion handles immediately. Keep the handles with the originating task; another process must present the job handle to resume that exact chain.
+
+Up to five different conversations may remain active while their Pro responses are monitored. Same-chat work stays FIFO, and the account gate admits only one pre-submit action at a time with a conservative ten-second minimum between sends. A stalled browser probe or response deadline becomes `response_uncertain`, quarantines only that conversation, and never triggers another send.
+
+Claude Desktop uses a broker-owned macOS notification by default. The notification tells you that durable state is ready; macOS cannot wake Claude's model, so reopen the chat and ask it to fetch `job_result`. Codex, Claude Code, and Claudex may instead keep a harness watcher when their host supports one.
 
 ```bash
 node plugins/oracle-firefox/dist/cli.mjs consult-start \

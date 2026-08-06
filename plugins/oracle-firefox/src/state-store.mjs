@@ -223,6 +223,7 @@ export class StateStore extends EventEmitter {
         this.migrateSix({ existing: false });
         this.registerBrokerTakeover();
       }
+      this.backfillUntrackedUncertaintyQuarantines();
       return this;
     } catch (error) {
       try { this.db?.close(); } catch {}
@@ -623,6 +624,19 @@ export class StateStore extends EventEmitter {
         "The coordinator identity file does not match the durable database. Oracle Firefox stopped before recovery or scheduling.",
       );
     }
+  }
+
+  backfillUntrackedUncertaintyQuarantines() {
+    this.assertCurrentBroker();
+    this.db.prepare(`
+      INSERT OR IGNORE INTO quarantines(scope_key, job_id, reason, active, created_at)
+      SELECT conversation_key, id,
+             'Uncertain submission imported from an older Oracle Firefox build; reconcile it before another send.',
+             1, COALESCE(completed_at, updated_at, created_at)
+      FROM jobs
+      WHERE state IN ('submission_uncertain', 'response_uncertain', 'quarantined')
+        AND conversation_key IS NOT NULL
+    `).run();
   }
 
   registerBrokerTakeover() {
@@ -1364,8 +1378,15 @@ export class StateStore extends EventEmitter {
         )
         SELECT id, ?, 'pending', ?
         FROM completion_subscriptions
-        WHERE chain_id = ? AND state = 'open'
+        WHERE chain_id = ? AND state = 'open' AND mode != 'manual'
       `).run(sequence, now, chainId);
+    }
+    if (TERMINAL_CHAIN_STATES.has(state)) {
+      this.db.prepare(`
+        UPDATE completion_subscriptions
+        SET state = 'closed', closed_at = ?
+        WHERE chain_id = ? AND state = 'open' AND mode = 'manual'
+      `).run(now, chainId);
     }
     return sequence;
   }
@@ -1380,12 +1401,12 @@ export class StateStore extends EventEmitter {
       });
     }
     const state = job.userTurnId || job.userTurnHash ? "response_uncertain" : "submission_uncertain";
-    const recoveryAction = state === "submission_uncertain" ? `reconcile_job ${id}` : `job_status ${id}`;
+    const recoveryAction = `reconcile_job ${id}`;
     const result = this.transition(id, state, {
       error: { ...structured, submissionMayHaveOccurred: true },
       recoveryAction,
     });
-    if (state === "submission_uncertain") this.quarantine(job.conversationKey, id, structured.message);
+    this.quarantine(job.conversationKey, id, structured.message);
     return result;
   }
 
@@ -1399,12 +1420,12 @@ export class StateStore extends EventEmitter {
       });
     }
     const state = job.userTurnId || job.userTurnHash ? "response_uncertain" : "submission_uncertain";
-    const recoveryAction = state === "submission_uncertain" ? `reconcile_job ${job.id}` : `job_status ${job.id}`;
+    const recoveryAction = `reconcile_job ${job.id}`;
     const result = this.transitionClaimed(claim, state, {
       error: { ...structured, submissionMayHaveOccurred: true },
       recoveryAction,
     });
-    if (state === "submission_uncertain") this.quarantine(job.conversationKey, job.id, structured.message);
+    this.quarantine(job.conversationKey, job.id, structured.message);
     return result;
   }
 
@@ -1447,8 +1468,16 @@ export class StateStore extends EventEmitter {
             updated_at=?, version=version+1
         WHERE id=?
       `).run(userTurnId ?? null, userTurnHash, now, jobId);
+      this.db.prepare(`
+        UPDATE job_attempts
+        SET execution_state='idle', execution_owner_instance_id=NULL,
+            execution_lease_generation=NULL, execution_heartbeat_at=NULL,
+            next_execution_not_before=NULL
+        WHERE job_id=?
+      `).run(jobId);
       this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)")
         .run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
+      this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
     });
     const reopened = this.requireJob(jobId);
     this.emit("change", reopened);
@@ -1596,6 +1625,21 @@ export class StateStore extends EventEmitter {
       throw codedError("STALE_EXECUTION", "This browser executor no longer owns the logical job. No browser action was attempted.");
     }
     return true;
+  }
+
+  heartbeatExecution(claim) {
+    return this.transaction(() => {
+      this.assertExecution(claim);
+      const now = new Date().toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET execution_heartbeat_at = ?
+        WHERE job_id = ? AND execution_epoch = ? AND execution_state = 'running'
+      `).run(now, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("STALE_EXECUTION", "The Oracle Firefox execution heartbeat no longer owns this job.");
+      }
+      return now;
+    });
   }
 
   transitionClaimed(claim, nextState, patch = {}, details = null) {
@@ -1872,7 +1916,7 @@ export class StateStore extends EventEmitter {
   authorizeSubscription({ subscriptionHandle, caller }) {
     const parsed = parseCapability(subscriptionHandle, "subscription");
     let row = null;
-    if (parsed) row = this.db.prepare("SELECT * FROM completion_subscriptions WHERE id = ? AND state = 'open'").get(parsed.subjectId);
+    if (parsed) row = this.db.prepare("SELECT * FROM completion_subscriptions WHERE id = ?").get(parsed.subjectId);
     if (!row || !verifyCapability(subscriptionHandle, row.capability_hash, { kind: "subscription", subjectId: row.id })) {
       throw codedError("COMPLETION_NOT_FOUND", "No accessible Oracle Firefox completion subscription matches that reference.");
     }
@@ -1882,6 +1926,7 @@ export class StateStore extends EventEmitter {
   claimCompletion(subscriptionHandle, caller, { claimSeconds = 90 } = {}) {
     return this.transaction(() => {
       const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
+      if (subscription.state !== "open") return null;
       const staleBefore = new Date(Date.now() - Math.max(10, claimSeconds) * 1_000).toISOString();
       this.db.prepare(`
         UPDATE completion_deliveries
@@ -1938,15 +1983,63 @@ export class StateStore extends EventEmitter {
     return this.transaction(() => {
       const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
       const now = new Date().toISOString();
-      const row = this.db.prepare("SELECT * FROM completion_deliveries WHERE id = ? AND subscription_id = ?").get(deliveryId, subscription.id);
+      const row = this.db.prepare(`
+        SELECT d.*, e.state AS event_state
+        FROM completion_deliveries d
+        JOIN chain_events e ON e.sequence = d.chain_event_sequence
+        WHERE d.id = ? AND d.subscription_id = ?
+      `).get(deliveryId, subscription.id);
       if (!row) throw codedError("COMPLETION_NOT_FOUND", "No accessible completion delivery matches that reference.");
       if (row.state !== "acknowledged") {
         this.db.prepare(`
           UPDATE completion_deliveries SET state = 'acknowledged', acknowledged_at = ? WHERE id = ?
         `).run(now, deliveryId);
       }
+      if (TERMINAL_CHAIN_STATES.has(row.event_state)) {
+        this.db.prepare(`
+          UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
+          WHERE id = ? AND state = 'open'
+        `).run(now, subscription.id);
+      }
       return { deliveryId, delivered: Boolean(row.delivered_at), acknowledged: true };
     });
+  }
+
+  maxCompletionDeliveryId() {
+    return Number(this.db.prepare("SELECT COALESCE(MAX(id), 0) AS id FROM completion_deliveries").get()?.id || 0);
+  }
+
+  pendingSystemNotifications(afterId = 0) {
+    return this.db.prepare(`
+      SELECT d.id AS delivery_id, d.subscription_id, d.state AS delivery_state,
+             e.chain_id, e.active_job_id, e.state AS event_state, e.created_at AS event_created_at,
+             s.mode, o.harness
+      FROM completion_deliveries d
+      JOIN completion_subscriptions s ON s.id = d.subscription_id
+      JOIN owner_sessions o ON o.id = s.owner_session_id
+      JOIN chain_events e ON e.sequence = d.chain_event_sequence
+      WHERE d.id > ? AND d.state = 'pending' AND s.state = 'open'
+        AND (s.mode = 'notify' OR (s.mode = 'harness' AND o.harness = 'claude-desktop-mcp'))
+      ORDER BY d.id
+    `).all(Math.max(0, Number(afterId) || 0)).map((row) => ({
+      deliveryId: Number(row.delivery_id),
+      subscriptionId: row.subscription_id,
+      chainId: row.chain_id,
+      activeJobId: row.active_job_id,
+      state: row.event_state,
+      createdAt: row.event_created_at,
+      mode: row.mode,
+      harness: row.harness,
+    }));
+  }
+
+  markSystemNotificationDelivered(deliveryId) {
+    const now = new Date().toISOString();
+    const changed = this.db.prepare(`
+      UPDATE completion_deliveries SET state = 'delivered', delivered_at = ?
+      WHERE id = ? AND state = 'pending'
+    `).run(now, deliveryId);
+    return Number(changed.changes) === 1;
   }
 
   waitForChange(timeoutMs) {
