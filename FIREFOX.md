@@ -40,7 +40,7 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.6.1.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.6.1.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Download and open [`oracle-firefox-1.6.2.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.6.2.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
 ## Choose a browser
 
@@ -189,5 +189,7 @@ If Pro needs local facts, it returns a structured `ORACLE_LOCAL_DATA_REQUEST_V1`
 ## Recovery
 
 Use `broker_status` or `job_status` after a client restart. Safe pre-send work resumes automatically. Proven submitted turns reattach in monitor-only mode. A verified ownership record lets a replacement broker close only its own orphaned dedicated Firefox after a crash. Unproven post-send states return `SUBMISSION_UNCERTAIN`; `reconcile_job` searches the exact conversation read-only and never sends another message.
+
+If a migrated quarantine outlives its private control capability, `inspect_quarantine` accepts only the exact conversation URL and returns a state fingerprint without exposing the old job. `recover_orphaned_quarantine` can then adopt a uniquely proven submitted turn for monitoring, or remove only the lane barrier after explicit manual inspection. Neither path sends or authorizes a replacement message.
 
 The canonical Codex source is [`plugins/oracle-firefox`](plugins/oracle-firefox). The generated Claude package is [`plugins/oracle-firefox-claude`](plugins/oracle-firefox-claude). Both are MIT licensed.

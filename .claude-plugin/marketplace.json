@@ -10,7 +10,7 @@
       "source": "./plugins/oracle-firefox-claude",
       "displayName": "Oracle Firefox",
       "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
-      "version": "1.6.1",
+      "version": "1.6.2",
       "author": {
         "name": "nikokuma",
         "url": "https://github.com/nikokuma"

@@ -1,10 +1,10 @@
 {
   "name": "oracle-firefox",
   "displayName": "Oracle Firefox",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "protocolVersion": 7,
   "schemaVersion": 6,
-  "releaseSequence": 1602,
+  "releaseSequence": 1603,
   "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
   "longDescription": "One identity-locked per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one safely selected browser backend. Firefox remains the compatibility default, native macOS Chrome is bundle-and-signature verified so Parallels or VM copies are rejected, and Safari uses a serialized visible WebDriver session with explicit session-only authentication. Capability-owned logical chains retain same-chat FIFO, durable completion, cooldown control, exact-turn correlation, and the one-send boundary across up to five qualified different-chat jobs.",
   "author": {
@@ -33,6 +33,8 @@
     { "name": "job_wait", "description": "Wait event-first on one logical job for up to 55 seconds and follow its recovery child." },
     { "name": "job_result", "description": "Read a completed answer or terminal outcome." },
     { "name": "list_jobs", "description": "List only the current client session's durable jobs without prompts." },
+    { "name": "inspect_quarantine", "description": "Inspect sanitized recovery state for one exact conversation URL." },
+    { "name": "recover_orphaned_quarantine", "description": "Reconcile or explicitly acknowledge one fingerprinted orphaned quarantine without sending." },
     { "name": "reconcile_job", "description": "Read-only reconciliation for an uncertain submission." },
     { "name": "acknowledge_uncertain", "description": "Remove a quarantine after manual inspection." },
     { "name": "cancel_job", "description": "Cancel before submit-intent or detach afterward." },

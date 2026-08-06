@@ -30970,12 +30970,12 @@ import { fileURLToPath } from "node:url";
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.1",
+  "packageVersion": "1.6.2",
   "protocolVersion": 7,
   "schemaVersion": 6,
-  "releaseSequence": 1602,
-  "sourceDigest": "8b360aec80aceddccec1a03f5b46790389c42a184879fef5a4e58d2d83f9d399",
-  "buildId": "oracle-firefox-1.6.1-8b360aec80aceddc"
+  "releaseSequence": 1603,
+  "sourceDigest": "ca28965db22d879d54cb6a6c81ed0232910b2d94333221b6b984442043a3b4d3",
+  "buildId": "oracle-firefox-1.6.2-ca28965db22d879d"
 });
 
 // src/build-info.mjs
@@ -31955,6 +31955,25 @@ register("list_jobs", {
   description: "List only this client session's recent durable jobs without exposing prompt contents.",
   inputSchema: { limit: external_exports.number().int().min(1).max(200).default(50), states: external_exports.array(external_exports.string()).default([]) }
 }, "jobs.list");
+register("inspect_quarantine", {
+  title: "Inspect one exact Oracle Firefox quarantine",
+  description: "Read sanitized recovery metadata for one exact conversation URL when the original job capability is unavailable. Never lists other chats, opens a browser, or sends a message.",
+  inputSchema: {
+    conversationUrl: external_exports.string().url().describe("Exact standalone or project ChatGPT conversation URL reported by the blocked submission.")
+  }
+}, "jobs.inspectQuarantine");
+register("recover_orphaned_quarantine", {
+  title: "Recover one orphaned Oracle Firefox quarantine",
+  description: "Use an inspected exact-URL fingerprint to reconcile read-only or acknowledge after explicit manual inspection. Never sends a message or authorizes a replacement.",
+  inputSchema: {
+    conversationUrl: external_exports.string().url().describe("The same exact conversation URL used with inspect_quarantine."),
+    fingerprint: external_exports.string().regex(/^[a-f0-9]{64}$/u).describe("Current fingerprint returned by inspect_quarantine."),
+    action: external_exports.enum(["reconcile", "acknowledge"]).default("reconcile"),
+    confirmCapabilityUnavailable: external_exports.boolean().describe("Must be true only after the user confirms the original control capability is unavailable."),
+    confirmManualInspection: external_exports.boolean().default(false).describe("For acknowledge only: true after the user manually inspected this exact chat and accepts the uncertainty."),
+    completionMode: external_exports.enum(["manual", "notify", "harness"]).default(defaultCompletionMode)
+  }
+}, "jobs.recoverOrphanedQuarantine", 12e4);
 register("reconcile_job", {
   title: "Reconcile an uncertain Oracle Firefox submission",
   description: "Read the exact target conversation and look for the authorized user-turn hash. Never sends or retries a message.",

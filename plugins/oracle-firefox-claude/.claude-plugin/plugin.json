@@ -1,7 +1,7 @@
 {
   "name": "oracle-firefox",
   "displayName": "Oracle Firefox",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
   "author": {
     "name": "nikokuma",

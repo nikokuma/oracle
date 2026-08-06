@@ -791,31 +791,121 @@ export class Coordinator {
         recoveryAction: `acknowledge_uncertain ${job.id} after manual inspection`,
       };
     }
-    const lease = await this.browserManager.leasePage(`reconcile-${job.id}`, { discovery: true });
+    const matches = await this.findSubmittedTurnMatches(job);
+    if (matches.length !== 1) {
+      return {
+        ...publicJob(job),
+        reconciled: false,
+        observedMatches: matches.length,
+        reason: matches.length ? "More than one exact user turn matched; attribution remains ambiguous." : "No exact submitted user turn was found.",
+      };
+    }
+    const match = matches[0];
+    this.store.reopenForMonitoring(job.id, { userTurnId: match.id, userTurnHash: job.submittedMessageHash });
+    this.store.acknowledge(job.id);
+    this.schedule();
+    return { ...this.getJob(job.id), reconciled: true, recoveryAction: "monitoring the proven submitted turn; no message was resent" };
+  }
+
+  async findSubmittedTurnMatches(job) {
+    const lease = await this.browserManager.leasePage(`reconcile-${job.id}-${randomUUID()}`, { discovery: true });
     try {
       await openExistingConversation(lease.page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
       const snapshot = await assistantSnapshot(lease.page);
-      const matches = snapshot.turns.filter((turn) =>
+      return snapshot.turns.filter((turn) =>
         turn.role === "user" &&
         semanticTextHash(turn.text) === job.submittedMessageHash &&
         attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || []),
       );
-      if (matches.length !== 1) {
-        return {
-          ...publicJob(job),
-          reconciled: false,
-          observedMatches: matches.length,
-          reason: matches.length ? "More than one exact user turn matched; attribution remains ambiguous." : "No exact submitted user turn was found.",
-        };
-      }
-      const match = matches[0];
-      this.store.reopenForMonitoring(job.id, { userTurnId: match.id, userTurnHash: job.submittedMessageHash });
-      this.store.acknowledge(job.id);
-      this.schedule();
-      return { ...this.getJob(job.id), reconciled: true, recoveryAction: "monitoring the proven submitted turn; no message was resent" };
     } finally {
       await this.browserManager.releasePage(lease.jobId);
     }
+  }
+
+  inspectQuarantine(conversationUrl) {
+    const canonicalUrl = normalizeConversationUrl(conversationUrl);
+    return {
+      ...this.store.quarantineView(canonicalUrl),
+      exactScope: true,
+      messageSent: false,
+    };
+  }
+
+  async recoverOrphanedQuarantine(params, context) {
+    this.requireWritable();
+    const caller = this.callerFromContext(context);
+    const canonicalUrl = normalizeConversationUrl(params.conversationUrl);
+    if (params.confirmCapabilityUnavailable !== true) {
+      throw codedError(
+        "CAPABILITY_RECOVERY_CONFIRMATION_REQUIRED",
+        "Recovering an orphaned quarantine requires explicit confirmation that the original control capability is unavailable.",
+      );
+    }
+    if (params.action === "acknowledge") {
+      if (params.confirmManualInspection !== true) {
+        throw codedError(
+          "MANUAL_INSPECTION_REQUIRED",
+          "Acknowledgement requires explicit confirmation that the user manually inspected this exact ChatGPT conversation and accepted the uncertainty.",
+        );
+      }
+      return this.store.acknowledgeOrphanedQuarantine(canonicalUrl, params.fingerprint);
+    }
+    const view = this.store.quarantineView(canonicalUrl);
+    if (!view.quarantined) {
+      throw codedError("QUARANTINE_NOT_FOUND", "No active Oracle Firefox quarantine matches that exact conversation URL.");
+    }
+    const job = this.store.orphanedQuarantineJob(canonicalUrl, params.fingerprint);
+    if (!job.conversationUrl || !job.submittedMessageHash) {
+      return {
+        ...view,
+        reconciled: false,
+        observedMatches: null,
+        reason: "The legacy job lacks the exact URL or submitted-message hash required for read-only proof.",
+        recoveryAction: "Manually inspect the exact conversation, then use acknowledge recovery with the same current fingerprint.",
+        messageSent: false,
+      };
+    }
+    const matches = await this.findSubmittedTurnMatches(job);
+    if (matches.length !== 1) {
+      return {
+        ...view,
+        reconciled: false,
+        observedMatches: matches.length,
+        reason: matches.length
+          ? "More than one exact user turn matched; attribution remains ambiguous."
+          : "No exact submitted user turn was found.",
+        recoveryAction: "Manually inspect the exact conversation before any acknowledgement.",
+        messageSent: false,
+      };
+    }
+    const chain = this.store.getChain(job.chainId);
+    const readCapability = mintCapability("read", chain.id);
+    const controlCapability = mintCapability("control", chain.id);
+    const subscriptionId = randomUUID();
+    const subscriptionCapability = mintCapability("subscription", subscriptionId);
+    const recovered = this.store.recoverOrphanedQuarantineForMonitoring({
+      scopeKey: canonicalUrl,
+      fingerprint: params.fingerprint,
+      caller,
+      userTurnId: matches[0].id,
+      userTurnHash: job.submittedMessageHash,
+      readCapabilityHash: readCapability.hash,
+      controlCapabilityHash: controlCapability.hash,
+      subscriptionId,
+      subscriptionCapabilityHash: subscriptionCapability.hash,
+      completionMode: params.completionMode || "manual",
+    });
+    this.schedule();
+    return {
+      ...publicJob(recovered),
+      reconciled: true,
+      adoptedForMonitoring: true,
+      messageSent: false,
+      recoveryAction: "monitoring the proven submitted turn; no message was resent",
+      jobHandle: controlCapability.handle,
+      readHandle: readCapability.handle,
+      completionHandle: subscriptionCapability.handle,
+    };
   }
 
   acknowledge(jobId) {
@@ -1060,6 +1150,11 @@ export class Coordinator {
         return this.result(job.id, params.followRetries !== false);
       },
       "jobs.list": (params, context) => this.listJobs(params, this.callerFromContext(context)),
+      "jobs.inspectQuarantine": (params, context) => {
+        this.callerFromContext(context);
+        return this.inspectQuarantine(params.conversationUrl);
+      },
+      "jobs.recoverOrphanedQuarantine": (params, context) => this.recoverOrphanedQuarantine(params, context),
       "jobs.reconcile": (params, context) => {
         const { job } = this.accessibleJob(params, context, { control: true });
         return this.reconcile(job.id, params.conversationUrl);

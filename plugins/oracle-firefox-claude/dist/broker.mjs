@@ -61290,12 +61290,12 @@ import { chmod as chmod3, link as link2, mkdir as mkdir4, open as open3, readFil
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.1",
+  "packageVersion": "1.6.2",
   "protocolVersion": 7,
   "schemaVersion": 6,
-  "releaseSequence": 1602,
-  "sourceDigest": "8b360aec80aceddccec1a03f5b46790389c42a184879fef5a4e58d2d83f9d399",
-  "buildId": "oracle-firefox-1.6.1-8b360aec80aceddc"
+  "releaseSequence": 1603,
+  "sourceDigest": "ca28965db22d879d54cb6a6c81ed0232910b2d94333221b6b984442043a3b4d3",
+  "buildId": "oracle-firefox-1.6.2-ca28965db22d879d"
 });
 
 // src/build-info.mjs
@@ -66355,6 +66355,17 @@ function rowToChain(row) {
     terminalAt: row.terminal_at
   };
 }
+function quarantineFingerprint(row) {
+  if (!row) return null;
+  return createHash8("sha256").update([
+    "oracle-firefox-quarantine-v1",
+    row.scope_key,
+    row.job_id,
+    row.created_at,
+    row.job_state,
+    row.job_updated_at
+  ].map((value) => String(value ?? "")).join("\0")).digest("hex");
+}
 var WAKE_CHAIN_STATES = /* @__PURE__ */ new Set([
   "input_required",
   "completed",
@@ -67211,7 +67222,13 @@ var StateStore = class extends EventEmitter4 {
         throw codedError(
           "CONVERSATION_QUARANTINED",
           "This conversation or new-chat scope is quarantined until its uncertain submission is reconciled.",
-          { recoveryAction: `reconcile_job ${activeQuarantine.job_id}` }
+          {
+            recoveryAction: /^https:\/\/chatgpt\.com\//u.test(input2.conversationKey) ? `inspect_quarantine for ${input2.conversationKey}` : `reconcile_job ${activeQuarantine.job_id}`,
+            details: {
+              exactScopeRequired: true,
+              capabilityRecoveryAvailable: /^https:\/\/chatgpt\.com\//u.test(input2.conversationKey)
+            }
+          }
         );
       }
       const id = input2.id || randomUUID8();
@@ -67578,6 +67595,126 @@ var StateStore = class extends EventEmitter4 {
       ON CONFLICT(scope_key) DO UPDATE SET job_id=excluded.job_id, reason=excluded.reason, active=1, created_at=excluded.created_at, acknowledged_at=NULL
     `).run(scopeKey, jobId, reason, now);
   }
+  activeQuarantineRecord(scopeKey) {
+    return this.db.prepare(`
+      SELECT q.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.canonical_url, j.submitted_message_hash, j.attachment_manifest_json,
+             a.chain_id, c.state AS chain_state
+      FROM quarantines q
+      JOIN jobs j ON j.id = q.job_id
+      JOIN job_attempts a ON a.job_id = j.id
+      JOIN job_chains c ON c.id = a.chain_id
+      WHERE q.scope_key = ? AND q.active = 1
+    `).get(scopeKey);
+  }
+  quarantineView(scopeKey) {
+    const row = this.activeQuarantineRecord(scopeKey);
+    if (!row) return { quarantined: false, conversationUrl: scopeKey };
+    const canReconcileReadOnly = Boolean(row.canonical_url && row.submitted_message_hash);
+    return {
+      quarantined: true,
+      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.scope_key) ? row.scope_key : null),
+      fingerprint: quarantineFingerprint(row),
+      jobState: row.job_state,
+      createdAt: row.created_at,
+      canReconcileReadOnly,
+      capabilityRecoveryRequired: true,
+      recoveryActions: canReconcileReadOnly ? ["reconcile", "acknowledge-after-manual-inspection"] : ["acknowledge-after-manual-inspection"]
+    };
+  }
+  requireMatchingQuarantine(scopeKey, fingerprint) {
+    const row = this.activeQuarantineRecord(scopeKey);
+    if (!row) {
+      throw codedError("QUARANTINE_NOT_FOUND", "No active Oracle Firefox quarantine matches that exact conversation URL.");
+    }
+    const currentFingerprint = quarantineFingerprint(row);
+    if (!fingerprint || fingerprint !== currentFingerprint) {
+      throw codedError(
+        "QUARANTINE_CHANGED",
+        "The quarantine changed after inspection. Inspect the exact conversation quarantine again before recovering it.",
+        { safeToRetry: true }
+      );
+    }
+    if (!(/* @__PURE__ */ new Set(["submission_uncertain", "response_uncertain", "quarantined"])).has(row.job_state)) {
+      throw codedError("QUARANTINE_NOT_RECOVERABLE", "The quarantined job is no longer in an uncertain terminal state.");
+    }
+    return row;
+  }
+  orphanedQuarantineJob(scopeKey, fingerprint) {
+    const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+    return this.requireJob(row.job_id);
+  }
+  acknowledgeOrphanedQuarantine(scopeKey, fingerprint) {
+    const result = this.transaction(() => {
+      const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE quarantines SET active = 0, acknowledged_at = ?
+        WHERE scope_key = ? AND job_id = ? AND active = 1
+      `).run(now, scopeKey, row.job_id);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("QUARANTINE_CHANGED", "The quarantine changed while it was being acknowledged.", { safeToRetry: true });
+      }
+      return { conversationUrl: row.canonical_url || scopeKey, fingerprint, acknowledgedAt: now };
+    });
+    return {
+      ...result,
+      acknowledged: true,
+      messageSent: false,
+      replacementAuthorized: false,
+      recoveryAction: "A fresh submission still requires its own explicit user authorization."
+    };
+  }
+  recoverOrphanedQuarantineForMonitoring({
+    scopeKey,
+    fingerprint,
+    caller,
+    userTurnId,
+    userTurnHash,
+    readCapabilityHash,
+    controlCapabilityHash,
+    subscriptionId,
+    subscriptionCapabilityHash,
+    completionMode = "manual"
+  }) {
+    const recovered = this.transaction(() => {
+      const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+      const job = this.requireJob(row.job_id);
+      const chain = this.getChain(row.chain_id);
+      if (!caller?.id || !chain || chain.activeJobId !== job.id) {
+        throw codedError("QUARANTINE_NOT_RECOVERABLE", "The uncertain logical chain cannot be safely adopted for monitoring.");
+      }
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      this.db.prepare(`
+        UPDATE job_chains SET read_cap_hash = ?, control_cap_hash = ?, updated_at = ? WHERE id = ?
+      `).run(readCapabilityHash, controlCapabilityHash, now, chain.id);
+      this.db.prepare(`
+        INSERT INTO chain_session_grants(
+          chain_id, session_id, can_read, can_control, can_list, granted_at, revoked_at
+        ) VALUES (?, ?, 1, 1, 1, ?, NULL)
+        ON CONFLICT(chain_id, session_id) DO UPDATE SET
+          can_read = 1, can_control = 1, can_list = 1,
+          granted_at = excluded.granted_at, revoked_at = NULL
+      `).run(chain.id, caller.id, now);
+      this.db.prepare(`
+        UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
+        WHERE chain_id = ? AND state = 'open'
+      `).run(now, chain.id);
+      this.db.prepare(`
+        INSERT INTO completion_subscriptions(
+          id, chain_id, owner_session_id, mode, capability_hash, state, created_at
+        ) VALUES (?, ?, ?, ?, ?, 'open', ?)
+      `).run(subscriptionId, chain.id, caller.id, completionMode, subscriptionCapabilityHash, now);
+      const reopened = this.reopenForMonitoringInCurrentTransaction(job.id, { userTurnId, userTurnHash }, now);
+      this.db.prepare(`
+        UPDATE quarantines SET active = 0, acknowledged_at = ?
+        WHERE scope_key = ? AND job_id = ? AND active = 1
+      `).run(now, scopeKey, job.id);
+      return reopened;
+    });
+    this.emit("change", recovered);
+    return recovered;
+  }
   acknowledge(jobId) {
     const job = this.requireJob(jobId);
     const now = (/* @__PURE__ */ new Date()).toISOString();
@@ -67596,29 +67733,33 @@ var StateStore = class extends EventEmitter4 {
     return { ...cancelled, cancelled: true, detached: false };
   }
   reopenForMonitoring(jobId, { userTurnId, userTurnHash }) {
-    const job = this.requireJob(jobId);
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.transaction(() => {
-      this.db.prepare(`
-        UPDATE jobs
-        SET state='queued', user_turn_id=?, user_turn_hash=?, error_json=NULL,
-            recovery_action='reattach submitted turn without resending', completed_at=NULL,
-            updated_at=?, version=version+1
-        WHERE id=?
-      `).run(userTurnId ?? null, userTurnHash, now, jobId);
-      this.db.prepare(`
-        UPDATE job_attempts
-        SET execution_state='idle', execution_owner_instance_id=NULL,
-            execution_lease_generation=NULL, execution_heartbeat_at=NULL,
-            next_execution_not_before=NULL
-        WHERE job_id=?
-      `).run(jobId);
-      this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)").run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
-      this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
-    });
-    const reopened = this.requireJob(jobId);
+    const reopened = this.transaction(() => this.reopenForMonitoringInCurrentTransaction(
+      jobId,
+      { userTurnId, userTurnHash },
+      (/* @__PURE__ */ new Date()).toISOString()
+    ));
     this.emit("change", reopened);
     return reopened;
+  }
+  reopenForMonitoringInCurrentTransaction(jobId, { userTurnId, userTurnHash }, now) {
+    const job = this.requireJob(jobId);
+    this.db.prepare(`
+      UPDATE jobs
+      SET state='queued', user_turn_id=?, user_turn_hash=?, error_json=NULL,
+          recovery_action='reattach submitted turn without resending', completed_at=NULL,
+          updated_at=?, version=version+1
+      WHERE id=?
+    `).run(userTurnId ?? null, userTurnHash, now, jobId);
+    this.db.prepare(`
+      UPDATE job_attempts
+      SET execution_state='idle', execution_owner_instance_id=NULL,
+          execution_lease_generation=NULL, execution_heartbeat_at=NULL,
+          next_execution_not_before=NULL
+      WHERE job_id=?
+    `).run(jobId);
+    this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)").run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
+    this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
+    return this.requireJob(jobId);
   }
   jobChain(jobId) {
     const requested = this.requireJob(jobId);
@@ -70418,29 +70559,114 @@ var Coordinator = class {
         recoveryAction: `acknowledge_uncertain ${job.id} after manual inspection`
       };
     }
-    const lease = await this.browserManager.leasePage(`reconcile-${job.id}`, { discovery: true });
+    const matches = await this.findSubmittedTurnMatches(job);
+    if (matches.length !== 1) {
+      return {
+        ...publicJob(job),
+        reconciled: false,
+        observedMatches: matches.length,
+        reason: matches.length ? "More than one exact user turn matched; attribution remains ambiguous." : "No exact submitted user turn was found."
+      };
+    }
+    const match = matches[0];
+    this.store.reopenForMonitoring(job.id, { userTurnId: match.id, userTurnHash: job.submittedMessageHash });
+    this.store.acknowledge(job.id);
+    this.schedule();
+    return { ...this.getJob(job.id), reconciled: true, recoveryAction: "monitoring the proven submitted turn; no message was resent" };
+  }
+  async findSubmittedTurnMatches(job) {
+    const lease = await this.browserManager.leasePage(`reconcile-${job.id}-${randomUUID11()}`, { discovery: true });
     try {
       await openExistingConversation(lease.page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
       const snapshot = await assistantSnapshot(lease.page);
-      const matches = snapshot.turns.filter(
+      return snapshot.turns.filter(
         (turn) => turn.role === "user" && semanticTextHash(turn.text) === job.submittedMessageHash && attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || [])
       );
-      if (matches.length !== 1) {
-        return {
-          ...publicJob(job),
-          reconciled: false,
-          observedMatches: matches.length,
-          reason: matches.length ? "More than one exact user turn matched; attribution remains ambiguous." : "No exact submitted user turn was found."
-        };
-      }
-      const match = matches[0];
-      this.store.reopenForMonitoring(job.id, { userTurnId: match.id, userTurnHash: job.submittedMessageHash });
-      this.store.acknowledge(job.id);
-      this.schedule();
-      return { ...this.getJob(job.id), reconciled: true, recoveryAction: "monitoring the proven submitted turn; no message was resent" };
     } finally {
       await this.browserManager.releasePage(lease.jobId);
     }
+  }
+  inspectQuarantine(conversationUrl) {
+    const canonicalUrl = normalizeConversationUrl(conversationUrl);
+    return {
+      ...this.store.quarantineView(canonicalUrl),
+      exactScope: true,
+      messageSent: false
+    };
+  }
+  async recoverOrphanedQuarantine(params, context2) {
+    this.requireWritable();
+    const caller = this.callerFromContext(context2);
+    const canonicalUrl = normalizeConversationUrl(params.conversationUrl);
+    if (params.confirmCapabilityUnavailable !== true) {
+      throw codedError(
+        "CAPABILITY_RECOVERY_CONFIRMATION_REQUIRED",
+        "Recovering an orphaned quarantine requires explicit confirmation that the original control capability is unavailable."
+      );
+    }
+    if (params.action === "acknowledge") {
+      if (params.confirmManualInspection !== true) {
+        throw codedError(
+          "MANUAL_INSPECTION_REQUIRED",
+          "Acknowledgement requires explicit confirmation that the user manually inspected this exact ChatGPT conversation and accepted the uncertainty."
+        );
+      }
+      return this.store.acknowledgeOrphanedQuarantine(canonicalUrl, params.fingerprint);
+    }
+    const view = this.store.quarantineView(canonicalUrl);
+    if (!view.quarantined) {
+      throw codedError("QUARANTINE_NOT_FOUND", "No active Oracle Firefox quarantine matches that exact conversation URL.");
+    }
+    const job = this.store.orphanedQuarantineJob(canonicalUrl, params.fingerprint);
+    if (!job.conversationUrl || !job.submittedMessageHash) {
+      return {
+        ...view,
+        reconciled: false,
+        observedMatches: null,
+        reason: "The legacy job lacks the exact URL or submitted-message hash required for read-only proof.",
+        recoveryAction: "Manually inspect the exact conversation, then use acknowledge recovery with the same current fingerprint.",
+        messageSent: false
+      };
+    }
+    const matches = await this.findSubmittedTurnMatches(job);
+    if (matches.length !== 1) {
+      return {
+        ...view,
+        reconciled: false,
+        observedMatches: matches.length,
+        reason: matches.length ? "More than one exact user turn matched; attribution remains ambiguous." : "No exact submitted user turn was found.",
+        recoveryAction: "Manually inspect the exact conversation before any acknowledgement.",
+        messageSent: false
+      };
+    }
+    const chain = this.store.getChain(job.chainId);
+    const readCapability = mintCapability("read", chain.id);
+    const controlCapability = mintCapability("control", chain.id);
+    const subscriptionId = randomUUID11();
+    const subscriptionCapability = mintCapability("subscription", subscriptionId);
+    const recovered = this.store.recoverOrphanedQuarantineForMonitoring({
+      scopeKey: canonicalUrl,
+      fingerprint: params.fingerprint,
+      caller,
+      userTurnId: matches[0].id,
+      userTurnHash: job.submittedMessageHash,
+      readCapabilityHash: readCapability.hash,
+      controlCapabilityHash: controlCapability.hash,
+      subscriptionId,
+      subscriptionCapabilityHash: subscriptionCapability.hash,
+      completionMode: params.completionMode || "manual"
+    });
+    this.schedule();
+    return {
+      ...publicJob(recovered),
+      reconciled: true,
+      adoptedForMonitoring: true,
+      messageSent: false,
+      recoveryAction: "monitoring the proven submitted turn; no message was resent",
+      jobHandle: controlCapability.handle,
+      readHandle: readCapability.handle,
+      completionHandle: subscriptionCapability.handle
+    };
   }
   acknowledge(jobId) {
     this.requireWritable();
@@ -70671,6 +70897,11 @@ var Coordinator = class {
         return this.result(job.id, params.followRetries !== false);
       },
       "jobs.list": (params, context2) => this.listJobs(params, this.callerFromContext(context2)),
+      "jobs.inspectQuarantine": (params, context2) => {
+        this.callerFromContext(context2);
+        return this.inspectQuarantine(params.conversationUrl);
+      },
+      "jobs.recoverOrphanedQuarantine": (params, context2) => this.recoverOrphanedQuarantine(params, context2),
       "jobs.reconcile": (params, context2) => {
         const { job } = this.accessibleJob(params, context2, { control: true });
         return this.reconcile(job.id, params.conversationUrl);

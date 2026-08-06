@@ -26,6 +26,7 @@
 
 ### Fixed
 
+- Oracle Firefox 1.6.2: recover migrated exact-conversation quarantines whose original private capability was lost through sanitized fingerprinted inspection, read-only exact-turn adoption, or explicitly confirmed manual acknowledgement; never list foreign jobs, send, or authorize a replacement.
 - Oracle Firefox 1.6.1: bound every assistant DOM probe and page close, heartbeat active executors, quarantine response-monitor uncertainty by conversation, terminate only Puppeteer's exact owned browser child after close, and deliver best-effort macOS notifications for Claude Desktop without claiming its model can wake automatically.
 - Oracle Firefox 1.6.1: stop creating undeliverable manual completion rows and close terminal subscriptions after acknowledgement, preventing stale completion backlogs from looking like failed result delivery.
 - Oracle Firefox: prevent differently installed or TMPDIR-scoped clients from launching competing brokers, prevent an older client from downgrading a newer broker, fence stale browser/executor callbacks after takeover, stop permanent profile conflicts from hot-looping, and fix a timed-out mutex waiter releasing another caller's lock.

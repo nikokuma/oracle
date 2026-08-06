@@ -222,6 +222,27 @@ register("list_jobs", {
   inputSchema: { limit: z.number().int().min(1).max(200).default(50), states: z.array(z.string()).default([]) },
 }, "jobs.list");
 
+register("inspect_quarantine", {
+  title: "Inspect one exact Oracle Firefox quarantine",
+  description: "Read sanitized recovery metadata for one exact conversation URL when the original job capability is unavailable. Never lists other chats, opens a browser, or sends a message.",
+  inputSchema: {
+    conversationUrl: z.string().url().describe("Exact standalone or project ChatGPT conversation URL reported by the blocked submission."),
+  },
+}, "jobs.inspectQuarantine");
+
+register("recover_orphaned_quarantine", {
+  title: "Recover one orphaned Oracle Firefox quarantine",
+  description: "Use an inspected exact-URL fingerprint to reconcile read-only or acknowledge after explicit manual inspection. Never sends a message or authorizes a replacement.",
+  inputSchema: {
+    conversationUrl: z.string().url().describe("The same exact conversation URL used with inspect_quarantine."),
+    fingerprint: z.string().regex(/^[a-f0-9]{64}$/u).describe("Current fingerprint returned by inspect_quarantine."),
+    action: z.enum(["reconcile", "acknowledge"]).default("reconcile"),
+    confirmCapabilityUnavailable: z.boolean().describe("Must be true only after the user confirms the original control capability is unavailable."),
+    confirmManualInspection: z.boolean().default(false).describe("For acknowledge only: true after the user manually inspected this exact chat and accepts the uncertainty."),
+    completionMode: z.enum(["manual", "notify", "harness"]).default(defaultCompletionMode),
+  },
+}, "jobs.recoverOrphanedQuarantine", 120_000);
+
 register("reconcile_job", {
   title: "Reconcile an uncertain Oracle Firefox submission",
   description: "Read the exact target conversation and look for the authorized user-turn hash. Never sends or retries a message.",

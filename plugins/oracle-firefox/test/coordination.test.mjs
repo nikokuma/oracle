@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { mintCapability } from "../src/capabilities.mjs";
+import { Coordinator } from "../src/coordinator.mjs";
 import { StateStore } from "../src/state-store.mjs";
 
 async function withStore(callback) {
@@ -52,6 +53,17 @@ function ownedJob(store, caller, overrides = {}) {
   return { ...created, read, control, subscription };
 }
 
+function makeResponseUncertain(store, job, messageHash = "submitted-hash") {
+  for (const state of ["snapshotted", "queued", "page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified", "submit_intent"]) {
+    store.transition(job.id, state, state === "submit_intent"
+      ? { submittedMessageHash: messageHash, attachmentManifest: [] }
+      : {});
+  }
+  store.transition(job.id, "user_turn_confirmed", { userTurnId: "legacy-user-turn", userTurnHash: messageHash });
+  store.transition(job.id, "awaiting_response");
+  return store.markFailure(job.id, Object.assign(new Error("legacy response monitor ended"), { code: "RESPONSE_MONITOR_STALLED" }));
+}
+
 test("capability-owned chains hide foreign UUIDs and permit explicit resume", async () => {
   await withStore(async (store) => {
     const aSession = store.createOwnerSession({ harness: "codex" });
@@ -76,6 +88,126 @@ test("capability-owned chains hide foreign UUIDs and permit explicit resume", as
     assert.equal(store.authorizeJob({ jobId: owned.job.id, caller: b, control: true }).job.id, owned.job.id);
     assert.deepEqual(store.listJobsForSession(a.id).map((job) => job.id), [owned.job.id]);
     assert.deepEqual(store.listJobsForSession(b.id).map((job) => job.id), [owned.job.id]);
+  });
+});
+
+test("an exact fingerprint permits manual orphaned-quarantine acknowledgement without exposing the old job", async () => {
+  await withStore(async (store) => {
+    const ownerSession = store.createOwnerSession({ harness: "codex" });
+    const recoverySession = store.createOwnerSession({ harness: "codex" });
+    const owner = authenticate(store, ownerSession, "codex");
+    const recovery = authenticate(store, recoverySession, "codex");
+    const conversationUrl = "https://chatgpt.com/c/orphaned-ack";
+    const owned = ownedJob(store, owner, { conversationKey: conversationUrl, conversationUrl });
+    makeResponseUncertain(store, owned.job);
+
+    assert.deepEqual(store.listJobsForSession(recovery.id), [], "the new task must not gain global job visibility");
+    const view = store.quarantineView(conversationUrl);
+    assert.equal(view.quarantined, true);
+    assert.equal(view.conversationUrl, conversationUrl);
+    assert.equal(view.canReconcileReadOnly, true);
+    assert.equal("jobId" in view, false);
+    assert.equal("sessionPath" in view, false);
+    assert.throws(
+      () => store.acknowledgeOrphanedQuarantine(conversationUrl, "0".repeat(64)),
+      (error) => error.code === "QUARANTINE_CHANGED",
+    );
+    const acknowledged = store.acknowledgeOrphanedQuarantine(conversationUrl, view.fingerprint);
+    assert.equal(acknowledged.acknowledged, true);
+    assert.equal(acknowledged.messageSent, false);
+    assert.equal(acknowledged.replacementAuthorized, false);
+    assert.equal(store.quarantineView(conversationUrl).quarantined, false);
+    assert.equal(store.listJobsForSession(recovery.id).length, 0, "acknowledgement alone must not adopt private history");
+  });
+});
+
+test("orphaned acknowledgement requires both lost-capability and exact-chat manual-inspection confirmation", async () => {
+  await withStore(async (store) => {
+    const ownerSession = store.createOwnerSession({ harness: "codex" });
+    const recoverySession = store.createOwnerSession({ harness: "codex" });
+    const owner = authenticate(store, ownerSession, "codex");
+    const recovery = authenticate(store, recoverySession, "codex");
+    const conversationUrl = "https://chatgpt.com/c/orphaned-confirmation";
+    const owned = ownedJob(store, owner, { conversationKey: conversationUrl, conversationUrl });
+    makeResponseUncertain(store, owned.job);
+    const inspected = store.quarantineView(conversationUrl);
+    const coordinator = new Coordinator({ store, browserManager: { status: () => ({}) } });
+    coordinator.callerFromContext = () => recovery;
+
+    await assert.rejects(
+      coordinator.recoverOrphanedQuarantine({
+        conversationUrl,
+        fingerprint: inspected.fingerprint,
+        action: "acknowledge",
+        confirmCapabilityUnavailable: false,
+        confirmManualInspection: true,
+      }, {}),
+      (error) => error.code === "CAPABILITY_RECOVERY_CONFIRMATION_REQUIRED",
+    );
+    await assert.rejects(
+      coordinator.recoverOrphanedQuarantine({
+        conversationUrl,
+        fingerprint: inspected.fingerprint,
+        action: "acknowledge",
+        confirmCapabilityUnavailable: true,
+        confirmManualInspection: false,
+      }, {}),
+      (error) => error.code === "MANUAL_INSPECTION_REQUIRED",
+    );
+    assert.equal(store.quarantineView(conversationUrl).quarantined, true);
+    const acknowledged = await coordinator.recoverOrphanedQuarantine({
+      conversationUrl,
+      fingerprint: inspected.fingerprint,
+      action: "acknowledge",
+      confirmCapabilityUnavailable: true,
+      confirmManualInspection: true,
+    }, {});
+    assert.equal(acknowledged.acknowledged, true);
+    assert.equal(acknowledged.messageSent, false);
+  });
+});
+
+test("proven orphaned reconciliation rotates handles and grants only the recovering session", async () => {
+  await withStore(async (store) => {
+    const ownerSession = store.createOwnerSession({ harness: "codex" });
+    const recoverySession = store.createOwnerSession({ harness: "claude" });
+    const foreignSession = store.createOwnerSession({ harness: "codex" });
+    const owner = authenticate(store, ownerSession, "codex");
+    const recovery = authenticate(store, recoverySession, "claude");
+    const foreign = authenticate(store, foreignSession, "codex");
+    const conversationUrl = "https://chatgpt.com/c/orphaned-reconcile";
+    const owned = ownedJob(store, owner, { conversationKey: conversationUrl, conversationUrl });
+    makeResponseUncertain(store, owned.job);
+    const inspected = store.quarantineView(conversationUrl);
+    const read = mintCapability("read", owned.job.chainId);
+    const control = mintCapability("control", owned.job.chainId);
+    const subscriptionId = crypto.randomUUID();
+    const subscription = mintCapability("subscription", subscriptionId);
+
+    const reopened = store.recoverOrphanedQuarantineForMonitoring({
+      scopeKey: conversationUrl,
+      fingerprint: inspected.fingerprint,
+      caller: recovery,
+      userTurnId: "proven-user-turn",
+      userTurnHash: "submitted-hash",
+      readCapabilityHash: read.hash,
+      controlCapabilityHash: control.hash,
+      subscriptionId,
+      subscriptionCapabilityHash: subscription.hash,
+      completionMode: "harness",
+    });
+    assert.equal(reopened.state, "queued");
+    assert.equal(store.quarantineView(conversationUrl).quarantined, false);
+    assert.equal(store.authorizeJob({ jobId: owned.job.id, caller: recovery, control: true }).job.id, owned.job.id);
+    assert.throws(
+      () => store.authorizeJob({ jobId: owned.job.id, jobHandle: owned.control.handle, caller: foreign, control: true }),
+      (error) => error.code === "JOB_NOT_FOUND",
+      "the reported-lost capability must be invalidated by recovery",
+    );
+    assert.equal(store.authorizeJob({ jobId: owned.job.id, jobHandle: control.handle, caller: foreign, control: true }).job.id, owned.job.id);
+    const replacementSubscription = store.db.prepare("SELECT * FROM completion_subscriptions WHERE id=?").get(subscriptionId);
+    assert.equal(replacementSubscription.owner_session_id, recovery.id);
+    assert.equal(replacementSubscription.mode, "harness");
   });
 });
 

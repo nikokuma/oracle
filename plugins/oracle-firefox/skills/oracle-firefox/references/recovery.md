@@ -28,6 +28,14 @@ Never replay after `submit_intent` or when `submissionMayHaveOccurred` is true.
 4. Use `acknowledge_uncertain` only after that manual decision. It removes quarantine but neither proves absence nor authorizes replacement.
 5. Respect `CONVERSATION_QUARANTINED` until the exact scope is resolved.
 
+If a migrated quarantine blocks an exact conversation but the originating task and its private job capability are gone:
+
+1. Call `inspect_quarantine` with the exact conversation URL from the blocked request. It reveals no other jobs, prompts, answers, or session paths.
+2. Keep the returned fingerprint. Never recover from a title, partial URL, stale fingerprint, or global search.
+3. Prefer `recover_orphaned_quarantine` with `action: "reconcile"` and explicit confirmation that the old capability is unavailable. Oracle reads the exact chat and adopts the chain only if one exact submitted turn matches; it never sends.
+4. If read-only proof fails, ask the user to inspect that exact ChatGPT chat. Use `action: "acknowledge"` only after the user explicitly accepts the uncertainty; set both confirmation fields.
+5. Acknowledgement only removes the lane barrier. It does not expose the old job, prove absence, or authorize a fresh submission.
+
 ## Restart and cancellation
 
 After restart, use `broker_status` or `job_status`. Safe pre-send work may resume; proven submitted work is monitor-only; unproven post-send work remains uncertain.

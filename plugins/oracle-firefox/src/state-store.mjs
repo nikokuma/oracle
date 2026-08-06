@@ -137,6 +137,18 @@ function rowToChain(row) {
   };
 }
 
+function quarantineFingerprint(row) {
+  if (!row) return null;
+  return createHash("sha256").update([
+    "oracle-firefox-quarantine-v1",
+    row.scope_key,
+    row.job_id,
+    row.created_at,
+    row.job_state,
+    row.job_updated_at,
+  ].map((value) => String(value ?? "")).join("\0")).digest("hex");
+}
+
 const WAKE_CHAIN_STATES = new Set([
   "input_required",
   "completed",
@@ -1040,7 +1052,15 @@ export class StateStore extends EventEmitter {
         throw codedError(
           "CONVERSATION_QUARANTINED",
           "This conversation or new-chat scope is quarantined until its uncertain submission is reconciled.",
-          { recoveryAction: `reconcile_job ${activeQuarantine.job_id}` },
+          {
+            recoveryAction: /^https:\/\/chatgpt\.com\//u.test(input.conversationKey)
+              ? `inspect_quarantine for ${input.conversationKey}`
+              : `reconcile_job ${activeQuarantine.job_id}`,
+            details: {
+              exactScopeRequired: true,
+              capabilityRecoveryAvailable: /^https:\/\/chatgpt\.com\//u.test(input.conversationKey),
+            },
+          },
         );
       }
       const id = input.id || randomUUID();
@@ -1438,6 +1458,134 @@ export class StateStore extends EventEmitter {
     `).run(scopeKey, jobId, reason, now);
   }
 
+  activeQuarantineRecord(scopeKey) {
+    return this.db.prepare(`
+      SELECT q.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.canonical_url, j.submitted_message_hash, j.attachment_manifest_json,
+             a.chain_id, c.state AS chain_state
+      FROM quarantines q
+      JOIN jobs j ON j.id = q.job_id
+      JOIN job_attempts a ON a.job_id = j.id
+      JOIN job_chains c ON c.id = a.chain_id
+      WHERE q.scope_key = ? AND q.active = 1
+    `).get(scopeKey);
+  }
+
+  quarantineView(scopeKey) {
+    const row = this.activeQuarantineRecord(scopeKey);
+    if (!row) return { quarantined: false, conversationUrl: scopeKey };
+    const canReconcileReadOnly = Boolean(row.canonical_url && row.submitted_message_hash);
+    return {
+      quarantined: true,
+      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.scope_key) ? row.scope_key : null),
+      fingerprint: quarantineFingerprint(row),
+      jobState: row.job_state,
+      createdAt: row.created_at,
+      canReconcileReadOnly,
+      capabilityRecoveryRequired: true,
+      recoveryActions: canReconcileReadOnly
+        ? ["reconcile", "acknowledge-after-manual-inspection"]
+        : ["acknowledge-after-manual-inspection"],
+    };
+  }
+
+  requireMatchingQuarantine(scopeKey, fingerprint) {
+    const row = this.activeQuarantineRecord(scopeKey);
+    if (!row) {
+      throw codedError("QUARANTINE_NOT_FOUND", "No active Oracle Firefox quarantine matches that exact conversation URL.");
+    }
+    const currentFingerprint = quarantineFingerprint(row);
+    if (!fingerprint || fingerprint !== currentFingerprint) {
+      throw codedError(
+        "QUARANTINE_CHANGED",
+        "The quarantine changed after inspection. Inspect the exact conversation quarantine again before recovering it.",
+        { safeToRetry: true },
+      );
+    }
+    if (!new Set(["submission_uncertain", "response_uncertain", "quarantined"]).has(row.job_state)) {
+      throw codedError("QUARANTINE_NOT_RECOVERABLE", "The quarantined job is no longer in an uncertain terminal state.");
+    }
+    return row;
+  }
+
+  orphanedQuarantineJob(scopeKey, fingerprint) {
+    const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+    return this.requireJob(row.job_id);
+  }
+
+  acknowledgeOrphanedQuarantine(scopeKey, fingerprint) {
+    const result = this.transaction(() => {
+      const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+      const now = new Date().toISOString();
+      const changed = this.db.prepare(`
+        UPDATE quarantines SET active = 0, acknowledged_at = ?
+        WHERE scope_key = ? AND job_id = ? AND active = 1
+      `).run(now, scopeKey, row.job_id);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("QUARANTINE_CHANGED", "The quarantine changed while it was being acknowledged.", { safeToRetry: true });
+      }
+      return { conversationUrl: row.canonical_url || scopeKey, fingerprint, acknowledgedAt: now };
+    });
+    return {
+      ...result,
+      acknowledged: true,
+      messageSent: false,
+      replacementAuthorized: false,
+      recoveryAction: "A fresh submission still requires its own explicit user authorization.",
+    };
+  }
+
+  recoverOrphanedQuarantineForMonitoring({
+    scopeKey,
+    fingerprint,
+    caller,
+    userTurnId,
+    userTurnHash,
+    readCapabilityHash,
+    controlCapabilityHash,
+    subscriptionId,
+    subscriptionCapabilityHash,
+    completionMode = "manual",
+  }) {
+    const recovered = this.transaction(() => {
+      const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+      const job = this.requireJob(row.job_id);
+      const chain = this.getChain(row.chain_id);
+      if (!caller?.id || !chain || chain.activeJobId !== job.id) {
+        throw codedError("QUARANTINE_NOT_RECOVERABLE", "The uncertain logical chain cannot be safely adopted for monitoring.");
+      }
+      const now = new Date().toISOString();
+      this.db.prepare(`
+        UPDATE job_chains SET read_cap_hash = ?, control_cap_hash = ?, updated_at = ? WHERE id = ?
+      `).run(readCapabilityHash, controlCapabilityHash, now, chain.id);
+      this.db.prepare(`
+        INSERT INTO chain_session_grants(
+          chain_id, session_id, can_read, can_control, can_list, granted_at, revoked_at
+        ) VALUES (?, ?, 1, 1, 1, ?, NULL)
+        ON CONFLICT(chain_id, session_id) DO UPDATE SET
+          can_read = 1, can_control = 1, can_list = 1,
+          granted_at = excluded.granted_at, revoked_at = NULL
+      `).run(chain.id, caller.id, now);
+      this.db.prepare(`
+        UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
+        WHERE chain_id = ? AND state = 'open'
+      `).run(now, chain.id);
+      this.db.prepare(`
+        INSERT INTO completion_subscriptions(
+          id, chain_id, owner_session_id, mode, capability_hash, state, created_at
+        ) VALUES (?, ?, ?, ?, ?, 'open', ?)
+      `).run(subscriptionId, chain.id, caller.id, completionMode, subscriptionCapabilityHash, now);
+      const reopened = this.reopenForMonitoringInCurrentTransaction(job.id, { userTurnId, userTurnHash }, now);
+      this.db.prepare(`
+        UPDATE quarantines SET active = 0, acknowledged_at = ?
+        WHERE scope_key = ? AND job_id = ? AND active = 1
+      `).run(now, scopeKey, job.id);
+      return reopened;
+    });
+    this.emit("change", recovered);
+    return recovered;
+  }
+
   acknowledge(jobId) {
     const job = this.requireJob(jobId);
     const now = new Date().toISOString();
@@ -1458,30 +1606,35 @@ export class StateStore extends EventEmitter {
   }
 
   reopenForMonitoring(jobId, { userTurnId, userTurnHash }) {
-    const job = this.requireJob(jobId);
-    const now = new Date().toISOString();
-    this.transaction(() => {
-      this.db.prepare(`
-        UPDATE jobs
-        SET state='queued', user_turn_id=?, user_turn_hash=?, error_json=NULL,
-            recovery_action='reattach submitted turn without resending', completed_at=NULL,
-            updated_at=?, version=version+1
-        WHERE id=?
-      `).run(userTurnId ?? null, userTurnHash, now, jobId);
-      this.db.prepare(`
-        UPDATE job_attempts
-        SET execution_state='idle', execution_owner_instance_id=NULL,
-            execution_lease_generation=NULL, execution_heartbeat_at=NULL,
-            next_execution_not_before=NULL
-        WHERE job_id=?
-      `).run(jobId);
-      this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)")
-        .run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
-      this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
-    });
-    const reopened = this.requireJob(jobId);
+    const reopened = this.transaction(() => this.reopenForMonitoringInCurrentTransaction(
+      jobId,
+      { userTurnId, userTurnHash },
+      new Date().toISOString(),
+    ));
     this.emit("change", reopened);
     return reopened;
+  }
+
+  reopenForMonitoringInCurrentTransaction(jobId, { userTurnId, userTurnHash }, now) {
+    const job = this.requireJob(jobId);
+    this.db.prepare(`
+      UPDATE jobs
+      SET state='queued', user_turn_id=?, user_turn_hash=?, error_json=NULL,
+          recovery_action='reattach submitted turn without resending', completed_at=NULL,
+          updated_at=?, version=version+1
+      WHERE id=?
+    `).run(userTurnId ?? null, userTurnHash, now, jobId);
+    this.db.prepare(`
+      UPDATE job_attempts
+      SET execution_state='idle', execution_owner_instance_id=NULL,
+          execution_lease_generation=NULL, execution_heartbeat_at=NULL,
+          next_execution_not_before=NULL
+      WHERE job_id=?
+    `).run(jobId);
+    this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)")
+      .run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
+    this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
+    return this.requireJob(jobId);
   }
 
   jobChain(jobId) {

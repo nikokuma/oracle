@@ -83,6 +83,17 @@ try {
   } else if (command === "status") result = await callBroker("jobs.status", { ...jobReference(), followRetries: !bool(args, "--no-follow-retries") }, { harness });
   else if (command === "result") result = await callBroker("jobs.result", { ...jobReference(), followRetries: !bool(args, "--no-follow-retries") }, { harness });
   else if (command === "jobs") result = await callBroker("jobs.list", { limit: number(args, ["--limit"], 50) }, { harness });
+  else if (command === "quarantine-inspect") result = await callBroker("jobs.inspectQuarantine", {
+    conversationUrl: option(args, ["--url"]),
+  }, { harness });
+  else if (command === "quarantine-recover") result = await callBroker("jobs.recoverOrphanedQuarantine", {
+    conversationUrl: option(args, ["--url"]),
+    fingerprint: option(args, ["--fingerprint"]),
+    action: option(args, ["--action"], "reconcile"),
+    confirmCapabilityUnavailable: bool(args, "--confirm-capability-unavailable"),
+    confirmManualInspection: bool(args, "--confirm-manual-inspection"),
+    completionMode: option(args, ["--completion-mode"], "manual"),
+  }, { timeoutMs: 120000, harness });
   else if (command === "reconcile") result = await callBroker("jobs.reconcile", { ...jobReference(), conversationUrl: option(args, ["--url"]) }, { timeoutMs: 120000, harness });
   else if (command === "acknowledge") result = await callBroker("jobs.acknowledge", jobReference(), { harness });
   else if (command === "cancel") result = await callBroker("jobs.cancel", jobReference(), { harness });
@@ -146,7 +157,7 @@ try {
       if (bool(args, "--notify")) await notify("Oracle Firefox", `Job ${jobId} ${result.state}`);
     }
   } else {
-    throw new Error("Usage: oracle-firefox coordinator-inspect|doctor|browser-select firefox|chrome|safari|broker-status|profiles|setup|import-session|projects|find-chats|artifacts|download-artifact|consult|consult-start|continue-chat|continue-chat-start|status <job-id> [--handle HANDLE]|result <job-id> [--handle HANDLE]|jobs|watch <job-id> [--handle HANDLE]|reconcile|acknowledge|cancel|reply-local-data|completion-claim|completion-delivered|completion-ack|emergency-lock|emergency-unlock");
+    throw new Error("Usage: oracle-firefox coordinator-inspect|doctor|browser-select firefox|chrome|safari|broker-status|profiles|setup|import-session|projects|find-chats|artifacts|download-artifact|consult|consult-start|continue-chat|continue-chat-start|status <job-id> [--handle HANDLE]|result <job-id> [--handle HANDLE]|jobs|watch <job-id> [--handle HANDLE]|quarantine-inspect --url URL|quarantine-recover --url URL --fingerprint HASH --confirm-capability-unavailable [--action reconcile|acknowledge]|reconcile|acknowledge|cancel|reply-local-data|completion-claim|completion-delivered|completion-ack|emergency-lock|emergency-unlock");
   }
   if (command !== "watch" || !bool(args, "--jsonl")) print(result);
 } catch (error) {
