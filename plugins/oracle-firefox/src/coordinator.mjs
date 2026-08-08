@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
-import { access, mkdir, open, rm } from "node:fs/promises";
+import { access, mkdir, open, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { AsyncMutex } from "./async-lock.mjs";
 import { BrowserManager } from "./browser-manager.mjs";
@@ -15,11 +15,12 @@ import {
 import { codedError, structuredError } from "./errors.mjs";
 import {
   buildLocalDataReply,
+  deriveLocalDataNonce,
   deriveEvidenceAuthorizationId,
   deriveResponseRecoveryAuthorizationId,
   scanEvidenceForSecrets,
 } from "./evidence.mjs";
-import { attachmentManifestKey, assistantSnapshot, normalizeConversationTitle, normalizeConversationUrl, openExistingConversation, projectUrlFromConversationUrl, semanticTextHash } from "./firefox.mjs";
+import { attachmentManifestKey, assistantSnapshot, normalizeConversationTitle, normalizeConversationUrl, openExistingConversation, projectUrlFromConversationUrl, semanticMismatchDetails, semanticTextHash } from "./firefox.mjs";
 import { requestDigest, StateStore, TERMINAL_JOB_STATES } from "./state-store.mjs";
 import { BROKER_BUILD_VERSION, BROKER_PROTOCOL_VERSION } from "./protocol.mjs";
 import {
@@ -38,6 +39,15 @@ import {
 } from "./workflow.mjs";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const INPUT_REQUEST_ABANDON_REASONS = new Set(["false-positive", "not-needed", "user-declined"]);
+
+function inputRequestAbandonReason(value) {
+  const reason = value || "user-declined";
+  if (!INPUT_REQUEST_ABANDON_REASONS.has(reason)) {
+    throw codedError("INVALID_INPUT_REQUEST_ABANDON_REASON", "Input-request abandonment reason must be false-positive, not-needed, or user-declined.");
+  }
+  return reason;
+}
 
 function publicJob(job, extras = {}) {
   if (!job) return null;
@@ -78,6 +88,9 @@ function publicJob(job, extras = {}) {
     retryAttempt: job.retryAttempt,
     maxAutomaticResponseRetries: job.maxAutomaticResponseRetries,
     chainId: job.chainId,
+    chainState: job.chainState,
+    inputRequestAbandonedAt: job.inputRequestAbandonedAt,
+    inputRequestAbandonedReason: job.inputRequestAbandonedReason,
     attemptKind: job.attemptKind,
     responseFailurePolicy: job.request?.responseFailurePolicy ?? "report",
     completionMode: job.request?.completionMode ?? "manual",
@@ -360,6 +373,13 @@ export class Coordinator {
         resolvedProjectUrl: match.projectUrl || discovered.projectUrl,
       };
     }
+    const rootAuthorizationId = internalChain
+      ? this.store.requireJob(internalChain.rootJobId).authorizationId
+      : authorizationId;
+    resolvedInput = {
+      ...resolvedInput,
+      localDataNonce: deriveLocalDataNonce(rootAuthorizationId),
+    };
     const prepared = await prepareJobRequest(operation, resolvedInput);
     const conversationKey = conversationKeyFor(operation, prepared);
     const chainId = internalChain?.id || null;
@@ -740,6 +760,12 @@ export class Coordinator {
     if (job.state === "completed") {
       return {
         ...job.result,
+        ...(job.inputRequestAbandonedAt ? {
+          inputRequestAbandoned: true,
+          inputRequestAbandonedAt: job.inputRequestAbandonedAt,
+          inputRequestAbandonedReason: job.inputRequestAbandonedReason,
+          recoveryAction: null,
+        } : {}),
         requestedJobId: requested.id,
         activeJobId: job.id,
         recoveryChain: chain.map((entry) => entry.id),
@@ -791,12 +817,14 @@ export class Coordinator {
         recoveryAction: `acknowledge_uncertain ${job.id} after manual inspection`,
       };
     }
-    const matches = await this.findSubmittedTurnMatches(job);
+    const { matches, candidateCount, mismatch } = await this.findSubmittedTurnMatches(job);
     if (matches.length !== 1) {
       return {
         ...publicJob(job),
         reconciled: false,
         observedMatches: matches.length,
+        candidateCount,
+        mismatch,
         reason: matches.length ? "More than one exact user turn matched; attribution remains ambiguous." : "No exact submitted user turn was found.",
       };
     }
@@ -812,11 +840,28 @@ export class Coordinator {
     try {
       await openExistingConversation(lease.page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
       const snapshot = await assistantSnapshot(lease.page);
-      return snapshot.turns.filter((turn) =>
+      const candidates = snapshot.turns.filter((turn) =>
         turn.role === "user" &&
-        semanticTextHash(turn.text) === job.submittedMessageHash &&
-        attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || []),
+        attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || [])
       );
+      const matches = candidates.filter((turn) => semanticTextHash(turn.text) === job.submittedMessageHash);
+      let expectedText = null;
+      if (job.request?.delivery === "attachment") {
+        expectedText = [
+          "Read the attached oracle-context.md before answering.",
+          "Follow the [USER] request and ORACLE LOCAL DATA PROTOCOL in that file.",
+          "Return only the substantive answer or the strict local-data request block.",
+        ].join("\n");
+      } else if (job.request?.requestPath) {
+        expectedText = (await readFile(job.request.requestPath, "utf8")).trimEnd();
+      }
+      return {
+        matches,
+        candidateCount: candidates.length,
+        mismatch: expectedText && candidates.length
+          ? semanticMismatchDetails(expectedText, candidates.at(-1).text)
+          : null,
+      };
     } finally {
       await this.browserManager.releasePage(lease.jobId);
     }
@@ -828,6 +873,74 @@ export class Coordinator {
       ...this.store.quarantineView(canonicalUrl),
       exactScope: true,
       messageSent: false,
+    };
+  }
+
+  inspectInputRequest(conversationUrl) {
+    const canonicalUrl = normalizeConversationUrl(conversationUrl);
+    return {
+      ...this.store.inputRequestView(canonicalUrl),
+      exactScope: true,
+      messageSent: false,
+      replacementAuthorized: false,
+    };
+  }
+
+  abandonInputRequest(input, context) {
+    this.requireWritable();
+    if (input.confirmAbandon !== true) {
+      throw codedError(
+        "INPUT_REQUEST_ABANDON_CONFIRMATION_REQUIRED",
+        "Abandoning a local-data request requires explicit confirmation. This discards the evidence round and releases the conversation lane without sending.",
+      );
+    }
+    const { job } = this.accessibleJob(input, context, { control: true });
+    const released = this.store.abandonInputRequest(job.id, { reason: inputRequestAbandonReason(input.reason) });
+    this.schedule();
+    return {
+      ...publicJob(released.job),
+      abandoned: true,
+      idempotent: Boolean(released.idempotent),
+      laneReleased: true,
+      templateFalsePositive: released.templateFalsePositive,
+      inputRequestAbandonedAt: released.abandonedAt,
+      inputRequestAbandonedReason: released.reason,
+      messageSent: false,
+      replacementAuthorized: false,
+      recoveryAction: "The next already-authorized same-chat job may now run; any new replacement still requires its own authorization.",
+    };
+  }
+
+  abandonOrphanedInputRequest(input, context) {
+    this.requireWritable();
+    this.callerFromContext(context);
+    if (input.confirmCapabilityUnavailable !== true) {
+      throw codedError(
+        "CAPABILITY_RECOVERY_CONFIRMATION_REQUIRED",
+        "Orphaned input-request recovery requires explicit confirmation that the original control capability is unavailable.",
+      );
+    }
+    if (input.confirmAbandon !== true) {
+      throw codedError(
+        "INPUT_REQUEST_ABANDON_CONFIRMATION_REQUIRED",
+        "Abandoning the exact input request requires explicit confirmation that no local-evidence reply should be sent.",
+      );
+    }
+    const canonicalUrl = normalizeConversationUrl(input.conversationUrl);
+    const released = this.store.abandonOrphanedInputRequest(canonicalUrl, input.fingerprint, {
+      reason: inputRequestAbandonReason(input.reason),
+    });
+    this.schedule();
+    return {
+      conversationUrl: canonicalUrl,
+      abandoned: true,
+      laneReleased: true,
+      templateFalsePositive: released.templateFalsePositive,
+      inputRequestAbandonedAt: released.abandonedAt,
+      inputRequestAbandonedReason: released.reason,
+      messageSent: false,
+      replacementAuthorized: false,
+      recoveryAction: "The next already-authorized same-chat job may now run; any new replacement still requires its own authorization.",
     };
   }
 
@@ -961,6 +1074,9 @@ export class Coordinator {
   async replyWithLocalData(input, context) {
     this.requireWritable();
     const { job: parent, chain } = this.accessibleJob(input, context, { control: true });
+    if (chain.state !== "input_required" || chain.inputRequestAbandonedAt) {
+      throw codedError("LOCAL_DATA_REQUEST_ABANDONED", "This local-data request was abandoned or is no longer the active input request for its conversation lane.");
+    }
     if (parent.state !== "completed" || parent.assistantDisposition !== "local_data_request" || !parent.localDataRequest) {
       throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected job did not complete with a valid local-data request.");
     }
@@ -1154,6 +1270,12 @@ export class Coordinator {
         this.callerFromContext(context);
         return this.inspectQuarantine(params.conversationUrl);
       },
+      "jobs.inspectInputRequest": (params, context) => {
+        this.callerFromContext(context);
+        return this.inspectInputRequest(params.conversationUrl);
+      },
+      "jobs.abandonInputRequest": (params, context) => this.abandonInputRequest(params, context),
+      "jobs.abandonOrphanedInputRequest": (params, context) => this.abandonOrphanedInputRequest(params, context),
       "jobs.recoverOrphanedQuarantine": (params, context) => this.recoverOrphanedQuarantine(params, context),
       "jobs.reconcile": (params, context) => {
         const { job } = this.accessibleJob(params, context, { control: true });

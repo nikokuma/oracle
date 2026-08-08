@@ -233,9 +233,15 @@ export class BrowserManager {
     try {
       this.controlPage = await this.pageOpener(browser, { newPage: false, foreground: false });
     } catch (error) {
-      await Promise.resolve(browser.close?.()).catch(() => undefined);
-      this.browser = null;
-      this.controlPage = null;
+      const failedOwner = this.currentOwner;
+      await boundedClose(browser, this.browserCloseTimeoutMs);
+      if (this.browser === browser) {
+        this.browser = null;
+        this.controlPage = null;
+        this.browserGeneration += 1;
+      }
+      if (this.ownerFileEnabled && failedOwner) await removeOwnerIfOwned(failedOwner);
+      if (this.currentOwner === failedOwner) this.currentOwner = null;
       throw error;
     }
     return browser;
@@ -253,9 +259,39 @@ export class BrowserManager {
       if (discovery && this.discoveryCount >= this.maxDiscoveryPages) {
         throw codedError("DISCOVERY_LIMIT_REACHED", "Both read-only discovery pages are currently in use.");
       }
-      const browser = await this.ensureBrowserLocked();
-      const generation = this.browserGeneration;
-      const page = await this.pageOpener(browser, { newPage: true, foreground: false });
+      let browser = await this.ensureBrowserLocked();
+      let generation = this.browserGeneration;
+      let page;
+      try {
+        page = await this.pageOpener(browser, { newPage: true, foreground: false });
+      } catch (firstError) {
+        // An execution-page navigation failure can leave the persistent
+        // browser's networking/lifecycle state wedged. Recycle it once only
+        // when no other page lease can be disturbed. openChatGpt closes its
+        // failed new page before this recovery boundary.
+        if (this.leases.size > 0) throw firstError;
+        await this.closeLocked();
+        try {
+          browser = await this.ensureBrowserLocked();
+          generation = this.browserGeneration;
+          page = await this.pageOpener(browser, { newPage: true, foreground: false });
+        } catch (secondError) {
+          throw codedError(
+            "BROWSER_PAGE_OPEN_FAILED",
+            `The managed ${this.browserName} browser was recycled once, but ChatGPT navigation still failed before a page lease was granted.`,
+            {
+              submissionMayHaveOccurred: false,
+              recoveryAction: "inspect ChatGPT login or service health before authorizing another job",
+              details: {
+                browserRecycled: true,
+                firstErrorCode: firstError?.code || "ORACLE_FIREFOX_ERROR",
+                secondErrorCode: secondError?.code || "ORACLE_FIREFOX_ERROR",
+              },
+              cause: secondError,
+            },
+          );
+        }
+      }
       if (generation !== this.browserGeneration || browser !== this.browser || !browser.connected) {
         await boundedClose(page, this.pageCloseTimeoutMs);
         throw codedError("BROWSER_EPOCH_CHANGED", `${this.browserName} restarted while a page was opening; the stale page was discarded.`, { safeToRetry: true });

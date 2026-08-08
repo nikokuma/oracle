@@ -40,7 +40,7 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.6.2.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.6.2.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Download and open [`oracle-firefox-1.6.9.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.6.9.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
 ## Choose a browser
 
@@ -178,13 +178,15 @@ Private state lives in:
 - Capability hashes, completion subscriptions, delivery acknowledgements, lanes, and cooldown state: the coordinator SQLite database
 - stable broker socket: `/tmp/oracle-firefox-<uid>-<coordinator-id>/broker.sock` (independent of each host's `TMPDIR`)
 
-The coordinator UUID, signed broker locator, coordinator lifetime lease, and profile lifetime lease make differently installed Codex, Claude, Claudex, and Desktop packages converge on one owner. A newer client may request a directional idle handoff from a known older broker. It never kills active work, unlinks an unverified socket, or lets an older client downgrade a newer broker. Schema 6 also fences pre-1.5 SQLite writers and writes a `coordinator.sqlite.pre-v6.bak` backup before migrating an existing production database.
+The coordinator UUID, signed broker locator, coordinator lifetime lease, and profile lifetime lease make differently installed Codex, Claude, Claudex, and Desktop packages converge on one owner. A newer client may request a directional idle handoff from a known older broker. It never kills active work, unlinks an unverified socket, or lets an older client downgrade a newer broker. Schema 7 retains the pre-1.5 writer fence, adds durable input-abandonment audit fields, and writes a `coordinator.sqlite.pre-v7.bak` backup before migrating an existing production database.
 
 If startup reports a database or identity failure, stop before editing SQLite. `node plugins/oracle-firefox/dist/cli.mjs coordinator-inspect` performs an offline/read-only integrity, schema, backup, and broker-generation inspection without launching Firefox or a broker. Preserve both the database and its migration backup before any separately approved repair.
 
 ## Local evidence
 
-If Pro needs local facts, it returns a structured `ORACLE_LOCAL_DATA_REQUEST_V1` block instead of guessing. The local agent may perform up to three secret-scanned, read-only evidence rounds inside the original task scope. A fourth round, sensitive request, write, or scope expansion requires fresh user approval.
+If Pro needs local facts, it ends its response with a structured `ORACLE_LOCAL_DATA_REQUEST_V1` block carrying Oracle's per-chain nonce instead of guessing. Oracle rejects echoed examples, placeholders, foreign nonces, and nonterminal blocks. The local agent may perform up to three secret-scanned, read-only evidence rounds inside the original task scope. A fourth round, sensitive request, write, or scope expansion requires fresh user approval.
+
+If the user chooses not to answer a genuine input request, `abandon_input_request` releases its same-chat FIFO lane using the chain's control capability. When that capability is unavailable, `inspect_input_request` and `recover_orphaned_input_request` provide exact-URL, fingerprinted recovery with explicit confirmation. Both preserve the original response, send nothing, expose no private job contents, and do not authorize a replacement message.
 
 ## Recovery
 

@@ -23,7 +23,7 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
   let brokerPid = null;
   try {
     await client.connect(transport);
-    assert.equal(client.getServerVersion()?.version, "1.6.2");
+    assert.equal(client.getServerVersion()?.version, "1.6.9");
     assert.match(client.getInstructions() || "", /one durable, identity-locked broker/u);
     assert.match(client.getInstructions() || "", /pending result never authorizes another send/u);
     const listed = await client.listTools();
@@ -37,6 +37,9 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
       "list_jobs",
       "inspect_quarantine",
       "recover_orphaned_quarantine",
+      "inspect_input_request",
+      "abandon_input_request",
+      "recover_orphaned_input_request",
       "reconcile_job",
       "acknowledge_uncertain",
       "cancel_job",

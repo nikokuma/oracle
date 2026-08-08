@@ -1,6 +1,6 @@
 # Local-evidence replies
 
-Read this file only when `job_result` returns `assistantDisposition: "local_data_request"` with a parsed `ORACLE_LOCAL_DATA_REQUEST_V1` request.
+Read this file only when `job_result` returns `assistantDisposition: "local_data_request"` with a parsed, terminal, nonce-bound `ORACLE_LOCAL_DATA_REQUEST_V1` request. Echoed protocol examples and placeholder blocks are not requests.
 
 1. Confirm the returned request is parsed and `safeReadOnly` is true. If not, do not perform checks or reply automatically.
 2. Perform only the specifically requested read-only checks within the original user task, workspace, files, and tooling scope.
@@ -12,5 +12,7 @@ Read this file only when `job_result` returns `assistantDisposition: "local_data
 6. The reply stays in the same conversation, re-verifies Pro, and is part of the original logical job.
 7. Up to three safe read-only evidence rounds are covered by the original authorization. Before a fourth round, any write, sensitive request, or scope expansion, stop and obtain fresh explicit user approval.
 8. When Pro returns a final answer, retrieve it through the normal job flow and verify it locally before acting.
+
+If the user explicitly chooses not to answer the request, call `abandon_input_request` with its control capability and confirmation. This preserves the response and releases only that same-chat FIFO lane; it never sends or authorizes a replacement. If the originating capability is unavailable, follow the exact-URL `inspect_input_request` and `recover_orphaned_input_request` flow in the recovery reference. Never abandon a genuine request automatically.
 
 Never guess a requested local fact. Report an unavailable fact as unavailable instead of approximating it.

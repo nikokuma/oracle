@@ -262,13 +262,13 @@ export async function prepareJobRequest(operation, input) {
   let selectedDelivery = "inline";
   if (operation === "consult") {
     context = await bundleContext({
-      prompt: withLocalDataProtocol(prompt),
+      prompt: withLocalDataProtocol(prompt, input.localDataNonce),
       files: input.files ?? [],
       cwd: input.cwd,
     });
     selectedDelivery = resolveDelivery(input.delivery ?? "auto", context);
   } else {
-    const finalPrompt = input.evidenceReply ? prompt : withLocalDataProtocol(prompt);
+    const finalPrompt = input.evidenceReply ? prompt : withLocalDataProtocol(prompt, input.localDataNonce);
     context = {
       bundle: finalPrompt,
       cwd: input.cwd ? path.resolve(input.cwd) : process.cwd(),
@@ -299,6 +299,7 @@ export async function prepareJobRequest(operation, input) {
     maxAutomaticEvidenceReplies,
     responseFailurePolicy,
     maxAutomaticResponseRetries: responseFailurePolicy === "retry-once" ? 1 : 0,
+    localDataNonce: input.localDataNonce,
     completionMode,
     includedFiles: context.included.map((entry) => entry.displayPath),
     skippedBinaryFiles: context.skippedBinary,
@@ -453,7 +454,9 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
       error,
     };
   }
-  const localDataRequest = parseLocalDataRequest(answer);
+  const localDataRequest = parseLocalDataRequest(answer, {
+    expectedNonce: job.request.localDataNonce || null,
+  });
   const disposition = localDataRequest ? "local_data_request" : "final";
   transitionExecution(store, executionClaim, job.id, "response_confirmed", {
     assistantDisposition: disposition,
@@ -496,9 +499,10 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
 
 export async function executeJob({ jobId, store, browserManager, beforeSubmit, executionClaim }) {
   let job = store.requireJob(jobId);
+  let lease = null;
   if (executionClaim) store.assertExecution(executionClaim);
-  const lease = await browserManager.leasePage(job.id);
   try {
+    lease = await browserManager.leasePage(job.id);
     if (executionClaim) store.assertExecution(executionClaim);
     transitionExecution(store, executionClaim, job.id, "page_leased");
     job = store.requireJob(job.id);
@@ -652,7 +656,20 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
     triggerFailpoint("after_assistant_completion");
     return await finalizeResponse({ job: store.requireJob(job.id), response, store, executionClaim });
   } catch (error) {
-    if (new Set(["STALE_EXECUTION", "BROKER_LEASE_LOST", "BROKER_INSTANCE_REPLACED"]).has(error?.code)) throw error;
+    if (new Set([
+      "STALE_EXECUTION",
+      "BROKER_LEASE_LOST",
+      "BROKER_INSTANCE_REPLACED",
+      "PROFILE_IN_USE_EXTERNALLY",
+      "BROKER_DATABASE_OWNED",
+      "BROKER_ENDPOINT_CONFLICT",
+    ]).has(error?.code)) throw error;
+    if (!lease && new Set([
+      "BROWSER_EPOCH_CHANGED",
+      "MAINTENANCE_ACTIVE",
+      "PAGE_LIMIT_REACHED",
+      "LOCK_TIMEOUT",
+    ]).has(error?.code)) throw error;
     let current = store.requireJob(job.id);
     if (current.submitIntentAt && !current.conversationUrl && error?.details?.conversationUrl) {
       try {
@@ -684,6 +701,6 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
     throw error;
   } finally {
     triggerFailpoint("before_browser_close");
-    await browserManager.releasePage(job.id);
+    if (lease) await browserManager.releasePage(job.id);
   }
 }

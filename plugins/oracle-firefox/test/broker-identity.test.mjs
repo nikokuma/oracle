@@ -185,7 +185,7 @@ test("production migration backs up the untouched legacy schema before upgrading
     legacy.close();
     const store = await new StateStore(databasePath, { brokerContext: brokerContext("migration-backup") }).open();
     store.close();
-    const backupPath = `${databasePath}.pre-v6.bak`;
+    const backupPath = `${databasePath}.pre-v7.bak`;
     assert.ok((await stat(backupPath)).size > 0);
     const backup = new DatabaseSync(backupPath, { readOnly: true });
     try {
@@ -193,6 +193,33 @@ test("production migration backs up the untouched legacy schema before upgrading
       assert.equal(backup.prepare("SELECT COUNT(*) count FROM sqlite_schema WHERE name='broker_state'").get().count, 0);
     } finally {
       backup.close();
+    }
+  });
+});
+
+test("a schema-six successor takes ownership before touching fenced migration rows", async () => {
+  await withEnvironment(async (root) => {
+    const databasePath = path.join(root, "schema-six.sqlite");
+    const coordinatorId = "schema-six-coordinator";
+    const first = await new StateStore(databasePath, { brokerContext: brokerContext(coordinatorId) }).open();
+    const job = createQueuedJob(first, "schema-six-upgrade");
+    first.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (6, ?)")
+      .run(new Date().toISOString());
+    first.db.prepare("DELETE FROM schema_migrations WHERE version = 7").run();
+    first.close();
+
+    const successorContext = brokerContext(coordinatorId);
+    const successor = await new StateStore(databasePath, { brokerContext: successorContext }).open();
+    try {
+      assert.equal(successor.db.prepare("SELECT MAX(version) version FROM schema_migrations").get().version, 7);
+      assert.equal(successor.requireJob(job.id).state, "queued");
+      assert.equal(successorContext.leaseGeneration, 2);
+      assert.equal(
+        successor.db.prepare("SELECT current_instance_id FROM broker_state WHERE id = 1").get().current_instance_id,
+        successorContext.instanceId,
+      );
+    } finally {
+      successor.close();
     }
   });
 });

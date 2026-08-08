@@ -24,6 +24,10 @@ export function normalizeSemanticText(value) {
   return String(value ?? "")
     .replace(/\r\n?/gu, "\n")
     .replace(/\u00a0/gu, " ")
+    // ChatGPT's contenteditable canonicalizes a literal tab to four spaces.
+    // Normalize both the authorization and every pre/post-submit observation
+    // the same way so the whole-message guard still catches any other change.
+    .replace(/\t/gu, "    ")
     .normalize("NFC")
     .replace(/[ \t]+\n/gu, "\n")
     .replace(/\n[ \t]+/gu, "\n")
@@ -32,6 +36,26 @@ export function normalizeSemanticText(value) {
 
 export function semanticTextHash(value) {
   return createHash("sha256").update(normalizeSemanticText(value)).digest("hex");
+}
+
+export function semanticMismatchDetails(expected, observed) {
+  const expectedNormalized = normalizeSemanticText(expected);
+  const observedNormalized = normalizeSemanticText(observed);
+  let firstMismatch = 0;
+  const length = Math.max(expectedNormalized.length, observedNormalized.length);
+  while (
+    firstMismatch < length &&
+    expectedNormalized[firstMismatch] === observedNormalized[firstMismatch]
+  ) firstMismatch += 1;
+  const codePoint = (value) => value.codePointAt(firstMismatch)?.toString(16).toUpperCase() ?? "EOF";
+  return {
+    exactMatch: expectedNormalized === observedNormalized,
+    firstMismatch,
+    expectedCodePoint: codePoint(expectedNormalized),
+    observedCodePoint: codePoint(observedNormalized),
+    expectedNormalizedLength: expectedNormalized.length,
+    observedNormalizedLength: observedNormalized.length,
+  };
 }
 
 export function classifyAssistantResponseFailure(assistant) {
@@ -150,6 +174,75 @@ export function projectUrlFromConversationUrl(value) {
   const match = conversationUrl.pathname.match(/^(\/g\/g-p-[^/]+)\/c\/[a-zA-Z0-9-]+$/u);
   if (!match) return null;
   return normalizeProjectUrl(`${conversationUrl.origin}${match[1]}/project`);
+}
+
+export function isNavigationTimeoutError(error) {
+  return Boolean(
+    error?.name === "TimeoutError" ||
+    /Navigation timeout of \d+ ms exceeded|navigation timed out/iu.test(String(error?.message || "")),
+  );
+}
+
+function pathnameFor(value) {
+  try {
+    return new URL(String(value)).pathname.replace(/\/+$/u, "") || "/";
+  } catch {
+    return null;
+  }
+}
+
+async function navigationTimeoutObservation(page, targetUrl) {
+  const target = new URL(targetUrl);
+  let observed;
+  try {
+    observed = new URL(page.url());
+  } catch {
+    observed = null;
+  }
+  const documentState = await page.evaluate(() => ({
+    readyState: document.readyState,
+    bodyPresent: Boolean(document.body),
+  })).catch(() => ({ readyState: null, bodyPresent: false }));
+  const exactTarget = Boolean(
+    observed &&
+    observed.protocol === target.protocol &&
+    observed.hostname === target.hostname &&
+    pathnameFor(observed.href) === pathnameFor(target.href),
+  );
+  return {
+    exactTarget,
+    usable: exactTarget && documentState.bodyPresent && new Set(["interactive", "complete"]).has(documentState.readyState),
+    targetPath: pathnameFor(target.href),
+    observedPath: observed?.hostname === target.hostname ? pathnameFor(observed.href) : null,
+    readyState: documentState.readyState,
+    bodyPresent: documentState.bodyPresent,
+  };
+}
+
+export async function navigateChatGpt(page, targetUrl, { timeoutMs = 60_000 } = {}) {
+  try {
+    await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    return { timedOut: false, recoveredFromDom: false };
+  } catch (error) {
+    if (!isNavigationTimeoutError(error)) throw error;
+    const observation = await navigationTimeoutObservation(page, targetUrl);
+    // Firefox BiDi can miss the lifecycle event even after the exact document
+    // is interactive. Continue only when the URL and DOM independently prove
+    // that the requested page is usable.
+    if (observation.usable) {
+      return { timedOut: true, recoveredFromDom: true, observation };
+    }
+    throw codedError(
+      "CHATGPT_NAVIGATION_TIMEOUT",
+      `ChatGPT did not finish opening the requested page within ${Math.round(timeoutMs / 1_000)} seconds.`,
+      {
+        submissionMayHaveOccurred: false,
+        recoveryAction: "recycle the idle managed browser once, then inspect browser or ChatGPT availability if navigation still fails",
+        details: observation,
+        cause: error,
+      },
+    );
+  }
 }
 
 function projectBasePath(value) {
@@ -439,7 +532,7 @@ export async function openProject(page, { title, projectUrl } = {}) {
   let expectedUrl = null;
   if (projectUrl) {
     expectedUrl = normalizeProjectUrl(projectUrl);
-    await page.goto(expectedUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
+    await navigateChatGpt(page, expectedUrl);
   } else {
     await waitForProjectControls(page);
     const candidates = await findProjectCandidates(page, normalizedTitle, { exact: true });
@@ -483,7 +576,7 @@ export async function openProject(page, { title, projectUrl } = {}) {
     });
   }
 
-  await waitForComposer(page, { timeoutMs: 60_000 });
+  await waitForComposerAfterNavigation(page, expectedUrl || page.url(), { timeoutMs: 60_000 });
   let observedUrl;
   try {
     observedUrl = normalizeProjectUrl(page.url());
@@ -643,8 +736,8 @@ export async function openExistingConversation(
       );
     }
   }
-  await page.goto(candidate.url, { waitUntil: "domcontentloaded", timeout: 60_000 });
-  await waitForComposer(page, { timeoutMs: 60_000 });
+  await navigateChatGpt(page, candidate.url);
+  await waitForComposerAfterNavigation(page, candidate.url, { timeoutMs: 60_000 });
   await waitForConversationHistoryStable(page, { timeoutMs: 30_000, stableMs: 2_500 });
   const observedUrl = normalizeConversationUrl(page.url());
   const observedProjectUrl = projectUrlFromConversationUrl(observedUrl);
@@ -728,10 +821,18 @@ export async function openChatGpt(browser, { newPage = false, foreground = true 
       pages[0] ??
       (await browser.newPage());
   page.setDefaultTimeout(30_000);
-  if (!page.url().includes("chatgpt.com")) {
-    await page.goto(CHATGPT_URL, { waitUntil: "domcontentloaded", timeout: 60_000 });
-  } else if (page.url() !== CHATGPT_URL) {
-    await page.goto(CHATGPT_URL, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  try {
+    if (!page.url().includes("chatgpt.com")) {
+      await navigateChatGpt(page, CHATGPT_URL);
+    } else if (page.url() !== CHATGPT_URL) {
+      await navigateChatGpt(page, CHATGPT_URL);
+    }
+  } catch (error) {
+    // A failed new-page navigation must not leak an untracked page into the
+    // persistent browser. The control page is owned by the browser lifecycle
+    // and is cleaned up by its caller if initialization fails.
+    if (newPage) await page.close().catch(() => undefined);
+    throw error;
   }
   if (foreground) await page.bringToFront();
   return page;
@@ -876,6 +977,7 @@ async function findVisibleHandle(page, selectors, { enabled = false } = {}) {
 
 export async function waitForComposer(page, { timeoutMs = 60_000 } = {}) {
   const deadline = Date.now() + timeoutMs;
+  let lastState = null;
   while (Date.now() < deadline) {
     const handle = await findVisibleHandle(page, INPUT_SELECTORS);
     if (handle) {
@@ -891,14 +993,44 @@ export async function waitForComposer(page, { timeoutMs = 60_000 } = {}) {
       await handle.dispose();
     }
     const state = await probeLogin(page).catch(() => null);
+    lastState = state || lastState;
     if (state?.cloudflare) {
-      throw new Error(
+      throw codedError(
+        "CHATGPT_CHALLENGE",
         "Cloudflare challenge detected. Run oracle_firefox_setup and complete the challenge in Firefox.",
       );
     }
     await delay(250);
   }
-  throw new Error("ChatGPT prompt composer did not become available.");
+  throw codedError(
+    "CHATGPT_COMPOSER_UNAVAILABLE",
+    "ChatGPT prompt composer did not become available.",
+    {
+      submissionMayHaveOccurred: false,
+      recoveryAction: "Oracle may reload this exact pre-submit target once; if it remains unavailable, inspect ChatGPT login or service health",
+      details: {
+        observedPath: pathnameFor(lastState?.url || page.url()),
+        sessionStatus: lastState?.sessionStatus ?? null,
+        sessionAuthenticated: lastState?.sessionAuthenticated ?? false,
+        accountSignal: lastState?.accountSignal ?? false,
+        loginCta: lastState?.loginCta ?? false,
+        cloudflare: lastState?.cloudflare ?? false,
+      },
+    },
+  );
+}
+
+export async function waitForComposerAfterNavigation(page, targetUrl, { timeoutMs = 60_000 } = {}) {
+  try {
+    return await waitForComposer(page, { timeoutMs });
+  } catch (error) {
+    if (error?.code !== "CHATGPT_COMPOSER_UNAVAILABLE") throw error;
+  }
+  // One exact pre-submit reload is safe. It never edits a composer or clicks
+  // Send, and it avoids asking the caller to create a duplicate job for a
+  // transiently incomplete ChatGPT shell.
+  await navigateChatGpt(page, targetUrl, { timeoutMs });
+  return waitForComposer(page, { timeoutMs });
 }
 
 export async function readComposerText(page) {
@@ -913,26 +1045,37 @@ export async function readComposerText(page) {
       .find((candidate) => visible(candidate));
     if (!node) return "";
     if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) return node.value;
-    const inlineText = (root) => {
+    const blockTags = new Set([
+      "P", "DIV", "LI", "UL", "OL", "DL", "DT", "DD", "PRE", "BLOCKQUOTE",
+      "H1", "H2", "H3", "H4", "H5", "H6", "SECTION", "ARTICLE", "TABLE", "TR",
+    ]);
+    const blockDisplays = new Set(["block", "list-item", "table", "table-row", "table-row-group"]);
+    const isStructuralBlock = (child) =>
+      child instanceof HTMLElement &&
+      (blockTags.has(child.tagName) || blockDisplays.has(window.getComputedStyle(child).display));
+    const structuredText = (root) => {
       if (root.childNodes.length === 1 && root.firstChild instanceof HTMLBRElement) return "";
-      let value = "";
+      const pieces = [];
       for (const child of root.childNodes) {
-        if (child.nodeType === Node.TEXT_NODE) value += child.textContent || "";
-        else if (child instanceof HTMLBRElement) value += "\n";
-        else value += inlineText(child);
+        if (child.nodeType === Node.TEXT_NODE) {
+          pieces.push({ text: child.textContent || "", block: false });
+        } else if (child instanceof HTMLBRElement) {
+          pieces.push({ text: "\n", block: false });
+        } else {
+          pieces.push({ text: structuredText(child), block: isStructuralBlock(child) });
+        }
+      }
+      let value = "";
+      for (let index = 0; index < pieces.length; index += 1) {
+        if (index > 0 && (pieces[index - 1].block || pieces[index].block)) value += "\n";
+        value += pieces[index].text;
       }
       return value;
     };
-    const children = Array.from(node.children || []);
-    const blockTags = new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6"]);
-    if (children.length > 0 && children.every((child) => blockTags.has(child.tagName))) {
-      // Firefox/ProseMirror represents each authorized LF as a separate block.
-      // innerText expands those block boundaries (one LF becomes two and two
-      // become five), while joining direct block text reconstructs the exact
-      // message, including empty blocks used for blank lines.
-      return children.map(inlineText).join("\n");
-    }
-    return inlineText(node) || node.innerText || node.textContent || "";
+    // Firefox/ProseMirror represents authorized line breaks as structural
+    // boundaries at multiple nesting levels. Reconstruct those boundaries
+    // recursively so a later list/container cannot flatten earlier paragraphs.
+    return structuredText(node) || node.innerText || node.textContent || "";
   }, INPUT_SELECTORS);
 }
 
@@ -953,21 +1096,34 @@ export async function inspectComposerState(page) {
       if (composer instanceof HTMLTextAreaElement || composer instanceof HTMLInputElement) {
         text = composer.value;
       } else if (composer) {
-        const inlineText = (root) => {
+        const blockTags = new Set([
+          "P", "DIV", "LI", "UL", "OL", "DL", "DT", "DD", "PRE", "BLOCKQUOTE",
+          "H1", "H2", "H3", "H4", "H5", "H6", "SECTION", "ARTICLE", "TABLE", "TR",
+        ]);
+        const blockDisplays = new Set(["block", "list-item", "table", "table-row", "table-row-group"]);
+        const isStructuralBlock = (child) =>
+          child instanceof HTMLElement &&
+          (blockTags.has(child.tagName) || blockDisplays.has(window.getComputedStyle(child).display));
+        const structuredText = (root) => {
           if (root.childNodes.length === 1 && root.firstChild instanceof HTMLBRElement) return "";
-          let value = "";
+          const pieces = [];
           for (const child of root.childNodes) {
-            if (child.nodeType === Node.TEXT_NODE) value += child.textContent || "";
-            else if (child instanceof HTMLBRElement) value += "\n";
-            else value += inlineText(child);
+            if (child.nodeType === Node.TEXT_NODE) {
+              pieces.push({ text: child.textContent || "", block: false });
+            } else if (child instanceof HTMLBRElement) {
+              pieces.push({ text: "\n", block: false });
+            } else {
+              pieces.push({ text: structuredText(child), block: isStructuralBlock(child) });
+            }
+          }
+          let value = "";
+          for (let index = 0; index < pieces.length; index += 1) {
+            if (index > 0 && (pieces[index - 1].block || pieces[index].block)) value += "\n";
+            value += pieces[index].text;
           }
           return value;
         };
-        const children = Array.from(composer.children || []);
-        const blockTags = new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6"]);
-        text = children.length > 0 && children.every((child) => blockTags.has(child.tagName))
-          ? children.map(inlineText).join("\n")
-          : inlineText(composer) || composer.innerText || composer.textContent || "";
+        text = structuredText(composer) || composer.innerText || composer.textContent || "";
       }
       const filenames = new Set();
       for (const input of fileSelectors.flatMap((selector) => Array.from(root.querySelectorAll(selector)))) {
@@ -1026,14 +1182,27 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
       node.dispatchEvent(new Event("change", { bubbles: true }));
     }, content);
   } else {
-    const lines = content.split("\n");
-    for (let index = 0; index < lines.length; index += 1) {
-      if (lines[index]) await page.keyboard.type(lines[index]);
-      if (index < lines.length - 1) {
-        await page.keyboard.down("Shift");
-        try { await page.keyboard.press("Enter"); }
-        finally { await page.keyboard.up("Shift"); }
+    const inserted = await editor.evaluate((node, value) => {
+      node.focus();
+      const selection = window.getSelection();
+      if (!selection?.rangeCount || !node.contains(selection.anchorNode)) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
       }
+      // Insert the complete authorized value as one edit. Per-character key
+      // events let ProseMirror consume prefixes such as `1. ` or `- ` as
+      // Markdown shortcuts, changing the draft before the exact-text guard.
+      return document.execCommand("insertText", false, value);
+    }, content);
+    if (!inserted) {
+      throw codedError(
+        "COMPOSER_INSERT_FAILED",
+        "Firefox refused the atomic composer insertion; no message was sent.",
+        { safeToRetry: true },
+      );
     }
   }
   await delay(250);
@@ -1041,22 +1210,12 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
   const expectedNormalized = normalizeSemanticText(content);
   const observedNormalized = normalizeSemanticText(observed);
   if (observedNormalized !== expectedNormalized) {
-    let firstMismatch = 0;
-    const length = Math.max(expectedNormalized.length, observedNormalized.length);
-    while (firstMismatch < length && expectedNormalized[firstMismatch] === observedNormalized[firstMismatch]) firstMismatch += 1;
-    const codePoint = (value) => value.codePointAt(firstMismatch)?.toString(16).toUpperCase() ?? "EOF";
     throw codedError(
       "COMPOSER_MISMATCH",
       `Prompt insertion did not match the whole authorized message (${observed.length}/${content.length} characters).`,
       {
         safeToRetry: true,
-        details: {
-          firstMismatch,
-          expectedCodePoint: codePoint(expectedNormalized),
-          observedCodePoint: codePoint(observedNormalized),
-          expectedNormalizedLength: expectedNormalized.length,
-          observedNormalizedLength: observedNormalized.length,
-        },
+        details: semanticMismatchDetails(content, observed),
       },
     );
   }
@@ -1146,6 +1305,12 @@ export async function assistantSnapshot(page) {
             const code = node.querySelector(":scope > code");
             const source = String(code?.textContent || node.textContent || "").replace(/\n+$/u, "");
             return `\`\`\`${source}\n\`\`\``;
+          }
+          if (node.tagName === "CODE") {
+            const source = node.textContent || "";
+            const longestRun = Math.max(0, ...Array.from(source.matchAll(/`+/gu), (match) => match[0].length));
+            const delimiter = "`".repeat(longestRun + 1);
+            return `${delimiter}${source}${delimiter}`;
           }
           return Array.from(node.childNodes, serializeUserSource).join("");
         };
@@ -1278,12 +1443,25 @@ export async function waitForUserMessage(
   } catch {
     // A canonical URL may not exist yet for a failed new-chat submission.
   }
+  const users = latest?.turns?.filter((turn) => turn.role === "user") || [];
+  const newUsers = knownTurnIds.size
+    ? users.filter((turn) => turn.id && !knownTurnIds.has(turn.id))
+    : users.slice(baselineCount);
+  const closest = newUsers.find((turn) =>
+    attachmentManifestKey(turn.attachments) === attachmentManifestKey(expectedManifest)
+  ) || newUsers.at(-1) || null;
   throw codedError(
     "SUBMISSION_UNCERTAIN",
     `The new user message could not be confirmed in the target conversation. Refusing to retry automatically. Last state: ${JSON.stringify({ userCount: latest?.userCount, baselineCount })}`,
     {
       submissionMayHaveOccurred: true,
-      details: { conversationUrl, observedUserCount: latest?.userCount ?? null, baselineCount },
+      details: {
+        conversationUrl,
+        observedUserCount: latest?.userCount ?? null,
+        baselineCount,
+        candidateCount: newUsers.length,
+        mismatch: closest ? semanticMismatchDetails(expectedText, closest.text) : null,
+      },
     },
   );
 }

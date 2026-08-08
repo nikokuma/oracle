@@ -61290,12 +61290,12 @@ import { chmod as chmod3, link as link2, mkdir as mkdir4, open as open3, readFil
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.2",
-  "protocolVersion": 7,
-  "schemaVersion": 6,
-  "releaseSequence": 1603,
-  "sourceDigest": "ca28965db22d879d54cb6a6c81ed0232910b2d94333221b6b984442043a3b4d3",
-  "buildId": "oracle-firefox-1.6.2-ca28965db22d879d"
+  "packageVersion": "1.6.9",
+  "protocolVersion": 8,
+  "schemaVersion": 7,
+  "releaseSequence": 1610,
+  "sourceDigest": "2f31f624d68eff4f24f7904a64fea5b2596d5ebff8574bdebfcff758658b642d",
+  "buildId": "oracle-firefox-1.6.9-2f31f624d68eff4f"
 });
 
 // src/build-info.mjs
@@ -63363,10 +63363,26 @@ var execFileAsync3 = promisify3(execFile3);
 var ORACLE_APPROVED_ATTACHMENTS = /* @__PURE__ */ new WeakMap();
 var delay = (milliseconds) => new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 function normalizeSemanticText(value) {
-  return String(value ?? "").replace(/\r\n?/gu, "\n").replace(/\u00a0/gu, " ").normalize("NFC").replace(/[ \t]+\n/gu, "\n").replace(/\n[ \t]+/gu, "\n").trim();
+  return String(value ?? "").replace(/\r\n?/gu, "\n").replace(/\u00a0/gu, " ").replace(/\t/gu, "    ").normalize("NFC").replace(/[ \t]+\n/gu, "\n").replace(/\n[ \t]+/gu, "\n").trim();
 }
 function semanticTextHash(value) {
   return createHash4("sha256").update(normalizeSemanticText(value)).digest("hex");
+}
+function semanticMismatchDetails(expected, observed) {
+  const expectedNormalized = normalizeSemanticText(expected);
+  const observedNormalized = normalizeSemanticText(observed);
+  let firstMismatch = 0;
+  const length = Math.max(expectedNormalized.length, observedNormalized.length);
+  while (firstMismatch < length && expectedNormalized[firstMismatch] === observedNormalized[firstMismatch]) firstMismatch += 1;
+  const codePoint = (value) => value.codePointAt(firstMismatch)?.toString(16).toUpperCase() ?? "EOF";
+  return {
+    exactMatch: expectedNormalized === observedNormalized,
+    firstMismatch,
+    expectedCodePoint: codePoint(expectedNormalized),
+    observedCodePoint: codePoint(observedNormalized),
+    expectedNormalizedLength: expectedNormalized.length,
+    observedNormalizedLength: observedNormalized.length
+  };
 }
 function classifyAssistantResponseFailure(assistant) {
   if (!assistant) return null;
@@ -63462,6 +63478,64 @@ function projectUrlFromConversationUrl(value) {
   const match = conversationUrl.pathname.match(/^(\/g\/g-p-[^/]+)\/c\/[a-zA-Z0-9-]+$/u);
   if (!match) return null;
   return normalizeProjectUrl(`${conversationUrl.origin}${match[1]}/project`);
+}
+function isNavigationTimeoutError(error) {
+  return Boolean(
+    error?.name === "TimeoutError" || /Navigation timeout of \d+ ms exceeded|navigation timed out/iu.test(String(error?.message || ""))
+  );
+}
+function pathnameFor(value) {
+  try {
+    return new URL(String(value)).pathname.replace(/\/+$/u, "") || "/";
+  } catch {
+    return null;
+  }
+}
+async function navigationTimeoutObservation(page, targetUrl) {
+  const target = new URL(targetUrl);
+  let observed;
+  try {
+    observed = new URL(page.url());
+  } catch {
+    observed = null;
+  }
+  const documentState = await page.evaluate(() => ({
+    readyState: document.readyState,
+    bodyPresent: Boolean(document.body)
+  })).catch(() => ({ readyState: null, bodyPresent: false }));
+  const exactTarget = Boolean(
+    observed && observed.protocol === target.protocol && observed.hostname === target.hostname && pathnameFor(observed.href) === pathnameFor(target.href)
+  );
+  return {
+    exactTarget,
+    usable: exactTarget && documentState.bodyPresent && (/* @__PURE__ */ new Set(["interactive", "complete"])).has(documentState.readyState),
+    targetPath: pathnameFor(target.href),
+    observedPath: observed?.hostname === target.hostname ? pathnameFor(observed.href) : null,
+    readyState: documentState.readyState,
+    bodyPresent: documentState.bodyPresent
+  };
+}
+async function navigateChatGpt(page, targetUrl, { timeoutMs = 6e4 } = {}) {
+  try {
+    await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    return { timedOut: false, recoveredFromDom: false };
+  } catch (error) {
+    if (!isNavigationTimeoutError(error)) throw error;
+    const observation = await navigationTimeoutObservation(page, targetUrl);
+    if (observation.usable) {
+      return { timedOut: true, recoveredFromDom: true, observation };
+    }
+    throw codedError(
+      "CHATGPT_NAVIGATION_TIMEOUT",
+      `ChatGPT did not finish opening the requested page within ${Math.round(timeoutMs / 1e3)} seconds.`,
+      {
+        submissionMayHaveOccurred: false,
+        recoveryAction: "recycle the idle managed browser once, then inspect browser or ChatGPT availability if navigation still fails",
+        details: observation,
+        cause: error
+      }
+    );
+  }
 }
 function projectBasePath(value) {
   return new URL(normalizeProjectUrl(value)).pathname.replace(/\/project$/u, "");
@@ -63673,7 +63747,7 @@ async function openProject(page, { title, projectUrl } = {}) {
   let expectedUrl = null;
   if (projectUrl) {
     expectedUrl = normalizeProjectUrl(projectUrl);
-    await page.goto(expectedUrl, { waitUntil: "domcontentloaded", timeout: 6e4 });
+    await navigateChatGpt(page, expectedUrl);
   } else {
     await waitForProjectControls(page);
     const candidates = await findProjectCandidates(page, normalizedTitle, { exact: true });
@@ -63711,7 +63785,7 @@ async function openProject(page, { title, projectUrl } = {}) {
       timeout: 3e4
     });
   }
-  await waitForComposer(page, { timeoutMs: 6e4 });
+  await waitForComposerAfterNavigation(page, expectedUrl || page.url(), { timeoutMs: 6e4 });
   let observedUrl;
   try {
     observedUrl = normalizeProjectUrl(page.url());
@@ -63845,8 +63919,8 @@ async function openExistingConversation(page, { title, conversationUrl, projectT
       );
     }
   }
-  await page.goto(candidate.url, { waitUntil: "domcontentloaded", timeout: 6e4 });
-  await waitForComposer(page, { timeoutMs: 6e4 });
+  await navigateChatGpt(page, candidate.url);
+  await waitForComposerAfterNavigation(page, candidate.url, { timeoutMs: 6e4 });
   await waitForConversationHistoryStable(page, { timeoutMs: 3e4, stableMs: 2500 });
   const observedUrl = normalizeConversationUrl(page.url());
   const observedProjectUrl = projectUrlFromConversationUrl(observedUrl);
@@ -63892,10 +63966,15 @@ async function openChatGpt(browser, { newPage = false, foreground = true } = {})
   const pages = await browser.pages();
   const page = newPage ? await browser.newPage() : pages.find((candidate) => candidate.url().includes("chatgpt.com")) ?? pages[0] ?? await browser.newPage();
   page.setDefaultTimeout(3e4);
-  if (!page.url().includes("chatgpt.com")) {
-    await page.goto(CHATGPT_URL, { waitUntil: "domcontentloaded", timeout: 6e4 });
-  } else if (page.url() !== CHATGPT_URL) {
-    await page.goto(CHATGPT_URL, { waitUntil: "domcontentloaded", timeout: 6e4 });
+  try {
+    if (!page.url().includes("chatgpt.com")) {
+      await navigateChatGpt(page, CHATGPT_URL);
+    } else if (page.url() !== CHATGPT_URL) {
+      await navigateChatGpt(page, CHATGPT_URL);
+    }
+  } catch (error) {
+    if (newPage) await page.close().catch(() => void 0);
+    throw error;
   }
   if (foreground) await page.bringToFront();
   return page;
@@ -63998,6 +64077,7 @@ async function findVisibleHandle(page, selectors, { enabled = false } = {}) {
 }
 async function waitForComposer(page, { timeoutMs = 6e4 } = {}) {
   const deadline = Date.now() + timeoutMs;
+  let lastState = null;
   while (Date.now() < deadline) {
     const handle = await findVisibleHandle(page, INPUT_SELECTORS);
     if (handle) {
@@ -64010,14 +64090,40 @@ async function waitForComposer(page, { timeoutMs = 6e4 } = {}) {
       await handle.dispose();
     }
     const state = await probeLogin(page).catch(() => null);
+    lastState = state || lastState;
     if (state?.cloudflare) {
-      throw new Error(
+      throw codedError(
+        "CHATGPT_CHALLENGE",
         "Cloudflare challenge detected. Run oracle_firefox_setup and complete the challenge in Firefox."
       );
     }
     await delay(250);
   }
-  throw new Error("ChatGPT prompt composer did not become available.");
+  throw codedError(
+    "CHATGPT_COMPOSER_UNAVAILABLE",
+    "ChatGPT prompt composer did not become available.",
+    {
+      submissionMayHaveOccurred: false,
+      recoveryAction: "Oracle may reload this exact pre-submit target once; if it remains unavailable, inspect ChatGPT login or service health",
+      details: {
+        observedPath: pathnameFor(lastState?.url || page.url()),
+        sessionStatus: lastState?.sessionStatus ?? null,
+        sessionAuthenticated: lastState?.sessionAuthenticated ?? false,
+        accountSignal: lastState?.accountSignal ?? false,
+        loginCta: lastState?.loginCta ?? false,
+        cloudflare: lastState?.cloudflare ?? false
+      }
+    }
+  );
+}
+async function waitForComposerAfterNavigation(page, targetUrl, { timeoutMs = 6e4 } = {}) {
+  try {
+    return await waitForComposer(page, { timeoutMs });
+  } catch (error) {
+    if (error?.code !== "CHATGPT_COMPOSER_UNAVAILABLE") throw error;
+  }
+  await navigateChatGpt(page, targetUrl, { timeoutMs });
+  return waitForComposer(page, { timeoutMs });
 }
 async function readComposerText(page) {
   return page.evaluate((selectors) => {
@@ -64029,22 +64135,50 @@ async function readComposerText(page) {
     const node = selectors.map((selector) => document.querySelector(selector)).find((candidate) => visible(candidate));
     if (!node) return "";
     if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) return node.value;
-    const inlineText = (root) => {
+    const blockTags = /* @__PURE__ */ new Set([
+      "P",
+      "DIV",
+      "LI",
+      "UL",
+      "OL",
+      "DL",
+      "DT",
+      "DD",
+      "PRE",
+      "BLOCKQUOTE",
+      "H1",
+      "H2",
+      "H3",
+      "H4",
+      "H5",
+      "H6",
+      "SECTION",
+      "ARTICLE",
+      "TABLE",
+      "TR"
+    ]);
+    const blockDisplays = /* @__PURE__ */ new Set(["block", "list-item", "table", "table-row", "table-row-group"]);
+    const isStructuralBlock = (child) => child instanceof HTMLElement && (blockTags.has(child.tagName) || blockDisplays.has(window.getComputedStyle(child).display));
+    const structuredText = (root) => {
       if (root.childNodes.length === 1 && root.firstChild instanceof HTMLBRElement) return "";
-      let value = "";
+      const pieces = [];
       for (const child of root.childNodes) {
-        if (child.nodeType === Node.TEXT_NODE) value += child.textContent || "";
-        else if (child instanceof HTMLBRElement) value += "\n";
-        else value += inlineText(child);
+        if (child.nodeType === Node.TEXT_NODE) {
+          pieces.push({ text: child.textContent || "", block: false });
+        } else if (child instanceof HTMLBRElement) {
+          pieces.push({ text: "\n", block: false });
+        } else {
+          pieces.push({ text: structuredText(child), block: isStructuralBlock(child) });
+        }
+      }
+      let value = "";
+      for (let index = 0; index < pieces.length; index += 1) {
+        if (index > 0 && (pieces[index - 1].block || pieces[index].block)) value += "\n";
+        value += pieces[index].text;
       }
       return value;
     };
-    const children = Array.from(node.children || []);
-    const blockTags = /* @__PURE__ */ new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6"]);
-    if (children.length > 0 && children.every((child) => blockTags.has(child.tagName))) {
-      return children.map(inlineText).join("\n");
-    }
-    return inlineText(node) || node.innerText || node.textContent || "";
+    return structuredText(node) || node.innerText || node.textContent || "";
   }, INPUT_SELECTORS);
 }
 async function inspectComposerState(page) {
@@ -64062,19 +64196,50 @@ async function inspectComposerState(page) {
       if (composer instanceof HTMLTextAreaElement || composer instanceof HTMLInputElement) {
         text = composer.value;
       } else if (composer) {
-        const inlineText = (root2) => {
+        const blockTags = /* @__PURE__ */ new Set([
+          "P",
+          "DIV",
+          "LI",
+          "UL",
+          "OL",
+          "DL",
+          "DT",
+          "DD",
+          "PRE",
+          "BLOCKQUOTE",
+          "H1",
+          "H2",
+          "H3",
+          "H4",
+          "H5",
+          "H6",
+          "SECTION",
+          "ARTICLE",
+          "TABLE",
+          "TR"
+        ]);
+        const blockDisplays = /* @__PURE__ */ new Set(["block", "list-item", "table", "table-row", "table-row-group"]);
+        const isStructuralBlock = (child) => child instanceof HTMLElement && (blockTags.has(child.tagName) || blockDisplays.has(window.getComputedStyle(child).display));
+        const structuredText = (root2) => {
           if (root2.childNodes.length === 1 && root2.firstChild instanceof HTMLBRElement) return "";
-          let value = "";
+          const pieces = [];
           for (const child of root2.childNodes) {
-            if (child.nodeType === Node.TEXT_NODE) value += child.textContent || "";
-            else if (child instanceof HTMLBRElement) value += "\n";
-            else value += inlineText(child);
+            if (child.nodeType === Node.TEXT_NODE) {
+              pieces.push({ text: child.textContent || "", block: false });
+            } else if (child instanceof HTMLBRElement) {
+              pieces.push({ text: "\n", block: false });
+            } else {
+              pieces.push({ text: structuredText(child), block: isStructuralBlock(child) });
+            }
+          }
+          let value = "";
+          for (let index = 0; index < pieces.length; index += 1) {
+            if (index > 0 && (pieces[index - 1].block || pieces[index].block)) value += "\n";
+            value += pieces[index].text;
           }
           return value;
         };
-        const children = Array.from(composer.children || []);
-        const blockTags = /* @__PURE__ */ new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6"]);
-        text = children.length > 0 && children.every((child) => blockTags.has(child.tagName)) ? children.map(inlineText).join("\n") : inlineText(composer) || composer.innerText || composer.textContent || "";
+        text = structuredText(composer) || composer.innerText || composer.textContent || "";
       }
       const filenames = /* @__PURE__ */ new Set();
       for (const input2 of fileSelectors.flatMap((selector) => Array.from(root.querySelectorAll(selector)))) {
@@ -64129,17 +64294,24 @@ async function insertComposerText(page, text, { expectedAttachments } = {}) {
       node.dispatchEvent(new Event("change", { bubbles: true }));
     }, content);
   } else {
-    const lines = content.split("\n");
-    for (let index = 0; index < lines.length; index += 1) {
-      if (lines[index]) await page.keyboard.type(lines[index]);
-      if (index < lines.length - 1) {
-        await page.keyboard.down("Shift");
-        try {
-          await page.keyboard.press("Enter");
-        } finally {
-          await page.keyboard.up("Shift");
-        }
+    const inserted = await editor.evaluate((node, value) => {
+      node.focus();
+      const selection = window.getSelection();
+      if (!selection?.rangeCount || !node.contains(selection.anchorNode)) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
       }
+      return document.execCommand("insertText", false, value);
+    }, content);
+    if (!inserted) {
+      throw codedError(
+        "COMPOSER_INSERT_FAILED",
+        "Firefox refused the atomic composer insertion; no message was sent.",
+        { safeToRetry: true }
+      );
     }
   }
   await delay(250);
@@ -64147,22 +64319,12 @@ async function insertComposerText(page, text, { expectedAttachments } = {}) {
   const expectedNormalized = normalizeSemanticText(content);
   const observedNormalized = normalizeSemanticText(observed);
   if (observedNormalized !== expectedNormalized) {
-    let firstMismatch = 0;
-    const length = Math.max(expectedNormalized.length, observedNormalized.length);
-    while (firstMismatch < length && expectedNormalized[firstMismatch] === observedNormalized[firstMismatch]) firstMismatch += 1;
-    const codePoint = (value) => value.codePointAt(firstMismatch)?.toString(16).toUpperCase() ?? "EOF";
     throw codedError(
       "COMPOSER_MISMATCH",
       `Prompt insertion did not match the whole authorized message (${observed.length}/${content.length} characters).`,
       {
         safeToRetry: true,
-        details: {
-          firstMismatch,
-          expectedCodePoint: codePoint(expectedNormalized),
-          observedCodePoint: codePoint(observedNormalized),
-          expectedNormalizedLength: expectedNormalized.length,
-          observedNormalizedLength: observedNormalized.length
-        }
+        details: semanticMismatchDetails(content, observed)
       }
     );
   }
@@ -64237,6 +64399,12 @@ async function assistantSnapshot(page) {
             const source2 = String(code?.textContent || node.textContent || "").replace(/\n+$/u, "");
             return `\`\`\`${source2}
 \`\`\``;
+          }
+          if (node.tagName === "CODE") {
+            const source2 = node.textContent || "";
+            const longestRun = Math.max(0, ...Array.from(source2.matchAll(/`+/gu), (match) => match[0].length));
+            const delimiter = "`".repeat(longestRun + 1);
+            return `${delimiter}${source2}${delimiter}`;
           }
           return Array.from(node.childNodes, serializeUserSource).join("");
         };
@@ -64320,9 +64488,9 @@ async function waitForUserMessage(page, baselineCount, expectedText, { timeoutMs
         recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job"
       });
     }
-    const users = latest.turns.filter((turn) => turn.role === "user");
-    const newUsers = knownTurnIds.size ? users.filter((turn) => turn.id && !knownTurnIds.has(turn.id)) : users.slice(baselineCount);
-    const match = newUsers.find(
+    const users2 = latest.turns.filter((turn) => turn.role === "user");
+    const newUsers2 = knownTurnIds.size ? users2.filter((turn) => turn.id && !knownTurnIds.has(turn.id)) : users2.slice(baselineCount);
+    const match = newUsers2.find(
       (turn) => semanticTextHash(turn.text) === expectedHash && attachmentManifestKey(turn.attachments) === attachmentManifestKey(expectedManifest)
     );
     if (match) {
@@ -64340,12 +64508,23 @@ async function waitForUserMessage(page, baselineCount, expectedText, { timeoutMs
     conversationUrl = normalizeConversationUrl(latest?.url || page.url());
   } catch {
   }
+  const users = latest?.turns?.filter((turn) => turn.role === "user") || [];
+  const newUsers = knownTurnIds.size ? users.filter((turn) => turn.id && !knownTurnIds.has(turn.id)) : users.slice(baselineCount);
+  const closest = newUsers.find(
+    (turn) => attachmentManifestKey(turn.attachments) === attachmentManifestKey(expectedManifest)
+  ) || newUsers.at(-1) || null;
   throw codedError(
     "SUBMISSION_UNCERTAIN",
     `The new user message could not be confirmed in the target conversation. Refusing to retry automatically. Last state: ${JSON.stringify({ userCount: latest?.userCount, baselineCount })}`,
     {
       submissionMayHaveOccurred: true,
-      details: { conversationUrl, observedUserCount: latest?.userCount ?? null, baselineCount }
+      details: {
+        conversationUrl,
+        observedUserCount: latest?.userCount ?? null,
+        baselineCount,
+        candidateCount: newUsers.length,
+        mismatch: closest ? semanticMismatchDetails(expectedText, closest.text) : null
+      }
     }
   );
 }
@@ -65386,9 +65565,15 @@ var BrowserManager = class {
     try {
       this.controlPage = await this.pageOpener(browser, { newPage: false, foreground: false });
     } catch (error) {
-      await Promise.resolve(browser.close?.()).catch(() => void 0);
-      this.browser = null;
-      this.controlPage = null;
+      const failedOwner = this.currentOwner;
+      await boundedClose(browser, this.browserCloseTimeoutMs);
+      if (this.browser === browser) {
+        this.browser = null;
+        this.controlPage = null;
+        this.browserGeneration += 1;
+      }
+      if (this.ownerFileEnabled && failedOwner) await removeOwnerIfOwned(failedOwner);
+      if (this.currentOwner === failedOwner) this.currentOwner = null;
       throw error;
     }
     return browser;
@@ -65404,9 +65589,35 @@ var BrowserManager = class {
       if (discovery && this.discoveryCount >= this.maxDiscoveryPages) {
         throw codedError("DISCOVERY_LIMIT_REACHED", "Both read-only discovery pages are currently in use.");
       }
-      const browser = await this.ensureBrowserLocked();
-      const generation = this.browserGeneration;
-      const page = await this.pageOpener(browser, { newPage: true, foreground: false });
+      let browser = await this.ensureBrowserLocked();
+      let generation = this.browserGeneration;
+      let page;
+      try {
+        page = await this.pageOpener(browser, { newPage: true, foreground: false });
+      } catch (firstError) {
+        if (this.leases.size > 0) throw firstError;
+        await this.closeLocked();
+        try {
+          browser = await this.ensureBrowserLocked();
+          generation = this.browserGeneration;
+          page = await this.pageOpener(browser, { newPage: true, foreground: false });
+        } catch (secondError) {
+          throw codedError(
+            "BROWSER_PAGE_OPEN_FAILED",
+            `The managed ${this.browserName} browser was recycled once, but ChatGPT navigation still failed before a page lease was granted.`,
+            {
+              submissionMayHaveOccurred: false,
+              recoveryAction: "inspect ChatGPT login or service health before authorizing another job",
+              details: {
+                browserRecycled: true,
+                firstErrorCode: firstError?.code || "ORACLE_FIREFOX_ERROR",
+                secondErrorCode: secondError?.code || "ORACLE_FIREFOX_ERROR"
+              },
+              cause: secondError
+            }
+          );
+        }
+      }
       if (generation !== this.browserGeneration || browser !== this.browser || !browser.connected) {
         await boundedClose(page, this.pageCloseTimeoutMs);
         throw codedError("BROWSER_EPOCH_CHANGED", `${this.browserName} restarted while a page was opening; the stale page was discarded.`, { safeToRetry: true });
@@ -65569,7 +65780,7 @@ var BrowserManager = class {
 // src/coordinator.mjs
 import { randomUUID as randomUUID11 } from "node:crypto";
 import { execFile as execFile7 } from "node:child_process";
-import { access as access5, mkdir as mkdir16, open as open9, rm as rm13 } from "node:fs/promises";
+import { access as access5, mkdir as mkdir16, open as open9, readFile as readFile9, rm as rm13 } from "node:fs/promises";
 import path29 from "node:path";
 
 // src/capabilities.mjs
@@ -66105,32 +66316,57 @@ function publicDownloadCandidates(candidates) {
 // src/evidence.mjs
 import { createHash as createHash7 } from "node:crypto";
 var LOCAL_DATA_SENTINEL = "ORACLE_LOCAL_DATA_REQUEST_V1";
-var LOCAL_DATA_PROTOCOL = `
+var LOCAL_DATA_PROTOCOL_VERSION = 1;
+var LOCAL_DATA_NONCE_PATTERN = /^[a-f0-9]{32}$/u;
+var LOCAL_DATA_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/iu;
+var TEMPLATE_PLACEHOLDERS = /* @__PURE__ */ new Set([
+  "short-stable-id",
+  "fact-id",
+  "exact fact needed",
+  "why it changes the answer",
+  "a safe read-only check"
+]);
+function deriveLocalDataNonce(rootAuthorizationId) {
+  return createHash7("sha256").update(`oracle-local-data-nonce-v1:${String(rootAuthorizationId)}`).digest("hex").slice(0, 32);
+}
+function localDataProtocol(nonce) {
+  if (!LOCAL_DATA_NONCE_PATTERN.test(String(nonce || ""))) {
+    throw codedError("LOCAL_DATA_NONCE_REQUIRED", "Oracle requires a per-job local-data nonce before preparing a prompt.");
+  }
+  return `
 When forming conclusions, label material claims as verified, inferred, or proposed.
 Do not guess when a material conclusion depends on facts that are only available in the local workspace or runtime.
-If local facts are required, stop and return exactly one ${LOCAL_DATA_SENTINEL} JSON block with this shape:
+If local facts are required, stop and end your response with exactly one ${LOCAL_DATA_SENTINEL} JSON block using this nonce and shape:
 {
+  "version": ${LOCAL_DATA_PROTOCOL_VERSION},
+  "oracleNonce": "${nonce}",
   "requestId": "short-stable-id",
   "requests": [
     { "id": "fact-id", "fact": "exact fact needed", "why": "why it changes the answer", "suggestedReadOnlyCheck": "a safe read-only check" }
   ]
 }
+Replace every descriptive placeholder with a concrete value. Never repeat this example as an answer.
 Never request credentials, cookies, tokens, passwords, private keys, browser-profile contents, unrelated chats, or unrelated private files. Do not request writes or state changes.
 `.trim();
-function withLocalDataProtocol(prompt) {
+}
+var LOCAL_DATA_PROTOCOL = localDataProtocol("00000000000000000000000000000000");
+function withLocalDataProtocol(prompt, nonce) {
   return `${String(prompt).trim()}
 
 [ORACLE LOCAL DATA PROTOCOL]
-${LOCAL_DATA_PROTOCOL}`;
+${localDataProtocol(nonce)}`;
 }
-function extractJson(text) {
-  const source2 = String(text ?? "");
-  const marker = source2.indexOf(LOCAL_DATA_SENTINEL);
+function extractTerminalJson(text) {
+  const source2 = String(text ?? "").trimEnd();
+  const marker = source2.lastIndexOf(LOCAL_DATA_SENTINEL);
   if (marker < 0) return null;
+  if (marker > 0 && source2[marker - 1] !== "\n" && source2[marker - 1] !== "\r") return null;
   const tail = source2.slice(marker + LOCAL_DATA_SENTINEL.length);
-  const fenced = tail.match(/^\s*```(?:json)?\s*([\s\S]*?)```/iu);
-  const candidate = fenced?.[1] ?? tail.slice(tail.indexOf("{"));
-  if (!candidate) return null;
+  const fenced = tail.match(/^\s*```(?:json)?\s*([\s\S]*?)```\s*$/iu);
+  if (fenced) return fenced[1];
+  const firstBrace = tail.indexOf("{");
+  if (firstBrace < 0 || tail.slice(0, firstBrace).trim()) return null;
+  const candidate = tail.slice(firstBrace);
   let depth = 0;
   let inString = false;
   let escaped = false;
@@ -66154,13 +66390,23 @@ function extractJson(text) {
     else if (char === "{") depth += 1;
     else if (char === "}") {
       depth -= 1;
-      if (depth === 0) return candidate.slice(start, index + 1);
+      if (depth === 0) {
+        if (candidate.slice(index + 1).trim()) return null;
+        return candidate.slice(start, index + 1);
+      }
     }
   }
-  return null;
+  return candidate;
 }
-function parseLocalDataRequest(text) {
-  const raw = extractJson(text);
+function isTemplateLocalDataRequest(value) {
+  if (!value || typeof value !== "object") return false;
+  if (TEMPLATE_PLACEHOLDERS.has(String(value.requestId || "").trim().toLowerCase())) return true;
+  return Array.isArray(value.requests) && value.requests.some(
+    (request3) => request3 && [request3.id, request3.fact, request3.why, request3.suggestedReadOnlyCheck].some((entry) => TEMPLATE_PLACEHOLDERS.has(String(entry || "").trim().toLowerCase()))
+  );
+}
+function parseLocalDataRequest(text, { expectedNonce = null } = {}) {
+  const raw = extractTerminalJson(text);
   if (!raw) return null;
   let value;
   try {
@@ -66168,11 +66414,19 @@ function parseLocalDataRequest(text) {
   } catch {
     throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contained invalid JSON.`);
   }
-  if (!value || typeof value.requestId !== "string" || !value.requestId.trim() || !Array.isArray(value.requests) || value.requests.length < 1 || value.requests.length > 20) {
+  if (!value || typeof value !== "object") {
+    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} did not match the required schema.`);
+  }
+  if (isTemplateLocalDataRequest(value)) return null;
+  if (expectedNonce && (value.version !== LOCAL_DATA_PROTOCOL_VERSION || value.oracleNonce !== expectedNonce)) return null;
+  if (value.oracleNonce != null && !LOCAL_DATA_NONCE_PATTERN.test(String(value.oracleNonce))) {
+    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contained an invalid Oracle nonce.`);
+  }
+  if (typeof value.requestId !== "string" || !value.requestId.trim() || !LOCAL_DATA_ID_PATTERN.test(value.requestId.trim()) || !Array.isArray(value.requests) || value.requests.length < 1 || value.requests.length > 20) {
     throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} did not match the required schema.`);
   }
   const requests2 = value.requests.map((request3) => {
-    if (!request3 || ![request3.id, request3.fact, request3.why, request3.suggestedReadOnlyCheck].every((entry) => typeof entry === "string" && entry.trim())) {
+    if (!request3 || ![request3.id, request3.fact, request3.why, request3.suggestedReadOnlyCheck].every((entry) => typeof entry === "string" && entry.trim()) || !LOCAL_DATA_ID_PATTERN.test(request3.id.trim())) {
       throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contains an incomplete fact request.`);
     }
     return {
@@ -66188,7 +66442,14 @@ function parseLocalDataRequest(text) {
   }
   const prohibited = /\b(password|credential|cookie|token|private key|secret|browser profile|unrelated chat|write|delete|modify|install|send)\b/iu;
   const unsafe = requests2.find((request3) => prohibited.test(`${request3.fact} ${request3.suggestedReadOnlyCheck}`));
-  return { version: 1, requestId: value.requestId.trim(), requests: requests2, safeReadOnly: !unsafe, unsafeRequestId: unsafe?.id ?? null };
+  return {
+    version: LOCAL_DATA_PROTOCOL_VERSION,
+    oracleNonce: value.oracleNonce ?? null,
+    requestId: value.requestId.trim(),
+    requests: requests2,
+    safeReadOnly: !unsafe,
+    unsafeRequestId: unsafe?.id ?? null
+  };
 }
 function scanEvidenceForSecrets(value) {
   const serialized = JSON.stringify(value);
@@ -66211,6 +66472,7 @@ function buildLocalDataReply({ request: request3, facts = [], unavailable = [] }
   if (!request3?.requestId) throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "A parsed local-data request is required.");
   const payload = {
     protocol: "ORACLE_LOCAL_DATA_RESPONSE_V1",
+    ...request3.oracleNonce ? { oracleNonce: request3.oracleNonce } : {},
     requestId: request3.requestId,
     facts: facts.map((fact) => ({ id: String(fact.id), value: fact.value, source: String(fact.source || "read-only local check") })),
     unavailable: unavailable.map((item) => ({ id: String(item.id), reason: String(item.reason) }))
@@ -66328,6 +66590,9 @@ function rowToJob(row) {
     executionState: row.execution_state ?? "idle",
     executionFailureCount: row.execution_failure_count ?? 0,
     nextExecutionNotBefore: row.next_execution_not_before ?? null,
+    chainState: row.chain_state ?? null,
+    inputRequestAbandonedAt: row.input_required_abandoned_at ?? null,
+    inputRequestAbandonedReason: row.input_required_abandoned_reason ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     startedAt: row.started_at,
@@ -66352,7 +66617,10 @@ function rowToChain(row) {
     legacyMode: row.legacy_mode,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    terminalAt: row.terminal_at
+    terminalAt: row.terminal_at,
+    inputRequestAbandonedAt: row.input_required_abandoned_at,
+    inputRequestAbandonedJobId: row.input_required_abandoned_job_id,
+    inputRequestAbandonedReason: row.input_required_abandoned_reason
   };
 }
 function quarantineFingerprint(row) {
@@ -66364,6 +66632,18 @@ function quarantineFingerprint(row) {
     row.created_at,
     row.job_state,
     row.job_updated_at
+  ].map((value) => String(value ?? "")).join("\0")).digest("hex");
+}
+function inputRequestFingerprint(row) {
+  if (!row) return null;
+  return createHash8("sha256").update([
+    "oracle-firefox-input-request-v1",
+    row.conversation_key,
+    row.id,
+    row.active_job_id,
+    row.updated_at,
+    row.job_updated_at,
+    row.local_data_request_json
   ].map((value) => String(value ?? "")).join("\0")).digest("hex");
 }
 var WAKE_CHAIN_STATES = /* @__PURE__ */ new Set([
@@ -66441,9 +66721,11 @@ var StateStore = class extends EventEmitter4 {
         if (integrity !== "ok" || this.db.prepare("PRAGMA foreign_key_check").all().length > 0) {
           throw codedError("COORDINATOR_DATABASE_INVALID", "Oracle Firefox refused to migrate a coordinator database that failed integrity checks.");
         }
+        const hasBrokerGenerationGuards = existingVersion >= 6;
+        if (hasBrokerGenerationGuards) this.registerBrokerTakeover();
         this.migrateLegacy();
-        this.migrateSix({ existing: false });
-        this.registerBrokerTakeover();
+        this.migrateSix({ existing: hasBrokerGenerationGuards });
+        if (!hasBrokerGenerationGuards) this.registerBrokerTakeover();
       }
       this.backfillUntrackedUncertaintyQuarantines();
       return this;
@@ -66766,6 +67048,11 @@ var StateStore = class extends EventEmitter4 {
         ["last_executor_error_json", "TEXT"]
       ]);
       addColumns("jobs", [["last_recovery_generation", "INTEGER NOT NULL DEFAULT 0"]]);
+      addColumns("job_chains", [
+        ["input_required_abandoned_at", "TEXT"],
+        ["input_required_abandoned_job_id", "TEXT"],
+        ["input_required_abandoned_reason", "TEXT"]
+      ]);
       addColumns("job_events", [
         ["broker_instance_id", "TEXT"],
         ["lease_generation", "INTEGER"]
@@ -67061,9 +67348,9 @@ var StateStore = class extends EventEmitter4 {
       throw error;
     }
   }
-  chainStateForJob(job) {
+  chainStateForJob(job, chain = null) {
     if (!job) return "failed";
-    if (job.state === "completed" && parse2(job.local_data_request_json)) return "input_required";
+    if (job.state === "completed" && parse2(job.local_data_request_json) && chain?.input_required_abandoned_job_id !== job.id) return "input_required";
     if (job.state === "completed") return "completed";
     if (job.state === "cancelled_pre_submit") return "cancelled";
     if (job.state === "submission_uncertain") return "submission_uncertain";
@@ -67077,9 +67364,12 @@ var StateStore = class extends EventEmitter4 {
     return `
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before
+             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM jobs j
       LEFT JOIN job_attempts a ON a.job_id = j.id
+      LEFT JOIN job_chains c ON c.id = a.chain_id
       ${where}
       ${suffix}
     `;
@@ -67189,9 +67479,12 @@ var StateStore = class extends EventEmitter4 {
     const stateClause = states.length ? `AND j.state IN (${states.map(() => "?").join(",")})` : "";
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch
+             a.execution_epoch, c.state AS chain_state,
+             c.input_required_abandoned_at, c.input_required_abandoned_job_id,
+             c.input_required_abandoned_reason
       FROM jobs j
       JOIN job_attempts a ON a.job_id = j.id
+      JOIN job_chains c ON c.id = a.chain_id
       JOIN chain_session_grants g ON g.chain_id = a.chain_id
       WHERE g.session_id = ? AND g.can_list = 1 AND g.revoked_at IS NULL ${stateClause}
       ORDER BY j.created_at DESC, j.rowid DESC LIMIT ?
@@ -67375,7 +67668,9 @@ var StateStore = class extends EventEmitter4 {
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before
+             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM jobs j
       JOIN job_attempts a ON a.job_id = j.id
       JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
@@ -67482,7 +67777,7 @@ var StateStore = class extends EventEmitter4 {
     const rawJob = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(jobId);
     const activeJobId = chain.active_job_id || jobId;
     const active = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(activeJobId) || rawJob;
-    const nextState = this.chainStateForJob(active);
+    const nextState = this.chainStateForJob(active, chain);
     const conversationKey = active.conversation_key || chain.conversation_key;
     const canonicalUrl = active.canonical_url || chain.canonical_url;
     if (canonicalUrl && canonicalUrl !== chain.canonical_url) {
@@ -67721,6 +68016,123 @@ var StateStore = class extends EventEmitter4 {
     this.db.prepare("UPDATE quarantines SET active = 0, acknowledged_at = ? WHERE job_id = ?").run(now, jobId);
     return { jobId, acknowledged: true, conversationKey: job.conversationKey };
   }
+  activeInputRequestRecord(scopeKey) {
+    const rows = this.db.prepare(`
+      SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.assistant_disposition, j.local_data_request_json
+      FROM job_chains c
+      JOIN jobs j ON j.id = c.active_job_id
+      WHERE c.conversation_key = ? AND c.state = 'input_required'
+        AND j.state = 'completed' AND j.local_data_request_json IS NOT NULL
+      ORDER BY c.accepted_sequence
+      LIMIT 2
+    `).all(scopeKey);
+    if (rows.length > 1) {
+      throw codedError("INPUT_REQUEST_AMBIGUOUS", "More than one durable input request occupies this exact conversation lane. Oracle refused to guess.");
+    }
+    return rows[0] || null;
+  }
+  inputRequestView(scopeKey) {
+    const row = this.activeInputRequestRecord(scopeKey);
+    if (!row) return { inputRequired: false, conversationUrl: scopeKey };
+    const request3 = parse2(row.local_data_request_json);
+    return {
+      inputRequired: true,
+      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.conversation_key) ? row.conversation_key : null),
+      fingerprint: inputRequestFingerprint(row),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      safeReadOnly: request3?.safeReadOnly === true,
+      templateFalsePositive: isTemplateLocalDataRequest(request3),
+      capabilityRecoveryRequired: true,
+      recoveryActions: ["reply-with-local-data", "abandon-after-user-confirmation"]
+    };
+  }
+  requireMatchingInputRequest(scopeKey, fingerprint) {
+    const row = this.activeInputRequestRecord(scopeKey);
+    if (!row) {
+      throw codedError("INPUT_REQUEST_NOT_FOUND", "No active Oracle Firefox input request matches that exact conversation URL.");
+    }
+    const currentFingerprint = inputRequestFingerprint(row);
+    if (!fingerprint || fingerprint !== currentFingerprint) {
+      throw codedError(
+        "INPUT_REQUEST_CHANGED",
+        "The input request changed after inspection. Inspect the exact conversation lane again before abandoning it.",
+        { safeToRetry: true }
+      );
+    }
+    return row;
+  }
+  abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode }, now = (/* @__PURE__ */ new Date()).toISOString()) {
+    const request3 = parse2(row.local_data_request_json);
+    if (row.state !== "input_required" || row.job_state !== "completed" || row.assistant_disposition !== "local_data_request" || !request3) {
+      throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected logical chain is not waiting for a valid local-data request.");
+    }
+    const changed = this.db.prepare(`
+      UPDATE job_chains
+      SET state = 'completed', terminal_at = ?, updated_at = ?,
+          input_required_abandoned_at = ?, input_required_abandoned_job_id = ?,
+          input_required_abandoned_reason = ?
+      WHERE id = ? AND active_job_id = ? AND state = 'input_required'
+    `).run(now, now, now, row.active_job_id, reason, row.id, row.active_job_id);
+    if (Number(changed.changes) !== 1) {
+      throw codedError("INPUT_REQUEST_CHANGED", "The input request changed while Oracle was abandoning it.", { safeToRetry: true });
+    }
+    this.createChainEvent(row.id, row.active_job_id, "completed", {
+      inputRequestAbandoned: true,
+      reason,
+      recoveryMode,
+      messageSent: false,
+      replacementAuthorized: false
+    }, now);
+    return {
+      job: this.requireJob(row.active_job_id),
+      chain: this.getChain(row.id),
+      abandonedAt: now,
+      reason,
+      templateFalsePositive: isTemplateLocalDataRequest(request3)
+    };
+  }
+  abandonInputRequest(jobId, { reason = "user-declined" } = {}) {
+    let released;
+    this.transaction(() => {
+      const job = this.requireJob(jobId);
+      const chain = this.chainAccessRow(job.chainId);
+      if (chain?.input_required_abandoned_job_id === job.id && chain.state === "completed") {
+        released = {
+          job,
+          chain: this.getChain(chain.id),
+          abandonedAt: chain.input_required_abandoned_at,
+          reason: chain.input_required_abandoned_reason,
+          templateFalsePositive: isTemplateLocalDataRequest(job.localDataRequest),
+          idempotent: true
+        };
+        return;
+      }
+      if (!chain || chain.active_job_id !== job.id) {
+        throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "Only the active input request in a logical chain can be abandoned.");
+      }
+      const row = {
+        ...chain,
+        job_state: job.state,
+        job_updated_at: job.updatedAt,
+        assistant_disposition: job.assistantDisposition,
+        local_data_request_json: json(job.localDataRequest)
+      };
+      released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "capability" });
+    });
+    this.emit("change", released.job);
+    return released;
+  }
+  abandonOrphanedInputRequest(scopeKey, fingerprint, { reason = "user-declined" } = {}) {
+    let released;
+    this.transaction(() => {
+      const row = this.requireMatchingInputRequest(scopeKey, fingerprint);
+      released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "orphaned-capability" });
+    });
+    this.emit("change", released.job);
+    return released;
+  }
   cancel(jobId) {
     const job = this.requireJob(jobId);
     if (TERMINAL_JOB_STATES.has(job.state)) return { ...job, cancelled: job.state === "cancelled_pre_submit", detached: false };
@@ -67766,9 +68178,12 @@ var StateStore = class extends EventEmitter4 {
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before
+             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM job_attempts a
       JOIN jobs j ON j.id = a.job_id
+      JOIN job_chains c ON c.id = a.chain_id
       WHERE a.chain_id = ?
       ORDER BY a.ordinal ASC
     `).all(requested.chainId).map(rowToJob);
@@ -69471,13 +69886,13 @@ async function prepareJobRequest(operation, input2) {
   let selectedDelivery = "inline";
   if (operation === "consult") {
     context2 = await bundleContext({
-      prompt: withLocalDataProtocol(prompt),
+      prompt: withLocalDataProtocol(prompt, input2.localDataNonce),
       files: input2.files ?? [],
       cwd: input2.cwd
     });
     selectedDelivery = resolveDelivery(input2.delivery ?? "auto", context2);
   } else {
-    const finalPrompt = input2.evidenceReply ? prompt : withLocalDataProtocol(prompt);
+    const finalPrompt = input2.evidenceReply ? prompt : withLocalDataProtocol(prompt, input2.localDataNonce);
     context2 = {
       bundle: finalPrompt,
       cwd: input2.cwd ? path28.resolve(input2.cwd) : process.cwd(),
@@ -69509,6 +69924,7 @@ async function prepareJobRequest(operation, input2) {
     maxAutomaticEvidenceReplies,
     responseFailurePolicy,
     maxAutomaticResponseRetries: responseFailurePolicy === "retry-once" ? 1 : 0,
+    localDataNonce: input2.localDataNonce,
     completionMode,
     includedFiles: context2.included.map((entry) => entry.displayPath),
     skippedBinaryFiles: context2.skippedBinary,
@@ -69655,7 +70071,9 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
       error
     };
   }
-  const localDataRequest = parseLocalDataRequest(answer);
+  const localDataRequest = parseLocalDataRequest(answer, {
+    expectedNonce: job.request.localDataNonce || null
+  });
   const disposition = localDataRequest ? "local_data_request" : "final";
   transitionExecution(store2, executionClaim, job.id, "response_confirmed", {
     assistantDisposition: disposition,
@@ -69697,9 +70115,10 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
 }
 async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, executionClaim }) {
   let job = store2.requireJob(jobId);
+  let lease = null;
   if (executionClaim) store2.assertExecution(executionClaim);
-  const lease = await browserManager.leasePage(job.id);
   try {
+    lease = await browserManager.leasePage(job.id);
     if (executionClaim) store2.assertExecution(executionClaim);
     transitionExecution(store2, executionClaim, job.id, "page_leased");
     job = store2.requireJob(job.id);
@@ -69842,7 +70261,20 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
     triggerFailpoint("after_assistant_completion");
     return await finalizeResponse({ job: store2.requireJob(job.id), response, store: store2, executionClaim });
   } catch (error) {
-    if ((/* @__PURE__ */ new Set(["STALE_EXECUTION", "BROKER_LEASE_LOST", "BROKER_INSTANCE_REPLACED"])).has(error?.code)) throw error;
+    if ((/* @__PURE__ */ new Set([
+      "STALE_EXECUTION",
+      "BROKER_LEASE_LOST",
+      "BROKER_INSTANCE_REPLACED",
+      "PROFILE_IN_USE_EXTERNALLY",
+      "BROKER_DATABASE_OWNED",
+      "BROKER_ENDPOINT_CONFLICT"
+    ])).has(error?.code)) throw error;
+    if (!lease && (/* @__PURE__ */ new Set([
+      "BROWSER_EPOCH_CHANGED",
+      "MAINTENANCE_ACTIVE",
+      "PAGE_LIMIT_REACHED",
+      "LOCK_TIMEOUT"
+    ])).has(error?.code)) throw error;
     let current = store2.requireJob(job.id);
     if (current.submitIntentAt && !current.conversationUrl && error?.details?.conversationUrl) {
       try {
@@ -69873,12 +70305,20 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
     throw error;
   } finally {
     triggerFailpoint("before_browser_close");
-    await browserManager.releasePage(job.id);
+    if (lease) await browserManager.releasePage(job.id);
   }
 }
 
 // src/coordinator.mjs
 var UUID_PATTERN2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+var INPUT_REQUEST_ABANDON_REASONS = /* @__PURE__ */ new Set(["false-positive", "not-needed", "user-declined"]);
+function inputRequestAbandonReason(value) {
+  const reason = value || "user-declined";
+  if (!INPUT_REQUEST_ABANDON_REASONS.has(reason)) {
+    throw codedError("INVALID_INPUT_REQUEST_ABANDON_REASON", "Input-request abandonment reason must be false-positive, not-needed, or user-declined.");
+  }
+  return reason;
+}
 function publicJob(job, extras = {}) {
   if (!job) return null;
   return {
@@ -69918,6 +70358,9 @@ function publicJob(job, extras = {}) {
     retryAttempt: job.retryAttempt,
     maxAutomaticResponseRetries: job.maxAutomaticResponseRetries,
     chainId: job.chainId,
+    chainState: job.chainState,
+    inputRequestAbandonedAt: job.inputRequestAbandonedAt,
+    inputRequestAbandonedReason: job.inputRequestAbandonedReason,
     attemptKind: job.attemptKind,
     responseFailurePolicy: job.request?.responseFailurePolicy ?? "report",
     completionMode: job.request?.completionMode ?? "manual",
@@ -70176,6 +70619,11 @@ var Coordinator = class {
         resolvedProjectUrl: match.projectUrl || discovered.projectUrl
       };
     }
+    const rootAuthorizationId = internalChain ? this.store.requireJob(internalChain.rootJobId).authorizationId : authorizationId;
+    resolvedInput = {
+      ...resolvedInput,
+      localDataNonce: deriveLocalDataNonce(rootAuthorizationId)
+    };
     const prepared = await prepareJobRequest(operation, resolvedInput);
     const conversationKey = conversationKeyFor(operation, prepared);
     const chainId = internalChain?.id || null;
@@ -70514,6 +70962,12 @@ var Coordinator = class {
     if (job.state === "completed") {
       return {
         ...job.result,
+        ...job.inputRequestAbandonedAt ? {
+          inputRequestAbandoned: true,
+          inputRequestAbandonedAt: job.inputRequestAbandonedAt,
+          inputRequestAbandonedReason: job.inputRequestAbandonedReason,
+          recoveryAction: null
+        } : {},
         requestedJobId: requested.id,
         activeJobId: job.id,
         recoveryChain: chain.map((entry) => entry.id),
@@ -70559,12 +71013,14 @@ var Coordinator = class {
         recoveryAction: `acknowledge_uncertain ${job.id} after manual inspection`
       };
     }
-    const matches = await this.findSubmittedTurnMatches(job);
+    const { matches, candidateCount, mismatch } = await this.findSubmittedTurnMatches(job);
     if (matches.length !== 1) {
       return {
         ...publicJob(job),
         reconciled: false,
         observedMatches: matches.length,
+        candidateCount,
+        mismatch,
         reason: matches.length ? "More than one exact user turn matched; attribution remains ambiguous." : "No exact submitted user turn was found."
       };
     }
@@ -70579,9 +71035,25 @@ var Coordinator = class {
     try {
       await openExistingConversation(lease.page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
       const snapshot = await assistantSnapshot(lease.page);
-      return snapshot.turns.filter(
-        (turn) => turn.role === "user" && semanticTextHash(turn.text) === job.submittedMessageHash && attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || [])
+      const candidates = snapshot.turns.filter(
+        (turn) => turn.role === "user" && attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || [])
       );
+      const matches = candidates.filter((turn) => semanticTextHash(turn.text) === job.submittedMessageHash);
+      let expectedText = null;
+      if (job.request?.delivery === "attachment") {
+        expectedText = [
+          "Read the attached oracle-context.md before answering.",
+          "Follow the [USER] request and ORACLE LOCAL DATA PROTOCOL in that file.",
+          "Return only the substantive answer or the strict local-data request block."
+        ].join("\n");
+      } else if (job.request?.requestPath) {
+        expectedText = (await readFile9(job.request.requestPath, "utf8")).trimEnd();
+      }
+      return {
+        matches,
+        candidateCount: candidates.length,
+        mismatch: expectedText && candidates.length ? semanticMismatchDetails(expectedText, candidates.at(-1).text) : null
+      };
     } finally {
       await this.browserManager.releasePage(lease.jobId);
     }
@@ -70592,6 +71064,71 @@ var Coordinator = class {
       ...this.store.quarantineView(canonicalUrl),
       exactScope: true,
       messageSent: false
+    };
+  }
+  inspectInputRequest(conversationUrl) {
+    const canonicalUrl = normalizeConversationUrl(conversationUrl);
+    return {
+      ...this.store.inputRequestView(canonicalUrl),
+      exactScope: true,
+      messageSent: false,
+      replacementAuthorized: false
+    };
+  }
+  abandonInputRequest(input2, context2) {
+    this.requireWritable();
+    if (input2.confirmAbandon !== true) {
+      throw codedError(
+        "INPUT_REQUEST_ABANDON_CONFIRMATION_REQUIRED",
+        "Abandoning a local-data request requires explicit confirmation. This discards the evidence round and releases the conversation lane without sending."
+      );
+    }
+    const { job } = this.accessibleJob(input2, context2, { control: true });
+    const released = this.store.abandonInputRequest(job.id, { reason: inputRequestAbandonReason(input2.reason) });
+    this.schedule();
+    return {
+      ...publicJob(released.job),
+      abandoned: true,
+      idempotent: Boolean(released.idempotent),
+      laneReleased: true,
+      templateFalsePositive: released.templateFalsePositive,
+      inputRequestAbandonedAt: released.abandonedAt,
+      inputRequestAbandonedReason: released.reason,
+      messageSent: false,
+      replacementAuthorized: false,
+      recoveryAction: "The next already-authorized same-chat job may now run; any new replacement still requires its own authorization."
+    };
+  }
+  abandonOrphanedInputRequest(input2, context2) {
+    this.requireWritable();
+    this.callerFromContext(context2);
+    if (input2.confirmCapabilityUnavailable !== true) {
+      throw codedError(
+        "CAPABILITY_RECOVERY_CONFIRMATION_REQUIRED",
+        "Orphaned input-request recovery requires explicit confirmation that the original control capability is unavailable."
+      );
+    }
+    if (input2.confirmAbandon !== true) {
+      throw codedError(
+        "INPUT_REQUEST_ABANDON_CONFIRMATION_REQUIRED",
+        "Abandoning the exact input request requires explicit confirmation that no local-evidence reply should be sent."
+      );
+    }
+    const canonicalUrl = normalizeConversationUrl(input2.conversationUrl);
+    const released = this.store.abandonOrphanedInputRequest(canonicalUrl, input2.fingerprint, {
+      reason: inputRequestAbandonReason(input2.reason)
+    });
+    this.schedule();
+    return {
+      conversationUrl: canonicalUrl,
+      abandoned: true,
+      laneReleased: true,
+      templateFalsePositive: released.templateFalsePositive,
+      inputRequestAbandonedAt: released.abandonedAt,
+      inputRequestAbandonedReason: released.reason,
+      messageSent: false,
+      replacementAuthorized: false,
+      recoveryAction: "The next already-authorized same-chat job may now run; any new replacement still requires its own authorization."
     };
   }
   async recoverOrphanedQuarantine(params, context2) {
@@ -70715,6 +71252,9 @@ var Coordinator = class {
   async replyWithLocalData(input2, context2) {
     this.requireWritable();
     const { job: parent, chain } = this.accessibleJob(input2, context2, { control: true });
+    if (chain.state !== "input_required" || chain.inputRequestAbandonedAt) {
+      throw codedError("LOCAL_DATA_REQUEST_ABANDONED", "This local-data request was abandoned or is no longer the active input request for its conversation lane.");
+    }
     if (parent.state !== "completed" || parent.assistantDisposition !== "local_data_request" || !parent.localDataRequest) {
       throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected job did not complete with a valid local-data request.");
     }
@@ -70901,6 +71441,12 @@ var Coordinator = class {
         this.callerFromContext(context2);
         return this.inspectQuarantine(params.conversationUrl);
       },
+      "jobs.inspectInputRequest": (params, context2) => {
+        this.callerFromContext(context2);
+        return this.inspectInputRequest(params.conversationUrl);
+      },
+      "jobs.abandonInputRequest": (params, context2) => this.abandonInputRequest(params, context2),
+      "jobs.abandonOrphanedInputRequest": (params, context2) => this.abandonOrphanedInputRequest(params, context2),
       "jobs.recoverOrphanedQuarantine": (params, context2) => this.recoverOrphanedQuarantine(params, context2),
       "jobs.reconcile": (params, context2) => {
         const { job } = this.accessibleJob(params, context2, { control: true });

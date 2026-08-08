@@ -10,6 +10,7 @@ import {
   inspectComposerState,
   insertComposerText,
   launchFirefox,
+  normalizeSemanticText,
   readComposerText,
   submitComposer,
   uploadAttachmentFiles,
@@ -48,6 +49,79 @@ test("reconstructs Firefox contenteditable block boundaries exactly", async () =
   await withPage('<div id="prompt-textarea" role="textbox" contenteditable="true"></div>', async (page) => {
     const authorized = "first line\n\nthird line\nfourth line";
     await insertComposerText(page, authorized);
+    assert.equal(await readComposerText(page), authorized);
+    assert.equal((await inspectComposerState(page)).text, authorized);
+  });
+});
+
+test("inserts contenteditable prompts atomically so Markdown shortcuts cannot rewrite them", async () => {
+  const authorized = "1. Assess this response boundary";
+  await withPage(`
+    <div id="prompt-textarea" role="textbox" contenteditable="true"></div>
+    <script>
+      const editor = document.querySelector("#prompt-textarea");
+      window.composerKeydowns = 0;
+      editor.addEventListener("keydown", event => {
+        window.composerKeydowns += 1;
+        if (event.key !== " " || editor.innerText !== "1.") return;
+        event.preventDefault();
+        editor.innerHTML = "<ol><li></li></ol>";
+        const item = editor.querySelector("li");
+        const range = document.createRange();
+        range.selectNodeContents(item);
+        range.collapse(false);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+    </script>
+  `, async (page) => {
+    await insertComposerText(page, authorized);
+    assert.equal(await readComposerText(page), authorized);
+    assert.equal((await inspectComposerState(page)).text, authorized);
+    assert.equal(await page.evaluate(() => window.composerKeydowns), 0);
+  });
+});
+
+test("accepts only ChatGPT's deterministic four-space expansion of composer tabs", async () => {
+  const authorized = "left\tcenter\tright";
+  await withPage(`
+    <div id="prompt-textarea" role="textbox" contenteditable="true"></div>
+    <script>
+      const editor = document.querySelector("#prompt-textarea");
+      editor.addEventListener("input", () => {
+        if (!editor.textContent.includes("\\t")) return;
+        editor.textContent = editor.textContent.replaceAll("\\t", "    ");
+      });
+    </script>
+  `, async (page) => {
+    await insertComposerText(page, authorized);
+    assert.equal(normalizeSemanticText(await readComposerText(page)), "left    center    right");
+    assert.equal(normalizeSemanticText((await inspectComposerState(page)).text), "left    center    right");
+  });
+});
+
+test("reconstructs mixed nested ProseMirror blocks without flattening paragraphs", async () => {
+  const authorized = [
+    "Wave checkpoint.",
+    "",
+    "I am a replacement agent.",
+    "- first bounded item",
+    "- second bounded item",
+    "",
+    "Archive digest follows.",
+  ].join("\n");
+  const html = [
+    '<div id="prompt-textarea" role="textbox" contenteditable="true">',
+    "<p>Wave checkpoint.</p>",
+    "<p><br></p>",
+    "<div>I am a replacement agent.</div>",
+    "<ul><li>- first bounded item</li><li>- second bounded item</li></ul>",
+    "<div><br></div>",
+    "<section>Archive digest follows.</section>",
+    "</div>",
+  ].join("");
+  await withPage(html, async (page) => {
     assert.equal(await readComposerText(page), authorized);
     assert.equal((await inspectComposerState(page)).text, authorized);
   });
@@ -219,6 +293,25 @@ test("reconstructs fenced code source for exact submitted-turn correlation", asy
       requireCanonicalUrl: false,
     });
     assert.equal(confirmed.userTurn.id, "evidence-user");
+  });
+});
+
+test("reconstructs inline code source for exact submitted-turn correlation", async () => {
+  await withPage(`
+    <main id="thread">
+      <article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="inline-code-user">
+        <div data-testid="collapsible-user-message-content" class="whitespace-pre-wrap">Inline syntax: <code>code</code> remains literal.</div>
+      </article>
+    </main>
+  `, async (page) => {
+    const expected = "Inline syntax: `code` remains literal.";
+    const snapshot = await assistantSnapshot(page);
+    assert.equal(snapshot.turns[0].text, expected);
+    const confirmed = await waitForUserMessage(page, 0, expected, {
+      timeoutMs: 1_000,
+      requireCanonicalUrl: false,
+    });
+    assert.equal(confirmed.userTurn.id, "inline-code-user");
   });
 });
 

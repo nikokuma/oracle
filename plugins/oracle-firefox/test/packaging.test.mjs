@@ -58,6 +58,26 @@ test("canonical metadata matches Codex, Claude, marketplace, and MCPB packages",
   }
 });
 
+test("Codex MCP launcher survives a restricted PATH and unrelated working directory", async () => {
+  const launcher = path.join(pluginRoot, "bin", "oracle-firefox-codex-launcher");
+  const unrelated = await mkdtemp(path.join(os.tmpdir(), "oracle-codex-launcher-"));
+  try {
+    const { stdout } = await execFileAsync(launcher, ["--launcher-probe"], {
+      cwd: unrelated,
+      env: {
+        PATH: "/usr/bin:/bin:/usr/sbin:/sbin",
+        ORACLE_FIREFOX_NODE_PATH: "/bin/echo",
+      },
+    });
+    assert.equal(stdout.trim(), `${path.join(pluginRoot, "dist", "server.mjs")} --launcher-probe`);
+    const contents = await readFile(launcher, "utf8");
+    assert.match(contents, /\/opt\/homebrew\/bin\/node/u);
+    assert.match(contents, /ORACLE_FIREFOX_NODE_PATH/u);
+  } finally {
+    await rm(unrelated, { recursive: true, force: true });
+  }
+});
+
 test("generated Claude skill includes the canonical progressive-disclosure references", async () => {
   const canonicalRoot = path.join(pluginRoot, "skills", "oracle-firefox");
   const generatedRoot = path.join(repositoryRoot, "plugins", "oracle-firefox-claude", "skills", "oracle-firefox");

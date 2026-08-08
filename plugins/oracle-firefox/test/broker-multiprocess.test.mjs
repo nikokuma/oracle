@@ -151,7 +151,11 @@ test("a strictly newer release request drains and releases the exact idle broker
     })).stdout);
     pid = value.status.pid;
     assert.equal(value.upgrade.accepted, true);
-    assert.equal(value.released, true);
+    const failureEvidence = value.released ? "" : await Promise.all([
+      readFile(path.join(root, "coordinator", "broker.log"), "utf8").catch((error) => `log unavailable: ${error.message}`),
+      readFile(path.join(root, "coordinator", "broker.locator.json"), "utf8").catch((error) => `locator unavailable: ${error.message}`),
+    ]).then(([log, locator]) => `\nBroker log:\n${log}\nLocator:\n${locator}`);
+    assert.equal(value.released, true, failureEvidence);
     assert.equal(value.upgrade.state, "draining");
   } finally {
     if (pid) {

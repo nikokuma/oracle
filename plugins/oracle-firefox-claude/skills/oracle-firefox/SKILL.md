@@ -52,7 +52,7 @@ Honor overrides: “current model” means `modelRequirement: "current"`; “do 
 6. Call `job_result` once terminal, following retries, and verify a normal answer locally.
    If you directly claimed a subscription event, mark it delivered after the handoff and acknowledge it only after consuming the result.
 7. Before acting on a pending receipt after restart, response failure, cooldown, uncertainty, quarantine, cancellation, or recovery chain, read [recovery and exceptional states](references/recovery.md).
-8. If the result is `assistantDisposition: "local_data_request"`, read [local-evidence replies](references/local-evidence.md) before any local check or reply.
+8. If the result is `assistantDisposition: "local_data_request"`, read [local-evidence replies](references/local-evidence.md) before any check, reply, or explicitly approved abandonment.
 
 ## Completion and scope
 

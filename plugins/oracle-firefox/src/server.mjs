@@ -78,6 +78,9 @@ const jobReferenceFields = {
   jobId: z.string().uuid().optional().describe("Opaque job UUID; accessible only to its owner session or for legacy read-only jobs."),
   jobHandle: z.string().optional().describe("Broker-minted control/read handle used to resume a job from another process."),
 };
+const inputRequestReason = z.enum(["false-positive", "not-needed", "user-declined"])
+  .default("user-declined")
+  .describe("Auditable reason for discarding the pending evidence request; never authorizes a replacement send.");
 
 function register(name, config, method, timeoutMs = 65_000, prepareParams = null) {
   server.registerTool(name, config, async (params, extra) => {
@@ -229,6 +232,36 @@ register("inspect_quarantine", {
     conversationUrl: z.string().url().describe("Exact standalone or project ChatGPT conversation URL reported by the blocked submission."),
   },
 }, "jobs.inspectQuarantine");
+
+register("inspect_input_request", {
+  title: "Inspect one exact Oracle Firefox input request",
+  description: "Read sanitized recovery metadata for the input request blocking one exact conversation URL. Never exposes the prompt or answer and never sends.",
+  inputSchema: {
+    conversationUrl: z.string().url().describe("Exact standalone or project ChatGPT conversation URL reported by the blocked submission."),
+  },
+}, "jobs.inspectInputRequest");
+
+register("abandon_input_request", {
+  title: "Abandon an Oracle Firefox input request",
+  description: "Discard one capability-owned local-evidence request and release its same-chat FIFO lane. Never sends and never authorizes a replacement.",
+  inputSchema: {
+    ...jobReferenceFields,
+    confirmAbandon: z.boolean().describe("Must be true after the user explicitly chooses not to answer this local-data request."),
+    reason: inputRequestReason,
+  },
+}, "jobs.abandonInputRequest");
+
+register("recover_orphaned_input_request", {
+  title: "Abandon one orphaned Oracle Firefox input request",
+  description: "Use an exact-URL inspection fingerprint to discard a blocking input request whose original capability is unavailable. Never sends or authorizes a replacement.",
+  inputSchema: {
+    conversationUrl: z.string().url().describe("The same exact conversation URL used with inspect_input_request."),
+    fingerprint: z.string().regex(/^[a-f0-9]{64}$/u).describe("Current fingerprint returned by inspect_input_request."),
+    confirmCapabilityUnavailable: z.boolean().describe("Must be true only after confirming the original control capability is unavailable."),
+    confirmAbandon: z.boolean().describe("Must be true after the user explicitly chooses to discard the request and release the lane."),
+    reason: inputRequestReason,
+  },
+}, "jobs.abandonOrphanedInputRequest");
 
 register("recover_orphaned_quarantine", {
   title: "Recover one orphaned Oracle Firefox quarantine",

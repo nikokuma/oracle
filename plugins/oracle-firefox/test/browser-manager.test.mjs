@@ -6,6 +6,7 @@ import path from "node:path";
 import { writeAtomicJson } from "../src/atomic-json.mjs";
 import { BrowserManager, removeOwnerIfOwned } from "../src/browser-manager.mjs";
 import { AsyncMutex } from "../src/async-lock.mjs";
+import { navigateChatGpt, openChatGpt } from "../src/firefox.mjs";
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -194,6 +195,109 @@ test("releasing a page is bounded even when its close promise never settles", as
   assert.ok(Date.now() - started < 500);
   assert.equal(manager.status().pagesLeased, 0);
   await manager.close();
+});
+
+test("an idle browser is recycled once after a fresh execution page cannot navigate", async () => {
+  let launches = 0;
+  const openerCalls = new Map();
+  const browsers = [];
+  const launcher = async () => {
+    const listeners = [];
+    const browser = {
+      id: ++launches,
+      connected: true,
+      process() { return null; },
+      once(event, callback) { if (event === "disconnected") listeners.push(callback); },
+      async close() {
+        this.connected = false;
+        for (const callback of listeners) callback();
+      },
+    };
+    browsers.push(browser);
+    return browser;
+  };
+  const opener = async (browser) => {
+    const call = (openerCalls.get(browser.id) || 0) + 1;
+    openerCalls.set(browser.id, call);
+    if (browser.id === 1 && call === 2) {
+      throw Object.assign(new Error("navigation stalled"), { code: "CHATGPT_NAVIGATION_TIMEOUT" });
+    }
+    return { async bringToFront() {}, async close() {} };
+  };
+  const manager = new BrowserManager({ launcher, pageOpener: opener, ownerFileEnabled: false });
+  try {
+    const lease = await manager.leasePage("recovered");
+    assert.equal(launches, 2);
+    assert.equal(browsers[0].connected, false);
+    assert.equal(lease.browserGeneration, manager.status().browserGeneration);
+    assert.equal(manager.status().pagesLeased, 1);
+  } finally {
+    await manager.close();
+  }
+});
+
+test("a page-open failure never recycles a browser that owns another active lease", async () => {
+  let launches = 0;
+  let opens = 0;
+  const listeners = [];
+  const browser = {
+    connected: true,
+    process() { return null; },
+    once(event, callback) { if (event === "disconnected") listeners.push(callback); },
+    async close() { this.connected = false; for (const callback of listeners) callback(); },
+  };
+  const manager = new BrowserManager({
+    ownerFileEnabled: false,
+    launcher: async () => { launches += 1; browser.connected = true; return browser; },
+    pageOpener: async () => {
+      opens += 1;
+      if (opens === 3) throw Object.assign(new Error("second lease stalled"), { code: "CHATGPT_NAVIGATION_TIMEOUT" });
+      return { async bringToFront() {}, async close() {} };
+    },
+  });
+  try {
+    const first = await manager.leasePage("active");
+    await assert.rejects(
+      () => manager.leasePage("blocked"),
+      (error) => error.code === "CHATGPT_NAVIGATION_TIMEOUT",
+    );
+    assert.equal(launches, 1);
+    assert.equal(browser.connected, true);
+    assert.doesNotThrow(() => manager.assertLease(first));
+  } finally {
+    await manager.close();
+  }
+});
+
+test("a Firefox lifecycle timeout is accepted only when the exact target DOM is usable", async () => {
+  const target = "https://chatgpt.com/c/exact-target";
+  const page = {
+    async goto() { throw Object.assign(new Error("Navigation timeout of 60000 ms exceeded"), { name: "TimeoutError" }); },
+    url() { return target; },
+    async evaluate() { return { readyState: "interactive", bodyPresent: true }; },
+  };
+  const result = await navigateChatGpt(page, target);
+  assert.equal(result.recoveredFromDom, true);
+
+  const wrong = { ...page, url: () => "about:blank" };
+  await assert.rejects(
+    () => navigateChatGpt(wrong, target),
+    (error) => error.code === "CHATGPT_NAVIGATION_TIMEOUT" && error.details?.observedPath === null,
+  );
+});
+
+test("openChatGpt closes a newly created page when its navigation fails", async () => {
+  let closed = 0;
+  const page = {
+    setDefaultTimeout() {},
+    url() { return "about:blank"; },
+    async goto() { throw Object.assign(new Error("Navigation timeout of 60000 ms exceeded"), { name: "TimeoutError" }); },
+    async evaluate() { return { readyState: "loading", bodyPresent: false }; },
+    async close() { closed += 1; },
+  };
+  const browser = { async pages() { return []; }, async newPage() { return page; } };
+  await assert.rejects(() => openChatGpt(browser, { newPage: true }), (error) => error.code === "CHATGPT_NAVIGATION_TIMEOUT");
+  assert.equal(closed, 1);
 });
 
 test("a stale browser callback cannot remove a newer broker's owner record", async () => {

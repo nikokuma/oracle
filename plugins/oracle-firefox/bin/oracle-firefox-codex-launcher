@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+
+launcher_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+plugin_root=$(dirname -- "$launcher_dir")
+
+if [ -n "${ORACLE_FIREFOX_NODE_PATH:-}" ]; then
+  node_path=$ORACLE_FIREFOX_NODE_PATH
+elif command -v node >/dev/null 2>&1; then
+  node_path=$(command -v node)
+elif [ -x /opt/homebrew/bin/node ]; then
+  node_path=/opt/homebrew/bin/node
+elif [ -x /usr/local/bin/node ]; then
+  node_path=/usr/local/bin/node
+elif [ -x /usr/bin/node ]; then
+  node_path=/usr/bin/node
+else
+  printf '%s\n' 'Oracle Firefox could not find Node.js. Set ORACLE_FIREFOX_NODE_PATH to a Node 24+ executable.' >&2
+  exit 127
+fi
+
+if [ ! -x "$node_path" ]; then
+  printf 'Oracle Firefox Node.js path is not executable: %s\n' "$node_path" >&2
+  exit 127
+fi
+
+exec "$node_path" "$plugin_root/dist/server.mjs" "$@"

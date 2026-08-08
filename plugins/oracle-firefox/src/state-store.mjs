@@ -5,6 +5,7 @@ import { chmod, mkdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { coordinatorDatabasePath } from "./config.mjs";
 import { codedError, structuredError } from "./errors.mjs";
+import { isTemplateLocalDataRequest } from "./evidence.mjs";
 import { mintCapability, parseCapability, verifyCapability } from "./capabilities.mjs";
 import {
   BROKER_PROTOCOL_VERSION,
@@ -108,6 +109,9 @@ function rowToJob(row) {
     executionState: row.execution_state ?? "idle",
     executionFailureCount: row.execution_failure_count ?? 0,
     nextExecutionNotBefore: row.next_execution_not_before ?? null,
+    chainState: row.chain_state ?? null,
+    inputRequestAbandonedAt: row.input_required_abandoned_at ?? null,
+    inputRequestAbandonedReason: row.input_required_abandoned_reason ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     startedAt: row.started_at,
@@ -134,6 +138,9 @@ function rowToChain(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     terminalAt: row.terminal_at,
+    inputRequestAbandonedAt: row.input_required_abandoned_at,
+    inputRequestAbandonedJobId: row.input_required_abandoned_job_id,
+    inputRequestAbandonedReason: row.input_required_abandoned_reason,
   };
 }
 
@@ -146,6 +153,19 @@ function quarantineFingerprint(row) {
     row.created_at,
     row.job_state,
     row.job_updated_at,
+  ].map((value) => String(value ?? "")).join("\0")).digest("hex");
+}
+
+function inputRequestFingerprint(row) {
+  if (!row) return null;
+  return createHash("sha256").update([
+    "oracle-firefox-input-request-v1",
+    row.conversation_key,
+    row.id,
+    row.active_job_id,
+    row.updated_at,
+    row.job_updated_at,
+    row.local_data_request_json,
   ].map((value) => String(value ?? "")).join("\0")).digest("hex");
 }
 
@@ -231,9 +251,14 @@ export class StateStore extends EventEmitter {
         if (integrity !== "ok" || this.db.prepare("PRAGMA foreign_key_check").all().length > 0) {
           throw codedError("COORDINATOR_DATABASE_INVALID", "Oracle Firefox refused to migrate a coordinator database that failed integrity checks.");
         }
+        // Schema v6 introduced broker-generation writer guards. A successor
+        // must take ownership before any later migration touches guarded job
+        // tables; otherwise the new broker correctly fences its own upgrade.
+        const hasBrokerGenerationGuards = existingVersion >= 6;
+        if (hasBrokerGenerationGuards) this.registerBrokerTakeover();
         this.migrateLegacy();
-        this.migrateSix({ existing: false });
-        this.registerBrokerTakeover();
+        this.migrateSix({ existing: hasBrokerGenerationGuards });
+        if (!hasBrokerGenerationGuards) this.registerBrokerTakeover();
       }
       this.backfillUntrackedUncertaintyQuarantines();
       return this;
@@ -564,6 +589,11 @@ export class StateStore extends EventEmitter {
         ["last_executor_error_json", "TEXT"],
       ]);
       addColumns("jobs", [["last_recovery_generation", "INTEGER NOT NULL DEFAULT 0"]]);
+      addColumns("job_chains", [
+        ["input_required_abandoned_at", "TEXT"],
+        ["input_required_abandoned_job_id", "TEXT"],
+        ["input_required_abandoned_reason", "TEXT"],
+      ]);
       addColumns("job_events", [
         ["broker_instance_id", "TEXT"],
         ["lease_generation", "INTEGER"],
@@ -871,9 +901,13 @@ export class StateStore extends EventEmitter {
     }
   }
 
-  chainStateForJob(job) {
+  chainStateForJob(job, chain = null) {
     if (!job) return "failed";
-    if (job.state === "completed" && parse(job.local_data_request_json)) return "input_required";
+    if (
+      job.state === "completed" &&
+      parse(job.local_data_request_json) &&
+      chain?.input_required_abandoned_job_id !== job.id
+    ) return "input_required";
     if (job.state === "completed") return "completed";
     if (job.state === "cancelled_pre_submit") return "cancelled";
     if (job.state === "submission_uncertain") return "submission_uncertain";
@@ -888,9 +922,12 @@ export class StateStore extends EventEmitter {
     return `
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before
+             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM jobs j
       LEFT JOIN job_attempts a ON a.job_id = j.id
+      LEFT JOIN job_chains c ON c.id = a.chain_id
       ${where}
       ${suffix}
     `;
@@ -1011,9 +1048,12 @@ export class StateStore extends EventEmitter {
     const stateClause = states.length ? `AND j.state IN (${states.map(() => "?").join(",")})` : "";
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch
+             a.execution_epoch, c.state AS chain_state,
+             c.input_required_abandoned_at, c.input_required_abandoned_job_id,
+             c.input_required_abandoned_reason
       FROM jobs j
       JOIN job_attempts a ON a.job_id = j.id
+      JOIN job_chains c ON c.id = a.chain_id
       JOIN chain_session_grants g ON g.chain_id = a.chain_id
       WHERE g.session_id = ? AND g.can_list = 1 AND g.revoked_at IS NULL ${stateClause}
       ORDER BY j.created_at DESC, j.rowid DESC LIMIT ?
@@ -1225,7 +1265,9 @@ export class StateStore extends EventEmitter {
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before
+             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM jobs j
       JOIN job_attempts a ON a.job_id = j.id
       JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
@@ -1336,7 +1378,7 @@ export class StateStore extends EventEmitter {
     const rawJob = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(jobId);
     const activeJobId = chain.active_job_id || jobId;
     const active = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(activeJobId) || rawJob;
-    const nextState = this.chainStateForJob(active);
+    const nextState = this.chainStateForJob(active, chain);
     const conversationKey = active.conversation_key || chain.conversation_key;
     const canonicalUrl = active.canonical_url || chain.canonical_url;
     if (canonicalUrl && canonicalUrl !== chain.canonical_url) {
@@ -1593,6 +1635,134 @@ export class StateStore extends EventEmitter {
     return { jobId, acknowledged: true, conversationKey: job.conversationKey };
   }
 
+  activeInputRequestRecord(scopeKey) {
+    const rows = this.db.prepare(`
+      SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.assistant_disposition, j.local_data_request_json
+      FROM job_chains c
+      JOIN jobs j ON j.id = c.active_job_id
+      WHERE c.conversation_key = ? AND c.state = 'input_required'
+        AND j.state = 'completed' AND j.local_data_request_json IS NOT NULL
+      ORDER BY c.accepted_sequence
+      LIMIT 2
+    `).all(scopeKey);
+    if (rows.length > 1) {
+      throw codedError("INPUT_REQUEST_AMBIGUOUS", "More than one durable input request occupies this exact conversation lane. Oracle refused to guess.");
+    }
+    return rows[0] || null;
+  }
+
+  inputRequestView(scopeKey) {
+    const row = this.activeInputRequestRecord(scopeKey);
+    if (!row) return { inputRequired: false, conversationUrl: scopeKey };
+    const request = parse(row.local_data_request_json);
+    return {
+      inputRequired: true,
+      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.conversation_key) ? row.conversation_key : null),
+      fingerprint: inputRequestFingerprint(row),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      safeReadOnly: request?.safeReadOnly === true,
+      templateFalsePositive: isTemplateLocalDataRequest(request),
+      capabilityRecoveryRequired: true,
+      recoveryActions: ["reply-with-local-data", "abandon-after-user-confirmation"],
+    };
+  }
+
+  requireMatchingInputRequest(scopeKey, fingerprint) {
+    const row = this.activeInputRequestRecord(scopeKey);
+    if (!row) {
+      throw codedError("INPUT_REQUEST_NOT_FOUND", "No active Oracle Firefox input request matches that exact conversation URL.");
+    }
+    const currentFingerprint = inputRequestFingerprint(row);
+    if (!fingerprint || fingerprint !== currentFingerprint) {
+      throw codedError(
+        "INPUT_REQUEST_CHANGED",
+        "The input request changed after inspection. Inspect the exact conversation lane again before abandoning it.",
+        { safeToRetry: true },
+      );
+    }
+    return row;
+  }
+
+  abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode }, now = new Date().toISOString()) {
+    const request = parse(row.local_data_request_json);
+    if (
+      row.state !== "input_required" ||
+      row.job_state !== "completed" ||
+      row.assistant_disposition !== "local_data_request" ||
+      !request
+    ) {
+      throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected logical chain is not waiting for a valid local-data request.");
+    }
+    const changed = this.db.prepare(`
+      UPDATE job_chains
+      SET state = 'completed', terminal_at = ?, updated_at = ?,
+          input_required_abandoned_at = ?, input_required_abandoned_job_id = ?,
+          input_required_abandoned_reason = ?
+      WHERE id = ? AND active_job_id = ? AND state = 'input_required'
+    `).run(now, now, now, row.active_job_id, reason, row.id, row.active_job_id);
+    if (Number(changed.changes) !== 1) {
+      throw codedError("INPUT_REQUEST_CHANGED", "The input request changed while Oracle was abandoning it.", { safeToRetry: true });
+    }
+    this.createChainEvent(row.id, row.active_job_id, "completed", {
+      inputRequestAbandoned: true,
+      reason,
+      recoveryMode,
+      messageSent: false,
+      replacementAuthorized: false,
+    }, now);
+    return {
+      job: this.requireJob(row.active_job_id),
+      chain: this.getChain(row.id),
+      abandonedAt: now,
+      reason,
+      templateFalsePositive: isTemplateLocalDataRequest(request),
+    };
+  }
+
+  abandonInputRequest(jobId, { reason = "user-declined" } = {}) {
+    let released;
+    this.transaction(() => {
+      const job = this.requireJob(jobId);
+      const chain = this.chainAccessRow(job.chainId);
+      if (chain?.input_required_abandoned_job_id === job.id && chain.state === "completed") {
+        released = {
+          job,
+          chain: this.getChain(chain.id),
+          abandonedAt: chain.input_required_abandoned_at,
+          reason: chain.input_required_abandoned_reason,
+          templateFalsePositive: isTemplateLocalDataRequest(job.localDataRequest),
+          idempotent: true,
+        };
+        return;
+      }
+      if (!chain || chain.active_job_id !== job.id) {
+        throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "Only the active input request in a logical chain can be abandoned.");
+      }
+      const row = {
+        ...chain,
+        job_state: job.state,
+        job_updated_at: job.updatedAt,
+        assistant_disposition: job.assistantDisposition,
+        local_data_request_json: json(job.localDataRequest),
+      };
+      released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "capability" });
+    });
+    this.emit("change", released.job);
+    return released;
+  }
+
+  abandonOrphanedInputRequest(scopeKey, fingerprint, { reason = "user-declined" } = {}) {
+    let released;
+    this.transaction(() => {
+      const row = this.requireMatchingInputRequest(scopeKey, fingerprint);
+      released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "orphaned-capability" });
+    });
+    this.emit("change", released.job);
+    return released;
+  }
+
   cancel(jobId) {
     const job = this.requireJob(jobId);
     if (TERMINAL_JOB_STATES.has(job.state)) return { ...job, cancelled: job.state === "cancelled_pre_submit", detached: false };
@@ -1642,9 +1812,12 @@ export class StateStore extends EventEmitter {
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before
+             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM job_attempts a
       JOIN jobs j ON j.id = a.job_id
+      JOIN job_chains c ON c.id = a.chain_id
       WHERE a.chain_id = ?
       ORDER BY a.ordinal ASC
     `).all(requested.chainId).map(rowToJob);

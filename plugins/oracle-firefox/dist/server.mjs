@@ -30970,12 +30970,12 @@ import { fileURLToPath } from "node:url";
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.2",
-  "protocolVersion": 7,
-  "schemaVersion": 6,
-  "releaseSequence": 1603,
-  "sourceDigest": "ca28965db22d879d54cb6a6c81ed0232910b2d94333221b6b984442043a3b4d3",
-  "buildId": "oracle-firefox-1.6.2-ca28965db22d879d"
+  "packageVersion": "1.6.9",
+  "protocolVersion": 8,
+  "schemaVersion": 7,
+  "releaseSequence": 1610,
+  "sourceDigest": "2f31f624d68eff4f24f7904a64fea5b2596d5ebff8574bdebfcff758658b642d",
+  "buildId": "oracle-firefox-1.6.9-2f31f624d68eff4f"
 });
 
 // src/build-info.mjs
@@ -31445,6 +31445,16 @@ var KNOWN_RELEASE_SEQUENCES = /* @__PURE__ */ new Map([
   ["1.4.1", 1401],
   [ORACLE_FIREFOX_VERSION, BROKER_RELEASE_SEQUENCE]
 ]);
+function processIsAlive(pid) {
+  const value = Number(pid);
+  if (!Number.isSafeInteger(value) || value <= 0) return false;
+  try {
+    process.kill(value, 0);
+    return true;
+  } catch (error51) {
+    return error51?.code !== "ESRCH";
+  }
+}
 async function ensurePrivateDirectory2(directory) {
   await mkdir4(directory, { recursive: true, mode: 448 });
   await chmod3(directory, 448);
@@ -31522,7 +31532,7 @@ function normalizeLegacyBrokerStatus(status, endpoint) {
 }
 function canRequestIdleUpgrade(hello, status) {
   return Boolean(
-    status && !status.draining && BROKER_RELEASE_SEQUENCE > Number(hello?.releaseSequence || 0) && Number(status.activeJobCount || 0) === 0 && Number(status.outstandingJobs || 0) === 0
+    status && !status.draining && BROKER_RELEASE_SEQUENCE > Number(hello?.releaseSequence || 0) && Number(status.activeJobCount || 0) === 0 && Number(status.browser?.pagesLeased || 0) === 0 && status.browser?.maintenance !== true
   );
 }
 async function probeBroker(identity, token, timeoutMs = 750, endpointOverride = null) {
@@ -31562,7 +31572,16 @@ async function waitForBrokerRelease(token, { identity = null, expectedInstanceId
   const deadline = Date.now() + Math.max(0, timeoutMs);
   while (Date.now() < deadline) {
     const result = await inspect(token, 500);
-    if (!result || result.kind === "absent") return true;
+    if (!result || result.kind === "absent" || !result.hello) {
+      const locator = await readBrokerLocator(resolved, token).catch(() => null);
+      if (expectedInstanceId && locator?.instanceId && locator.instanceId !== expectedInstanceId) return true;
+      const sameLocator = Boolean(expectedInstanceId && locator?.instanceId === expectedInstanceId);
+      const sameLifetimeOwner = Boolean(sameLocator && locator?.pid && processIsAlive(locator.pid));
+      if (sameLocator && !sameLifetimeOwner) return true;
+      if (!result || result.kind === "absent" && !locator) return true;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      continue;
+    }
     const hello = result.hello || result;
     if (expectedInstanceId && hello.instanceId && hello.instanceId !== expectedInstanceId) return true;
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -31831,6 +31850,7 @@ var jobReferenceFields = {
   jobId: external_exports.string().uuid().optional().describe("Opaque job UUID; accessible only to its owner session or for legacy read-only jobs."),
   jobHandle: external_exports.string().optional().describe("Broker-minted control/read handle used to resume a job from another process.")
 };
+var inputRequestReason = external_exports.enum(["false-positive", "not-needed", "user-declined"]).default("user-declined").describe("Auditable reason for discarding the pending evidence request; never authorizes a replacement send.");
 function register(name, config2, method, timeoutMs = 65e3, prepareParams = null) {
   server.registerTool(name, config2, async (params, extra) => {
     try {
@@ -31962,6 +31982,33 @@ register("inspect_quarantine", {
     conversationUrl: external_exports.string().url().describe("Exact standalone or project ChatGPT conversation URL reported by the blocked submission.")
   }
 }, "jobs.inspectQuarantine");
+register("inspect_input_request", {
+  title: "Inspect one exact Oracle Firefox input request",
+  description: "Read sanitized recovery metadata for the input request blocking one exact conversation URL. Never exposes the prompt or answer and never sends.",
+  inputSchema: {
+    conversationUrl: external_exports.string().url().describe("Exact standalone or project ChatGPT conversation URL reported by the blocked submission.")
+  }
+}, "jobs.inspectInputRequest");
+register("abandon_input_request", {
+  title: "Abandon an Oracle Firefox input request",
+  description: "Discard one capability-owned local-evidence request and release its same-chat FIFO lane. Never sends and never authorizes a replacement.",
+  inputSchema: {
+    ...jobReferenceFields,
+    confirmAbandon: external_exports.boolean().describe("Must be true after the user explicitly chooses not to answer this local-data request."),
+    reason: inputRequestReason
+  }
+}, "jobs.abandonInputRequest");
+register("recover_orphaned_input_request", {
+  title: "Abandon one orphaned Oracle Firefox input request",
+  description: "Use an exact-URL inspection fingerprint to discard a blocking input request whose original capability is unavailable. Never sends or authorizes a replacement.",
+  inputSchema: {
+    conversationUrl: external_exports.string().url().describe("The same exact conversation URL used with inspect_input_request."),
+    fingerprint: external_exports.string().regex(/^[a-f0-9]{64}$/u).describe("Current fingerprint returned by inspect_input_request."),
+    confirmCapabilityUnavailable: external_exports.boolean().describe("Must be true only after confirming the original control capability is unavailable."),
+    confirmAbandon: external_exports.boolean().describe("Must be true after the user explicitly chooses to discard the request and release the lane."),
+    reason: inputRequestReason
+  }
+}, "jobs.abandonOrphanedInputRequest");
 register("recover_orphaned_quarantine", {
   title: "Recover one orphaned Oracle Firefox quarantine",
   description: "Use an inspected exact-URL fingerprint to reconcile read-only or acknowledge after explicit manual inspection. Never sends a message or authorizes a replacement.",

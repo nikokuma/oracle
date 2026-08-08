@@ -13,12 +13,12 @@ import { fileURLToPath } from "node:url";
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.2",
-  "protocolVersion": 7,
-  "schemaVersion": 6,
-  "releaseSequence": 1603,
-  "sourceDigest": "ca28965db22d879d54cb6a6c81ed0232910b2d94333221b6b984442043a3b4d3",
-  "buildId": "oracle-firefox-1.6.2-ca28965db22d879d"
+  "packageVersion": "1.6.9",
+  "protocolVersion": 8,
+  "schemaVersion": 7,
+  "releaseSequence": 1610,
+  "sourceDigest": "2f31f624d68eff4f24f7904a64fea5b2596d5ebff8574bdebfcff758658b642d",
+  "buildId": "oracle-firefox-1.6.9-2f31f624d68eff4f"
 });
 
 // src/build-info.mjs
@@ -467,6 +467,16 @@ var KNOWN_RELEASE_SEQUENCES = /* @__PURE__ */ new Map([
   ["1.4.1", 1401],
   [ORACLE_FIREFOX_VERSION, BROKER_RELEASE_SEQUENCE]
 ]);
+function processIsAlive(pid) {
+  const value = Number(pid);
+  if (!Number.isSafeInteger(value) || value <= 0) return false;
+  try {
+    process.kill(value, 0);
+    return true;
+  } catch (error) {
+    return error?.code !== "ESRCH";
+  }
+}
 async function ensurePrivateDirectory2(directory) {
   await mkdir4(directory, { recursive: true, mode: 448 });
   await chmod3(directory, 448);
@@ -544,7 +554,7 @@ function normalizeLegacyBrokerStatus(status, endpoint) {
 }
 function canRequestIdleUpgrade(hello, status) {
   return Boolean(
-    status && !status.draining && BROKER_RELEASE_SEQUENCE > Number(hello?.releaseSequence || 0) && Number(status.activeJobCount || 0) === 0 && Number(status.outstandingJobs || 0) === 0
+    status && !status.draining && BROKER_RELEASE_SEQUENCE > Number(hello?.releaseSequence || 0) && Number(status.activeJobCount || 0) === 0 && Number(status.browser?.pagesLeased || 0) === 0 && status.browser?.maintenance !== true
   );
 }
 async function probeBroker(identity, token, timeoutMs = 750, endpointOverride = null) {
@@ -584,7 +594,16 @@ async function waitForBrokerRelease(token, { identity = null, expectedInstanceId
   const deadline = Date.now() + Math.max(0, timeoutMs);
   while (Date.now() < deadline) {
     const result = await inspect(token, 500);
-    if (!result || result.kind === "absent") return true;
+    if (!result || result.kind === "absent" || !result.hello) {
+      const locator = await readBrokerLocator(resolved, token).catch(() => null);
+      if (expectedInstanceId && locator?.instanceId && locator.instanceId !== expectedInstanceId) return true;
+      const sameLocator = Boolean(expectedInstanceId && locator?.instanceId === expectedInstanceId);
+      const sameLifetimeOwner = Boolean(sameLocator && locator?.pid && processIsAlive(locator.pid));
+      if (sameLocator && !sameLifetimeOwner) return true;
+      if (!result || result.kind === "absent" && !locator) return true;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      continue;
+    }
     const hello = result.hello || result;
     if (expectedInstanceId && hello.instanceId && hello.instanceId !== expectedInstanceId) return true;
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -953,6 +972,21 @@ try {
   else if (command === "quarantine-inspect") result = await callBroker("jobs.inspectQuarantine", {
     conversationUrl: option(args, ["--url"])
   }, { harness });
+  else if (command === "input-request-inspect") result = await callBroker("jobs.inspectInputRequest", {
+    conversationUrl: option(args, ["--url"])
+  }, { harness });
+  else if (command === "abandon-input") result = await callBroker("jobs.abandonInputRequest", {
+    ...jobReference(),
+    confirmAbandon: bool(args, "--confirm-abandon"),
+    reason: option(args, ["--reason"], "user-declined")
+  }, { harness });
+  else if (command === "input-request-recover") result = await callBroker("jobs.abandonOrphanedInputRequest", {
+    conversationUrl: option(args, ["--url"]),
+    fingerprint: option(args, ["--fingerprint"]),
+    confirmCapabilityUnavailable: bool(args, "--confirm-capability-unavailable"),
+    confirmAbandon: bool(args, "--confirm-abandon"),
+    reason: option(args, ["--reason"], "user-declined")
+  }, { harness });
   else if (command === "quarantine-recover") result = await callBroker("jobs.recoverOrphanedQuarantine", {
     conversationUrl: option(args, ["--url"]),
     fingerprint: option(args, ["--fingerprint"]),
@@ -1026,7 +1060,7 @@ try {
       if (bool(args, "--notify")) await notify("Oracle Firefox", `Job ${jobId} ${result.state}`);
     }
   } else {
-    throw new Error("Usage: oracle-firefox coordinator-inspect|doctor|browser-select firefox|chrome|safari|broker-status|profiles|setup|import-session|projects|find-chats|artifacts|download-artifact|consult|consult-start|continue-chat|continue-chat-start|status <job-id> [--handle HANDLE]|result <job-id> [--handle HANDLE]|jobs|watch <job-id> [--handle HANDLE]|quarantine-inspect --url URL|quarantine-recover --url URL --fingerprint HASH --confirm-capability-unavailable [--action reconcile|acknowledge]|reconcile|acknowledge|cancel|reply-local-data|completion-claim|completion-delivered|completion-ack|emergency-lock|emergency-unlock");
+    throw new Error("Usage: oracle-firefox coordinator-inspect|doctor|browser-select firefox|chrome|safari|broker-status|profiles|setup|import-session|projects|find-chats|artifacts|download-artifact|consult|consult-start|continue-chat|continue-chat-start|status <job-id> [--handle HANDLE]|result <job-id> [--handle HANDLE]|jobs|watch <job-id> [--handle HANDLE]|input-request-inspect --url URL|abandon-input <job-id> --handle HANDLE --confirm-abandon|input-request-recover --url URL --fingerprint HASH --confirm-capability-unavailable --confirm-abandon|quarantine-inspect --url URL|quarantine-recover --url URL --fingerprint HASH --confirm-capability-unavailable [--action reconcile|acknowledge]|reconcile|acknowledge|cancel|reply-local-data|completion-claim|completion-delivered|completion-ack|emergency-lock|emergency-unlock");
   }
   if (command !== "watch" || !bool(args, "--jsonl")) print(result);
 } catch (error) {

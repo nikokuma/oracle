@@ -44,6 +44,12 @@ For `BROKER_DRAINING`, `BROKER_UNRESPONSIVE`, `BROKER_ENDPOINT_CONFLICT`, `BROKE
 
 `cancel_job` cancels only before `submit_intent`. Afterward it detaches the caller while monitoring continues and never authorizes a retry.
 
+## Unanswered local-data requests
+
+An `input_required` chain intentionally holds its exact conversation lane so a later agent cannot overtake a pending evidence reply. If the user explicitly declines that reply, use capability-owned `abandon_input_request`; it preserves the completed response, records the reason, sends nothing, and releases only the FIFO barrier.
+
+If the original capability is unavailable, call `inspect_input_request` with the exact conversation URL, retain its fingerprint, then call `recover_orphaned_input_request` only with explicit lost-capability and abandonment confirmations. Never recover from a title, partial URL, stale fingerprint, or global search. The orphan flow exposes no old prompt, answer, job id, handle, or session path and never authorizes a replacement message.
+
 ## Terminal result
 
 Call `job_result` once terminal and verify a normal answer locally. For an unknown state, preserve the job id and report the structured outcome instead of inventing recovery behavior.

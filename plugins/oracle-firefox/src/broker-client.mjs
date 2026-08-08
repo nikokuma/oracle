@@ -25,6 +25,20 @@ const KNOWN_RELEASE_SEQUENCES = new Map([
   [ORACLE_FIREFOX_VERSION, BROKER_RELEASE_SEQUENCE],
 ]);
 
+function processIsAlive(pid) {
+  const value = Number(pid);
+  if (!Number.isSafeInteger(value) || value <= 0) return false;
+  try {
+    process.kill(value, 0);
+    return true;
+  } catch (error) {
+    // Permission denial still proves that a process occupies the PID. A PID
+    // reused during this bounded wait only delays the upgrade, which is the
+    // fail-closed direction.
+    return error?.code !== "ESRCH";
+  }
+}
+
 async function ensurePrivateDirectory(directory) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
   await chmod(directory, 0o700);
@@ -101,7 +115,8 @@ export function canRequestIdleUpgrade(hello, status) {
     status && !status.draining &&
     BROKER_RELEASE_SEQUENCE > Number(hello?.releaseSequence || 0) &&
     Number(status.activeJobCount || 0) === 0 &&
-    Number(status.outstandingJobs || 0) === 0
+    Number(status.browser?.pagesLeased || 0) === 0 &&
+    status.browser?.maintenance !== true
   );
 }
 
@@ -146,7 +161,19 @@ export async function waitForBrokerRelease(
   const deadline = Date.now() + Math.max(0, timeoutMs);
   while (Date.now() < deadline) {
     const result = await inspect(token, 500);
-    if (!result || result.kind === "absent") return true;
+    if (!result || result.kind === "absent" || !result.hello) {
+      const locator = await readBrokerLocator(resolved, token).catch(() => null);
+      if (expectedInstanceId && locator?.instanceId && locator.instanceId !== expectedInstanceId) return true;
+      const sameLocator = Boolean(expectedInstanceId && locator?.instanceId === expectedInstanceId);
+      const sameLifetimeOwner = Boolean(sameLocator && locator?.pid && processIsAlive(locator.pid));
+      // The old broker closes its RPC socket before the lifetime lease is
+      // released. Do not launch its successor during that narrow shutdown
+      // window; wait until the exact owning process has exited instead.
+      if (sameLocator && !sameLifetimeOwner) return true;
+      if (!result || result.kind === "absent" && !locator) return true;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      continue;
+    }
     const hello = result.hello || result;
     if (expectedInstanceId && hello.instanceId && hello.instanceId !== expectedInstanceId) return true;
     await new Promise((resolve) => setTimeout(resolve, 100));

@@ -37,9 +37,30 @@ test("unknown legacy builds are not assigned an upgrade ordering", () => {
   assert.equal(normalizeLegacyBrokerStatus({ protocolVersion: 5, buildVersion: "dev" }, "fixture").releaseSequence, 0);
 });
 
-test("same-protocol upgrade is requested only after the older broker is truly idle", () => {
+test("same-protocol upgrade waits for active browser work but preserves durable queued jobs", () => {
   const hello = { releaseSequence: 1600 };
-  assert.equal(canRequestIdleUpgrade(hello, { activeJobCount: 0, outstandingJobs: 0, draining: false }), true);
-  assert.equal(canRequestIdleUpgrade(hello, { activeJobCount: 1, outstandingJobs: 1, draining: false }), false);
-  assert.equal(canRequestIdleUpgrade(hello, { activeJobCount: 0, outstandingJobs: 0, draining: true }), false);
+  assert.equal(canRequestIdleUpgrade(hello, {
+    activeJobCount: 0,
+    outstandingJobs: 3,
+    draining: false,
+    browser: { pagesLeased: 0, maintenance: false },
+  }), true);
+  assert.equal(canRequestIdleUpgrade(hello, {
+    activeJobCount: 1,
+    outstandingJobs: 1,
+    draining: false,
+    browser: { pagesLeased: 1, maintenance: false },
+  }), false);
+  assert.equal(canRequestIdleUpgrade(hello, {
+    activeJobCount: 0,
+    outstandingJobs: 0,
+    draining: false,
+    browser: { pagesLeased: 0, maintenance: true },
+  }), false);
+  assert.equal(canRequestIdleUpgrade(hello, {
+    activeJobCount: 0,
+    outstandingJobs: 0,
+    draining: true,
+    browser: { pagesLeased: 0, maintenance: false },
+  }), false);
 });

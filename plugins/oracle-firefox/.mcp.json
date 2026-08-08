@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "oracle-firefox": {
-      "command": "node",
-      "args": ["./dist/server.mjs"],
+      "command": "./bin/oracle-firefox-codex-launcher",
+      "args": [],
       "cwd": ".",
       "env_vars": [
         "ORACLE_FIREFOX_HOME",

@@ -248,6 +248,122 @@ test("evidence and recovery attempts inherit one root, owner, lane ticket, and c
   });
 });
 
+test("capability-owned input abandonment preserves the result and releases same-chat FIFO", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex" });
+    const caller = authenticate(store, session, "codex");
+    const conversationUrl = "https://chatgpt.com/c/abandon-input";
+    const owned = ownedJob(store, caller, { conversationKey: conversationUrl, conversationUrl });
+    const localDataRequest = {
+      version: 1,
+      requestId: "runtime-check",
+      requests: [{ id: "node", fact: "Node version", why: "SQLite support", suggestedReadOnlyCheck: "node --version" }],
+      safeReadOnly: true,
+      unsafeRequestId: null,
+    };
+    store.transition(owned.job.id, "completed", {
+      assistantDisposition: "local_data_request",
+      localDataRequest,
+      result: { answer: "Need one local fact." },
+      recoveryAction: "reply_with_local_data",
+    });
+    const later = store.createJob({
+      authorizationId: crypto.randomUUID(),
+      operation: "continue_chat",
+      request: {},
+      conversationKey: conversationUrl,
+      conversationUrl,
+      sessionPath: "/tmp/later-after-input",
+    }).job;
+    store.transition(later.id, "snapshotted");
+    store.transition(later.id, "queued");
+    assert.equal(store.getChain(owned.job.chainId).state, "input_required");
+    assert.equal(store.isRunnable(later.id), false);
+
+    const released = store.abandonInputRequest(owned.job.id, { reason: "not-needed" });
+    assert.equal(released.chain.state, "completed");
+    assert.equal(released.reason, "not-needed");
+    assert.equal(store.requireJob(owned.job.id).localDataRequest.requestId, "runtime-check");
+    assert.equal(store.isRunnable(later.id), true);
+    assert.equal(store.jobChain(owned.job.id).length, 1, "abandonment must not create or send a child job");
+
+    const again = store.abandonInputRequest(owned.job.id, { reason: "false-positive" });
+    assert.equal(again.idempotent, true);
+    assert.equal(again.reason, "not-needed", "the original audit reason is immutable");
+  });
+});
+
+test("orphaned input recovery is exact-URL fingerprinted, sanitized, and confirmation-gated", async () => {
+  await withStore(async (store) => {
+    const ownerSession = store.createOwnerSession({ harness: "codex" });
+    const recoverySession = store.createOwnerSession({ harness: "claude" });
+    const owner = authenticate(store, ownerSession, "codex");
+    const recovery = authenticate(store, recoverySession, "claude");
+    const conversationUrl = "https://chatgpt.com/c/orphaned-input";
+    const owned = ownedJob(store, owner, { conversationKey: conversationUrl, conversationUrl });
+    store.transition(owned.job.id, "completed", {
+      assistantDisposition: "local_data_request",
+      localDataRequest: {
+        version: 1,
+        requestId: "short-stable-id",
+        requests: [{
+          id: "fact-id",
+          fact: "exact fact needed",
+          why: "why it changes the answer",
+          suggestedReadOnlyCheck: "a safe read-only check",
+        }],
+        safeReadOnly: true,
+      },
+      result: { answer: "private answer must not be exposed" },
+    });
+    const view = store.inputRequestView(conversationUrl);
+    assert.equal(view.inputRequired, true);
+    assert.equal(view.templateFalsePositive, true);
+    assert.equal("jobId" in view, false);
+    assert.equal("localDataRequest" in view, false);
+    assert.equal(JSON.stringify(view).includes("private answer"), false);
+    assert.throws(
+      () => store.abandonOrphanedInputRequest(conversationUrl, "0".repeat(64), { reason: "false-positive" }),
+      (error) => error.code === "INPUT_REQUEST_CHANGED",
+    );
+
+    const coordinator = new Coordinator({ store, browserManager: { status: () => ({}) } });
+    coordinator.callerFromContext = () => recovery;
+    assert.throws(
+      () => coordinator.abandonOrphanedInputRequest({
+        conversationUrl,
+        fingerprint: view.fingerprint,
+        confirmCapabilityUnavailable: false,
+        confirmAbandon: true,
+        reason: "false-positive",
+      }, {}),
+      (error) => error.code === "CAPABILITY_RECOVERY_CONFIRMATION_REQUIRED",
+    );
+    assert.throws(
+      () => coordinator.abandonOrphanedInputRequest({
+        conversationUrl,
+        fingerprint: view.fingerprint,
+        confirmCapabilityUnavailable: true,
+        confirmAbandon: false,
+        reason: "false-positive",
+      }, {}),
+      (error) => error.code === "INPUT_REQUEST_ABANDON_CONFIRMATION_REQUIRED",
+    );
+    const released = coordinator.abandonOrphanedInputRequest({
+      conversationUrl,
+      fingerprint: view.fingerprint,
+      confirmCapabilityUnavailable: true,
+      confirmAbandon: true,
+      reason: "false-positive",
+    }, {});
+    assert.equal(released.laneReleased, true);
+    assert.equal(released.messageSent, false);
+    assert.equal(released.replacementAuthorized, false);
+    assert.deepEqual(store.listJobsForSession(recovery.id), [], "orphan recovery must not expose or adopt private history");
+    assert.equal(store.inputRequestView(conversationUrl).inputRequired, false);
+  });
+});
+
 test("completion outbox is exact-subscription, claimable, delivered, and acknowledged without answer data", async () => {
   await withStore(async (store) => {
     const session = store.createOwnerSession({ harness: "codex" });

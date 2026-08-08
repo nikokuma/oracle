@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "oracle-firefox",
   "display_name": "Oracle Firefox",
-  "version": "1.6.2",
+  "version": "1.6.9",
   "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
   "long_description": "One identity-locked per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one safely selected browser backend. Firefox remains the compatibility default, native macOS Chrome is bundle-and-signature verified so Parallels or VM copies are rejected, and Safari uses a serialized visible WebDriver session with explicit session-only authentication. Capability-owned logical chains retain same-chat FIFO, durable completion, cooldown control, exact-turn correlation, and the one-send boundary across up to five qualified different-chat jobs.\n\nThe bundle never contains login cookies. Firefox and Chrome use separate dedicated local profiles; Safari uses an isolated automation session.",
   "author": {
@@ -106,6 +106,18 @@
     {
       "name": "recover_orphaned_quarantine",
       "description": "Reconcile or explicitly acknowledge one fingerprinted orphaned quarantine without sending."
+    },
+    {
+      "name": "inspect_input_request",
+      "description": "Inspect sanitized blocking input-request state for one exact conversation URL."
+    },
+    {
+      "name": "abandon_input_request",
+      "description": "Discard one capability-owned input request and release its FIFO lane without sending."
+    },
+    {
+      "name": "recover_orphaned_input_request",
+      "description": "Discard one fingerprinted orphan input request after explicit confirmation without sending."
     },
     {
       "name": "reconcile_job",
