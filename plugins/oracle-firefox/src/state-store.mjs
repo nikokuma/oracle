@@ -9,6 +9,8 @@ import { isTemplateLocalDataRequest } from "./evidence.mjs";
 import { mintCapability, parseCapability, verifyCapability } from "./capabilities.mjs";
 import {
   BROKER_PROTOCOL_VERSION,
+  BROKER_MINIMUM_READER_PROTOCOL,
+  BROKER_MINIMUM_WRITER_PROTOCOL,
   BROKER_RELEASE_SEQUENCE,
   BROKER_SCHEMA_VERSION,
   BROKER_BUILD_ID,
@@ -139,6 +141,7 @@ function rowToJob(row) {
     executionKind: row.execution_kind ?? "pre_submit",
     executionFailureCount: row.execution_failure_count ?? 0,
     nextExecutionNotBefore: row.next_execution_not_before ?? null,
+    lastExecutorError: parse(row.last_executor_error_json),
     monitorDeadlineAt: row.monitor_deadline_at ?? null,
     finalReconciliationAttemptedAt: row.final_reconciliation_attempted_at ?? null,
     assistantTurnId: row.assistant_turn_id ?? null,
@@ -276,6 +279,8 @@ export class StateStore extends EventEmitter {
       instanceId: `test-${randomUUID()}`,
       leaseGeneration: 0,
       protocolVersion: BROKER_PROTOCOL_VERSION,
+      minimumReaderProtocol: BROKER_MINIMUM_READER_PROTOCOL,
+      minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
       releaseSequence: BROKER_RELEASE_SEQUENCE,
       buildVersion: ORACLE_FIREFOX_VERSION,
       buildId: BROKER_BUILD_ID,
@@ -634,7 +639,12 @@ export class StateStore extends EventEmitter {
           id, coordinator_id, current_lease_generation, last_recovery_generation,
           minimum_reader_protocol, minimum_writer_protocol, qualified_concurrency, updated_at
         ) VALUES (1, ?, 0, 0, ?, ?, 1, ?)
-      `).run(this.brokerContext.coordinatorId, BROKER_PROTOCOL_VERSION, BROKER_PROTOCOL_VERSION, now);
+      `).run(
+        this.brokerContext.coordinatorId,
+        BROKER_MINIMUM_READER_PROTOCOL,
+        BROKER_MINIMUM_WRITER_PROTOCOL,
+        now,
+      );
 
       const addColumns = (table, columns) => {
         const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
@@ -888,9 +898,15 @@ export class StateStore extends EventEmitter {
       );
       this.db.prepare(`
         UPDATE broker_state SET current_instance_id=?, current_lease_generation=?,
-          minimum_reader_protocol=MAX(minimum_reader_protocol, ?),
+          minimum_reader_protocol=?,
           minimum_writer_protocol=MAX(minimum_writer_protocol, ?), updated_at=? WHERE id=1
-      `).run(context.instanceId, next, BROKER_PROTOCOL_VERSION, BROKER_PROTOCOL_VERSION, now);
+      `).run(
+        context.instanceId,
+        next,
+        BROKER_MINIMUM_READER_PROTOCOL,
+        BROKER_MINIMUM_WRITER_PROTOCOL,
+        now,
+      );
       return next;
     });
     context.leaseGeneration = generation;
@@ -1105,7 +1121,7 @@ export class StateStore extends EventEmitter {
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
              a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
+             a.next_execution_not_before, a.last_executor_error_json, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
@@ -1175,7 +1191,39 @@ export class StateStore extends EventEmitter {
     return { sessionId: id, sessionHandle: capability.handle, harness: normalizedHarness };
   }
 
-  authenticateOwnerSession(client) {
+  resumeOwnerSessionReadOnly({
+    harness = "unknown",
+    hostSessionHint = null,
+    stableSessionId = null,
+    stableSessionHandle = null,
+  } = {}) {
+    const parsed = parseCapability(stableSessionHandle, "session");
+    const row = parsed && parsed.subjectId === stableSessionId
+      ? this.db.prepare("SELECT * FROM owner_sessions WHERE id=? AND revoked_at IS NULL").get(stableSessionId)
+      : null;
+    if (
+      !row ||
+      row.harness !== String(harness || "unknown") ||
+      (row.host_session_hint ?? null) !== (hostSessionHint == null ? null : String(hostSessionHint)) ||
+      !verifyCapability(stableSessionHandle, row.session_cap_hash, { kind: "session", subjectId: row.id })
+    ) {
+      throw codedError(
+        "CLIENT_UPGRADE_REQUIRED",
+        "Protocol 8 may resume an existing owner session for reads but cannot create or repair one.",
+        {
+          safeToRetry: false,
+          recoveryAction: "reload this host with Oracle Firefox 1.7.0 or newer",
+          details: {
+            minimumReaderProtocol: BROKER_MINIMUM_READER_PROTOCOL,
+            minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
+          },
+        },
+      );
+    }
+    return { sessionId: row.id, sessionHandle: stableSessionHandle, harness: row.harness, readOnly: true };
+  }
+
+  authenticateOwnerSession(client, { touch = true } = {}) {
     const parsed = parseCapability(client?.sessionHandle, "session");
     if (!parsed || parsed.subjectId !== client?.sessionId) {
       throw codedError("CLIENT_SESSION_REQUIRED", "Open an Oracle Firefox client session before accessing jobs.");
@@ -1190,7 +1238,7 @@ export class StateStore extends EventEmitter {
     ) {
       throw codedError("CLIENT_SESSION_REQUIRED", "The Oracle Firefox client session belongs to a different harness or host session.");
     }
-    this.db.prepare("UPDATE owner_sessions SET last_seen_at = ? WHERE id = ?").run(new Date().toISOString(), row.id);
+    if (touch) this.db.prepare("UPDATE owner_sessions SET last_seen_at = ? WHERE id = ?").run(new Date().toISOString(), row.id);
     return {
       id: row.id,
       harness: row.harness,
@@ -1223,7 +1271,14 @@ export class StateStore extends EventEmitter {
     `).get(chainId, sessionId);
   }
 
-  authorizeJob({ jobId, jobHandle = null, caller = null, control = false, allowLegacyRead = false } = {}) {
+  authorizeJob({
+    jobId,
+    jobHandle = null,
+    caller = null,
+    control = false,
+    allowLegacyRead = false,
+    allowCapabilityGrant = true,
+  } = {}) {
     let job = null;
     let chain = null;
     const parsedHandle = parseCapability(jobHandle);
@@ -1238,7 +1293,7 @@ export class StateStore extends EventEmitter {
         ) {
           job = jobId ? this.getJob(jobId) : this.getJob(chain.rootJobId);
           if (!job || job.chainId !== chain.id) job = null;
-          if (job && caller) {
+          if (job && caller && allowCapabilityGrant) {
             const now = new Date().toISOString();
             this.db.prepare(`
               INSERT INTO chain_session_grants(
@@ -1283,7 +1338,9 @@ export class StateStore extends EventEmitter {
     const stateClause = states.length ? `AND j.state IN (${states.map(() => "?").join(",")})` : "";
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch, a.execution_kind, a.monitor_deadline_at,
+             a.execution_epoch, a.execution_state, a.execution_kind,
+             a.execution_failure_count, a.next_execution_not_before,
+             a.last_executor_error_json, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at, c.state AS chain_state,
              c.input_required_abandoned_at, c.input_required_abandoned_job_id,
              c.input_required_abandoned_reason, c.attention_required_at
@@ -1591,7 +1648,7 @@ export class StateStore extends EventEmitter {
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
              a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
+             a.next_execution_not_before, a.last_executor_error_json, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
@@ -2360,7 +2417,7 @@ export class StateStore extends EventEmitter {
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
              a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
+             a.next_execution_not_before, a.last_executor_error_json, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
@@ -2697,12 +2754,27 @@ export class StateStore extends EventEmitter {
         ? Math.min(Date.now() + delay, deadlineMs)
         : Date.now() + delay;
       const retryAt = new Date(Math.max(Date.now(), retryMs)).toISOString();
+      const reattaching = structuredError(codedError(
+        "MONITOR_REATTACHING",
+        "Oracle is reattaching to the proven submitted turn without sending another message.",
+        {
+          safeToRetry: false,
+          submissionMayHaveOccurred: true,
+          recoveryAction: "wait for the existing monitor-only job; do not resubmit",
+          details: {
+            causeCode: structured.code,
+            retryAt,
+            monitorDeadlineAt: attempt.monitor_deadline_at || job.monitorDeadlineAt || null,
+            retryCount: failures,
+          },
+        },
+      ));
       this.db.prepare(`
         UPDATE job_attempts SET execution_state='backoff', execution_kind='monitor_only',
           execution_owner_instance_id=NULL, execution_lease_generation=NULL,
           execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
         WHERE job_id=? AND execution_epoch=?
-      `).run(failures, retryAt, json(structured), claim.jobId, claim.executionEpoch);
+      `).run(failures, retryAt, json(reattaching), claim.jobId, claim.executionEpoch);
       this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?")
         .run(new Date().toISOString(), claim.chainId, claim.jobId);
       released = this.requireJob(claim.jobId);
@@ -2903,6 +2975,67 @@ export class StateStore extends EventEmitter {
       synchronous: this.db.prepare("PRAGMA synchronous").get().synchronous,
       foreignKeys: Boolean(this.db.prepare("PRAGMA foreign_keys").get().foreign_keys),
       schemaVersion: Number(this.db.prepare("SELECT COALESCE(MAX(version), 0) version FROM schema_migrations").get().version),
+    };
+  }
+
+  protocolCompatibilityStatus() {
+    const state = this.db.prepare(`
+      SELECT minimum_reader_protocol, minimum_writer_protocol
+      FROM broker_state WHERE id=1
+    `).get();
+    const counts = { currentWriter: 0, readOnlyLegacy: 0, incompatible: 0, unknown: 0 };
+    const sessions = this.db.prepare(`
+      SELECT metadata_json FROM owner_sessions WHERE revoked_at IS NULL
+    `).all();
+    for (const session of sessions) {
+      const protocol = Number(parse(session.metadata_json)?.protocolVersion || 0);
+      if (!protocol) counts.unknown += 1;
+      else if (protocol >= BROKER_MINIMUM_WRITER_PROTOCOL && protocol <= BROKER_PROTOCOL_VERSION) counts.currentWriter += 1;
+      else if (protocol >= BROKER_MINIMUM_READER_PROTOCOL && protocol < BROKER_MINIMUM_WRITER_PROTOCOL) counts.readOnlyLegacy += 1;
+      else counts.incompatible += 1;
+    }
+    return {
+      brokerProtocol: BROKER_PROTOCOL_VERSION,
+      minimumReaderProtocol: Number(state?.minimum_reader_protocol || BROKER_MINIMUM_READER_PROTOCOL),
+      minimumWriterProtocol: Number(state?.minimum_writer_protocol || BROKER_MINIMUM_WRITER_PROTOCOL),
+      protocol8ReadCompatible: BROKER_MINIMUM_READER_PROTOCOL <= 8 && BROKER_PROTOCOL_VERSION >= 8,
+      clientSessions: { total: sessions.length, ...counts },
+    };
+  }
+
+  completionDeliveryHealth() {
+    const subscriptionRows = this.db.prepare(`
+      SELECT state, COUNT(*) count FROM completion_subscriptions GROUP BY state
+    `).all();
+    const deliveryRows = this.db.prepare(`
+      SELECT state, COUNT(*) count FROM completion_deliveries GROUP BY state
+    `).all();
+    const counts = (rows) => Object.fromEntries(rows.map((row) => [row.state, Number(row.count)]));
+    const subscriptions = { open: 0, closed: 0, ...counts(subscriptionRows) };
+    const deliveries = { pending: 0, claimed: 0, delivered: 0, acknowledged: 0, ...counts(deliveryRows) };
+    const retry = this.db.prepare(`
+      SELECT COUNT(*) AS scheduled,
+             MIN(next_attempt_at) AS next_attempt_at,
+             SUM(CASE WHEN last_error_json IS NOT NULL THEN 1 ELSE 0 END) AS with_error
+      FROM completion_deliveries
+      WHERE state='pending' AND next_attempt_at IS NOT NULL
+    `).get();
+    const expiredClaims = Number(this.db.prepare(`
+      SELECT COUNT(*) count FROM completion_deliveries
+      WHERE state='claimed' AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?
+    `).get(new Date().toISOString())?.count || 0);
+    return {
+      subscriptions: { ...subscriptions, total: subscriptions.open + subscriptions.closed },
+      deliveries: {
+        ...deliveries,
+        total: deliveries.pending + deliveries.claimed + deliveries.delivered + deliveries.acknowledged,
+      },
+      retry: {
+        scheduled: Number(retry?.scheduled || 0),
+        nextAttemptAt: retry?.next_attempt_at || null,
+        withLastError: Number(retry?.with_error || 0),
+        expiredClaims,
+      },
     };
   }
 

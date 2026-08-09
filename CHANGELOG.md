@@ -4,6 +4,7 @@
 
 ### Added
 
+- Oracle Firefox 1.7.0: publish schema 8 and wire protocol 9; add capability-owned start-receipt recovery, session-scoped attention listing, execution/blocker/result/monitor status fields, aggregate delivery and version-skew health, concurrency provenance, and stable recovery errors across MCP, CLI, Codex, Claude Code, Claudex, and Claude Desktop.
 - Oracle Firefox 1.6: add a persisted idle-only browser selector, full native macOS Chrome launch through the Google-signed `/Applications` bundle with Parallels/VM rejection, and a visible serialized Safari WebDriver backend with explicit session-only authentication and capability limits.
 - Oracle Firefox 1.5: add a canonical TMPDIR-independent endpoint, coordinator and profile lifetime leases, signed instance locators, broker generations, SQLite writer fencing, atomic execution claims, generation-scoped recovery, directional idle upgrades, and one source-derived build identity across Codex, Claude Code, Claudex, and Desktop artifacts.
 - Oracle Firefox 1.4: accept up to five explicit raw ZIP attachments for new or existing chats, snapshot and hash them durably, reject unsafe or ambiguous archives, and correlate the exact multi-file manifest before and after submission.
@@ -16,6 +17,7 @@
 
 ### Changed
 
+- Oracle Firefox 1.7.0: keep protocol 8 read-compatible while requiring protocol 9 for every mutation; older writers receive `CLIENT_UPGRADE_REQUIRED` without stopping, downgrading, or replacing the broker. Schema-8 migration classifies historical submissions only from durable SQLite evidence, never `response.md`, and preserves browser profiles, sessions, capabilities, subscriptions, and Firefox as the default.
 - Oracle Firefox 1.6.1: allow five different conversations to remain in response monitoring while account-wide trusted submission remains serialized and paced at ten seconds; idle same-protocol clients now hand off safely to a newer broker without interrupting outstanding work.
 - Oracle Firefox 1.5 initially started with one active conversation and retained explicit qualification for up to five isolated different-chat jobs while preserving same-chat FIFO, serialized trusted input/model/Send actions, and cooldown backpressure.
 - Oracle Firefox: default ordinary broker runs to headless Firefox and make visible setup/login an exclusive maintenance operation.

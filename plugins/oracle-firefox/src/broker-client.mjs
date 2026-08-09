@@ -30,6 +30,7 @@ const KNOWN_RELEASE_SEQUENCES = new Map([
   ["1.3.0", 1300],
   ["1.4.0", 1400],
   ["1.4.1", 1401],
+  ["1.6.9", 1610],
   [ORACLE_FIREFOX_VERSION, BROKER_RELEASE_SEQUENCE],
 ]);
 
@@ -268,13 +269,14 @@ function transportUncertain(error) {
 
 function unresolvedReceiptError(error) {
   return codedError(
-    "START_RECEIPT_UNCERTAIN",
-    "Oracle Firefox could not prove whether the preserved start was committed. It did not submit the start request again.",
+    "RECEIPT_MAY_EXIST",
+    "Oracle Firefox could not prove whether the preserved start was committed. Recover the receipt; do not resubmit the request.",
     {
       cause: error,
       safeToRetry: false,
       submissionMayHaveOccurred: true,
-      recoveryAction: "retry this exact start with the same authorizationId and stable host-session identity to check the preserved receipt again",
+      recoveryAction: "call recover_start_receipt with the preserved authorizationId, requestDigest, and receiptRecoveryHandle; do not create a new authorization",
+      details: { causeCode: error?.code || null },
     },
   );
 }

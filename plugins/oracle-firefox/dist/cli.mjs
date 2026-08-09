@@ -14,17 +14,21 @@ import { fileURLToPath } from "node:url";
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.9",
-  "protocolVersion": 8,
+  "packageVersion": "1.7.0",
+  "protocolVersion": 9,
+  "minimumReaderProtocol": 8,
+  "minimumWriterProtocol": 9,
   "schemaVersion": 8,
-  "releaseSequence": 1610,
-  "sourceDigest": "d920973d1da26dd43990fc1c479faa792f27a1d6da0d6f2591fa2192b579c4ea",
-  "buildId": "oracle-firefox-1.6.9-d920973d1da26dd4"
+  "releaseSequence": 1700,
+  "sourceDigest": "5a793ded893553106b214700d502a8bbe88af7e081571805b161c6afd7420ec9",
+  "buildId": "oracle-firefox-1.7.0-5a793ded89355310"
 });
 
 // src/build-info.mjs
 var ORACLE_FIREFOX_VERSION = GENERATED_BUILD_INFO.packageVersion;
 var BROKER_PROTOCOL_VERSION = GENERATED_BUILD_INFO.protocolVersion;
+var BROKER_MINIMUM_READER_PROTOCOL = GENERATED_BUILD_INFO.minimumReaderProtocol;
+var BROKER_MINIMUM_WRITER_PROTOCOL = GENERATED_BUILD_INFO.minimumWriterProtocol;
 var BROKER_SCHEMA_VERSION = GENERATED_BUILD_INFO.schemaVersion;
 var BROKER_RELEASE_SEQUENCE = GENERATED_BUILD_INFO.releaseSequence;
 var BROKER_BUILD_ID = GENERATED_BUILD_INFO.buildId;
@@ -100,6 +104,27 @@ var OracleFirefoxError = class extends Error {
     this.details = options.details ?? null;
   }
 };
+var CAPABILITY_PATTERN = /ofx1\.(?:session|read|control|subscription|receipt|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu;
+function redact(value) {
+  if (typeof value === "string") return value.replace(CAPABILITY_PATTERN, "[REDACTED_CAPABILITY]");
+  if (Array.isArray(value)) return value.map(redact);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, redact(item)]));
+  }
+  return value;
+}
+function structuredError(error, fallback = {}) {
+  const value = error instanceof Error ? error : new Error(String(error));
+  return {
+    code: value.code || fallback.code || "ORACLE_FIREFOX_ERROR",
+    message: redact(value.message),
+    jobState: value.jobState ?? fallback.jobState ?? null,
+    safeToRetry: value.safeToRetry ?? fallback.safeToRetry ?? false,
+    submissionMayHaveOccurred: value.submissionMayHaveOccurred ?? fallback.submissionMayHaveOccurred ?? false,
+    recoveryAction: redact(value.recoveryAction ?? fallback.recoveryAction ?? null),
+    details: redact(value.details ?? fallback.details ?? null)
+  };
+}
 function codedError(code, message, options) {
   return new OracleFirefoxError(code, message, options);
 }
@@ -474,7 +499,7 @@ function rpcRequest(endpoint, token, method, params = {}, options = {}) {
         socket.write(encodeFrame({
           id,
           token,
-          protocolVersion: BROKER_PROTOCOL_VERSION,
+          protocolVersion: options.protocolVersion ?? BROKER_PROTOCOL_VERSION,
           method,
           params,
           client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION }
@@ -544,6 +569,7 @@ var JOB_STATES = Object.freeze([
   "submission_uncertain",
   "response_uncertain",
   "response_failed",
+  "input_invalid",
   "quarantined"
 ]);
 var STATE_INDEX = new Map(JOB_STATES.map((state, index) => [state, index]));
@@ -575,6 +601,7 @@ var KNOWN_RELEASE_SEQUENCES = /* @__PURE__ */ new Map([
   ["1.3.0", 1300],
   ["1.4.0", 1400],
   ["1.4.1", 1401],
+  ["1.6.9", 1610],
   [ORACLE_FIREFOX_VERSION, BROKER_RELEASE_SEQUENCE]
 ]);
 function processIsAlive(pid) {
@@ -792,13 +819,14 @@ function transportUncertain(error) {
 }
 function unresolvedReceiptError(error) {
   return codedError(
-    "START_RECEIPT_UNCERTAIN",
-    "Oracle Firefox could not prove whether the preserved start was committed. It did not submit the start request again.",
+    "RECEIPT_MAY_EXIST",
+    "Oracle Firefox could not prove whether the preserved start was committed. Recover the receipt; do not resubmit the request.",
     {
       cause: error,
       safeToRetry: false,
       submissionMayHaveOccurred: true,
-      recoveryAction: "retry this exact start with the same authorizationId and stable host-session identity to check the preserved receipt again"
+      recoveryAction: "call recover_start_receipt with the preserved authorizationId, requestDigest, and receiptRecoveryHandle; do not create a new authorization",
+      details: { causeCode: error?.code || null }
     }
   );
 }
@@ -1246,7 +1274,8 @@ var harness = process.env.ORACLE_FIREFOX_HARNESS || "cli";
 var jobReference = () => ({ jobId: args[0], jobHandle: option(args, ["--handle"]) });
 try {
   let result;
-  if (command === "coordinator-inspect") result = await inspectCoordinatorDatabase();
+  if (command === "version" || command === "--version" || command === "-v") result = { version: ORACLE_FIREFOX_VERSION };
+  else if (command === "coordinator-inspect") result = await inspectCoordinatorDatabase();
   else if (command === "doctor") result = await callBroker("workflow.doctor", {}, { harness });
   else if (command === "browser-select") result = await callBroker("workflow.selectBrowser", { browser: args[0] }, { harness });
   else if (command === "broker-status") result = await callBroker("broker.status", {}, { harness });
@@ -1279,9 +1308,15 @@ try {
   } else if (command === "continue-chat" || command === "continue-chat-start") {
     const params = { authorizationId: option(args, ["--authorization-id"], command === "continue-chat-start" ? void 0 : randomUUID6()), chatTitle: option(args, ["--title"]), conversationUrl: option(args, ["--url"]), prompt: option(args, ["-p", "--prompt"]), zipFiles: repeated(args, ["--zip-file", "--zip"]), cwd: option(args, ["--cwd"]), ...target(args), ...common(args) };
     result = await callBroker(command === "continue-chat" ? "jobs.compatContinue" : "jobs.startContinue", params, { timeoutMs: command === "continue-chat" ? 245e3 : 65e3, harness });
-  } else if (command === "status") result = await callBroker("jobs.status", { ...jobReference(), followRetries: !bool(args, "--no-follow-retries") }, { harness });
+  } else if (command === "recover-start-receipt") result = await callBroker("jobs.recoverStartReceipt", {
+    authorizationId: option(args, ["--authorization-id"]),
+    requestDigest: option(args, ["--request-digest"]),
+    recoveryHandle: option(args, ["--receipt-recovery-handle"])
+  }, { harness });
+  else if (command === "status") result = await callBroker("jobs.status", { ...jobReference(), followRetries: !bool(args, "--no-follow-retries") }, { harness });
   else if (command === "result") result = await callBroker("jobs.result", { ...jobReference(), followRetries: !bool(args, "--no-follow-retries") }, { harness });
   else if (command === "jobs") result = await callBroker("jobs.list", { limit: number(args, ["--limit"], 50) }, { harness });
+  else if (command === "list-attention" || command === "attention") result = await callBroker("jobs.listAttention", {}, { harness });
   else if (command === "quarantine-inspect") result = await callBroker("jobs.inspectQuarantine", {
     conversationUrl: option(args, ["--url"])
   }, { harness });
@@ -1373,11 +1408,11 @@ try {
       if (bool(args, "--notify")) await notify("Oracle Firefox", `Job ${jobId} ${result.state}`);
     }
   } else {
-    throw new Error("Usage: oracle-firefox coordinator-inspect|doctor|browser-select firefox|chrome|safari|broker-status|profiles|setup|import-session|projects|find-chats|artifacts|download-artifact|consult|consult-start|continue-chat|continue-chat-start|status <job-id> [--handle HANDLE]|result <job-id> [--handle HANDLE]|jobs|watch <job-id> [--handle HANDLE]|input-request-inspect --url URL|abandon-input <job-id> --handle HANDLE --confirm-abandon|input-request-recover --url URL --fingerprint HASH --confirm-capability-unavailable --confirm-abandon|quarantine-inspect --url URL|quarantine-recover --url URL --fingerprint HASH --confirm-capability-unavailable [--action reconcile|acknowledge]|reconcile|acknowledge|cancel|reply-local-data|completion-claim|completion-delivered|completion-ack|emergency-lock|emergency-unlock");
+    throw new Error("Usage: oracle-firefox version|coordinator-inspect|doctor|browser-select firefox|chrome|safari|broker-status|profiles|setup|import-session|projects|find-chats|artifacts|download-artifact|consult|consult-start|continue-chat|continue-chat-start|recover-start-receipt --authorization-id UUID --request-digest SHA256 --receipt-recovery-handle HANDLE|status <job-id> [--handle HANDLE]|result <job-id> [--handle HANDLE]|jobs|list-attention|watch <job-id> [--handle HANDLE]|input-request-inspect --url URL|abandon-input <job-id> --handle HANDLE --confirm-abandon|input-request-recover --url URL --fingerprint HASH --confirm-capability-unavailable --confirm-abandon|quarantine-inspect --url URL|quarantine-recover --url URL --fingerprint HASH --confirm-capability-unavailable [--action reconcile|acknowledge]|reconcile|acknowledge|cancel|reply-local-data|completion-claim|completion-delivered|completion-ack|emergency-lock|emergency-unlock");
   }
   if (command !== "watch" || !bool(args, "--jsonl")) print(result);
 } catch (error) {
-  process.stderr.write(`${JSON.stringify({ code: error.code || "ORACLE_FIREFOX_ERROR", message: error.message, recoveryAction: error.recoveryAction || null }, null, 2)}
+  process.stderr.write(`${JSON.stringify(structuredError(error), null, 2)}
 `);
   process.exitCode = 1;
 }

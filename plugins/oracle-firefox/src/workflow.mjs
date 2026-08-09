@@ -676,7 +676,17 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
     });
   } catch (error) {
     if (error?.code !== "LOCAL_DATA_REQUEST_INVALID") throw error;
-    inputInvalidError = structuredError(error, { jobState: "input_invalid" });
+    inputInvalidError = structuredError(codedError(
+      "INPUT_INVALID",
+      "ChatGPT returned a malformed local-data request. Oracle preserved the response and blocked automated follow-up.",
+      {
+        jobState: "input_invalid",
+        safeToRetry: false,
+        submissionMayHaveOccurred: true,
+        recoveryAction: "use the owning control capability to explicitly abandon the malformed input request; do not send an automated reply",
+        details: { parserCode: error.code },
+      },
+    ));
   }
   const disposition = inputInvalidError ? "input_invalid" : (localDataRequest ? "local_data_request" : "final");
   const terminalState = inputInvalidError ? "input_invalid" : "completed";

@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "oracle-firefox",
   "display_name": "Oracle Firefox",
-  "version": "1.6.9",
-  "description": "Capability-isolated ChatGPT Pro consultation, ZIP uploads, durable completion, and downloads through Firefox, native macOS Chrome, or Safari.",
-  "long_description": "One identity-locked per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one safely selected browser backend. Firefox remains the compatibility default, native macOS Chrome is bundle-and-signature verified so Parallels or VM copies are rejected, and Safari uses a serialized visible WebDriver session with explicit session-only authentication. Capability-owned logical chains retain same-chat FIFO, durable completion, cooldown control, exact-turn correlation, and the one-send boundary across up to five qualified different-chat jobs.\n\nThe bundle never contains login cookies. Firefox and Chrome use separate dedicated local profiles; Safari uses an isolated automation session.",
+  "version": "1.7.0",
+  "description": "Capability-isolated ChatGPT Pro consultation with durable receipt recovery, attention routing, ZIP uploads, and downloads through Firefox, native macOS Chrome, or Safari.",
+  "long_description": "One identity-locked per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one safely selected browser backend. Firefox remains the compatibility default, native macOS Chrome is bundle-and-signature verified, and Safari uses a serialized visible WebDriver session. Capability-owned logical chains retain same-chat FIFO, recoverable start receipts, session-scoped attention, durable completion, exact-turn monitor-only recovery, and the one-send boundary across five qualified different-chat slots.\n\nThe bundle never contains login cookies. Firefox and Chrome use separate dedicated local profiles; Safari uses an isolated automation session.",
   "author": {
     "name": "nikokuma",
     "url": "https://github.com/nikokuma"
@@ -84,6 +84,10 @@
       "description": "Start a durable existing-chat continuation and return immediately."
     },
     {
+      "name": "recover_start_receipt",
+      "description": "Recover one committed start receipt without submitting again."
+    },
+    {
       "name": "job_status",
       "description": "Read durable job state."
     },
@@ -98,6 +102,10 @@
     {
       "name": "list_jobs",
       "description": "List only the current client session's durable jobs without prompts."
+    },
+    {
+      "name": "list_attention",
+      "description": "List only the current client session's sanitized attention blockers."
     },
     {
       "name": "inspect_quarantine",

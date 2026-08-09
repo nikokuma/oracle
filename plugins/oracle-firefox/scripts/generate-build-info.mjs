@@ -17,6 +17,8 @@ const sourceDigest = digest.digest("hex");
 const build = {
   packageVersion: meta.version,
   protocolVersion: meta.protocolVersion,
+  minimumReaderProtocol: meta.minimumReaderProtocol,
+  minimumWriterProtocol: meta.minimumWriterProtocol,
   schemaVersion: meta.schemaVersion,
   releaseSequence: meta.releaseSequence,
   sourceDigest,

@@ -19,7 +19,8 @@ test("offline coordinator inspection is read-only and reports schema fencing", a
     assert.equal(inspected.schemaVersion, 8);
     assert.equal(inspected.integrity, "ok");
     assert.equal(inspected.foreignKeyViolations, 0);
-    assert.equal(inspected.broker.minimumWriterProtocol, 8);
+    assert.equal(inspected.broker.minimumReaderProtocol, 8);
+    assert.equal(inspected.broker.minimumWriterProtocol, 9);
     assert.equal(inspected.repairRequired, false);
   } finally {
     if (priorCoordinator === undefined) delete process.env.ORACLE_FIREFOX_COORDINATOR_HOME;

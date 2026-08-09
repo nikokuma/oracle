@@ -253,6 +253,7 @@ test("malformed local-data JSON is preserved as input_invalid and requires capab
       },
     });
     assert.equal(result.state, "input_invalid");
+    assert.equal(result.error.code, "INPUT_INVALID");
     assert.equal(result.answer, malformed);
     assert.equal(store.requireJob(job.id).state, "input_invalid");
     assert.equal(store.requireJob(job.id).assistantDisposition, "input_invalid");

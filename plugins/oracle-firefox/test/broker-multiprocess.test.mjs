@@ -104,6 +104,67 @@ async function receiptPaths(coordinatorHome) {
     });
 }
 
+test("CLI publishes version, session attention, and start-receipt recovery", { timeout: 20_000 }, async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "oracle-cli-public-api-"));
+  const authorizationId = crypto.randomUUID();
+  const digest = "d".repeat(64);
+  const recoveryHandle = "receipt-fixture-handle";
+  const requests = [];
+  const broker = await startFakeBroker(root, (request) => {
+    requests.push({ method: request.method, params: request.params });
+    if (request.method === "jobs.listAttention") return { result: { attention: [] } };
+    if (request.method === "jobs.recoverStartReceipt") {
+      return {
+        result: {
+          authorizationId,
+          requestDigest: digest,
+          receiptRecoveryHandle: recoveryHandle,
+          receiptState: "recovered",
+        },
+      };
+    }
+    throw new Error(`Unexpected fixture method: ${request.method}`);
+  });
+  const cliPath = path.resolve("src/cli.mjs");
+  try {
+    const version = JSON.parse((await execFileAsync(process.execPath, [cliPath, "version"], {
+      env: broker.env,
+      timeout: 10_000,
+    })).stdout);
+    assert.deepEqual(version, { version: "1.7.0" });
+
+    const attention = JSON.parse((await execFileAsync(process.execPath, [cliPath, "list-attention"], {
+      env: broker.env,
+      timeout: 10_000,
+    })).stdout);
+    assert.deepEqual(attention, { attention: [] });
+
+    const recovered = JSON.parse((await execFileAsync(process.execPath, [
+      cliPath,
+      "recover-start-receipt",
+      "--authorization-id", authorizationId,
+      "--request-digest", digest,
+      "--receipt-recovery-handle", recoveryHandle,
+    ], {
+      env: broker.env,
+      timeout: 10_000,
+    })).stdout);
+    assert.equal(recovered.receiptState, "recovered");
+    assert.equal(recovered.receiptRecoveryHandle, recoveryHandle);
+    assert.deepEqual(requests, [
+      { method: "jobs.listAttention", params: {} },
+      {
+        method: "jobs.recoverStartReceipt",
+        params: { authorizationId, requestDigest: digest, recoveryHandle },
+      },
+    ]);
+    assert.deepEqual(broker.errors, []);
+  } finally {
+    await broker.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("protocol upgrades wait for the expected broker instance to release ownership", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "oracle-broker-release-"));
   const endpoint = path.join(root, "broker.sock");
@@ -231,7 +292,7 @@ test("a strictly newer release request drains and releases the exact idle broker
     const upgrade = await rpcRequest(identity.endpoint, token, 'broker.requestUpgrade', {
       expectedInstanceId: status.brokerInstanceId,
       expectedLeaseGeneration: status.leaseGeneration,
-      requesterReleaseSequence: 1700,
+      requesterReleaseSequence: ${BROKER_RELEASE_SEQUENCE + 1},
       requesterBuildId: 'upgrade-fixture'
     });
     const released = await waitForBrokerRelease(token, {
@@ -483,9 +544,9 @@ test("broker-client preserves an ambiguous receipt and never resends after incon
     const first = JSON.parse((await run()).stdout);
     assert.deepEqual(first, {
       ok: false,
-      code: "START_RECEIPT_UNCERTAIN",
+      code: "RECEIPT_MAY_EXIST",
       submissionMayHaveOccurred: true,
-      recoveryAction: "retry this exact start with the same authorizationId and stable host-session identity to check the preserved receipt again",
+      recoveryAction: "call recover_start_receipt with the preserved authorizationId, requestDigest, and receiptRecoveryHandle; do not create a new authorization",
     });
     assert.equal(startCount, 1);
     assert.equal(recoveryCount, 1);
@@ -496,9 +557,9 @@ test("broker-client preserves an ambiguous receipt and never resends after incon
     const second = JSON.parse((await run()).stdout);
     assert.deepEqual(second, {
       ok: false,
-      code: "START_RECEIPT_UNCERTAIN",
+      code: "RECEIPT_MAY_EXIST",
       submissionMayHaveOccurred: true,
-      recoveryAction: "retry this exact start with the same authorizationId and stable host-session identity to check the preserved receipt again",
+      recoveryAction: "call recover_start_receipt with the preserved authorizationId, requestDigest, and receiptRecoveryHandle; do not create a new authorization",
     });
     assert.equal(startCount, 1, "an existing ambiguous receipt must never re-enter jobs.startConsult");
     assert.equal(recoveryCount, 2);
@@ -603,6 +664,9 @@ test("independent harness sessions cannot read a foreign job UUID but can explic
     assert.equal(value.listed.jobs.some((job) => job.jobId === value.receipt.jobId), true);
     assert.match(value.receipt.jobHandle, /^ofx1\.control\./u);
     assert.match(value.receipt.completionHandle, /^ofx1\.subscription\./u);
+    assert.match(value.receipt.receiptRecoveryHandle, /^ofx1\.receipt\./u);
+    assert.match(value.receipt.requestDigest, /^[a-f0-9]{64}$/u);
+    assert.equal(value.receipt.receiptState, "committed");
     assert.equal(JSON.stringify(value.broker).includes(value.receipt.jobId), false, "broker status must not expose active job ids");
   } finally {
     if (pid) {

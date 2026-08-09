@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdir, rename, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, stat, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { mkdtemp } from "node:fs/promises";
@@ -16,12 +16,15 @@ import {
 } from "../src/build-info.mjs";
 import { StateStore } from "../src/state-store.mjs";
 import { mintCapability } from "../src/capabilities.mjs";
+import { browserProfileDirectory, configuredBrowserName } from "../src/config.mjs";
 
 const ENV_KEYS = [
   "ORACLE_FIREFOX_HOME",
   "ORACLE_FIREFOX_COORDINATOR_HOME",
   "ORACLE_FIREFOX_RUNTIME_ROOT",
   "ORACLE_FIREFOX_BROKER_ENDPOINT",
+  "ORACLE_BROWSER",
+  "ORACLE_FIREFOX_BROWSER",
   "TMPDIR",
 ];
 
@@ -31,6 +34,8 @@ async function withEnvironment(callback) {
   const prior = Object.fromEntries(ENV_KEYS.map((key) => [key, process.env[key]]));
   try {
     delete process.env.ORACLE_FIREFOX_BROKER_ENDPOINT;
+    delete process.env.ORACLE_BROWSER;
+    delete process.env.ORACLE_FIREFOX_BROWSER;
     process.env.ORACLE_FIREFOX_HOME = path.join(root, "home");
     process.env.ORACLE_FIREFOX_COORDINATOR_HOME = path.join(root, "coordinator");
     process.env.ORACLE_FIREFOX_RUNTIME_ROOT = runtimeRoot;
@@ -229,9 +234,20 @@ test("schema seven migrates transactionally to monotonic monitor execution witho
   await withEnvironment(async (root) => {
     const databasePath = path.join(root, "schema-seven.sqlite");
     const sessionPath = path.join(root, "legacy-session");
+    const responseOnlySessionPath = path.join(root, "legacy-response-only-session");
+    const profilePath = path.join(root, "home", "profile");
+    const chromeProfilePath = path.join(root, "home", "browser-profiles", "chrome");
     const coordinatorId = "schema-seven-coordinator";
     await mkdir(sessionPath, { recursive: true });
+    await mkdir(responseOnlySessionPath, { recursive: true });
+    await mkdir(profilePath, { recursive: true });
+    await mkdir(chromeProfilePath, { recursive: true });
     await writeFile(path.join(sessionPath, "response.md"), "unbound legacy response hint\n", { mode: 0o600 });
+    await writeFile(path.join(responseOnlySessionPath, "response.md"), "response.md alone is not submission proof\n", { mode: 0o600 });
+    await writeFile(path.join(profilePath, "authenticated-profile.marker"), "preserve me\n", { mode: 0o600 });
+    await writeFile(path.join(chromeProfilePath, "authenticated-profile.marker"), "preserve chrome too\n", { mode: 0o600 });
+    assert.equal(configuredBrowserName(), "firefox");
+    assert.equal(browserProfileDirectory(), profilePath);
     const firstContext = brokerContext(coordinatorId);
     const first = await new StateStore(databasePath, { brokerContext: firstContext }).open();
     const owner = first.createOwnerSession({ harness: "legacy-codex", clientInstanceId: "legacy-client" });
@@ -267,6 +283,23 @@ test("schema seven migrates transactionally to monotonic monitor execution witho
       userTurnHash: "schema-seven-user-hash",
     });
     first.transition(job.id, "awaiting_response");
+    const responseOnlyId = randomUUID();
+    const responseOnlyRead = mintCapability("read", responseOnlyId);
+    const responseOnlyControl = mintCapability("control", responseOnlyId);
+    const responseOnly = first.createJob({
+      id: responseOnlyId,
+      authorizationId: randomUUID(),
+      operation: "continue_chat",
+      request: { responseTimeoutSeconds: 300 },
+      conversationKey: "https://chatgpt.com/c/schema-seven-response-only",
+      conversationUrl: "https://chatgpt.com/c/schema-seven-response-only",
+      sessionPath: responseOnlySessionPath,
+      ownerSessionId: caller.id,
+      readCapabilityHash: responseOnlyRead.hash,
+      controlCapabilityHash: responseOnlyControl.hash,
+    }).job;
+    first.transition(responseOnly.id, "snapshotted");
+    first.transition(responseOnly.id, "queued");
     const chainBefore = first.chainAccessRow(job.chainId);
     first.close();
 
@@ -307,6 +340,11 @@ test("schema seven migrates transactionally to monotonic monitor execution witho
       assert.ok(migrated.monitorDeadlineAt);
       assert.equal(migrated.result, null, "an unbound legacy response.md must not become authoritative result proof");
       assert.equal(migrated.assistantTurnId, null);
+      const responseOnlyMigrated = successor.requireJob(responseOnly.id);
+      assert.equal(responseOnlyMigrated.state, "queued");
+      assert.equal(responseOnlyMigrated.executionKind, "pre_submit");
+      assert.equal(responseOnlyMigrated.submitIntentAt, null);
+      assert.equal(responseOnlyMigrated.result, null);
       assert.equal(successor.getChain(job.chainId).id, job.chainId);
       const chainAfter = successor.chainAccessRow(job.chainId);
       assert.equal(chainAfter.read_cap_hash, chainBefore.read_cap_hash);
@@ -314,6 +352,9 @@ test("schema seven migrates transactionally to monotonic monitor execution witho
       assert.equal(successor.authenticateOwnerSession({ sessionId: owner.sessionId, sessionHandle: owner.sessionHandle }).id, owner.sessionId);
       assert.equal(successor.db.prepare("SELECT COUNT(*) count FROM submit_permits WHERE job_id=? AND consumed_at IS NOT NULL").get(job.id).count, 1);
       assert.equal(successor.db.prepare("SELECT COUNT(*) count FROM completion_subscriptions WHERE id=?").get(subscriptionId).count, 1);
+      assert.equal(await readFile(path.join(profilePath, "authenticated-profile.marker"), "utf8"), "preserve me\n");
+      assert.equal(await readFile(path.join(chromeProfilePath, "authenticated-profile.marker"), "utf8"), "preserve chrome too\n");
+      assert.equal(configuredBrowserName(), "firefox", "schema migration must preserve Firefox as the default browser");
     } finally {
       successor.close();
     }

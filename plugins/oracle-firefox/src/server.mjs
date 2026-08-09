@@ -3,12 +3,14 @@ import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import pluginMeta from "../plugin.meta.json" with { type: "json" };
 import { callBroker } from "./broker-client.mjs";
 import { ORACLE_FIREFOX_VERSION } from "./build-info.mjs";
 import { structuredError } from "./errors.mjs";
 
 const harnessName = process.env.ORACLE_FIREFOX_HARNESS || "codex-mcp";
 const defaultCompletionMode = harnessName === "claude-desktop-mcp" ? "notify" : "manual";
+const canonicalTools = new Map(pluginMeta.tools.map((tool) => [tool.name, tool]));
 
 function prepareExecutionParams(params) {
   return {
@@ -83,7 +85,9 @@ const inputRequestReason = z.enum(["false-positive", "not-needed", "user-decline
   .describe("Auditable reason for discarding the pending evidence request; never authorizes a replacement send.");
 
 function register(name, config, method, timeoutMs = 65_000, prepareParams = null) {
-  server.registerTool(name, config, async (params, extra) => {
+  const canonical = canonicalTools.get(name);
+  if (!canonical) throw new Error(`Tool ${name} is missing from plugin.meta.json.`);
+  server.registerTool(name, { ...config, description: canonical.description }, async (params, extra) => {
     try {
       const requestParams = prepareParams ? prepareParams(params) : params;
       const result = await callBroker(method, requestParams, {
@@ -183,6 +187,20 @@ register("continue_chat_start", {
   inputSchema: { authorizationId: z.string().uuid(), ...continueFields },
 }, "jobs.startContinue", 65_000, prepareExecutionParams);
 
+register("recover_start_receipt", {
+  title: "Recover an Oracle Firefox start receipt",
+  description: "Recover the exact committed start and rotate its private job/completion handles without submitting, retrying, or creating another ChatGPT turn.",
+  inputSchema: {
+    authorizationId: z.string().uuid(),
+    requestDigest: z.string().regex(/^[a-f0-9]{64}$/u),
+    receiptRecoveryHandle: z.string().min(1).describe("Private receiptRecoveryHandle returned by the original start receipt."),
+  },
+}, "jobs.recoverStartReceipt", 65_000, (params) => ({
+  authorizationId: params.authorizationId,
+  requestDigest: params.requestDigest,
+  recoveryHandle: params.receiptRecoveryHandle,
+}));
+
 register("consult", {
   title: "Consult ChatGPT through Firefox",
   description: "Compatibility tool: starts one durable consultation, waits up to 240 seconds, then returns either the result or a non-error pending receipt.",
@@ -224,6 +242,12 @@ register("list_jobs", {
   description: "List only this client session's recent durable jobs without exposing prompt contents.",
   inputSchema: { limit: z.number().int().min(1).max(200).default(50), states: z.array(z.string()).default([]) },
 }, "jobs.list");
+
+register("list_attention", {
+  title: "List Oracle Firefox attention",
+  description: "List only this client session's sanitized input and uncertainty blockers without prompts, answers, job ids, paths, URLs, or capabilities.",
+  inputSchema: {},
+}, "jobs.listAttention");
 
 register("inspect_quarantine", {
   title: "Inspect one exact Oracle Firefox quarantine",

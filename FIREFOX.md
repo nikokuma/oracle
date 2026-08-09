@@ -40,7 +40,7 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.6.9.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.6.9.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Download and open [`oracle-firefox-1.7.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.7.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
 ## Choose a browser
 
@@ -133,9 +133,18 @@ node plugins/oracle-firefox/dist/cli.mjs watch <job-id> \
   --completion-handle '<completion-handle>' \
   --jsonl --notify
 node plugins/oracle-firefox/dist/cli.mjs result <job-id> --handle '<job-handle>'
+node plugins/oracle-firefox/dist/cli.mjs list-attention
+
+# Recover handles from an already committed start; this never submits again.
+node plugins/oracle-firefox/dist/cli.mjs recover-start-receipt \
+  --authorization-id '<uuid>' \
+  --request-digest '<sha256>' \
+  --receipt-recovery-handle '<receipt-handle>'
 ```
 
-MCP clients use `consult_start`, `continue_chat_start`, `job_status`, `job_wait`, and `job_result`. The compatibility `consult` and `continue_chat` tools wait at most 240 seconds, then return a pending receipt while the broker continues working.
+MCP clients use `consult_start`, `continue_chat_start`, `recover_start_receipt`, `job_status`, `job_wait`, `job_result`, and `list_attention`. Start receipts include `receiptRecoveryHandle`, `receiptState`, and `requestDigest`; keep them private with the job and completion handles. Receipt recovery rotates lost handles around the same committed logical chain and never invokes a start or Send path. The compatibility `consult` and `continue_chat` tools wait at most 240 seconds, then return a pending receipt while the broker continues working.
+
+Job status, wait, result, and list views expose `executionMode`, `blockedReason`, `attentionRequired`, `resultAvailable`, and sanitized `monitorRetry` timing/count/error information. `list_attention` returns only blockers owned by the current host session. Broker status reports a mutually exclusive logical queue partition, aggregate durable-delivery health, reader/writer version skew, and the source of its qualified/effective concurrency; none of these views lists foreign job ids, prompts, answers, URLs, paths, or capabilities.
 
 When an agent uses the bundled Oracle skill, the default is `responseFailurePolicy=retry-once`, recovery-chain following, and one harness-appropriate completion handoff. You do not need to repeat those instructions. Explicit requests such as “do not retry,” “notify me only,” or “no automation” override the skill default. Direct CLI/MCP callers that bypass the skill retain the conservative raw default `responseFailurePolicy=report`.
 
@@ -178,7 +187,9 @@ Private state lives in:
 - Capability hashes, completion subscriptions, delivery acknowledgements, lanes, and cooldown state: the coordinator SQLite database
 - stable broker socket: `/tmp/oracle-firefox-<uid>-<coordinator-id>/broker.sock` (independent of each host's `TMPDIR`)
 
-The coordinator UUID, signed broker locator, coordinator lifetime lease, and profile lifetime lease make differently installed Codex, Claude, Claudex, and Desktop packages converge on one owner. A newer client may request a directional idle handoff from a known older broker. It never kills active work, unlinks an unverified socket, or lets an older client downgrade a newer broker. Schema 7 retains the pre-1.5 writer fence, adds durable input-abandonment audit fields, and writes a `coordinator.sqlite.pre-v7.bak` backup before migrating an existing production database.
+The coordinator UUID, signed broker locator, coordinator lifetime lease, and profile lifetime lease make differently installed Codex, Claude, Claudex, and Desktop packages converge on one owner. A newer client may request a directional idle handoff from a known older broker. It never kills active work, unlinks an unverified socket, or lets an older client downgrade a newer broker. Oracle Firefox 1.7.0 publishes schema 8 and wire protocol 9. Protocol 8 remains read-compatible for existing sessions, but every mutation requires protocol 9 and returns `CLIENT_UPGRADE_REQUIRED` to an older writer without replacing the broker.
+
+Schema 8 writes `coordinator.sqlite.pre-v8.bak` before migrating an older production database. It treats only durable SQLite evidence—`submit_intent`, one canonical conversation URL, and an exact user-turn id or hash—as proof of a submitted turn. `response.md` is never migration evidence. Proven submissions become monitor-only; unproven post-intent work remains uncertain and quarantined; pre-intent work may resume safely. The migration leaves the authenticated Firefox/Chrome profile directories, persisted browser selection, owner sessions, capability hashes, subscriptions, and default Firefox selection in place. See the packaged [1.7.0 migration notes](plugins/oracle-firefox/MIGRATION.md).
 
 If startup reports a database or identity failure, stop before editing SQLite. `node plugins/oracle-firefox/dist/cli.mjs coordinator-inspect` performs an offline/read-only integrity, schema, backup, and broker-generation inspection without launching Firefox or a broker. Preserve both the database and its migration backup before any separately approved repair.
 
@@ -188,9 +199,13 @@ If Pro needs local facts, it ends its response with a structured `ORACLE_LOCAL_D
 
 If the user chooses not to answer a genuine input request, `abandon_input_request` releases its same-chat FIFO lane using the chain's control capability. When that capability is unavailable, `inspect_input_request` and `recover_orphaned_input_request` provide exact-URL, fingerprinted recovery with explicit confirmation. Both preserve the original response, send nothing, expose no private job contents, and do not authorize a replacement message.
 
+A malformed local-data block is preserved as `INPUT_INVALID`, blocks automated reply, and requires the owning control capability for explicit abandonment. New starts blocked by an outstanding request return `INPUT_REQUIRED_BLOCKING`; `inspect_input_request` returns only sanitized `blockers[]` entries.
+
 ## Recovery
 
 Use `broker_status` or `job_status` after a client restart. Safe pre-send work resumes automatically. Proven submitted turns reattach in monitor-only mode. A verified ownership record lets a replacement broker close only its own orphaned dedicated Firefox after a crash. Unproven post-send states return `SUBMISSION_UNCERTAIN`; `reconcile_job` searches the exact conversation read-only and never sends another message.
+
+During bounded exact-turn monitor recovery, status reports `MONITOR_REATTACHING`; it is not permission to retry. If start delivery is ambiguous, `RECEIPT_MAY_EXIST` directs the caller to `recover_start_receipt` with the preserved receipt fields. `CLIENT_UPGRADE_REQUIRED` means the caller may continue protocol-8 reads but must reload Oracle Firefox 1.7.0 before any write.
 
 If a migrated quarantine outlives its private control capability, `inspect_quarantine` accepts only the exact conversation URL and returns a state fingerprint without exposing the old job. `recover_orphaned_quarantine` can then adopt a uniquely proven submitted turn for monitoring, or remove only the lane barrier after explicit manual inspection. Neither path sends or authorizes a replacement message.
 

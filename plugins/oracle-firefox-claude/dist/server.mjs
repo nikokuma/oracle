@@ -30962,6 +30962,93 @@ var StdioServerTransport = class {
   }
 };
 
+// plugin.meta.json
+var plugin_meta_default = {
+  name: "oracle-firefox",
+  displayName: "Oracle Firefox",
+  version: "1.7.0",
+  codexVersion: "1.7.0+codex.20260809170000",
+  protocolVersion: 9,
+  minimumReaderProtocol: 8,
+  minimumWriterProtocol: 9,
+  schemaVersion: 8,
+  releaseSequence: 1700,
+  description: "Capability-isolated ChatGPT Pro consultation with durable receipt recovery, attention routing, ZIP uploads, and downloads through Firefox, native macOS Chrome, or Safari.",
+  longDescription: "One identity-locked per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one safely selected browser backend. Firefox remains the compatibility default, native macOS Chrome is bundle-and-signature verified, and Safari uses a serialized visible WebDriver session. Capability-owned logical chains retain same-chat FIFO, recoverable start receipts, session-scoped attention, durable completion, exact-turn monitor-only recovery, and the one-send boundary across five qualified different-chat slots.",
+  codex: {
+    description: "Run durable, capability-isolated ChatGPT Pro consultations through safely selected Firefox, native macOS Chrome, or Safari backends.",
+    shortDescription: "Durable ChatGPT Pro consultation through Firefox, Chrome, or Safari.",
+    longDescription: "Oracle Firefox keeps its stable plugin identity while one per-user broker safely selects Firefox, native macOS Chrome, or Safari. It preserves same-chat FIFO, protocol-fenced writers, recoverable receipts, session-scoped attention, exact-turn monitoring, private completion handoffs, validated ZIP inputs, and read-only generated-file downloads.",
+    capabilities: [
+      "Firefox Automation",
+      "Native Chrome Automation",
+      "Safari WebDriver",
+      "WebDriver BiDi",
+      "Context Bundling",
+      "Validated ZIP Uploads",
+      "ChatGPT Consultation",
+      "ChatGPT Projects",
+      "Existing Chat Continuation",
+      "Generated File Downloads",
+      "Durable Background Jobs",
+      "Start Receipt Recovery",
+      "Session Attention Routing",
+      "Response Failure Recovery",
+      "Completion Handoffs",
+      "ChatGPT Pro Verification",
+      "Multi-Harness Coordination"
+    ],
+    defaultPrompt: [
+      "Get a browser-backed second opinion on this code.",
+      "Ask ChatGPT to review files using native Mac Chrome.",
+      "Continue an existing ChatGPT conversation through Firefox."
+    ]
+  },
+  author: {
+    name: "nikokuma",
+    url: "https://github.com/nikokuma"
+  },
+  homepage: "https://github.com/nikokuma/oracle/blob/main/FIREFOX.md",
+  repository: "https://github.com/nikokuma/oracle",
+  license: "MIT",
+  keywords: ["firefox", "chrome", "safari", "chatgpt", "pro", "webdriver", "mcp", "codex", "claude"],
+  tools: [
+    { name: "doctor", description: "Check Firefox, native Chrome, Safari, and broker readiness." },
+    { name: "select_browser", description: "Safely select Firefox, Chrome, or Safari while Oracle is idle." },
+    { name: "setup", description: "Open interactive login for Firefox or Chrome; Safari uses approved session import." },
+    { name: "profiles", description: "Find Firefox source profiles with ChatGPT cookies without exposing values." },
+    { name: "import_session", description: "Import only ChatGPT/OpenAI cookies into the selected browser after explicit approval." },
+    { name: "list_projects", description: "Discover ChatGPT projects read-only." },
+    { name: "find_chats", description: "Discover exact conversation targets read-only." },
+    { name: "list_chat_artifacts", description: "List safe downloadable file links in one exact chat." },
+    { name: "download_chat_artifact", description: "Download one exact ChatGPT-generated file without sending a message." },
+    { name: "consult", description: "Start a compatible durable consultation and wait briefly." },
+    { name: "continue_chat", description: "Continue one exact conversation and wait briefly." },
+    { name: "consult_start", description: "Start a durable consultation and return immediately." },
+    { name: "continue_chat_start", description: "Start a durable existing-chat continuation and return immediately." },
+    { name: "recover_start_receipt", description: "Recover one committed start receipt without submitting again." },
+    { name: "job_status", description: "Read durable job state." },
+    { name: "job_wait", description: "Wait event-first on one logical job for up to 55 seconds and follow its recovery child." },
+    { name: "job_result", description: "Read a completed answer or terminal outcome." },
+    { name: "list_jobs", description: "List only the current client session's durable jobs without prompts." },
+    { name: "list_attention", description: "List only the current client session's sanitized attention blockers." },
+    { name: "inspect_quarantine", description: "Inspect sanitized recovery state for one exact conversation URL." },
+    { name: "recover_orphaned_quarantine", description: "Reconcile or explicitly acknowledge one fingerprinted orphaned quarantine without sending." },
+    { name: "inspect_input_request", description: "Inspect sanitized blocking input-request state for one exact conversation URL." },
+    { name: "abandon_input_request", description: "Discard one capability-owned input request and release its FIFO lane without sending." },
+    { name: "recover_orphaned_input_request", description: "Discard one fingerprinted orphan input request after explicit confirmation without sending." },
+    { name: "reconcile_job", description: "Read-only reconciliation for an uncertain submission." },
+    { name: "acknowledge_uncertain", description: "Remove a quarantine after manual inspection." },
+    { name: "cancel_job", description: "Cancel before submit-intent or detach afterward." },
+    { name: "broker_status", description: "Inspect broker, browser, and queue health." },
+    { name: "reply_with_local_data", description: "Send one safe structured local-evidence reply." },
+    { name: "completion_claim", description: "Claim one exact subscription-scoped completion event." },
+    { name: "completion_wait", description: "Wait event-first for one exact subscription-scoped completion event." },
+    { name: "completion_mark_delivered", description: "Mark a claimed completion notification delivered." },
+    { name: "completion_acknowledge", description: "Acknowledge one exact completion delivery." }
+  ]
+};
+
 // src/broker-client.mjs
 import { spawn } from "node:child_process";
 import { createHash as createHash5, randomBytes as randomBytes2, randomUUID as randomUUID5 } from "node:crypto";
@@ -30971,17 +31058,21 @@ import { fileURLToPath } from "node:url";
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.9",
-  "protocolVersion": 8,
+  "packageVersion": "1.7.0",
+  "protocolVersion": 9,
+  "minimumReaderProtocol": 8,
+  "minimumWriterProtocol": 9,
   "schemaVersion": 8,
-  "releaseSequence": 1610,
-  "sourceDigest": "d920973d1da26dd43990fc1c479faa792f27a1d6da0d6f2591fa2192b579c4ea",
-  "buildId": "oracle-firefox-1.6.9-d920973d1da26dd4"
+  "releaseSequence": 1700,
+  "sourceDigest": "5a793ded893553106b214700d502a8bbe88af7e081571805b161c6afd7420ec9",
+  "buildId": "oracle-firefox-1.7.0-5a793ded89355310"
 });
 
 // src/build-info.mjs
 var ORACLE_FIREFOX_VERSION = GENERATED_BUILD_INFO.packageVersion;
 var BROKER_PROTOCOL_VERSION = GENERATED_BUILD_INFO.protocolVersion;
+var BROKER_MINIMUM_READER_PROTOCOL = GENERATED_BUILD_INFO.minimumReaderProtocol;
+var BROKER_MINIMUM_WRITER_PROTOCOL = GENERATED_BUILD_INFO.minimumWriterProtocol;
 var BROKER_SCHEMA_VERSION = GENERATED_BUILD_INFO.schemaVersion;
 var BROKER_RELEASE_SEQUENCE = GENERATED_BUILD_INFO.releaseSequence;
 var BROKER_BUILD_ID = GENERATED_BUILD_INFO.buildId;
@@ -31452,7 +31543,7 @@ function rpcRequest(endpoint, token, method, params = {}, options = {}) {
         socket.write(encodeFrame({
           id,
           token,
-          protocolVersion: BROKER_PROTOCOL_VERSION,
+          protocolVersion: options.protocolVersion ?? BROKER_PROTOCOL_VERSION,
           method,
           params,
           client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION }
@@ -31522,6 +31613,7 @@ var JOB_STATES = Object.freeze([
   "submission_uncertain",
   "response_uncertain",
   "response_failed",
+  "input_invalid",
   "quarantined"
 ]);
 var STATE_INDEX = new Map(JOB_STATES.map((state, index) => [state, index]));
@@ -31553,6 +31645,7 @@ var KNOWN_RELEASE_SEQUENCES = /* @__PURE__ */ new Map([
   ["1.3.0", 1300],
   ["1.4.0", 1400],
   ["1.4.1", 1401],
+  ["1.6.9", 1610],
   [ORACLE_FIREFOX_VERSION, BROKER_RELEASE_SEQUENCE]
 ]);
 function processIsAlive(pid) {
@@ -31770,13 +31863,14 @@ function transportUncertain(error51) {
 }
 function unresolvedReceiptError(error51) {
   return codedError(
-    "START_RECEIPT_UNCERTAIN",
-    "Oracle Firefox could not prove whether the preserved start was committed. It did not submit the start request again.",
+    "RECEIPT_MAY_EXIST",
+    "Oracle Firefox could not prove whether the preserved start was committed. Recover the receipt; do not resubmit the request.",
     {
       cause: error51,
       safeToRetry: false,
       submissionMayHaveOccurred: true,
-      recoveryAction: "retry this exact start with the same authorizationId and stable host-session identity to check the preserved receipt again"
+      recoveryAction: "call recover_start_receipt with the preserved authorizationId, requestDigest, and receiptRecoveryHandle; do not create a new authorization",
+      details: { causeCode: error51?.code || null }
     }
   );
 }
@@ -32101,6 +32195,7 @@ async function callBroker(method, params = {}, options = {}) {
 // src/server.mjs
 var harnessName = process.env.ORACLE_FIREFOX_HARNESS || "codex-mcp";
 var defaultCompletionMode = harnessName === "claude-desktop-mcp" ? "notify" : "manual";
+var canonicalTools = new Map(plugin_meta_default.tools.map((tool) => [tool.name, tool]));
 function prepareExecutionParams(params) {
   return {
     ...params,
@@ -32165,7 +32260,9 @@ var jobReferenceFields = {
 };
 var inputRequestReason = external_exports.enum(["false-positive", "not-needed", "user-declined"]).default("user-declined").describe("Auditable reason for discarding the pending evidence request; never authorizes a replacement send.");
 function register(name, config2, method, timeoutMs = 65e3, prepareParams = null) {
-  server.registerTool(name, config2, async (params, extra) => {
+  const canonical = canonicalTools.get(name);
+  if (!canonical) throw new Error(`Tool ${name} is missing from plugin.meta.json.`);
+  server.registerTool(name, { ...config2, description: canonical.description }, async (params, extra) => {
     try {
       const requestParams = prepareParams ? prepareParams(params) : params;
       const result = await callBroker(method, requestParams, {
@@ -32252,6 +32349,19 @@ register("continue_chat_start", {
   description: "Authorize one asynchronous message to one exact conversation, plus at most one derived recovery continuation only when responseFailurePolicy=retry-once. Returns immediately.",
   inputSchema: { authorizationId: external_exports.string().uuid(), ...continueFields }
 }, "jobs.startContinue", 65e3, prepareExecutionParams);
+register("recover_start_receipt", {
+  title: "Recover an Oracle Firefox start receipt",
+  description: "Recover the exact committed start and rotate its private job/completion handles without submitting, retrying, or creating another ChatGPT turn.",
+  inputSchema: {
+    authorizationId: external_exports.string().uuid(),
+    requestDigest: external_exports.string().regex(/^[a-f0-9]{64}$/u),
+    receiptRecoveryHandle: external_exports.string().min(1).describe("Private receiptRecoveryHandle returned by the original start receipt.")
+  }
+}, "jobs.recoverStartReceipt", 65e3, (params) => ({
+  authorizationId: params.authorizationId,
+  requestDigest: params.requestDigest,
+  recoveryHandle: params.receiptRecoveryHandle
+}));
 register("consult", {
   title: "Consult ChatGPT through Firefox",
   description: "Compatibility tool: starts one durable consultation, waits up to 240 seconds, then returns either the result or a non-error pending receipt.",
@@ -32288,6 +32398,11 @@ register("list_jobs", {
   description: "List only this client session's recent durable jobs without exposing prompt contents.",
   inputSchema: { limit: external_exports.number().int().min(1).max(200).default(50), states: external_exports.array(external_exports.string()).default([]) }
 }, "jobs.list");
+register("list_attention", {
+  title: "List Oracle Firefox attention",
+  description: "List only this client session's sanitized input and uncertainty blockers without prompts, answers, job ids, paths, URLs, or capabilities.",
+  inputSchema: {}
+}, "jobs.listAttention");
 register("inspect_quarantine", {
   title: "Inspect one exact Oracle Firefox quarantine",
   description: "Read sanitized recovery metadata for one exact conversation URL when the original job capability is unavailable. Never lists other chats, opens a browser, or sends a message.",

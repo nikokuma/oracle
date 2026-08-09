@@ -17,10 +17,14 @@ test("canonical metadata matches Codex, Claude, marketplace, and MCPB packages",
   const claude = JSON.parse(await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", ".claude-plugin", "plugin.json"), "utf8"));
   const marketplace = JSON.parse(await readFile(path.join(repositoryRoot, ".claude-plugin", "marketplace.json"), "utf8"));
   const mcpb = JSON.parse(await readFile(path.join(pluginRoot, "mcpb", "manifest.json"), "utf8"));
-  assert.equal(codex.version.split("+")[0], meta.version);
+  assert.equal(codex.version, meta.codexVersion);
+  assert.equal(codex.description, meta.codex.description);
+  assert.equal(codex.interface.shortDescription, meta.codex.shortDescription);
+  assert.equal(codex.interface.longDescription, meta.codex.longDescription);
   assert.equal(claude.version, meta.version);
   assert.equal(marketplace.plugins[0].version, meta.version);
   assert.equal(mcpb.version, meta.version);
+  assert.deepEqual(mcpb.tools, meta.tools);
   const claudeMcp = JSON.parse(await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", ".mcp.json"), "utf8"));
   assert.match(claudeMcp.mcpServers["oracle-firefox"].args[0], /\$\{CLAUDE_PLUGIN_ROOT\}/u);
   assert.equal(claudeMcp.mcpServers["oracle-firefox"].env.ORACLE_FIREFOX_HARNESS, "claude-code-mcp");
@@ -41,6 +45,8 @@ test("canonical metadata matches Codex, Claude, marketplace, and MCPB packages",
   assert.equal(packageJson.version, meta.version);
   assert.equal(build.packageVersion, meta.version);
   assert.equal(build.protocolVersion, meta.protocolVersion);
+  assert.equal(build.minimumReaderProtocol, meta.minimumReaderProtocol);
+  assert.equal(build.minimumWriterProtocol, meta.minimumWriterProtocol);
   assert.equal(build.schemaVersion, meta.schemaVersion);
   assert.equal(build.releaseSequence, meta.releaseSequence);
   assert.deepEqual(claudeBuild, build);
@@ -56,6 +62,54 @@ test("canonical metadata matches Codex, Claude, marketplace, and MCPB packages",
   ]) {
     assert.match(await readFile(artifact, "utf8"), new RegExp(build.buildId), `${artifact} must carry the canonical build id`);
   }
+  for (const name of ["server.mjs", "broker.mjs"]) {
+    const canonical = await readFile(path.join(pluginRoot, "dist", name));
+    assert.deepEqual(
+      await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", "dist", name)),
+      canonical,
+      `Claude ${name} must be byte-identical to the canonical bundle`,
+    );
+    assert.deepEqual(
+      await readFile(path.join(pluginRoot, "mcpb", "server", name)),
+      canonical,
+      `MCPB ${name} must be byte-identical to the canonical bundle`,
+    );
+  }
+  for (const name of ["cli.mjs", "oracle-claudex.mjs"]) {
+    assert.deepEqual(
+      await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", "dist", name)),
+      await readFile(path.join(pluginRoot, "dist", name)),
+      `Claude ${name} must be byte-identical to the canonical bundle`,
+    );
+  }
+});
+
+test("generated harness configurations are self-contained and never embed this checkout", async () => {
+  const generated = [
+    path.join(pluginRoot, ".codex-plugin", "plugin.json"),
+    path.join(pluginRoot, ".mcp.json"),
+    path.join(repositoryRoot, "plugins", "oracle-firefox-claude", ".claude-plugin", "plugin.json"),
+    path.join(repositoryRoot, "plugins", "oracle-firefox-claude", ".mcp.json"),
+    path.join(pluginRoot, "mcpb", "manifest.json"),
+    path.join(pluginRoot, "dist", "oracle-claudex.mjs"),
+  ];
+  for (const artifact of generated) {
+    const contents = await readFile(artifact, "utf8");
+    assert.equal(contents.includes(repositoryRoot), false, `${artifact} must not embed the generating checkout`);
+  }
+  const codexMcp = JSON.parse(await readFile(path.join(pluginRoot, ".mcp.json"), "utf8"));
+  assert.equal(codexMcp.mcpServers["oracle-firefox"].command, "./bin/oracle-firefox-codex-launcher");
+  const claudeMcp = JSON.parse(await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", ".mcp.json"), "utf8"));
+  assert.equal(claudeMcp.mcpServers["oracle-firefox"].args[0], "${CLAUDE_PLUGIN_ROOT}/dist/server.mjs");
+  const mcpb = JSON.parse(await readFile(path.join(pluginRoot, "mcpb", "manifest.json"), "utf8"));
+  assert.equal(mcpb.server.entry_point, "server/server.mjs");
+  assert.equal(mcpb.server.mcp_config.args[0], "${__dirname}/server/server.mjs");
+  const migration = await readFile(path.join(pluginRoot, "MIGRATION.md"), "utf8");
+  assert.equal(
+    await readFile(path.join(repositoryRoot, "plugins", "oracle-firefox-claude", "MIGRATION.md"), "utf8"),
+    migration,
+  );
+  assert.equal(await readFile(path.join(pluginRoot, "mcpb", "MIGRATION.md"), "utf8"), migration);
 });
 
 test("Codex MCP launcher survives a restricted PATH and unrelated working directory", async () => {

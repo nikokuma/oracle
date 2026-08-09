@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import {
   attachRpcServer,
+  BROKER_MINIMUM_READER_PROTOCOL,
+  BROKER_MINIMUM_WRITER_PROTOCOL,
   BROKER_PROTOCOL_VERSION,
   createFrameDecoder,
   encodeFrame,
@@ -57,19 +59,21 @@ function attachFake(methods, options = {}) {
   return socket;
 }
 
-function requestFrame(method, params = {}, id = crypto.randomUUID()) {
-  return encodeFrame({ id, token: TOKEN, protocolVersion: BROKER_PROTOCOL_VERSION, method, params });
+function requestFrame(method, params = {}, id = crypto.randomUUID(), protocolVersion = BROKER_PROTOCOL_VERSION) {
+  return encodeFrame({ id, token: TOKEN, protocolVersion, method, params });
 }
 
-async function responseFrom(socket, method, params = {}) {
+async function responseFrom(socket, method, params = {}, protocolVersion = BROKER_PROTOCOL_VERSION) {
   const id = crypto.randomUUID();
-  socket.emit("data", requestFrame(method, params, id));
-  while (!socket.frames.length) await new Promise((resolve) => setTimeout(resolve, 1));
+  socket.emit("data", requestFrame(method, params, id, protocolVersion));
   let observed = null;
-  const decode = createFrameDecoder((value) => {
-    if (value.id === id) observed = value;
-  }, (error) => { throw error; });
-  socket.frames.forEach((frame) => decode(frame));
+  while (!observed) {
+    await new Promise((resolve) => setTimeout(resolve, 1));
+    const decode = createFrameDecoder((value) => {
+      if (value.id === id) observed = value;
+    }, (error) => { throw error; });
+    socket.frames.forEach((frame) => decode(frame));
+  }
   return observed;
 }
 
@@ -89,6 +93,33 @@ test("broker token comparison is constant-length and fail-closed", () => {
   assert.equal(tokensEqual("", ""), false);
 });
 
+test("protocol 8 remains read-compatible while every mutation requires protocol 9", async () => {
+  assert.equal(BROKER_MINIMUM_READER_PROTOCOL, 8);
+  assert.equal(BROKER_MINIMUM_WRITER_PROTOCOL, 9);
+  assert.equal(BROKER_PROTOCOL_VERSION, 9);
+  let mutations = 0;
+  const methods = {
+    "broker.status": (_params, context) => ({ protocolVersion: context.protocolVersion, alive: true }),
+    "jobs.startConsult": () => { mutations += 1; return { committed: true }; },
+  };
+  const socket = attachFake(methods);
+  const legacyRead = await responseFrom(socket, "broker.status", {}, 8);
+  assert.equal(legacyRead.ok, true);
+  assert.deepEqual(legacyRead.result, { protocolVersion: 8, alive: true });
+
+  const legacyWrite = await responseFrom(socket, "jobs.startConsult", {}, 8);
+  assert.equal(legacyWrite.ok, false);
+  assert.equal(legacyWrite.error.code, "CLIENT_UPGRADE_REQUIRED");
+  assert.equal(legacyWrite.error.safeToRetry, false);
+  assert.equal(mutations, 0, "a protocol-8 writer must be rejected before its mutation handler runs");
+  assert.equal(socket.destroyed, false, "an older writer must not terminate or replace the broker");
+
+  const currentWrite = await responseFrom(socket, "jobs.startConsult", {}, 9);
+  assert.equal(currentWrite.ok, true);
+  assert.equal(currentWrite.result.committed, true);
+  assert.equal(mutations, 1);
+});
+
 test("known legacy status is normalized for directional upgrade without inventing a generation", () => {
   const normalized = normalizeLegacyBrokerStatus({
     protocolVersion: 6,
@@ -101,6 +132,11 @@ test("known legacy status is normalized for directional upgrade without inventin
   assert.equal(normalized.instanceId, "legacy:123:/tmp/legacy.sock");
   assert.equal(normalized.leaseGeneration, 0);
   assert.equal(normalized.legacy, true);
+  assert.equal(normalizeLegacyBrokerStatus({
+    protocolVersion: 8,
+    buildVersion: "1.6.9",
+    pid: 456,
+  }, "/tmp/previous.sock").releaseSequence, 1610);
 });
 
 test("unknown legacy builds are not assigned an upgrade ordering", () => {

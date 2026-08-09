@@ -2,7 +2,9 @@
 
 Read this file before acting on a pending receipt after client restart, positively classified response failure, cooldown, uncertain submission, quarantine, cancellation, or recovery chain.
 
-Keep the root `jobId` and private `jobHandle`. Present the handle when a different MCP/CLI process resumes the chain. Use `followRetries: true` unless the user explicitly asks to inspect the original failed job.
+Keep the root `jobId`, `jobHandle`, `completionHandle`, `receiptRecoveryHandle`, and `requestDigest`. Present only the needed private handle when resuming. Use `followRetries: true` unless the user explicitly asks to inspect the original failed job.
+
+`RECEIPT_MAY_EXIST` means start delivery was ambiguous. Call `recover_start_receipt` with the preserved authorization id, digest, and receipt handle. This rotates access to the same committed chain; never create a new authorization or replay the request. `receiptState: "recovered"` confirms recovery.
 
 ## Response failure
 
@@ -20,7 +22,7 @@ For `ACCOUNT_COOLDOWN`, do not create another send. The broker persists one acco
 
 Never replay after `submit_intent` or when `submissionMayHaveOccurred` is true.
 
-`RESPONSE_MONITOR_STALLED` and `RESPONSE_TIMEOUT` mean the authorized turn may still finish in ChatGPT. Oracle stops the hung monitor, marks the exact conversation `response_uncertain`, and quarantines only that lane; other conversations may continue.
+`MONITOR_REATTACHING` means Oracle is retrying only the bounded exact-turn monitor. Wait for that job and do not send. `RESPONSE_MONITOR_STALLED` and `RESPONSE_TIMEOUT` after the recovery bound mean the authorized turn may still finish; Oracle marks the exact conversation `response_uncertain` and quarantines only that lane.
 
 1. Call `reconcile_job`; it searches the exact conversation read-only and never sends.
 2. If proven, reattach or monitor the existing submission.
@@ -40,13 +42,15 @@ If a migrated quarantine blocks an exact conversation but the originating task a
 
 After restart, use `broker_status` or `job_status`. Safe pre-send work may resume; proven submitted work is monitor-only; unproven post-send work remains uncertain.
 
-For `BROKER_DRAINING`, `BROKER_UNRESPONSIVE`, `BROKER_ENDPOINT_CONFLICT`, `BROKER_PROTOCOL_MISMATCH`, or `CLIENT_UPGRADE_REQUIRED`, do not kill a process, delete a socket/lease/locator, launch Firefox directly, or start another broker. Keep the private handles and follow the returned wait or host-reload action. A known newer package may request an idle directional handoff; older or unknown builds fail closed.
+For `BROKER_DRAINING`, `BROKER_UNRESPONSIVE`, `BROKER_ENDPOINT_CONFLICT`, `BROKER_PROTOCOL_MISMATCH`, or `CLIENT_UPGRADE_REQUIRED`, do not kill a process, delete a socket/lease/locator, launch Firefox directly, or start another broker. Protocol 8 may keep reading but cannot mutate; reload the current package for writes. Keep handles and follow the returned action.
 
 `cancel_job` cancels only before `submit_intent`. Afterward it detaches the caller while monitoring continues and never authorizes a retry.
 
 ## Unanswered local-data requests
 
 An `input_required` chain intentionally holds its exact conversation lane so a later agent cannot overtake a pending evidence reply. If the user explicitly declines that reply, use capability-owned `abandon_input_request`; it preserves the completed response, records the reason, sends nothing, and releases only the FIFO barrier.
+
+`INPUT_REQUIRED_BLOCKING` means an earlier owner must resolve or abandon its request. `INPUT_INVALID` is a preserved malformed request: never construct an automated reply; only its owning control capability may abandon it. `list_attention` is session-scoped, and `inspect_input_request` exposes only sanitized `blockers[]`.
 
 If the original capability is unavailable, call `inspect_input_request` with the exact conversation URL, retain its fingerprint, then call `recover_orphaned_input_request` only with explicit lost-capability and abandonment confirmations. Never recover from a title, partial URL, stale fingerprint, or global search. The orphan flow exposes no old prompt, answer, job id, handle, or session path and never authorizes a replacement message.
 

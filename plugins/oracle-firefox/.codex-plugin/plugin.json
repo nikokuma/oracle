@@ -1,6 +1,6 @@
 {
   "name": "oracle-firefox",
-  "version": "1.6.9+codex.20260808160402",
+  "version": "1.7.0+codex.20260809170000",
   "description": "Run durable, capability-isolated ChatGPT Pro consultations through safely selected Firefox, native macOS Chrome, or Safari backends.",
   "author": {
     "name": "nikokuma",
@@ -11,16 +11,20 @@
   "license": "MIT",
   "keywords": [
     "firefox",
-    "webdriver-bidi",
+    "chrome",
+    "safari",
     "chatgpt",
-    "code-review",
-    "second-opinion"
+    "pro",
+    "webdriver",
+    "mcp",
+    "codex",
+    "claude"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Oracle Firefox",
     "shortDescription": "Durable ChatGPT Pro consultation through Firefox, Chrome, or Safari.",
-    "longDescription": "Oracle Firefox keeps its stable plugin identity while one per-user broker safely selects Firefox, native macOS Chrome, or Safari. It preserves same-chat FIFO, fences stale generations, verifies Pro, validates ZIP inputs, emits private completion handoffs, supports local evidence, and downloads generated files read-only. Chrome is bundle/signature verified; Safari is visible and session-authenticated.",
+    "longDescription": "Oracle Firefox keeps its stable plugin identity while one per-user broker safely selects Firefox, native macOS Chrome, or Safari. It preserves same-chat FIFO, protocol-fenced writers, recoverable receipts, session-scoped attention, exact-turn monitoring, private completion handoffs, validated ZIP inputs, and read-only generated-file downloads.",
     "developerName": "nikokuma",
     "category": "Developer Tools",
     "capabilities": [
@@ -35,6 +39,8 @@
       "Existing Chat Continuation",
       "Generated File Downloads",
       "Durable Background Jobs",
+      "Start Receipt Recovery",
+      "Session Attention Routing",
       "Response Failure Recovery",
       "Completion Handoffs",
       "ChatGPT Pro Verification",

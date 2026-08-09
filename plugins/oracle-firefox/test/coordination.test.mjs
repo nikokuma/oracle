@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { mintCapability, redactCapabilityText } from "../src/capabilities.mjs";
-import { Coordinator } from "../src/coordinator.mjs";
+import { Coordinator, publicJob } from "../src/coordinator.mjs";
 import { structuredError } from "../src/errors.mjs";
 import { StateStore } from "../src/state-store.mjs";
 
@@ -584,6 +584,135 @@ test("a private start-receipt capability reissues handles without duplicating th
       (error) => error.code === "JOB_NOT_FOUND",
     );
     assert.equal(store.authorizeJob({ jobId: owned.job.id, jobHandle: second.jobHandle, caller: secondResumeCaller, control: true }).job.id, owned.job.id);
+  });
+});
+
+test("public receipt recovery returns the recovery handle, digest, and receipt state", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex", hostSessionHint: "receipt-public" });
+    const caller = authenticate(store, session, "codex");
+    const authorizationId = crypto.randomUUID();
+    const recovery = mintCapability("receipt", authorizationId);
+    const owned = ownedJob(store, caller, {
+      authorizationId,
+      startReceiptCapabilityHash: recovery.hash,
+    });
+    const coordinator = new Coordinator({ store, browserManager: { status: () => ({}) } });
+    const receipt = coordinator.recoverStartReceipt({
+      authorizationId,
+      requestDigest: owned.job.requestDigest,
+      recoveryHandle: recovery.handle,
+    }, null, caller);
+    assert.equal(receipt.jobId, owned.job.id);
+    assert.equal(receipt.requestDigest, owned.job.requestDigest);
+    assert.equal(receipt.receiptRecoveryHandle, recovery.handle);
+    assert.equal(receipt.receiptState, "recovered");
+    assert.equal(receipt.receiptRecovered, true);
+  });
+});
+
+test("protocol-8 owner-session reopening and capability reads do not mutate durable grants", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex", hostSessionHint: "legacy-reader" });
+    const caller = authenticate(store, session, "codex");
+    const owned = ownedJob(store, caller);
+    const old = "2000-01-01T00:00:00.000Z";
+    store.db.prepare("UPDATE owner_sessions SET last_seen_at=? WHERE id=?").run(old, caller.id);
+    const resumed = store.resumeOwnerSessionReadOnly({
+      harness: "codex",
+      hostSessionHint: "legacy-reader",
+      stableSessionId: session.sessionId,
+      stableSessionHandle: session.sessionHandle,
+    });
+    assert.equal(resumed.readOnly, true);
+    const authenticated = store.authenticateOwnerSession({
+      harness: "codex",
+      hostSessionHint: "legacy-reader",
+      sessionId: session.sessionId,
+      sessionHandle: session.sessionHandle,
+    }, { touch: false });
+    const before = store.db.prepare("SELECT COUNT(*) count FROM chain_session_grants").get().count;
+    assert.equal(store.authorizeJob({
+      jobId: owned.job.id,
+      jobHandle: owned.read.handle,
+      caller: authenticated,
+      allowCapabilityGrant: false,
+    }).job.id, owned.job.id);
+    assert.equal(store.db.prepare("SELECT COUNT(*) count FROM chain_session_grants").get().count, before);
+    assert.equal(store.db.prepare("SELECT last_seen_at FROM owner_sessions WHERE id=?").get(caller.id).last_seen_at, old);
+    assert.throws(
+      () => store.resumeOwnerSessionReadOnly({
+        harness: "codex",
+        hostSessionHint: "new-legacy-reader",
+        stableSessionId: crypto.randomUUID(),
+        stableSessionHandle: mintCapability("session", crypto.randomUUID()).handle,
+      }),
+      (error) => error.code === "CLIENT_UPGRADE_REQUIRED",
+    );
+  });
+});
+
+test("public job views expose execution, blockers, result availability, and monitor retry safely", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex" });
+    const caller = authenticate(store, session, "codex");
+    const scope = "https://chatgpt.com/c/public-monitor-view";
+    const owned = ownedJob(store, caller, { conversationKey: scope, conversationUrl: scope });
+    for (const state of ["snapshotted", "queued", "page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified", "submit_intent"]) {
+      store.transition(owned.job.id, state, state === "submit_intent" ? { submittedMessageHash: "public-monitor-hash" } : {});
+    }
+    store.transition(owned.job.id, "user_turn_confirmed", {
+      userTurnId: "public-monitor-turn",
+      userTurnHash: "public-monitor-hash",
+    });
+    store.transition(owned.job.id, "awaiting_response");
+    const claim = store.claimRunnable(owned.job.id);
+    store.releaseExecutionWithBackoff(claim, Object.assign(new Error("private executor detail"), {
+      code: "RESPONSE_MONITOR_STALLED",
+      submissionMayHaveOccurred: true,
+    }), { backoffDelays: [60_000] });
+    const job = store.requireJob(owned.job.id);
+    const view = publicJob(job, { logicalState: store.logicalStateForJob(job.id) });
+    assert.equal(view.executionMode, "monitor_only");
+    assert.equal(view.blockedReason, "MONITOR_REATTACHING");
+    assert.equal(view.attentionRequired, false);
+    assert.equal(view.resultAvailable, false);
+    assert.equal(view.monitorRetry.retryCount, 1);
+    assert.equal(view.monitorRetry.lastError.code, "MONITOR_REATTACHING");
+    assert.equal(JSON.stringify(view).includes("private executor detail"), false);
+  });
+});
+
+test("broker status publishes exclusive queue, delivery, version-skew, and concurrency provenance aggregates", async () => {
+  await withStore(async (store) => {
+    store.createOwnerSession({ harness: "legacy", metadata: { protocolVersion: 8 } });
+    const currentSession = store.createOwnerSession({ harness: "codex", metadata: { protocolVersion: 9 } });
+    const current = authenticate(store, currentSession, "codex");
+    const owned = ownedJob(store, current);
+    const coordinator = new Coordinator({
+      store,
+      browserManager: { status: () => ({ browser: "firefox", pagesLeased: 0 }) },
+      writeConcurrency: 5,
+    });
+    coordinator.database = store.databaseStatus();
+    coordinator.invariants = { ok: true, violations: [] };
+    coordinator.recovery = [];
+    const status = coordinator.status();
+    assert.equal(
+      status.queue.executing + status.queue.monitoring + status.queue.runnableQueued +
+        status.queue.blockedAttention + status.queue.blockedUncertainty,
+      status.queue.logicalOutstanding,
+    );
+    assert.equal(status.durableDelivery.subscriptions.open, 1);
+    assert.equal(status.versionSkew.minimumReaderProtocol, 8);
+    assert.equal(status.versionSkew.minimumWriterProtocol, 9);
+    assert.equal(status.versionSkew.clientSessions.readOnlyLegacy, 1);
+    assert.equal(status.versionSkew.clientSessions.currentWriter, 1);
+    assert.equal(status.concurrency.logicalJobSlots, 5);
+    assert.equal(status.concurrency.submissionSerialization, "broker-wide-one-at-a-time");
+    assert.equal(status.concurrency.configuredBy, "constructor");
+    assert.equal(JSON.stringify(status).includes(owned.job.id), false, "broker status must remain aggregate-only");
+    assert.equal(JSON.stringify(status).includes(owned.control.handle), false);
   });
 });
 

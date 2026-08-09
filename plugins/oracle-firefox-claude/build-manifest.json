@@ -1,8 +1,10 @@
 {
-  "packageVersion": "1.6.9",
-  "protocolVersion": 8,
+  "packageVersion": "1.7.0",
+  "protocolVersion": 9,
+  "minimumReaderProtocol": 8,
+  "minimumWriterProtocol": 9,
   "schemaVersion": 8,
-  "releaseSequence": 1610,
-  "sourceDigest": "d920973d1da26dd43990fc1c479faa792f27a1d6da0d6f2591fa2192b579c4ea",
-  "buildId": "oracle-firefox-1.6.9-d920973d1da26dd4"
+  "releaseSequence": 1700,
+  "sourceDigest": "5a793ded893553106b214700d502a8bbe88af7e081571805b161c6afd7420ec9",
+  "buildId": "oracle-firefox-1.7.0-5a793ded89355310"
 }

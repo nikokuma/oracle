@@ -3,15 +3,31 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { codedError, structuredError } from "./errors.mjs";
 import {
   BROKER_BUILD_ID,
+  BROKER_MINIMUM_READER_PROTOCOL,
+  BROKER_MINIMUM_WRITER_PROTOCOL,
   BROKER_PROTOCOL_VERSION,
   BROKER_RELEASE_SEQUENCE,
   ORACLE_FIREFOX_VERSION,
 } from "./build-info.mjs";
 
 export { BROKER_PROTOCOL_VERSION } from "./build-info.mjs";
+export { BROKER_MINIMUM_READER_PROTOCOL, BROKER_MINIMUM_WRITER_PROTOCOL } from "./build-info.mjs";
 export const BROKER_BUILD_VERSION = ORACLE_FIREFOX_VERSION;
 export { BROKER_BUILD_ID, BROKER_RELEASE_SEQUENCE };
 const MAX_FRAME_BYTES = 8 * 1024 * 1024;
+const READ_COMPATIBLE_METHODS = new Set([
+  "broker.hello",
+  "broker.status",
+  "broker.openSession",
+  "workflow.doctor",
+  "jobs.status",
+  "jobs.wait",
+  "jobs.result",
+  "jobs.list",
+  "jobs.listAttention",
+  "jobs.inspectQuarantine",
+  "jobs.inspectInputRequest",
+]);
 
 export function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
@@ -89,22 +105,38 @@ export function attachRpcServer(socket, { token, methods, serverInfo, socketTime
       if (!tokensEqual(request?.token, token)) {
         throw codedError("BROKER_UNAUTHORIZED", "Broker authentication failed.");
       }
-      const crossVersionMethod = new Set([
-        "broker.hello",
-        "broker.status",
-        "broker.requestUpgrade",
-        "broker.shutdownWhenIdle",
-      ]).has(request?.method);
-      if (request?.protocolVersion !== BROKER_PROTOCOL_VERSION && !crossVersionMethod) {
+      const clientProtocol = Number(request?.protocolVersion || 0);
+      if (clientProtocol < BROKER_MINIMUM_READER_PROTOCOL || clientProtocol > BROKER_PROTOCOL_VERSION) {
         throw codedError(
           "BROKER_PROTOCOL_MISMATCH",
-          `Client protocol ${request?.protocolVersion ?? "unknown"} is incompatible with broker protocol ${BROKER_PROTOCOL_VERSION}.`,
+          `Client protocol ${request?.protocolVersion ?? "unknown"} is outside broker reader range ${BROKER_MINIMUM_READER_PROTOCOL}-${BROKER_PROTOCOL_VERSION}.`,
           { details: serverInfo },
+        );
+      }
+      if (clientProtocol < BROKER_MINIMUM_WRITER_PROTOCOL && !READ_COMPATIBLE_METHODS.has(request?.method)) {
+        throw codedError(
+          "CLIENT_UPGRADE_REQUIRED",
+          `Client protocol ${clientProtocol} may read from this broker but protocol ${BROKER_MINIMUM_WRITER_PROTOCOL} is required for mutations.`,
+          {
+            safeToRetry: false,
+            recoveryAction: "reload this host with Oracle Firefox 1.7.0 or newer; the running broker was left unchanged",
+            details: {
+              clientProtocol,
+              minimumReaderProtocol: BROKER_MINIMUM_READER_PROTOCOL,
+              minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
+              brokerProtocol: BROKER_PROTOCOL_VERSION,
+            },
+          },
         );
       }
       const handler = methods[request.method];
       if (!handler) throw codedError("METHOD_NOT_FOUND", `Unknown broker method: ${request.method}`);
-      const result = await handler(request.params ?? {}, { requestId: id, client: request.client ?? null });
+      const result = await handler(request.params ?? {}, {
+        requestId: id,
+        client: request.client ?? null,
+        protocolVersion: clientProtocol,
+        readOnlyCompatibility: clientProtocol < BROKER_MINIMUM_WRITER_PROTOCOL,
+      });
       await send({ id, ok: true, result, server: serverInfo });
     } catch (error) {
       await send({ id, ok: false, error: structuredError(error), server: serverInfo });
@@ -159,7 +191,7 @@ export function rpcRequest(endpoint, token, method, params = {}, options = {}) {
         socket.write(encodeFrame({
           id,
           token,
-          protocolVersion: BROKER_PROTOCOL_VERSION,
+          protocolVersion: options.protocolVersion ?? BROKER_PROTOCOL_VERSION,
           method,
           params,
           client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION },

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -23,7 +23,7 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
   let brokerPid = null;
   try {
     await client.connect(transport);
-    assert.equal(client.getServerVersion()?.version, "1.6.9");
+    assert.equal(client.getServerVersion()?.version, "1.7.0");
     assert.match(client.getInstructions() || "", /one durable, identity-locked broker/u);
     assert.match(client.getInstructions() || "", /pending result never authorizes another send/u);
     const listed = await client.listTools();
@@ -31,10 +31,12 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
     for (const required of [
       "consult_start",
       "continue_chat_start",
+      "recover_start_receipt",
       "job_status",
       "job_wait",
       "job_result",
       "list_jobs",
+      "list_attention",
       "inspect_quarantine",
       "recover_orphaned_quarantine",
       "inspect_input_request",
@@ -53,6 +55,23 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
       "completion_mark_delivered",
       "completion_acknowledge",
     ]) assert.equal(names.has(required), true, `missing MCP tool ${required}`);
+    const meta = JSON.parse(await readFile(path.resolve("plugin.meta.json"), "utf8"));
+    assert.deepEqual(
+      listed.tools.map(({ name, description }) => ({ name, description })).sort((a, b) => a.name.localeCompare(b.name)),
+      [...meta.tools].sort((a, b) => a.name.localeCompare(b.name)),
+      "runtime MCP names and descriptions must come from canonical plugin.meta.json",
+    );
+    const recoverReceipt = listed.tools.find((entry) => entry.name === "recover_start_receipt");
+    assert.deepEqual(Object.keys(recoverReceipt.inputSchema.properties).sort(), [
+      "authorizationId",
+      "receiptRecoveryHandle",
+      "requestDigest",
+    ]);
+    assert.deepEqual(recoverReceipt.inputSchema.required.sort(), [
+      "authorizationId",
+      "receiptRecoveryHandle",
+      "requestDigest",
+    ]);
     for (const name of ["consult", "consult_start", "continue_chat", "continue_chat_start"]) {
       const tool = listed.tools.find((entry) => entry.name === name);
       assert.equal(tool.inputSchema.properties.zipFiles.type, "array", `${name} must expose raw ZIP inputs`);
@@ -61,6 +80,11 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
     const status = await client.callTool({ name: "broker_status", arguments: {} });
     brokerPid = status.structuredContent.pid;
     assert.equal(status.structuredContent.ready, true);
+    assert.deepEqual(status.structuredContent.protocol, { minimum: 8, maximum: 9 });
+    assert.equal(status.structuredContent.minimumWriterProtocol, 9);
+    assert.equal(status.structuredContent.schemaVersion, 8);
+    const attention = await client.callTool({ name: "list_attention", arguments: {} });
+    assert.deepEqual(attention.structuredContent, { attention: [] });
     const doctor = await client.callTool({ name: "doctor", arguments: {} });
     assert.equal(typeof doctor.structuredContent.profileDirectory, "string");
     assert.deepEqual(Object.keys(doctor.structuredContent.browsers), ["firefox", "chrome", "safari"]);

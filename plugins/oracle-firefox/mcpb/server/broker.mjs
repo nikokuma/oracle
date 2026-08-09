@@ -61290,17 +61290,21 @@ import { chmod as chmod4, link as link2, mkdir as mkdir5, open as open3, readFil
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.6.9",
-  "protocolVersion": 8,
+  "packageVersion": "1.7.0",
+  "protocolVersion": 9,
+  "minimumReaderProtocol": 8,
+  "minimumWriterProtocol": 9,
   "schemaVersion": 8,
-  "releaseSequence": 1610,
-  "sourceDigest": "d920973d1da26dd43990fc1c479faa792f27a1d6da0d6f2591fa2192b579c4ea",
-  "buildId": "oracle-firefox-1.6.9-d920973d1da26dd4"
+  "releaseSequence": 1700,
+  "sourceDigest": "5a793ded893553106b214700d502a8bbe88af7e081571805b161c6afd7420ec9",
+  "buildId": "oracle-firefox-1.7.0-5a793ded89355310"
 });
 
 // src/build-info.mjs
 var ORACLE_FIREFOX_VERSION = GENERATED_BUILD_INFO.packageVersion;
 var BROKER_PROTOCOL_VERSION = GENERATED_BUILD_INFO.protocolVersion;
+var BROKER_MINIMUM_READER_PROTOCOL = GENERATED_BUILD_INFO.minimumReaderProtocol;
+var BROKER_MINIMUM_WRITER_PROTOCOL = GENERATED_BUILD_INFO.minimumWriterProtocol;
 var BROKER_SCHEMA_VERSION = GENERATED_BUILD_INFO.schemaVersion;
 var BROKER_RELEASE_SEQUENCE = GENERATED_BUILD_INFO.releaseSequence;
 var BROKER_BUILD_ID = GENERATED_BUILD_INFO.buildId;
@@ -61732,6 +61736,19 @@ import net from "node:net";
 import { randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var BROKER_BUILD_VERSION = ORACLE_FIREFOX_VERSION;
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
+var READ_COMPATIBLE_METHODS = /* @__PURE__ */ new Set([
+  "broker.hello",
+  "broker.status",
+  "broker.openSession",
+  "workflow.doctor",
+  "jobs.status",
+  "jobs.wait",
+  "jobs.result",
+  "jobs.list",
+  "jobs.listAttention",
+  "jobs.inspectQuarantine",
+  "jobs.inspectInputRequest"
+]);
 function encodeFrame(value) {
   const payload = Buffer.from(JSON.stringify(value), "utf8");
   if (payload.length > MAX_FRAME_BYTES) {
@@ -61805,22 +61822,38 @@ function attachRpcServer(socket, { token: token2, methods: methods2, serverInfo:
       if (!tokensEqual(request3?.token, token2)) {
         throw codedError("BROKER_UNAUTHORIZED", "Broker authentication failed.");
       }
-      const crossVersionMethod = (/* @__PURE__ */ new Set([
-        "broker.hello",
-        "broker.status",
-        "broker.requestUpgrade",
-        "broker.shutdownWhenIdle"
-      ])).has(request3?.method);
-      if (request3?.protocolVersion !== BROKER_PROTOCOL_VERSION && !crossVersionMethod) {
+      const clientProtocol = Number(request3?.protocolVersion || 0);
+      if (clientProtocol < BROKER_MINIMUM_READER_PROTOCOL || clientProtocol > BROKER_PROTOCOL_VERSION) {
         throw codedError(
           "BROKER_PROTOCOL_MISMATCH",
-          `Client protocol ${request3?.protocolVersion ?? "unknown"} is incompatible with broker protocol ${BROKER_PROTOCOL_VERSION}.`,
+          `Client protocol ${request3?.protocolVersion ?? "unknown"} is outside broker reader range ${BROKER_MINIMUM_READER_PROTOCOL}-${BROKER_PROTOCOL_VERSION}.`,
           { details: serverInfo2 }
+        );
+      }
+      if (clientProtocol < BROKER_MINIMUM_WRITER_PROTOCOL && !READ_COMPATIBLE_METHODS.has(request3?.method)) {
+        throw codedError(
+          "CLIENT_UPGRADE_REQUIRED",
+          `Client protocol ${clientProtocol} may read from this broker but protocol ${BROKER_MINIMUM_WRITER_PROTOCOL} is required for mutations.`,
+          {
+            safeToRetry: false,
+            recoveryAction: "reload this host with Oracle Firefox 1.7.0 or newer; the running broker was left unchanged",
+            details: {
+              clientProtocol,
+              minimumReaderProtocol: BROKER_MINIMUM_READER_PROTOCOL,
+              minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
+              brokerProtocol: BROKER_PROTOCOL_VERSION
+            }
+          }
         );
       }
       const handler = methods2[request3.method];
       if (!handler) throw codedError("METHOD_NOT_FOUND", `Unknown broker method: ${request3.method}`);
-      const result = await handler(request3.params ?? {}, { requestId: id, client: request3.client ?? null });
+      const result = await handler(request3.params ?? {}, {
+        requestId: id,
+        client: request3.client ?? null,
+        protocolVersion: clientProtocol,
+        readOnlyCompatibility: clientProtocol < BROKER_MINIMUM_WRITER_PROTOCOL
+      });
       await send({ id, ok: true, result, server: serverInfo2 });
     } catch (error) {
       await send({ id, ok: false, error: structuredError(error), server: serverInfo2 });
@@ -61871,7 +61904,7 @@ function rpcRequest(endpoint2, token2, method, params = {}, options = {}) {
         socket.write(encodeFrame({
           id,
           token: token2,
-          protocolVersion: BROKER_PROTOCOL_VERSION,
+          protocolVersion: options.protocolVersion ?? BROKER_PROTOCOL_VERSION,
           method,
           params,
           client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION }
@@ -62100,6 +62133,7 @@ var JOB_STATES = Object.freeze([
   "submission_uncertain",
   "response_uncertain",
   "response_failed",
+  "input_invalid",
   "quarantined"
 ]);
 var TERMINAL_JOB_STATES = /* @__PURE__ */ new Set([
@@ -62109,6 +62143,7 @@ var TERMINAL_JOB_STATES = /* @__PURE__ */ new Set([
   "submission_uncertain",
   "response_uncertain",
   "response_failed",
+  "input_invalid",
   "quarantined"
 ]);
 var STATE_INDEX = new Map(JOB_STATES.map((state, index) => [state, index]));
@@ -62190,6 +62225,7 @@ function rowToJob(row) {
     executionKind: row.execution_kind ?? "pre_submit",
     executionFailureCount: row.execution_failure_count ?? 0,
     nextExecutionNotBefore: row.next_execution_not_before ?? null,
+    lastExecutorError: parse(row.last_executor_error_json),
     monitorDeadlineAt: row.monitor_deadline_at ?? null,
     finalReconciliationAttemptedAt: row.final_reconciliation_attempted_at ?? null,
     assistantTurnId: row.assistant_turn_id ?? null,
@@ -62197,6 +62233,7 @@ function rowToJob(row) {
     chainState: row.chain_state ?? null,
     inputRequestAbandonedAt: row.input_required_abandoned_at ?? null,
     inputRequestAbandonedReason: row.input_required_abandoned_reason ?? null,
+    attentionRequiredAt: row.attention_required_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     startedAt: row.started_at,
@@ -62224,7 +62261,8 @@ function rowToChain(row) {
     terminalAt: row.terminal_at,
     inputRequestAbandonedAt: row.input_required_abandoned_at,
     inputRequestAbandonedJobId: row.input_required_abandoned_job_id,
-    inputRequestAbandonedReason: row.input_required_abandoned_reason
+    inputRequestAbandonedReason: row.input_required_abandoned_reason,
+    attentionRequiredAt: row.attention_required_at
   };
 }
 function quarantineFingerprint(row) {
@@ -62233,9 +62271,7 @@ function quarantineFingerprint(row) {
     "oracle-firefox-quarantine-v1",
     row.scope_key,
     row.job_id,
-    row.created_at,
-    row.job_state,
-    row.job_updated_at
+    row.created_at
   ].map((value) => String(value ?? "")).join("\0")).digest("hex");
 }
 function inputRequestFingerprint(row) {
@@ -62245,13 +62281,36 @@ function inputRequestFingerprint(row) {
     row.conversation_key,
     row.id,
     row.active_job_id,
-    row.updated_at,
-    row.job_updated_at,
-    row.local_data_request_json
+    row.created_at
   ].map((value) => String(value ?? "")).join("\0")).digest("hex");
+}
+function blockerAgeSeconds(row, nowMs = Date.now()) {
+  const createdMs = Date.parse(row.created_at || row.updated_at || 0);
+  return Number.isFinite(createdMs) ? Math.max(0, Math.floor((nowMs - createdMs) / 1e3)) : null;
+}
+function sanitizedInputBlocker(row, nowMs = Date.now()) {
+  const invalid = row.job_state === "input_invalid" || row.assistant_disposition === "input_invalid";
+  return {
+    fingerprint: inputRequestFingerprint(row),
+    type: invalid ? "input_invalid" : "local_data",
+    ageSeconds: blockerAgeSeconds({
+      created_at: row.updated_at || row.created_at
+    }, nowMs),
+    state: row.attention_required_at ? "attention_required" : "waiting_for_owner"
+  };
+}
+function sanitizedQuarantineBlocker(row, nowMs = Date.now()) {
+  return {
+    fingerprint: quarantineFingerprint(row),
+    type: "uncertainty",
+    ageSeconds: blockerAgeSeconds(row, nowMs),
+    state: "reconciliation_required"
+  };
 }
 var WAKE_CHAIN_STATES = /* @__PURE__ */ new Set([
   "input_required",
+  "input_invalid",
+  "attention_required",
   "completed",
   "failed",
   "cancelled",
@@ -62291,6 +62350,8 @@ var StateStore = class extends EventEmitter {
       instanceId: `test-${randomUUID4()}`,
       leaseGeneration: 0,
       protocolVersion: BROKER_PROTOCOL_VERSION,
+      minimumReaderProtocol: BROKER_MINIMUM_READER_PROTOCOL,
+      minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
       releaseSequence: BROKER_RELEASE_SEQUENCE,
       buildVersion: ORACLE_FIREFOX_VERSION,
       buildId: BROKER_BUILD_ID,
@@ -62638,7 +62699,12 @@ var StateStore = class extends EventEmitter {
           id, coordinator_id, current_lease_generation, last_recovery_generation,
           minimum_reader_protocol, minimum_writer_protocol, qualified_concurrency, updated_at
         ) VALUES (1, ?, 0, 0, ?, ?, 1, ?)
-      `).run(this.brokerContext.coordinatorId, BROKER_PROTOCOL_VERSION, BROKER_PROTOCOL_VERSION, now);
+      `).run(
+        this.brokerContext.coordinatorId,
+        BROKER_MINIMUM_READER_PROTOCOL,
+        BROKER_MINIMUM_WRITER_PROTOCOL,
+        now
+      );
       const addColumns = (table, columns) => {
         const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
         for (const [name, definition] of columns) {
@@ -62755,7 +62821,8 @@ var StateStore = class extends EventEmitter {
       addColumns("job_chains", [
         ["start_receipt_cap_hash", "TEXT"],
         ["start_receipt_recovered_at", "TEXT"],
-        ["start_receipt_recovery_count", "INTEGER NOT NULL DEFAULT 0"]
+        ["start_receipt_recovery_count", "INTEGER NOT NULL DEFAULT 0"],
+        ["attention_required_at", "TEXT"]
       ]);
       addColumns("completion_deliveries", [
         ["claim_kind", "TEXT"],
@@ -62767,6 +62834,15 @@ var StateStore = class extends EventEmitter {
       this.db.exec(`
         CREATE INDEX IF NOT EXISTS completion_deliveries_system_ready
           ON completion_deliveries(state, next_attempt_at, claim_expires_at, id);
+        CREATE TABLE IF NOT EXISTS cooldown_incidents (
+          evidence_fingerprint TEXT PRIMARY KEY,
+          evidence_kind TEXT NOT NULL,
+          code TEXT NOT NULL,
+          first_seen_at TEXT NOT NULL,
+          last_seen_at TEXT NOT NULL,
+          observer_count INTEGER NOT NULL DEFAULT 1,
+          cooldown_until TEXT NOT NULL
+        );
       `);
       this.db.exec(`
         UPDATE completion_deliveries
@@ -62795,10 +62871,12 @@ var StateStore = class extends EventEmitter {
       "completion_subscriptions",
       "completion_deliveries",
       "account_state",
-      "submit_permits"
+      "submit_permits",
+      "cooldown_incidents"
     ];
     const metadata = ["schema_migrations", "broker_instances", "broker_state"];
-    for (const table of operational) {
+    const existingTables = new Set(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((row) => row.name));
+    for (const table of operational.filter((name) => existingTables.has(name))) {
       for (const action of ["INSERT", "UPDATE", "DELETE"]) {
         const name = `oracle_guard_${table}_${action.toLowerCase()}`;
         this.db.exec(`
@@ -62889,9 +62967,15 @@ var StateStore = class extends EventEmitter {
       );
       this.db.prepare(`
         UPDATE broker_state SET current_instance_id=?, current_lease_generation=?,
-          minimum_reader_protocol=MAX(minimum_reader_protocol, ?),
+          minimum_reader_protocol=?,
           minimum_writer_protocol=MAX(minimum_writer_protocol, ?), updated_at=? WHERE id=1
-      `).run(context2.instanceId, next, BROKER_PROTOCOL_VERSION, BROKER_PROTOCOL_VERSION, now);
+      `).run(
+        context2.instanceId,
+        next,
+        BROKER_MINIMUM_READER_PROTOCOL,
+        BROKER_MINIMUM_WRITER_PROTOCOL,
+        now
+      );
       return next;
     });
     context2.leaseGeneration = generation;
@@ -63056,6 +63140,7 @@ var StateStore = class extends EventEmitter {
   }
   chainStateForJob(job, chain = null) {
     if (!job) return "failed";
+    if (job.state === "input_invalid" && chain?.input_required_abandoned_job_id !== job.id) return "input_invalid";
     if (job.state === "completed" && parse(job.local_data_request_json) && chain?.input_required_abandoned_job_id !== job.id) return "input_required";
     if (job.state === "completed") return "completed";
     if (job.state === "cancelled_pre_submit") return "cancelled";
@@ -63071,10 +63156,11 @@ var StateStore = class extends EventEmitter {
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
              a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
+             a.next_execution_not_before, a.last_executor_error_json, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
+             c.attention_required_at
       FROM jobs j
       LEFT JOIN job_attempts a ON a.job_id = j.id
       LEFT JOIN job_chains c ON c.id = a.chain_id
@@ -63132,7 +63218,31 @@ var StateStore = class extends EventEmitter {
     });
     return { sessionId: id, sessionHandle: capability.handle, harness: normalizedHarness };
   }
-  authenticateOwnerSession(client) {
+  resumeOwnerSessionReadOnly({
+    harness = "unknown",
+    hostSessionHint = null,
+    stableSessionId = null,
+    stableSessionHandle = null
+  } = {}) {
+    const parsed = parseCapability(stableSessionHandle, "session");
+    const row = parsed && parsed.subjectId === stableSessionId ? this.db.prepare("SELECT * FROM owner_sessions WHERE id=? AND revoked_at IS NULL").get(stableSessionId) : null;
+    if (!row || row.harness !== String(harness || "unknown") || (row.host_session_hint ?? null) !== (hostSessionHint == null ? null : String(hostSessionHint)) || !verifyCapability(stableSessionHandle, row.session_cap_hash, { kind: "session", subjectId: row.id })) {
+      throw codedError(
+        "CLIENT_UPGRADE_REQUIRED",
+        "Protocol 8 may resume an existing owner session for reads but cannot create or repair one.",
+        {
+          safeToRetry: false,
+          recoveryAction: "reload this host with Oracle Firefox 1.7.0 or newer",
+          details: {
+            minimumReaderProtocol: BROKER_MINIMUM_READER_PROTOCOL,
+            minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL
+          }
+        }
+      );
+    }
+    return { sessionId: row.id, sessionHandle: stableSessionHandle, harness: row.harness, readOnly: true };
+  }
+  authenticateOwnerSession(client, { touch = true } = {}) {
     const parsed = parseCapability(client?.sessionHandle, "session");
     if (!parsed || parsed.subjectId !== client?.sessionId) {
       throw codedError("CLIENT_SESSION_REQUIRED", "Open an Oracle Firefox client session before accessing jobs.");
@@ -63144,7 +63254,7 @@ var StateStore = class extends EventEmitter {
     if (client?.harness && String(client.harness) !== row.harness || client?.hostSessionHint != null && String(client.hostSessionHint) !== (row.host_session_hint ?? null)) {
       throw codedError("CLIENT_SESSION_REQUIRED", "The Oracle Firefox client session belongs to a different harness or host session.");
     }
-    this.db.prepare("UPDATE owner_sessions SET last_seen_at = ? WHERE id = ?").run((/* @__PURE__ */ new Date()).toISOString(), row.id);
+    if (touch) this.db.prepare("UPDATE owner_sessions SET last_seen_at = ? WHERE id = ?").run((/* @__PURE__ */ new Date()).toISOString(), row.id);
     return {
       id: row.id,
       harness: row.harness,
@@ -63172,7 +63282,14 @@ var StateStore = class extends EventEmitter {
       WHERE chain_id = ? AND session_id = ? AND revoked_at IS NULL
     `).get(chainId, sessionId);
   }
-  authorizeJob({ jobId, jobHandle = null, caller = null, control = false, allowLegacyRead = false } = {}) {
+  authorizeJob({
+    jobId,
+    jobHandle = null,
+    caller = null,
+    control = false,
+    allowLegacyRead = false,
+    allowCapabilityGrant = true
+  } = {}) {
     let job = null;
     let chain = null;
     const parsedHandle = parseCapability(jobHandle);
@@ -63184,7 +63301,7 @@ var StateStore = class extends EventEmitter {
         if (verifyCapability(jobHandle, expectedHash, { kind: parsedHandle.kind, subjectId: chain.id }) && (!control || parsedHandle.kind === "control")) {
           job = jobId ? this.getJob(jobId) : this.getJob(chain.rootJobId);
           if (!job || job.chainId !== chain.id) job = null;
-          if (job && caller) {
+          if (job && caller && allowCapabilityGrant) {
             const now = (/* @__PURE__ */ new Date()).toISOString();
             this.db.prepare(`
               INSERT INTO chain_session_grants(
@@ -63228,10 +63345,12 @@ var StateStore = class extends EventEmitter {
     const stateClause = states.length ? `AND j.state IN (${states.map(() => "?").join(",")})` : "";
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch, a.execution_kind, a.monitor_deadline_at,
+             a.execution_epoch, a.execution_state, a.execution_kind,
+             a.execution_failure_count, a.next_execution_not_before,
+             a.last_executor_error_json, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at, c.state AS chain_state,
              c.input_required_abandoned_at, c.input_required_abandoned_job_id,
-             c.input_required_abandoned_reason
+             c.input_required_abandoned_reason, c.attention_required_at
       FROM jobs j
       JOIN job_attempts a ON a.job_id = j.id
       JOIN job_chains c ON c.id = a.chain_id
@@ -63260,23 +63379,37 @@ var StateStore = class extends EventEmitter {
         }
         return { job: existingJob, chain: existingChain, idempotent: true };
       }
-      const activeQuarantine = this.db.prepare("SELECT * FROM quarantines WHERE scope_key = ? AND active = 1").get(input2.conversationKey);
-      if (activeQuarantine) {
-        throw codedError(
-          "CONVERSATION_QUARANTINED",
-          "This conversation or new-chat scope is quarantined until its uncertain submission is reconciled.",
-          {
-            recoveryAction: /^https:\/\/chatgpt\.com\//u.test(input2.conversationKey) ? `inspect_quarantine for ${input2.conversationKey}` : `reconcile_job ${activeQuarantine.job_id}`,
-            details: {
-              exactScopeRequired: true,
-              capabilityRecoveryAvailable: /^https:\/\/chatgpt\.com\//u.test(input2.conversationKey)
-            }
-          }
-        );
-      }
       const id = input2.id || randomUUID4();
       const parentAttempt = input2.parentJobId ? this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(input2.parentJobId) : null;
       const inheritedChain = parentAttempt ? this.chainAccessRow(parentAttempt.chain_id) : null;
+      if (!inheritedChain) {
+        const inputBlockers = this.activeInputRequestRecords(input2.conversationKey);
+        if (inputBlockers.length) {
+          throw codedError(
+            "INPUT_REQUIRED_BLOCKING",
+            "This exact conversation lane is waiting for explicit owner input and cannot accept another start.",
+            {
+              safeToRetry: false,
+              recoveryAction: "The owning session must resolve or explicitly abandon the outstanding input request.",
+              details: { blockers: inputBlockers.map((row) => sanitizedInputBlocker(row)) }
+            }
+          );
+        }
+        const activeQuarantine = this.db.prepare("SELECT * FROM quarantines WHERE scope_key = ? AND active = 1").get(input2.conversationKey);
+        if (activeQuarantine) {
+          throw codedError(
+            "CONVERSATION_QUARANTINED",
+            "This conversation or new-chat scope is quarantined until its uncertain submission is reconciled.",
+            {
+              recoveryAction: "Inspect the exact conversation blocker and reconcile or explicitly acknowledge it.",
+              details: {
+                exactScopeRequired: true,
+                blockers: this.activeQuarantineRecords(input2.conversationKey).map((row) => sanitizedQuarantineBlocker(row))
+              }
+            }
+          );
+        }
+      }
       const chainId = input2.chainId || inheritedChain?.id || id;
       const rootJobId = inheritedChain?.root_job_id || input2.rootJobId || id;
       this.db.prepare(`
@@ -63321,7 +63454,8 @@ var StateStore = class extends EventEmitter {
         `).run(id, chainId, kind, ordinal, input2.parentJobId, now);
         this.db.prepare(`
           UPDATE job_chains
-          SET active_job_id = ?, state = 'queued', updated_at = ?, terminal_at = NULL
+          SET active_job_id = ?, state = 'queued', updated_at = ?, terminal_at = NULL,
+              attention_required_at = NULL
           WHERE id = ?
         `).run(id, now, chainId);
         chain = this.getChain(chainId);
@@ -63417,7 +63551,7 @@ var StateStore = class extends EventEmitter {
   }
   completedJobsWithExactProof() {
     return this.db.prepare(this.jobSelect(`
-      WHERE j.state='completed' AND j.result_json IS NOT NULL
+      WHERE j.state IN ('completed', 'input_invalid') AND j.result_json IS NOT NULL
         AND j.submit_intent_at IS NOT NULL
         AND oracle_canonical_conversation_url(j.canonical_url) = 1
         AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
@@ -63487,10 +63621,11 @@ var StateStore = class extends EventEmitter {
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
              a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
+             a.next_execution_not_before, a.last_executor_error_json, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
+             c.attention_required_at
       FROM jobs j
       JOIN job_attempts a ON a.job_id = j.id
       JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
@@ -63498,10 +63633,79 @@ var StateStore = class extends EventEmitter {
       ORDER BY c.accepted_sequence ASC, a.ordinal ASC
     `).all().map(rowToJob);
   }
+  logicalQueueRows(sessionId = null) {
+    const sessionJoin = sessionId ? `
+      JOIN chain_session_grants g ON g.chain_id=c.id
+        AND g.session_id=? AND g.can_list=1 AND g.revoked_at IS NULL
+    ` : "";
+    return this.db.prepare(`
+      SELECT c.*, j.state AS job_state, j.assistant_disposition,
+             a.execution_state, a.execution_kind,
+             EXISTS(SELECT 1 FROM quarantines q WHERE q.scope_key=c.conversation_key AND q.active=1) AS quarantined_lane
+      FROM job_chains c
+      JOIN jobs j ON j.id=c.active_job_id
+      JOIN job_attempts a ON a.job_id=j.id
+      ${sessionJoin}
+      ORDER BY c.accepted_sequence
+    `).all(...sessionId ? [sessionId] : []);
+  }
+  logicalQueueSnapshot(sessionId = null) {
+    const rows = this.logicalQueueRows(sessionId);
+    const outstandingStates = /* @__PURE__ */ new Set([
+      "queued",
+      "running",
+      "input_required",
+      "input_invalid",
+      "submission_uncertain",
+      "response_uncertain",
+      "quarantined"
+    ]);
+    const attentionByLane = /* @__PURE__ */ new Set();
+    const uncertaintyByLane = /* @__PURE__ */ new Set();
+    const byChainId = /* @__PURE__ */ new Map();
+    const counts = {
+      executing: 0,
+      monitoring: 0,
+      runnableQueued: 0,
+      blockedAttention: 0,
+      blockedUncertainty: 0,
+      logicalOutstanding: 0
+    };
+    for (const row of rows) {
+      if (!outstandingStates.has(row.state)) continue;
+      let logicalState;
+      if (row.state === "input_required" || row.state === "input_invalid" || attentionByLane.has(row.conversation_key)) {
+        logicalState = "blocked_attention";
+      } else if ((/* @__PURE__ */ new Set(["submission_uncertain", "response_uncertain", "quarantined"])).has(row.state) || row.quarantined_lane || uncertaintyByLane.has(row.conversation_key)) {
+        logicalState = "blocked_uncertainty";
+      } else if (row.execution_state === "running" || row.state === "running") {
+        logicalState = row.execution_kind === "monitor_only" ? "monitoring" : "executing";
+      } else {
+        logicalState = "runnable_queued";
+      }
+      byChainId.set(row.id, logicalState);
+      counts.logicalOutstanding += 1;
+      if (logicalState === "blocked_attention") counts.blockedAttention += 1;
+      else if (logicalState === "blocked_uncertainty") counts.blockedUncertainty += 1;
+      else if (logicalState === "monitoring") counts.monitoring += 1;
+      else if (logicalState === "executing") counts.executing += 1;
+      else counts.runnableQueued += 1;
+      if (row.state === "input_required" || row.state === "input_invalid") attentionByLane.add(row.conversation_key);
+      if ((/* @__PURE__ */ new Set(["submission_uncertain", "response_uncertain", "quarantined"])).has(row.state) || row.quarantined_lane) {
+        uncertaintyByLane.add(row.conversation_key);
+      }
+    }
+    return { counts, byChainId };
+  }
+  logicalStateForJob(jobId) {
+    const job = this.requireJob(jobId);
+    return this.logicalQueueSnapshot().byChainId.get(job.chainId) || null;
+  }
+  logicalQueueCounts(sessionId = null) {
+    return this.logicalQueueSnapshot(sessionId).counts;
+  }
   countOutstanding() {
-    const terminals = Array.from(TERMINAL_JOB_STATES);
-    const placeholders = terminals.map(() => "?").join(",");
-    return Number(this.db.prepare(`SELECT COUNT(*) count FROM jobs WHERE state NOT IN (${placeholders})`).get(...terminals).count);
+    return this.logicalQueueCounts().logicalOutstanding;
   }
   transition(id, nextState, patch = {}, details = null) {
     if (!STATE_INDEX.has(nextState)) throw new Error(`Unknown job state: ${nextState}`);
@@ -63632,12 +63836,14 @@ var StateStore = class extends EventEmitter {
     const canonicalUrl = active.canonical_url || chain.canonical_url;
     if (canonicalUrl && canonicalUrl !== chain.canonical_url) {
       const collision = this.db.prepare(`
-        SELECT id FROM job_chains
-        WHERE id <> ? AND canonical_url = ?
-          AND state NOT IN ('completed', 'failed', 'cancelled')
-        ORDER BY accepted_sequence LIMIT 1
-      `).get(chain.id, canonicalUrl);
-      if (collision) {
+        SELECT c.id, c.accepted_sequence, c.state, j.submit_intent_at
+        FROM job_chains c JOIN jobs j ON j.id=c.active_job_id
+        WHERE c.id <> ? AND (c.canonical_url = ? OR c.conversation_key = ?)
+          AND c.state NOT IN ('completed', 'failed', 'cancelled')
+        ORDER BY c.accepted_sequence LIMIT 1
+      `).get(chain.id, canonicalUrl, canonicalUrl);
+      const laterUnsentSuccessor = collision && Number(collision.accepted_sequence) > Number(chain.accepted_sequence) && collision.state === "queued" && !collision.submit_intent_at;
+      if (collision && !laterUnsentSuccessor) {
         throw codedError("CONVERSATION_LANE_COLLISION", "The canonical conversation is already owned by another active logical chain. Oracle stopped without another send.", {
           submissionMayHaveOccurred: true,
           recoveryAction: "inspect both logical chains and reconcile the submitted turn"
@@ -63684,8 +63890,8 @@ var StateStore = class extends EventEmitter {
         )
         SELECT id, ?, 'pending', ?
         FROM completion_subscriptions
-        WHERE chain_id = ? AND state = 'open' AND mode != 'manual'
-      `).run(sequence, now, chainId);
+        WHERE chain_id = ? AND state = 'open' AND (? = 'attention_required' OR mode != 'manual')
+      `).run(sequence, now, chainId, state);
     }
     if (TERMINAL_CHAIN_STATES.has(state)) {
       this.db.prepare(`
@@ -63740,7 +63946,7 @@ var StateStore = class extends EventEmitter {
       ON CONFLICT(scope_key) DO UPDATE SET job_id=excluded.job_id, reason=excluded.reason, active=1, created_at=excluded.created_at, acknowledged_at=NULL
     `).run(scopeKey, jobId, reason, now);
   }
-  activeQuarantineRecord(scopeKey) {
+  activeQuarantineRecords(scopeKey) {
     return this.db.prepare(`
       SELECT q.*, j.state AS job_state, j.updated_at AS job_updated_at,
              j.canonical_url, j.submitted_message_hash, j.attachment_manifest_json,
@@ -63750,36 +63956,41 @@ var StateStore = class extends EventEmitter {
       JOIN job_attempts a ON a.job_id = j.id
       JOIN job_chains c ON c.id = a.chain_id
       WHERE q.scope_key = ? AND q.active = 1
-    `).get(scopeKey);
+      ORDER BY q.created_at, q.job_id
+    `).all(scopeKey);
+  }
+  activeQuarantineRecord(scopeKey) {
+    const rows = this.activeQuarantineRecords(scopeKey);
+    return rows.length === 1 ? rows[0] : null;
   }
   quarantineView(scopeKey) {
-    const row = this.activeQuarantineRecord(scopeKey);
-    if (!row) return { quarantined: false, conversationUrl: scopeKey };
-    const canReconcileReadOnly = Boolean(row.canonical_url && row.submitted_message_hash);
+    const rows = this.activeQuarantineRecords(scopeKey);
+    if (!rows.length) return { quarantined: false, blockers: [] };
+    const blockers = rows.map((row) => sanitizedQuarantineBlocker(row));
     return {
       quarantined: true,
-      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.scope_key) ? row.scope_key : null),
-      fingerprint: quarantineFingerprint(row),
-      jobState: row.job_state,
-      createdAt: row.created_at,
-      canReconcileReadOnly,
       capabilityRecoveryRequired: true,
-      recoveryActions: canReconcileReadOnly ? ["reconcile", "acknowledge-after-manual-inspection"] : ["acknowledge-after-manual-inspection"]
+      blockers,
+      ...blockers.length === 1 ? blockers[0] : {}
     };
   }
   requireMatchingQuarantine(scopeKey, fingerprint) {
-    const row = this.activeQuarantineRecord(scopeKey);
-    if (!row) {
+    const rows = this.activeQuarantineRecords(scopeKey);
+    if (!rows.length) {
       throw codedError("QUARANTINE_NOT_FOUND", "No active Oracle Firefox quarantine matches that exact conversation URL.");
     }
-    const currentFingerprint = quarantineFingerprint(row);
-    if (!fingerprint || fingerprint !== currentFingerprint) {
+    const matches = rows.filter((row2) => quarantineFingerprint(row2) === fingerprint);
+    if (matches.length === 0) {
       throw codedError(
         "QUARANTINE_CHANGED",
         "The quarantine changed after inspection. Inspect the exact conversation quarantine again before recovering it.",
         { safeToRetry: true }
       );
     }
+    if (matches.length > 1) {
+      throw codedError("QUARANTINE_AMBIGUOUS", "More than one durable quarantine matched the supplied fingerprint. Oracle refused to guess.");
+    }
+    const [row] = matches;
     if (!(/* @__PURE__ */ new Set(["submission_uncertain", "response_uncertain", "quarantined"])).has(row.job_state)) {
       throw codedError("QUARANTINE_NOT_RECOVERABLE", "The quarantined job is no longer in an uncertain terminal state.");
     }
@@ -63800,7 +64011,7 @@ var StateStore = class extends EventEmitter {
       if (Number(changed.changes) !== 1) {
         throw codedError("QUARANTINE_CHANGED", "The quarantine changed while it was being acknowledged.", { safeToRetry: true });
       }
-      return { conversationUrl: row.canonical_url || scopeKey, fingerprint, acknowledgedAt: now };
+      return { fingerprint, acknowledgedAt: now };
     });
     return {
       ...result,
@@ -63866,56 +64077,134 @@ var StateStore = class extends EventEmitter {
     this.db.prepare("UPDATE quarantines SET active = 0, acknowledged_at = ? WHERE job_id = ?").run(now, jobId);
     return { jobId, acknowledged: true, conversationKey: job.conversationKey };
   }
-  activeInputRequestRecord(scopeKey) {
-    const rows = this.db.prepare(`
+  activeInputRequestRecords(scopeKey) {
+    return this.db.prepare(`
       SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
              j.assistant_disposition, j.local_data_request_json
       FROM job_chains c
       JOIN jobs j ON j.id = c.active_job_id
-      WHERE c.conversation_key = ? AND c.state = 'input_required'
-        AND j.state = 'completed' AND j.local_data_request_json IS NOT NULL
+      WHERE (c.conversation_key = ? OR c.canonical_url = ?)
+        AND c.state IN ('input_required', 'input_invalid')
+        AND (
+          (j.state = 'completed' AND j.assistant_disposition = 'local_data_request' AND j.local_data_request_json IS NOT NULL)
+          OR (j.state = 'input_invalid' AND j.assistant_disposition = 'input_invalid')
+        )
       ORDER BY c.accepted_sequence
-      LIMIT 2
-    `).all(scopeKey);
-    if (rows.length > 1) {
-      throw codedError("INPUT_REQUEST_AMBIGUOUS", "More than one durable input request occupies this exact conversation lane. Oracle refused to guess.");
-    }
-    return rows[0] || null;
+    `).all(scopeKey, scopeKey);
+  }
+  activeInputRequestRecord(scopeKey) {
+    const rows = this.activeInputRequestRecords(scopeKey);
+    return rows.length === 1 ? rows[0] : null;
+  }
+  inputBlockers(scopeKey) {
+    return this.activeInputRequestRecords(scopeKey).map((row) => sanitizedInputBlocker(row));
   }
   inputRequestView(scopeKey) {
-    const row = this.activeInputRequestRecord(scopeKey);
-    if (!row) return { inputRequired: false, conversationUrl: scopeKey };
-    const request3 = parse(row.local_data_request_json);
+    const rows = this.activeInputRequestRecords(scopeKey);
+    if (!rows.length) return { inputRequired: false, blockers: [] };
+    const blockers = rows.map((row) => sanitizedInputBlocker(row));
     return {
       inputRequired: true,
-      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.conversation_key) ? row.conversation_key : null),
-      fingerprint: inputRequestFingerprint(row),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      safeReadOnly: request3?.safeReadOnly === true,
-      templateFalsePositive: isTemplateLocalDataRequest(request3),
       capabilityRecoveryRequired: true,
-      recoveryActions: ["reply-with-local-data", "abandon-after-user-confirmation"]
+      blockers,
+      ...blockers.length === 1 ? blockers[0] : {}
     };
   }
   requireMatchingInputRequest(scopeKey, fingerprint) {
-    const row = this.activeInputRequestRecord(scopeKey);
-    if (!row) {
+    const rows = this.activeInputRequestRecords(scopeKey);
+    if (!rows.length) {
       throw codedError("INPUT_REQUEST_NOT_FOUND", "No active Oracle Firefox input request matches that exact conversation URL.");
     }
-    const currentFingerprint = inputRequestFingerprint(row);
-    if (!fingerprint || fingerprint !== currentFingerprint) {
+    const matches = rows.filter((row) => inputRequestFingerprint(row) === fingerprint);
+    if (matches.length === 0) {
       throw codedError(
         "INPUT_REQUEST_CHANGED",
         "The input request changed after inspection. Inspect the exact conversation lane again before abandoning it.",
         { safeToRetry: true }
       );
     }
-    return row;
+    if (matches.length > 1) {
+      throw codedError("INPUT_REQUEST_AMBIGUOUS", "More than one durable input request matched the supplied fingerprint. Oracle refused to guess.");
+    }
+    return matches[0];
+  }
+  attentionForSession(sessionId) {
+    const inputRows = this.db.prepare(`
+      SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.assistant_disposition, j.local_data_request_json
+      FROM job_chains c
+      JOIN jobs j ON j.id=c.active_job_id
+      JOIN chain_session_grants g ON g.chain_id=c.id
+      WHERE g.session_id=? AND g.can_list=1 AND g.revoked_at IS NULL
+        AND c.state IN ('input_required', 'input_invalid')
+      ORDER BY c.accepted_sequence
+    `).all(sessionId);
+    const uncertaintyRows = this.db.prepare(`
+      SELECT q.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.canonical_url, j.submitted_message_hash, j.attachment_manifest_json,
+             a.chain_id, c.state AS chain_state
+      FROM quarantines q
+      JOIN jobs j ON j.id=q.job_id
+      JOIN job_attempts a ON a.job_id=j.id
+      JOIN job_chains c ON c.id=a.chain_id
+      JOIN chain_session_grants g ON g.chain_id=c.id
+      WHERE g.session_id=? AND g.can_list=1 AND g.revoked_at IS NULL AND q.active=1
+      ORDER BY q.created_at, q.job_id
+    `).all(sessionId);
+    return [
+      ...inputRows.map((row) => sanitizedInputBlocker(row)),
+      ...uncertaintyRows.map((row) => sanitizedQuarantineBlocker(row))
+    ];
+  }
+  sweepAttentionRequired({ nowMs = Date.now(), afterMs = 30 * 6e4 } = {}) {
+    const cutoff = new Date(nowMs - Math.max(1, Number(afterMs) || 30 * 6e4)).toISOString();
+    const marked = this.transaction(() => {
+      const candidates = this.db.prepare(`
+        SELECT c.id, c.active_job_id
+        FROM job_chains c
+        WHERE c.state IN ('input_required', 'input_invalid')
+          AND c.attention_required_at IS NULL AND c.updated_at <= ?
+        ORDER BY c.accepted_sequence
+      `).all(cutoff);
+      const attentionAt = new Date(nowMs).toISOString();
+      const changed = [];
+      for (const candidate of candidates) {
+        const update = this.db.prepare(`
+          UPDATE job_chains SET attention_required_at=?
+          WHERE id=? AND active_job_id=? AND state IN ('input_required', 'input_invalid')
+            AND attention_required_at IS NULL
+        `).run(attentionAt, candidate.id, candidate.active_job_id);
+        if (Number(update.changes) !== 1) continue;
+        this.createChainEvent(candidate.id, candidate.active_job_id, "attention_required", {
+          ownerActionRequired: true,
+          laneReleased: false
+        }, attentionAt);
+        changed.push(candidate.active_job_id);
+      }
+      return changed;
+    });
+    for (const jobId of marked) this.emit("change", this.requireJob(jobId));
+    return marked.map((jobId) => ({ fingerprint: inputRequestFingerprint(
+      this.db.prepare(`
+        SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
+               j.assistant_disposition, j.local_data_request_json
+        FROM job_chains c JOIN jobs j ON j.id=c.active_job_id WHERE j.id=?
+      `).get(jobId)
+    ), state: "attention_required" }));
+  }
+  earliestAttentionWake({ afterMs = 30 * 6e4 } = {}) {
+    const row = this.db.prepare(`
+      SELECT MIN(updated_at) AS created_at FROM job_chains
+      WHERE state IN ('input_required', 'input_invalid') AND attention_required_at IS NULL
+    `).get();
+    if (!row?.created_at) return null;
+    return new Date(Date.parse(row.created_at) + Math.max(1, Number(afterMs) || 30 * 6e4)).toISOString();
   }
   abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode }, now = (/* @__PURE__ */ new Date()).toISOString()) {
     const request3 = parse(row.local_data_request_json);
-    if (row.state !== "input_required" || row.job_state !== "completed" || row.assistant_disposition !== "local_data_request" || !request3) {
+    const validRequest = row.state === "input_required" && row.job_state === "completed" && row.assistant_disposition === "local_data_request" && request3;
+    const malformedRequest = row.state === "input_invalid" && row.job_state === "input_invalid" && row.assistant_disposition === "input_invalid";
+    if (!validRequest && !malformedRequest) {
       throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected logical chain is not waiting for a valid local-data request.");
     }
     const changed = this.db.prepare(`
@@ -63923,7 +64212,7 @@ var StateStore = class extends EventEmitter {
       SET state = 'completed', terminal_at = ?, updated_at = ?,
           input_required_abandoned_at = ?, input_required_abandoned_job_id = ?,
           input_required_abandoned_reason = ?
-      WHERE id = ? AND active_job_id = ? AND state = 'input_required'
+      WHERE id = ? AND active_job_id = ? AND state IN ('input_required', 'input_invalid')
     `).run(now, now, now, row.active_job_id, reason, row.id, row.active_job_id);
     if (Number(changed.changes) !== 1) {
       throw codedError("INPUT_REQUEST_CHANGED", "The input request changed while Oracle was abandoning it.", { safeToRetry: true });
@@ -63940,7 +64229,8 @@ var StateStore = class extends EventEmitter {
       chain: this.getChain(row.id),
       abandonedAt: now,
       reason,
-      templateFalsePositive: isTemplateLocalDataRequest(request3)
+      templateFalsePositive: request3 ? isTemplateLocalDataRequest(request3) : false,
+      inputInvalid: malformedRequest
     };
   }
   abandonInputRequest(jobId, { reason = "user-declined" } = {}) {
@@ -63955,6 +64245,7 @@ var StateStore = class extends EventEmitter {
           abandonedAt: chain.input_required_abandoned_at,
           reason: chain.input_required_abandoned_reason,
           templateFalsePositive: isTemplateLocalDataRequest(job.localDataRequest),
+          inputInvalid: job.state === "input_invalid",
           idempotent: true
         };
         return;
@@ -63978,6 +64269,12 @@ var StateStore = class extends EventEmitter {
     let released;
     this.transaction(() => {
       const row = this.requireMatchingInputRequest(scopeKey, fingerprint);
+      if (row.state === "input_invalid" || row.job_state === "input_invalid") {
+        throw codedError(
+          "INPUT_INVALID_CAPABILITY_REQUIRED",
+          "Malformed local-data input may be resolved only with the logical chain's existing control capability."
+        );
+      }
       released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "orphaned-capability" });
     });
     this.emit("change", released.job);
@@ -64044,10 +64341,11 @@ var StateStore = class extends EventEmitter {
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
              a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
+             a.next_execution_not_before, a.last_executor_error_json, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
+             c.attention_required_at
       FROM job_attempts a
       JOIN jobs j ON j.id = a.job_id
       JOIN job_chains c ON c.id = a.chain_id
@@ -64075,7 +64373,7 @@ var StateStore = class extends EventEmitter {
       SELECT id FROM job_chains
       WHERE conversation_key = ?
         AND accepted_sequence < ?
-        AND state IN ('queued', 'running', 'input_required')
+        AND state IN ('queued', 'running', 'input_required', 'input_invalid')
       ORDER BY accepted_sequence LIMIT 1
     `).get(chain.conversationKey, chain.acceptedSequence);
     if (earlier) return false;
@@ -64122,7 +64420,7 @@ var StateStore = class extends EventEmitter {
             SELECT 1 FROM job_chains earlier
             WHERE earlier.conversation_key = c.conversation_key
               AND earlier.accepted_sequence < c.accepted_sequence
-              AND earlier.state IN ('queued', 'running', 'input_required')
+              AND earlier.state IN ('queued', 'running', 'input_required', 'input_invalid')
           )
           AND NOT EXISTS (
             SELECT 1 FROM job_chains creation
@@ -64225,7 +64523,8 @@ var StateStore = class extends EventEmitter {
     responseDisposition = "completed",
     localDataRequest = null,
     result,
-    recoveryAction = null
+    recoveryAction = null,
+    terminalState = "completed"
   }) {
     if (!assistantTurnHash || !assistantTurnId && assistantTurnBound !== true || !result) {
       throw codedError(
@@ -64235,6 +64534,9 @@ var StateStore = class extends EventEmitter {
       );
     }
     let completed;
+    if (!(/* @__PURE__ */ new Set(["completed", "input_invalid"])).has(terminalState)) {
+      throw codedError("INVALID_JOB_TRANSITION", "Assistant response commits may terminate only as completed or input_invalid.");
+    }
     this.transaction(() => {
       this.assertExecution(claim);
       const job = this.requireJob(claim.jobId);
@@ -64245,7 +64547,7 @@ var StateStore = class extends EventEmitter {
           { submissionMayHaveOccurred: true }
         );
       }
-      completed = this.transitionInCurrentTransaction(claim.jobId, "completed", {
+      completed = this.transitionInCurrentTransaction(claim.jobId, terminalState, {
         assistantTurnId: assistantTurnId || null,
         assistantTurnHash,
         assistantDisposition,
@@ -64353,12 +64655,27 @@ var StateStore = class extends EventEmitter {
       const deadlineMs = Date.parse(attempt.monitor_deadline_at || job.monitorDeadlineAt || 0);
       const retryMs = Number.isFinite(deadlineMs) && deadlineMs > 0 ? Math.min(Date.now() + delay3, deadlineMs) : Date.now() + delay3;
       const retryAt = new Date(Math.max(Date.now(), retryMs)).toISOString();
+      const reattaching = structuredError(codedError(
+        "MONITOR_REATTACHING",
+        "Oracle is reattaching to the proven submitted turn without sending another message.",
+        {
+          safeToRetry: false,
+          submissionMayHaveOccurred: true,
+          recoveryAction: "wait for the existing monitor-only job; do not resubmit",
+          details: {
+            causeCode: structured.code,
+            retryAt,
+            monitorDeadlineAt: attempt.monitor_deadline_at || job.monitorDeadlineAt || null,
+            retryCount: failures
+          }
+        }
+      ));
       this.db.prepare(`
         UPDATE job_attempts SET execution_state='backoff', execution_kind='monitor_only',
           execution_owner_instance_id=NULL, execution_lease_generation=NULL,
           execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
         WHERE job_id=? AND execution_epoch=?
-      `).run(failures, retryAt, json(structured), claim.jobId, claim.executionEpoch);
+      `).run(failures, retryAt, json(reattaching), claim.jobId, claim.executionEpoch);
       this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?").run((/* @__PURE__ */ new Date()).toISOString(), claim.chainId, claim.jobId);
       released = this.requireJob(claim.jobId);
     });
@@ -64521,6 +64838,7 @@ var StateStore = class extends EventEmitter {
       cooldownUntil: row.cooldown_until,
       cooldownCode: row.cooldown_code,
       cooldownCount: row.cooldown_count,
+      cooldownIncidentCount: Number(this.db.prepare("SELECT COUNT(*) count FROM cooldown_incidents").get()?.count || 0),
       effectiveConcurrency: row.effective_concurrency,
       successStreak: row.success_streak,
       probeInFlight: Boolean(row.probe_in_flight),
@@ -64549,6 +64867,65 @@ var StateStore = class extends EventEmitter {
       synchronous: this.db.prepare("PRAGMA synchronous").get().synchronous,
       foreignKeys: Boolean(this.db.prepare("PRAGMA foreign_keys").get().foreign_keys),
       schemaVersion: Number(this.db.prepare("SELECT COALESCE(MAX(version), 0) version FROM schema_migrations").get().version)
+    };
+  }
+  protocolCompatibilityStatus() {
+    const state = this.db.prepare(`
+      SELECT minimum_reader_protocol, minimum_writer_protocol
+      FROM broker_state WHERE id=1
+    `).get();
+    const counts = { currentWriter: 0, readOnlyLegacy: 0, incompatible: 0, unknown: 0 };
+    const sessions = this.db.prepare(`
+      SELECT metadata_json FROM owner_sessions WHERE revoked_at IS NULL
+    `).all();
+    for (const session of sessions) {
+      const protocol = Number(parse(session.metadata_json)?.protocolVersion || 0);
+      if (!protocol) counts.unknown += 1;
+      else if (protocol >= BROKER_MINIMUM_WRITER_PROTOCOL && protocol <= BROKER_PROTOCOL_VERSION) counts.currentWriter += 1;
+      else if (protocol >= BROKER_MINIMUM_READER_PROTOCOL && protocol < BROKER_MINIMUM_WRITER_PROTOCOL) counts.readOnlyLegacy += 1;
+      else counts.incompatible += 1;
+    }
+    return {
+      brokerProtocol: BROKER_PROTOCOL_VERSION,
+      minimumReaderProtocol: Number(state?.minimum_reader_protocol || BROKER_MINIMUM_READER_PROTOCOL),
+      minimumWriterProtocol: Number(state?.minimum_writer_protocol || BROKER_MINIMUM_WRITER_PROTOCOL),
+      protocol8ReadCompatible: BROKER_MINIMUM_READER_PROTOCOL <= 8 && BROKER_PROTOCOL_VERSION >= 8,
+      clientSessions: { total: sessions.length, ...counts }
+    };
+  }
+  completionDeliveryHealth() {
+    const subscriptionRows = this.db.prepare(`
+      SELECT state, COUNT(*) count FROM completion_subscriptions GROUP BY state
+    `).all();
+    const deliveryRows = this.db.prepare(`
+      SELECT state, COUNT(*) count FROM completion_deliveries GROUP BY state
+    `).all();
+    const counts = (rows) => Object.fromEntries(rows.map((row) => [row.state, Number(row.count)]));
+    const subscriptions = { open: 0, closed: 0, ...counts(subscriptionRows) };
+    const deliveries = { pending: 0, claimed: 0, delivered: 0, acknowledged: 0, ...counts(deliveryRows) };
+    const retry2 = this.db.prepare(`
+      SELECT COUNT(*) AS scheduled,
+             MIN(next_attempt_at) AS next_attempt_at,
+             SUM(CASE WHEN last_error_json IS NOT NULL THEN 1 ELSE 0 END) AS with_error
+      FROM completion_deliveries
+      WHERE state='pending' AND next_attempt_at IS NOT NULL
+    `).get();
+    const expiredClaims = Number(this.db.prepare(`
+      SELECT COUNT(*) count FROM completion_deliveries
+      WHERE state='claimed' AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?
+    `).get((/* @__PURE__ */ new Date()).toISOString())?.count || 0);
+    return {
+      subscriptions: { ...subscriptions, total: subscriptions.open + subscriptions.closed },
+      deliveries: {
+        ...deliveries,
+        total: deliveries.pending + deliveries.claimed + deliveries.delivered + deliveries.acknowledged
+      },
+      retry: {
+        scheduled: Number(retry2?.scheduled || 0),
+        nextAttemptAt: retry2?.next_attempt_at || null,
+        withLastError: Number(retry2?.with_error || 0),
+        expiredClaims
+      }
     };
   }
   checkInvariants() {
@@ -64588,7 +64965,12 @@ var StateStore = class extends EventEmitter {
         throw codedError("ACCOUNT_COOLDOWN", "ChatGPT submissions are paused by the broker-wide account cooldown.", {
           safeToRetry: true,
           recoveryAction: `wait until ${state.cooldownUntil} before submitting again`,
-          details: { cooldownUntil: state.cooldownUntil, cooldownCode: state.cooldownCode }
+          details: {
+            cooldownUntil: state.cooldownUntil,
+            cooldownCode: state.cooldownCode,
+            cooldownEpoch: state.gateVersion,
+            existingLocalGate: true
+          }
         });
       }
       const paceMs = state.nextSubmitNotBefore ? Date.parse(state.nextSubmitNotBefore) : 0;
@@ -64654,13 +65036,43 @@ var StateStore = class extends EventEmitter {
     this.emit("change", transitioned);
     return transitioned;
   }
-  recordAccountCooldown(error, { minimumMs = 12e4, maximumMs = 30 * 6e4 } = {}) {
+  recordAccountCooldown(error, { minimumMs = 12e4, maximumMs = 30 * 6e4, nowMs = Date.now() } = {}) {
     return this.transaction(() => {
+      const evidence = error?.details?.remoteThrottleEvidence || error?.remoteThrottleEvidence || null;
+      if (!evidence || typeof evidence !== "object") {
+        return { ...this.accountState(), incidentRecorded: false, existingLocalGate: true };
+      }
+      const evidenceFingerprint = /^[a-f0-9]{64}$/u.test(String(evidence.fingerprint || "")) ? String(evidence.fingerprint) : createHash5("sha256").update(`oracle-remote-throttle-v1\0${JSON.stringify(evidence)}`).digest("hex");
       const current = this.accountState();
       const count = current.cooldownCount + 1;
       const duration = Math.min(maximumMs, minimumMs * 2 ** Math.min(4, count - 1));
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const until = new Date(Date.now() + duration).toISOString();
+      const now = new Date(nowMs).toISOString();
+      const until = new Date(nowMs + duration).toISOString();
+      const inserted = this.db.prepare(`
+        INSERT OR IGNORE INTO cooldown_incidents(
+          evidence_fingerprint, evidence_kind, code, first_seen_at, last_seen_at,
+          observer_count, cooldown_until
+        ) VALUES (?, ?, ?, ?, ?, 1, ?)
+      `).run(
+        evidenceFingerprint,
+        String(evidence.kind || "remote_throttle"),
+        error?.code || "ACCOUNT_COOLDOWN",
+        now,
+        now,
+        until
+      );
+      if (Number(inserted.changes) === 0) {
+        this.db.prepare(`
+          UPDATE cooldown_incidents SET observer_count=observer_count+1, last_seen_at=?
+          WHERE evidence_fingerprint=?
+        `).run(now, evidenceFingerprint);
+        return {
+          ...this.accountState(),
+          incidentRecorded: false,
+          evidenceFingerprint,
+          existingLocalGate: false
+        };
+      }
       this.db.prepare(`
         UPDATE account_state
         SET gate_version = gate_version + 1, cooldown_until = ?, cooldown_code = ?,
@@ -64669,7 +65081,7 @@ var StateStore = class extends EventEmitter {
         WHERE id = 1
       `).run(until, error?.code || "ACCOUNT_COOLDOWN", count, now);
       this.db.prepare("UPDATE submit_permits SET invalidated_at = ? WHERE consumed_at IS NULL AND invalidated_at IS NULL").run(now);
-      return this.accountState();
+      return { ...this.accountState(), incidentRecorded: true, evidenceFingerprint, existingLocalGate: false };
     });
   }
   recordSubmissionSuccess() {
@@ -66616,6 +67028,10 @@ function normalizeSemanticText(value) {
 function semanticTextHash(value) {
   return createHash8("sha256").update(normalizeSemanticText(value)).digest("hex");
 }
+function remoteThrottleEvidence(kind, identity3, text) {
+  const fingerprint = createHash8("sha256").update(["oracle-remote-throttle-v1", kind, identity3 || "", semanticTextHash(text)].join("\0")).digest("hex");
+  return { kind, fingerprint };
+}
 function semanticMismatchDetails(expected, observed) {
   const expectedNormalized = normalizeSemanticText(expected);
   const observedNormalized = normalizeSemanticText(observed);
@@ -67733,7 +68149,10 @@ async function waitForUserMessage(page, baselineCount, expectedText, { timeoutMs
     if (cooldownNotice) {
       throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submission attempt because the account is temporarily rate-limited. Oracle did not retry.", {
         submissionMayHaveOccurred: false,
-        recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job"
+        recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+        details: {
+          remoteThrottleEvidence: remoteThrottleEvidence("visible_notice", cooldownNotice.id, cooldownNotice.text)
+        }
       });
     }
     const users2 = latest.turns.filter((turn) => turn.role === "user");
@@ -67795,29 +68214,6 @@ function isPlaceholder(text) {
   const normalized = String(text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
   return !normalized || normalized === "chatgpt said:" || normalized === "chatgpt said" || normalized.includes("answer now") && normalized.includes("pro thinking");
 }
-async function boundedAssistantSnapshot(page, probeTimeoutMs = 3e4) {
-  let timer2;
-  try {
-    return await Promise.race([
-      assistantSnapshot(page),
-      new Promise((_2, reject) => {
-        timer2 = setTimeout(() => reject(codedError(
-          "RESPONSE_MONITOR_STALLED",
-          `The browser stopped responding for ${probeTimeoutMs}ms while Oracle monitored the submitted turn. Oracle did not retry or resend.`,
-          {
-            submissionMayHaveOccurred: true,
-            safeToRetry: false,
-            recoveryAction: "inspect the exact conversation and reconcile this job without resending",
-            details: { probeTimeoutMs }
-          }
-        )), Math.max(1, probeTimeoutMs));
-        timer2.unref?.();
-      })
-    ]);
-  } finally {
-    clearTimeout(timer2);
-  }
-}
 function correlatedUserTurnIndex(turns, userTurn) {
   if (!Array.isArray(turns) || !userTurn?.id && !userTurn?.hash) return -1;
   if (userTurn.id) {
@@ -67836,47 +68232,248 @@ function correlatedUserTurnIndex(turns, userTurn) {
   if (Array.isArray(userTurn.attachments) && Array.isArray(match.attachments) && attachmentManifestKey(match.attachments) !== attachmentManifestKey(userTurn.attachments)) return -1;
   return matchIndex;
 }
-function assistantBoundToUserTurn(turns, userIndex) {
-  if (userIndex < 0) return null;
-  const following = turns.slice(userIndex + 1);
-  const nextUserIndex = following.findIndex((turn) => turn.role === "user");
-  const responseSegment = nextUserIndex >= 0 ? following.slice(0, nextUserIndex) : following;
-  const assistants = responseSegment.filter((turn) => turn.role === "assistant");
-  return assistants.length === 1 ? assistants[0] : null;
+async function probeAssistantAfterTurn(page, userTurn, { includeContent = false } = {}) {
+  const startedAt = performance.now();
+  const probe2 = await page.evaluate(async ({ expected, include, finishedSelector, stopSelectors }) => {
+    const visible = (node) => {
+      if (!(node instanceof HTMLElement)) return false;
+      const rect = node.getBoundingClientRect();
+      const style = window.getComputedStyle(node);
+      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+    };
+    const normalize3 = (value) => String(value || "").replace(/\r\n?/gu, "\n").replace(/\u00a0/gu, " ").replace(/\t/gu, "    ").normalize("NFC").replace(/[ \t]+\n/gu, "\n").replace(/\n[ \t]+/gu, "\n").trim();
+    const hash = (value) => {
+      const bytes = new TextEncoder().encode(normalize3(value));
+      const words = [];
+      const hashWords = [];
+      const constants3 = [];
+      const composite = {};
+      let primeCount = 0;
+      for (let candidate = 2; primeCount < 64; candidate += 1) {
+        if (composite[candidate]) continue;
+        for (let multiple = candidate * candidate; multiple < 313; multiple += candidate) composite[multiple] = true;
+        hashWords[primeCount] = Math.sqrt(candidate) * 4294967296 | 0;
+        constants3[primeCount] = Math.cbrt(candidate) * 4294967296 | 0;
+        primeCount += 1;
+      }
+      const bitLength = bytes.length * 8;
+      const paddedLength = bytes.length + 9 + 63 >> 6 << 6;
+      const padded = new Uint8Array(paddedLength);
+      padded.set(bytes);
+      padded[bytes.length] = 128;
+      const view = new DataView(padded.buffer);
+      view.setUint32(paddedLength - 4, bitLength >>> 0, false);
+      view.setUint32(paddedLength - 8, Math.floor(bitLength / 4294967296), false);
+      const rotate = (word, amount) => word >>> amount | word << 32 - amount;
+      for (let offset = 0; offset < paddedLength; offset += 64) {
+        for (let index = 0; index < 16; index += 1) words[index] = view.getInt32(offset + index * 4, false);
+        for (let index = 16; index < 64; index += 1) {
+          const left2 = words[index - 15];
+          const right2 = words[index - 2];
+          const sigma0 = rotate(left2, 7) ^ rotate(left2, 18) ^ left2 >>> 3;
+          const sigma1 = rotate(right2, 17) ^ rotate(right2, 19) ^ right2 >>> 10;
+          words[index] = words[index - 16] + sigma0 + words[index - 7] + sigma1 | 0;
+        }
+        let [a2, b2, c, d, e, f, g, h] = hashWords;
+        for (let index = 0; index < 64; index += 1) {
+          const sum1 = rotate(e, 6) ^ rotate(e, 11) ^ rotate(e, 25);
+          const choice = e & f ^ ~e & g;
+          const temp1 = h + sum1 + choice + constants3[index] + words[index] | 0;
+          const sum0 = rotate(a2, 2) ^ rotate(a2, 13) ^ rotate(a2, 22);
+          const majority = a2 & b2 ^ a2 & c ^ b2 & c;
+          const temp2 = sum0 + majority | 0;
+          h = g;
+          g = f;
+          f = e;
+          e = d + temp1 | 0;
+          d = c;
+          c = b2;
+          b2 = a2;
+          a2 = temp1 + temp2 | 0;
+        }
+        const next = [a2, b2, c, d, e, f, g, h];
+        for (let index = 0; index < 8; index += 1) hashWords[index] = hashWords[index] + next[index] | 0;
+      }
+      return hashWords.map((word) => (word >>> 0).toString(16).padStart(8, "0")).join("");
+    };
+    const serializeUserSource = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) return node.textContent || "";
+      if (!(node instanceof HTMLElement)) return "";
+      if (node instanceof HTMLBRElement) return "\n";
+      if (node instanceof HTMLPreElement) {
+        const code = node.querySelector(":scope > code");
+        const source2 = String(code?.textContent || node.textContent || "").replace(/\n+$/u, "");
+        return `\`\`\`${source2}
+\`\`\``;
+      }
+      if (node.tagName === "CODE") {
+        const source2 = node.textContent || "";
+        const longestRun = Math.max(0, ...Array.from(source2.matchAll(/`+/gu), (match) => match[0].length));
+        const delimiter = "`".repeat(longestRun + 1);
+        return `${delimiter}${source2}${delimiter}`;
+      }
+      return Array.from(node.childNodes, serializeUserSource).join("");
+    };
+    const roleNodes = Array.from(document.querySelectorAll('[data-message-author-role], [data-turn="assistant"], [data-turn="user"]'));
+    const turns = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const roleNode of roleNodes) {
+      const turn = roleNode.closest('[data-testid^="conversation-turn"]') || roleNode.closest("article") || roleNode;
+      if (seen.has(turn)) continue;
+      seen.add(turn);
+      const role = roleNode.getAttribute("data-message-author-role") || roleNode.getAttribute("data-turn");
+      if (role !== "assistant" && role !== "user") continue;
+      turns.push({ role, roleNode, turn });
+    }
+    const attachmentNames = (turn) => Array.from(turn.querySelectorAll('[data-testid*="attachment"], [data-testid*="file"], a[download], [role="group"][aria-label]')).map((node) => (node.getAttribute("download") || node.getAttribute("aria-label") || node.getAttribute("title") || node.textContent || "").trim()).flatMap((value) => {
+      const match = value.match(/([^/\\\n]+\.[a-z0-9]{1,12})/iu);
+      return match ? [match[1].trim()] : [];
+    }).sort();
+    const expectedAttachments = Array.isArray(expected.attachments) ? [...expected.attachments].sort() : null;
+    const matches = [];
+    if (expected.id) {
+      for (let index = 0; index < turns.length; index += 1) {
+        const item2 = turns[index];
+        if (item2.role !== "user") continue;
+        const id2 = item2.turn.getAttribute("data-message-id") || item2.roleNode.getAttribute("data-message-id") || item2.turn.getAttribute("data-testid") || item2.turn.id || null;
+        if (id2 === expected.id) matches.push(index);
+      }
+    }
+    if (matches.length === 0 && expected.hash) {
+      for (let index = 0; index < turns.length; index += 1) {
+        const item2 = turns[index];
+        if (item2.role !== "user") continue;
+        const content2 = item2.turn.querySelector('[data-testid="collapsible-user-message-content"], .whitespace-pre-wrap, [data-message-content], [data-testid*="user-message-content"]') || item2.roleNode;
+        if (await hash(serializeUserSource(content2)) !== expected.hash) continue;
+        const attachments = attachmentNames(item2.turn);
+        if (expectedAttachments && attachments.join("\0") !== expectedAttachments.join("\0")) continue;
+        matches.push(index);
+      }
+    }
+    if (matches.length !== 1) {
+      return { userMatchCount: matches.length, assistantCount: 0, assistant: null, stopVisible: false };
+    }
+    const following = turns.slice(matches[0] + 1);
+    const nextUser = following.findIndex((item2) => item2.role === "user");
+    const segment = nextUser >= 0 ? following.slice(0, nextUser) : following;
+    const assistants = segment.filter((item2) => item2.role === "assistant");
+    const stopVisible = stopSelectors.some(
+      (selector) => Array.from(document.querySelectorAll(selector)).some((node) => visible(node))
+    );
+    if (assistants.length !== 1) {
+      return { userMatchCount: 1, assistantCount: assistants.length, assistant: null, stopVisible };
+    }
+    const item = assistants[0];
+    const content = item.turn.querySelector(".markdown, [data-message-content]") || item.roleNode;
+    const text = (content.innerText || content.textContent || "").trim();
+    const id = item.turn.getAttribute("data-message-id") || item.roleNode.getAttribute("data-message-id") || item.turn.getAttribute("data-testid") || item.turn.id || null;
+    const errorIndicators = Array.from(item.turn.querySelectorAll('[role="alert"], [data-testid*="error"], button')).filter((node) => {
+      if (!visible(node)) return false;
+      if (node.matches('[role="alert"], [data-testid*="error"]')) return true;
+      const label = String(node.getAttribute("aria-label") || node.textContent || "").replace(/\s+/gu, " ").trim();
+      return /^(?:retry|try again|regenerate|report)$/iu.test(label);
+    }).map((node) => String(node.getAttribute("aria-label") || node.textContent || "").replace(/\s+/gu, " ").trim()).filter(Boolean).slice(0, 8);
+    const textHash = await hash(text);
+    return {
+      userMatchCount: 1,
+      assistantCount: 1,
+      stopVisible,
+      assistant: {
+        id,
+        hash: textHash,
+        textLength: text.length,
+        completionVisible: Boolean(item.turn.querySelector(finishedSelector)),
+        errorIndicators,
+        ...include ? { text, html: item.turn.innerHTML || "" } : {}
+      }
+    };
+  }, {
+    expected: userTurn,
+    include: includeContent,
+    finishedSelector: FINISHED_ACTIONS_SELECTOR,
+    stopSelectors: STOP_BUTTON_SELECTORS
+  });
+  const payloadBytes = Buffer.byteLength(JSON.stringify(probe2), "utf8");
+  return { ...probe2, latencyMs: performance.now() - startedAt, payloadBytes };
+}
+async function boundedAssistantTurnProbe(page, userTurn, options, probeTimeoutMs) {
+  let timer2;
+  try {
+    return await Promise.race([
+      probeAssistantAfterTurn(page, userTurn, options),
+      new Promise((_2, reject) => {
+        timer2 = setTimeout(() => reject(codedError(
+          "RESPONSE_MONITOR_STALLED",
+          `The exact-turn browser probe exceeded ${probeTimeoutMs}ms. Oracle released only the monitor execution and did not resend.`,
+          {
+            submissionMayHaveOccurred: true,
+            safeToRetry: false,
+            recoveryAction: "resume monitor-only execution for the exact submitted turn",
+            details: { probeTimeoutMs, monitorOnly: true }
+          }
+        )), Math.max(1, probeTimeoutMs));
+        timer2.unref?.();
+      })
+    ]);
+  } finally {
+    clearTimeout(timer2);
+  }
 }
 async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, stableMs = 2500, probeTimeoutMs = 3e4 } = {}) {
   const deadline = Date.now() + timeoutMs;
   let lastKey = "";
   let stableSince = Date.now();
   let terminalCycles = 0;
+  let cachedAssistant = null;
+  let terminalContentKey = "";
+  const monitorMetrics = { probeCount: 0, contentFetchCount: 0, maxProbeLatencyMs: 0, maxProbePayloadBytes: 0 };
   while (Date.now() < deadline) {
-    const snapshot = await boundedAssistantSnapshot(page, Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now())));
-    const userIndex = correlatedUserTurnIndex(snapshot.turns, userTurn);
-    const assistant = assistantBoundToUserTurn(snapshot.turns, userIndex);
-    const responseFailure = classifyAssistantResponseFailure(assistant);
-    const key = assistant ? `${assistant.id || ""}:${semanticTextHash(assistant.text)}` : "";
+    const boundedTimeout = Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now()));
+    const probe2 = await boundedAssistantTurnProbe(page, userTurn, { includeContent: false }, boundedTimeout);
+    monitorMetrics.probeCount += 1;
+    monitorMetrics.maxProbeLatencyMs = Math.max(monitorMetrics.maxProbeLatencyMs, probe2.latencyMs);
+    monitorMetrics.maxProbePayloadBytes = Math.max(monitorMetrics.maxProbePayloadBytes, probe2.payloadBytes);
+    const key = probe2.assistant ? `${probe2.assistant.id || ""}:${probe2.assistant.hash}` : "";
+    const terminalHint = Boolean(probe2.assistant && (probe2.assistant.completionVisible || probe2.assistant.errorIndicators.length) && !probe2.stopVisible);
     if (key !== lastKey) {
       lastKey = key;
       stableSince = Date.now();
       terminalCycles = 0;
     }
-    const terminal = assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure) && !snapshot.stopVisible;
+    if (probe2.assistant && (key !== `${cachedAssistant?.id || ""}:${cachedAssistant?.hash || ""}` || terminalHint && terminalContentKey !== key)) {
+      const content = await boundedAssistantTurnProbe(page, userTurn, { includeContent: true }, boundedTimeout);
+      monitorMetrics.contentFetchCount += 1;
+      monitorMetrics.maxProbeLatencyMs = Math.max(monitorMetrics.maxProbeLatencyMs, content.latencyMs);
+      monitorMetrics.maxProbePayloadBytes = Math.max(monitorMetrics.maxProbePayloadBytes, content.payloadBytes);
+      cachedAssistant = content.assistant;
+      if (terminalHint && content.assistant) terminalContentKey = key;
+    }
+    const assistant = cachedAssistant ? {
+      ...cachedAssistant,
+      text: cachedAssistant.text || "",
+      html: cachedAssistant.html || ""
+    } : null;
+    const responseFailure = classifyAssistantResponseFailure(assistant);
+    const terminal = terminalHint && assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure);
     if (terminal) {
       terminalCycles += 1;
       if (terminalCycles >= 3 && Date.now() - stableSince >= stableMs) {
         if (isChatGptCooldownText(assistant.text)) {
           throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
             submissionMayHaveOccurred: true,
-            recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job"
+            recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+            details: {
+              remoteThrottleEvidence: remoteThrottleEvidence("assistant_turn", assistant.id || userTurn.id, assistant.text)
+            }
           });
         }
         return {
-          ...snapshot,
           assistantTurn: assistant,
           text: assistant.text,
           html: assistant.html,
           responseFailure,
-          exactTurnBinding: true
+          exactTurnBinding: true,
+          monitorMetrics
         };
       }
     } else {
@@ -67898,26 +68495,34 @@ async function reconcileAssistantAfterTurn(page, userTurn) {
       { submissionMayHaveOccurred: true }
     );
   }
-  const snapshot = await boundedAssistantSnapshot(page);
-  const userIndex = correlatedUserTurnIndex(snapshot.turns, userTurn);
-  if (userIndex < 0) return null;
-  const assistant = assistantBoundToUserTurn(snapshot.turns, userIndex);
+  const probe2 = await boundedAssistantTurnProbe(page, userTurn, { includeContent: false }, 3e4);
+  if (probe2.userMatchCount !== 1 || probe2.assistantCount !== 1 || !probe2.assistant) return null;
+  const content = await boundedAssistantTurnProbe(page, userTurn, { includeContent: true }, 3e4);
+  const assistant = content.assistant;
   const responseFailure = classifyAssistantResponseFailure(assistant);
-  const terminal = assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure) && !snapshot.stopVisible;
+  const terminal = assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure) && !probe2.stopVisible;
   if (!terminal) return null;
   if (isChatGptCooldownText(assistant.text)) {
     throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
       submissionMayHaveOccurred: true,
-      recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job"
+      recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+      details: {
+        remoteThrottleEvidence: remoteThrottleEvidence("assistant_turn", assistant.id || userTurn.id, assistant.text)
+      }
     });
   }
   return {
-    ...snapshot,
     assistantTurn: assistant,
     text: assistant.text,
     html: assistant.html,
     responseFailure,
-    exactTurnBinding: true
+    exactTurnBinding: true,
+    monitorMetrics: {
+      probeCount: 2,
+      contentFetchCount: 1,
+      maxProbeLatencyMs: Math.max(probe2.latencyMs, content.latencyMs),
+      maxProbePayloadBytes: Math.max(probe2.payloadBytes, content.payloadBytes)
+    }
   };
 }
 function isChatGptCooldownText(value) {
@@ -67930,7 +68535,11 @@ async function readChatGptCooldownNotice(page) {
     const notices = Array.from(
       document.querySelectorAll('[role="alert"], [data-sonner-toast], [data-testid*="toast"], [data-testid*="error"]')
     ).filter(visible);
-    return notices.map((node) => (node.innerText || node.textContent || "").replace(/\s+/gu, " ").trim()).find((text) => /too many requests(?: too quickly)?|temporarily rate[- ]limited|try again later/iu.test(text)) || null;
+    const matched = notices.map((node) => ({
+      id: node.getAttribute("data-testid") || node.getAttribute("data-sonner-toast") || node.id || null,
+      text: (node.innerText || node.textContent || "").replace(/\s+/gu, " ").trim()
+    })).find((notice) => /too many requests(?: too quickly)?|temporarily rate[- ]limited|try again later/iu.test(notice.text));
+    return matched || null;
   });
 }
 
@@ -67945,6 +68554,40 @@ var KEY_VALUES = {
   Tab: "\uE004"
 };
 var delay2 = (milliseconds) => new Promise((resolve7) => setTimeout(resolve7, milliseconds));
+function safariChildExited(child) {
+  return !child || child.exitCode !== null || child.signalCode != null;
+}
+async function waitForSafariChildExit(child, timeoutMs) {
+  if (safariChildExited(child)) return true;
+  let timer2;
+  let onExit;
+  try {
+    return await Promise.race([
+      new Promise((resolve7) => {
+        onExit = () => resolve7(true);
+        child.once("exit", onExit);
+      }),
+      new Promise((resolve7) => {
+        timer2 = setTimeout(() => resolve7(false), Math.max(1, timeoutMs));
+        timer2.unref?.();
+      })
+    ]);
+  } finally {
+    clearTimeout(timer2);
+    if (onExit && !safariChildExited(child)) child.off?.("exit", onExit);
+  }
+}
+async function shutdownSafariProcess(child, { termTimeoutMs = 2e3, killTimeoutMs = 1e3 } = {}) {
+  if (!child || safariChildExited(child)) return { exited: true, escalated: false, pid: child?.pid ?? null };
+  const ownedPid = child.pid;
+  child.kill("SIGTERM");
+  if (await waitForSafariChildExit(child, termTimeoutMs)) {
+    return { exited: true, escalated: false, pid: ownedPid };
+  }
+  child.kill("SIGKILL");
+  const exited = await waitForSafariChildExit(child, killTimeoutMs);
+  return { exited, escalated: true, pid: ownedPid };
+}
 async function freePort() {
   return new Promise((resolve7, reject) => {
     const server2 = net2.createServer();
@@ -68285,9 +68928,15 @@ var SafariBrowser = class {
     }, { owner: "safari-new-page" });
   }
   async close() {
-    if (!this.connected) return;
-    await this.transport.request("DELETE", `/session/${encodeURIComponent(this.sessionId)}`).catch(() => void 0);
-    this.child.kill("SIGTERM");
+    if (this.connected) {
+      await this.transport.request(
+        "DELETE",
+        `/session/${encodeURIComponent(this.sessionId)}`,
+        void 0,
+        { timeoutMs: 2e3 }
+      ).catch(() => void 0);
+    }
+    await shutdownSafariProcess(this.child);
     this._disconnected();
   }
 };
@@ -68362,7 +69011,7 @@ async function launchSafari({
     }
     return browser;
   } catch (error) {
-    child.kill("SIGTERM");
+    await shutdownSafariProcess(child);
     throw error;
   }
 }
@@ -68819,6 +69468,7 @@ var BrowserManager = class {
     this.maintenance = false;
     this.ownerChecked = false;
     this.browserGeneration = 0;
+    this.quarantinedDownloadGenerations = /* @__PURE__ */ new Set();
     this.resourceGate = new AsyncMutex("browser-resource", { timeoutMs: lockTimeoutMs });
     this.trustedActionGate = new AsyncMutex("trusted-browser-action", { timeoutMs: lockTimeoutMs });
     this.downloadGate = new AsyncMutex("browser-download", { timeoutMs: lockTimeoutMs });
@@ -68980,7 +69630,24 @@ var BrowserManager = class {
     return this.withTrustedAction(leaseOrPage, callback, { owner: leaseOrPage?.jobId || "composer-input" });
   }
   async withDownload(callback) {
-    return this.downloadGate.run(callback, { owner: "download" });
+    return this.downloadGate.run(async () => {
+      const generation = this.browserGeneration;
+      if (this.quarantinedDownloadGenerations.has(generation)) {
+        throw codedError(
+          "BROWSER_DOWNLOAD_GENERATION_QUARANTINED",
+          "A previous download timed out on this browser generation. Oracle will not route another browser-managed download until the browser generation changes.",
+          { safeToRetry: true, recoveryAction: "wait for or explicitly perform an idle browser recycle before retrying the download" }
+        );
+      }
+      try {
+        return await callback();
+      } catch (error) {
+        if (error?.details?.downloadAttemptQuarantined === true) {
+          this.quarantinedDownloadGenerations.add(Number(error.details.browserGeneration));
+        }
+        throw error;
+      }
+    }, { owner: "download" });
   }
   async withMaintenance(callback) {
     await this.resourceGate.run(async () => {
@@ -69132,7 +69799,7 @@ async function writeCompletionRecord(directory, record) {
 // src/downloads.mjs
 import { createHash as createHash9, randomUUID as randomUUID8 } from "node:crypto";
 import { createReadStream as createReadStream2 } from "node:fs";
-import { chmod as chmod6, mkdir as mkdir13, open as open7, readdir as readdir3, rename as rename4, rm as rm10, stat as stat6 } from "node:fs/promises";
+import { chmod as chmod6, mkdir as mkdir13, open as open7, readdir as readdir3, rename as rename4, rm as rm10, stat as stat6, writeFile as writeFile2 } from "node:fs/promises";
 import path23 from "node:path";
 var CHATGPT_DOWNLOAD_BASE_URL = "https://chatgpt.com/";
 var MAX_REDIRECTS = 5;
@@ -69409,6 +70076,40 @@ async function waitForBrowserDownload(directory, before, timeoutMs = 6e4) {
   }
   throw codedError("DOWNLOAD_TIMEOUT", `The exact download control was clicked once, but Firefox did not finish one file within ${timeoutMs / 1e3} seconds. It was not clicked again.`);
 }
+async function configureBrowserDownloadAttempt(page, attemptDirectory) {
+  await mkdir13(attemptDirectory, { recursive: true, mode: 448 });
+  await chmod6(attemptDirectory, 448);
+  let cdpError = null;
+  try {
+    const session = await page.createCDPSession();
+    try {
+      await session.send("Browser.setDownloadBehavior", {
+        behavior: "allow",
+        downloadPath: attemptDirectory,
+        eventsEnabled: true
+      });
+      return "cdp";
+    } finally {
+      await session.detach().catch(() => void 0);
+    }
+  } catch (error) {
+    cdpError = error;
+  }
+  const userContext = page.browserContext?.()?.userContext;
+  const bidiSession = userContext?.browser?.session;
+  if (userContext?.id && bidiSession?.send) {
+    await bidiSession.send("browser.setDownloadBehavior", {
+      downloadBehavior: { type: "allowed", destinationFolder: attemptDirectory },
+      userContexts: [userContext.id]
+    });
+    return "webdriver-bidi";
+  }
+  throw codedError(
+    "BROWSER_DOWNLOAD_ISOLATION_UNAVAILABLE",
+    "The selected browser cannot bind this download click to a private attempt directory. No download was attempted.",
+    { cause: cdpError }
+  );
+}
 async function hashFile(filePath) {
   const hash = createHash9("sha256");
   const prefix = [];
@@ -69423,16 +70124,50 @@ async function hashFile(filePath) {
   }
   return { sha256: hash.digest("hex"), prefix: Buffer.concat(prefix) };
 }
-async function downloadWithBrowserControl(page, selected, { maxBytes, rootDirectory, stagingDirectory }) {
-  const staging = stagingDirectory;
+async function downloadWithBrowserControl(page, selected, {
+  maxBytes,
+  rootDirectory,
+  stagingDirectory,
+  browserGeneration,
+  timeoutMs,
+  hooks = {}
+}) {
+  const attemptId = randomUUID8();
+  const generation = Math.max(0, Number(browserGeneration) || 0);
+  const staging = path23.join(path23.resolve(stagingDirectory), `generation-${generation}`, `attempt-${attemptId}`);
+  const configureAttempt = hooks.configureAttempt || configureBrowserDownloadAttempt;
+  const controlFor = hooks.controlFor || browserControlFor;
+  const waitForDownload = hooks.waitForDownload || waitForBrowserDownload;
+  await configureAttempt(page, staging);
   const before = await stagingSnapshot(staging);
-  const element = await browserControlFor(page, selected);
+  const element = await controlFor(page, selected);
+  let downloaded;
+  let clickAttempted = false;
   try {
+    clickAttempted = true;
     await element.click();
+    downloaded = await waitForDownload(staging, before, timeoutMs);
+  } catch (error) {
+    if (clickAttempted) {
+      await writeFile2(path23.join(staging, ".quarantined.json"), `${JSON.stringify({
+        version: 1,
+        attemptId,
+        browserGeneration: generation,
+        quarantinedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        reason: error?.code || "DOWNLOAD_FAILED"
+      }, null, 2)}
+`, { mode: 384 }).catch(() => void 0);
+      error.details = {
+        ...error?.details && typeof error.details === "object" ? error.details : {},
+        downloadAttemptQuarantined: true,
+        browserGeneration: generation,
+        attemptId
+      };
+    }
+    throw error;
   } finally {
-    await element.dispose();
+    await element.dispose().catch(() => void 0);
   }
-  const downloaded = await waitForBrowserDownload(staging, before);
   if (downloaded.size > maxBytes) {
     throw codedError("DOWNLOAD_TOO_LARGE", `The browser-downloaded ChatGPT file is larger than the ${maxBytes}-byte limit. It was left in private staging for manual inspection.`);
   }
@@ -69448,6 +70183,8 @@ async function downloadWithBrowserControl(page, selected, { maxBytes, rootDirect
   await chmod6(target, 384);
   return {
     downloadId,
+    attemptId,
+    browserGeneration: generation,
     path: target,
     filename,
     sizeBytes: downloaded.size,
@@ -69506,7 +70243,18 @@ function assertArtifactSignature(filename, prefix) {
     throw codedError("DOWNLOAD_CONTENT_INVALID", "The downloaded .zip file did not have a valid ZIP signature.");
   }
 }
-async function downloadAssistantArtifact(page, { linkText, scope = "last-assistant", maxBytes = DEFAULT_DOWNLOAD_MAX_BYTES, rootDirectory = downloadsDirectory(), stagingDirectory = browserDownloadStagingDirectory(), fetchImpl = fetch, allowBrowserDownload = true } = {}) {
+async function downloadAssistantArtifact(page, {
+  linkText,
+  scope = "last-assistant",
+  maxBytes = DEFAULT_DOWNLOAD_MAX_BYTES,
+  rootDirectory = downloadsDirectory(),
+  stagingDirectory = browserDownloadStagingDirectory(),
+  fetchImpl = fetch,
+  allowBrowserDownload = true,
+  browserGeneration = 0,
+  browserDownloadTimeoutMs = 6e4,
+  browserDownloadHooks = {}
+} = {}) {
   if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > ABSOLUTE_DOWNLOAD_MAX_BYTES) {
     throw codedError("INVALID_DOWNLOAD_LIMIT", `maxBytes must be an integer from 1 to ${ABSOLUTE_DOWNLOAD_MAX_BYTES}.`);
   }
@@ -69519,7 +70267,17 @@ async function downloadAssistantArtifact(page, { linkText, scope = "last-assista
         "This Safari file control requires a browser-managed download, which cannot be routed into Oracle's private staging directory. Use Firefox or Chrome for this download."
       );
     }
-    return { ...await downloadWithBrowserControl(page, selected, { maxBytes, rootDirectory, stagingDirectory }), scope };
+    return {
+      ...await downloadWithBrowserControl(page, selected, {
+        maxBytes,
+        rootDirectory,
+        stagingDirectory,
+        browserGeneration,
+        timeoutMs: browserDownloadTimeoutMs,
+        hooks: browserDownloadHooks
+      }),
+      scope
+    };
   }
   const response = await fetchDownload(page, selected.source.downloadUrl, fetchImpl);
   const contentType = response.headers.get("content-type") || "application/octet-stream";
@@ -69571,6 +70329,8 @@ async function downloadAssistantArtifact(page, { linkText, scope = "last-assista
   await chmod6(target, 384);
   return {
     downloadId,
+    attemptId: downloadId,
+    browserGeneration: Math.max(0, Number(browserGeneration) || 0),
     path: target,
     filename,
     sizeBytes,
@@ -70893,6 +71653,16 @@ async function repairTerminalArtifacts(store2) {
 function transitionExecution(store2, executionClaim, jobId, state, patch = {}, details = null) {
   return executionClaim ? store2.transitionClaimed(executionClaim, state, patch, details) : store2.transition(jobId, state, patch, details);
 }
+function exactPreSubmitTargetMatches(currentUrl, expectedUrl) {
+  try {
+    const current = new URL(String(currentUrl));
+    const expected = new URL(String(expectedUrl));
+    const normalizedPath = (value) => value.pathname.replace(/\/+$/u, "") || "/";
+    return current.origin === "https://chatgpt.com" && expected.origin === "https://chatgpt.com" && normalizedPath(current) === normalizedPath(expected) && current.search === expected.search && current.hash === expected.hash;
+  } catch {
+    return false;
+  }
+}
 async function monitorSubmittedJob({ job, page, store: store2, executionClaim, dependencies = {}, finalAttempt = false }) {
   if (!job.submitIntentAt || !job.conversationUrl || !job.userTurnId && !job.userTurnHash || !job.monitorDeadlineAt) {
     throw codedError("SUBMISSION_UNCERTAIN", "A submitted job lacks enough durable evidence for monitor-only recovery.", {
@@ -71008,6 +71778,7 @@ var TERMINAL_JOB_STATES_FOR_WORKFLOW = /* @__PURE__ */ new Set([
   "submission_uncertain",
   "response_uncertain",
   "response_failed",
+  "input_invalid",
   "quarantined"
 ]);
 async function finalizeResponse({ job, response, store: store2, executionClaim }) {
@@ -71075,17 +71846,35 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
     triggerFailpoint("after_response_persistence");
     return detected;
   }
-  const localDataRequest = parseLocalDataRequest(answer, {
-    expectedNonce: job.request.localDataNonce || null
-  });
-  const disposition = localDataRequest ? "local_data_request" : "final";
+  let localDataRequest = null;
+  let inputInvalidError = null;
+  try {
+    localDataRequest = parseLocalDataRequest(answer, {
+      expectedNonce: job.request.localDataNonce || null
+    });
+  } catch (error) {
+    if (error?.code !== "LOCAL_DATA_REQUEST_INVALID") throw error;
+    inputInvalidError = structuredError(codedError(
+      "INPUT_INVALID",
+      "ChatGPT returned a malformed local-data request. Oracle preserved the response and blocked automated follow-up.",
+      {
+        jobState: "input_invalid",
+        safeToRetry: false,
+        submissionMayHaveOccurred: true,
+        recoveryAction: "use the owning control capability to explicitly abandon the malformed input request; do not send an automated reply",
+        details: { parserCode: error.code }
+      }
+    ));
+  }
+  const disposition = inputInvalidError ? "input_invalid" : localDataRequest ? "local_data_request" : "final";
+  const terminalState = inputInvalidError ? "input_invalid" : "completed";
   const completedAt = (/* @__PURE__ */ new Date()).toISOString();
   const result = {
     jobId: job.id,
     rootJobId: job.rootJobId,
     authorizationId: job.authorizationId,
-    state: "completed",
-    status: "completed",
+    state: terminalState,
+    status: terminalState,
     mode: job.operation === "consult" ? "new-chat" : "continue-chat",
     browser: job.request.browser || "firefox",
     projectTitle: job.projectTitle,
@@ -71095,7 +71884,7 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
     modelEvidence: job.modelEvidence,
     zipAttachments: publicZipAttachments(job.request),
     assistantDisposition: disposition,
-    responseDisposition: "completed",
+    responseDisposition: inputInvalidError ? "input_invalid" : "completed",
     localDataRequest,
     evidenceRound: job.evidenceRound,
     maxAutomaticEvidenceReplies: job.maxAutomaticEvidenceReplies,
@@ -71106,7 +71895,8 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
     safeToRetry: false,
     submissionMayHaveOccurred: true,
     submissionCount: job.retryAttempt + 1,
-    recoveryAction: localDataRequest ? "perform approved read-only checks, then call reply_with_local_data" : null
+    ...inputInvalidError ? { error: inputInvalidError } : {},
+    recoveryAction: inputInvalidError ? "use the owning control capability to explicitly abandon this malformed input request; no automated reply is permitted" : localDataRequest ? "perform approved read-only checks, then call reply_with_local_data" : null
   };
   if (executionClaim) {
     store2.completeResponseClaimed(executionClaim, {
@@ -71114,20 +71904,22 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
       assistantTurnHash,
       assistantTurnBound: response.exactTurnBinding,
       assistantDisposition: disposition,
-      responseDisposition: "completed",
+      responseDisposition: inputInvalidError ? "input_invalid" : "completed",
       localDataRequest,
       result,
-      recoveryAction: result.recoveryAction
+      recoveryAction: result.recoveryAction,
+      terminalState
     });
   } else {
-    transitionExecution(store2, null, job.id, "response_confirmed", {
+    transitionExecution(store2, null, job.id, inputInvalidError ? "input_invalid" : "response_confirmed", {
       assistantTurnId,
       assistantTurnHash,
       assistantDisposition: disposition,
-      responseDisposition: "completed",
-      localDataRequest
+      responseDisposition: inputInvalidError ? "input_invalid" : "completed",
+      localDataRequest,
+      ...inputInvalidError ? { result, error: inputInvalidError, recoveryAction: result.recoveryAction } : {}
     });
-    transitionExecution(store2, null, job.id, "completed", { result, recoveryAction: result.recoveryAction });
+    if (!inputInvalidError) transitionExecution(store2, null, job.id, "completed", { result, recoveryAction: result.recoveryAction });
   }
   triggerFailpoint("after_terminal_commit");
   await writeCompletedArtifacts(store2.requireJob(job.id), result);
@@ -71220,39 +72012,49 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
       throw codedError("ATTACHMENT_MISMATCH", "The composer attachment set changed before submission.", { safeToRetry: true });
     }
     transitionExecution(store2, executionClaim, job.id, "composer_verified", { attachmentManifest });
-    await beforeSubmit?.(job.id, { waitOnly: true });
-    await browserManager.withTrustedAction(lease, async () => {
-      if (executionClaim) store2.assertExecution(executionClaim);
-      const selectedModel = await ensureModelRequirement(lease.page, job.request.modelRequirement);
-      transitionExecution(store2, executionClaim, job.id, "model_verified", { modelEvidence: selectedModel });
-      let finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
-      triggerFailpoint("after_model_verification");
-      const finalComposer = await inspectComposerState(lease.page);
-      if (semanticTextHash(finalComposer.text) !== semanticTextHash(composerPrompt)) {
-        throw codedError("COMPOSER_MISMATCH", "The composer changed after model selection; no message was sent.", { safeToRetry: true });
+    const expectedPreSubmitUrl = target?.url || project?.url || "https://chatgpt.com/";
+    let submitted = false;
+    while (!submitted) {
+      await beforeSubmit?.(job.id, { waitOnly: true });
+      try {
+        await browserManager.withTrustedAction(lease, async () => {
+          if (executionClaim) store2.assertExecution(executionClaim);
+          const selectedModel = await ensureModelRequirement(lease.page, job.request.modelRequirement);
+          transitionExecution(store2, executionClaim, job.id, "model_verified", { modelEvidence: selectedModel });
+          const submitPermit = await beforeSubmit?.(job.id, { waitOnly: false });
+          if (store2.requireJob(job.id).state === "cancelled_pre_submit") {
+            throw codedError("JOB_CANCELLED", "The job was cancelled before submission; no message was sent.", { safeToRetry: false });
+          }
+          if (executionClaim) store2.assertExecution(executionClaim);
+          if (!exactPreSubmitTargetMatches(lease.page.url(), expectedPreSubmitUrl)) {
+            throw codedError("TARGET_CHANGED", "The exact ChatGPT target changed before submission; no message was sent.", { safeToRetry: true });
+          }
+          const preClickComposer = await inspectComposerState(lease.page);
+          if (semanticTextHash(preClickComposer.text) !== semanticTextHash(composerPrompt) || preClickComposer.uploading || attachmentManifestKey(preClickComposer.attachments) !== attachmentManifestKey(attachmentManifest)) {
+            throw codedError("COMPOSER_MISMATCH", "The exact composer or attachment state changed before submission; no message was sent.", { safeToRetry: true });
+          }
+          const finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
+          triggerFailpoint("after_model_verification");
+          (executionClaim ? store2.consumeSubmitPermitClaimed.bind(store2, executionClaim) : store2.consumeSubmitPermit.bind(store2, job.id))(
+            submitPermit.id,
+            { modelEvidence: finalModelEvidence, submittedMessageHash: semanticTextHash(composerPrompt) },
+            {
+              authorizedMessageHash: semanticTextHash(composerPrompt),
+              executionEpoch: executionClaim?.executionEpoch ?? null,
+              cooldownEpoch: submitPermit.gateVersion,
+              exactTarget: expectedPreSubmitUrl
+            }
+          );
+          triggerFailpoint("after_submit_intent");
+          await submitComposer(lease.page);
+          submitted = true;
+          triggerFailpoint("after_click");
+        }, { owner: `submit:${job.id}` });
+      } catch (error) {
+        if ((/* @__PURE__ */ new Set(["SUBMIT_PACING_WAIT", "SUBMIT_PERMIT_INVALID"])).has(error?.code) && !store2.requireJob(job.id).submitIntentAt) continue;
+        throw error;
       }
-      if (finalComposer.uploading || attachmentManifestKey(finalComposer.attachments) !== attachmentManifestKey(attachmentManifest)) {
-        throw codedError("ATTACHMENT_MISMATCH", "The attachment set changed after model selection; no message was sent.", { safeToRetry: true });
-      }
-      const submitPermit = await beforeSubmit?.(job.id, { waitOnly: false });
-      if (store2.requireJob(job.id).state === "cancelled_pre_submit") {
-        throw codedError("JOB_CANCELLED", "The job was cancelled before submission; no message was sent.", { safeToRetry: false });
-      }
-      if (executionClaim) store2.assertExecution(executionClaim);
-      const preClickComposer = await inspectComposerState(lease.page);
-      if (semanticTextHash(preClickComposer.text) !== semanticTextHash(composerPrompt) || preClickComposer.uploading || attachmentManifestKey(preClickComposer.attachments) !== attachmentManifestKey(attachmentManifest)) {
-        throw codedError("COMPOSER_MISMATCH", "The exact composer state changed while waiting for the submit permit; no message was sent.", { safeToRetry: true });
-      }
-      finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
-      (executionClaim ? store2.consumeSubmitPermitClaimed.bind(store2, executionClaim) : store2.consumeSubmitPermit.bind(store2, job.id))(
-        submitPermit.id,
-        { modelEvidence: finalModelEvidence, submittedMessageHash: semanticTextHash(composerPrompt) },
-        { authorizedMessageHash: semanticTextHash(composerPrompt), executionEpoch: executionClaim?.executionEpoch ?? null }
-      );
-      triggerFailpoint("after_submit_intent");
-      await submitComposer(lease.page);
-      triggerFailpoint("after_click");
-    }, { owner: `submit:${job.id}` });
+    }
     const confirmed = await waitForUserMessage(lease.page, baseline.userCount, composerPrompt, {
       timeoutMs: 3e4,
       expectedAttachments: attachmentManifest,
@@ -71348,8 +72150,36 @@ function inputRequestAbandonReason(value) {
   }
   return reason;
 }
+function publicExecutionView(job, logicalState = null) {
+  const executionMode = job.executionKind === "monitor_only" ? "monitor_only" : "pre_submit";
+  let blockedReason = null;
+  if (executionMode === "monitor_only" && job.executionState === "backoff") blockedReason = "MONITOR_REATTACHING";
+  else if (logicalState === "blocked_attention") {
+    blockedReason = job.state === "input_invalid" || job.chainState === "input_invalid" ? "INPUT_INVALID" : "INPUT_REQUIRED_BLOCKING";
+  } else if (logicalState === "blocked_uncertainty") {
+    blockedReason = job.state === "response_uncertain" ? "RESPONSE_UNCERTAIN" : job.state === "submission_uncertain" ? "SUBMISSION_UNCERTAIN" : "CONVERSATION_QUARANTINED";
+  }
+  const monitorRetry = executionMode === "monitor_only" ? {
+    state: job.executionState === "backoff" ? "reattaching" : job.executionState,
+    retryCount: Number(job.executionFailureCount || 0),
+    retryAt: job.nextExecutionNotBefore || null,
+    deadlineAt: job.monitorDeadlineAt || null,
+    finalReconciliationAttemptedAt: job.finalReconciliationAttemptedAt || null,
+    lastError: job.lastExecutorError || null
+  } : null;
+  return {
+    executionMode,
+    blockedReason,
+    attentionRequired: Boolean(
+      job.attentionRequiredAt || logicalState === "blocked_attention" || (/* @__PURE__ */ new Set(["input_required", "input_invalid"])).has(job.chainState)
+    ),
+    resultAvailable: Boolean(job.result),
+    monitorRetry
+  };
+}
 function publicJob(job, extras = {}) {
   if (!job) return null;
+  const logicalState = extras.logicalState ?? null;
   return {
     jobId: job.id,
     authorizationId: job.authorizationId,
@@ -71396,6 +72226,7 @@ function publicJob(job, extras = {}) {
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
     completedAt: job.completedAt,
+    ...publicExecutionView(job, logicalState),
     ...extras
   };
 }
@@ -71492,10 +72323,12 @@ var Coordinator = class {
     this.notificationWakeTimer = null;
     this.accountWakeTimer = null;
     this.executionWakeTimer = null;
+    this.attentionWakeTimer = null;
     this.abandonedClaimSweepTimer = null;
     this.onStoreChange = (job) => {
       if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
       this.queueSystemNotifications();
+      this.scheduleAttentionWake();
       this.schedule();
     };
   }
@@ -71521,9 +72354,11 @@ var Coordinator = class {
       for (const rootJobId of this.store.allRootJobIds()) this.queueCompletionRecord(rootJobId);
     }
     if (!this.safeMode) {
+      this.store.sweepAttentionRequired();
       this.startAbandonedClaimSweeper();
       this.schedule();
       this.queueSystemNotifications();
+      this.scheduleAttentionWake();
     }
     this.scheduleAccountWake(this.store.accountState().cooldownUntil);
     return this;
@@ -71541,6 +72376,7 @@ var Coordinator = class {
     await Promise.allSettled(this.notificationWorkers);
     clearTimeout(this.accountWakeTimer);
     clearTimeout(this.executionWakeTimer);
+    clearTimeout(this.attentionWakeTimer);
     await this.browserManager.close();
     this.store.markBrokerReleased?.("coordinator closed cleanly");
     this.store.close();
@@ -71550,9 +72386,15 @@ var Coordinator = class {
     return { draining: true, reason, activeExecutors: this.active.size };
   }
   status() {
+    const logicalQueue = this.store.logicalQueueCounts();
+    const account = this.store.accountState();
+    const queue = { ...logicalQueue };
     return {
       ready: true,
       protocolVersion: BROKER_PROTOCOL_VERSION,
+      protocol: { minimum: BROKER_MINIMUM_READER_PROTOCOL, maximum: BROKER_PROTOCOL_VERSION },
+      minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
+      schemaVersion: this.database?.schemaVersion ?? null,
       buildVersion: BROKER_BUILD_VERSION,
       pid: process.pid,
       brokerInstanceId: this.brokerInstanceId,
@@ -71560,11 +72402,30 @@ var Coordinator = class {
       leaseGeneration: this.brokerContext?.leaseGeneration || null,
       startedAt: this.startedAt,
       activeJobCount: this.active.size,
-      queuedJobs: this.store.queuedJobs().length,
-      outstandingJobs: this.store.countOutstanding(),
+      executing: logicalQueue.executing,
+      monitoring: logicalQueue.monitoring,
+      runnableQueued: logicalQueue.runnableQueued,
+      blockedAttention: logicalQueue.blockedAttention,
+      blockedUncertainty: logicalQueue.blockedUncertainty,
+      logicalOutstanding: logicalQueue.logicalOutstanding,
+      queuedJobs: logicalQueue.runnableQueued,
+      outstandingJobs: logicalQueue.logicalOutstanding,
       writeConcurrency: this.writeConcurrency,
       minimumSubmissionIntervalMs: this.minimumSubmissionIntervalMs,
-      account: this.store.accountState(),
+      queue,
+      account,
+      durableDelivery: this.store.completionDeliveryHealth(),
+      versionSkew: this.store.protocolCompatibilityStatus(),
+      concurrency: {
+        logicalJobSlots: this.writeConcurrency,
+        qualifiedConversationSlots: account.qualifiedConcurrency,
+        effectivePreSubmitSlots: account.effectiveConcurrency,
+        activeExecutors: this.active.size,
+        submissionSerialization: "broker-wide-one-at-a-time",
+        minimumSubmissionIntervalMs: this.minimumSubmissionIntervalMs,
+        configuredBy: this.explicitWriteConcurrency ? "constructor" : process.env.ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS ? "ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS" : process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY ? "ORACLE_FIREFOX_WRITE_CONCURRENCY" : "default-five",
+        qualificationSource: this.qualifiedConcurrencyOverride ? "ORACLE_FIREFOX_QUALIFIED_CONCURRENCY" : "durable-broker-state"
+      },
       recovery: {
         count: this.recovery?.length ?? 0,
         actions: Object.fromEntries(
@@ -71587,7 +72448,8 @@ var Coordinator = class {
   async statusAsync() {
     return { ...this.status(), emergencyLocked: await fileExists(emergencyLockPath()) };
   }
-  openClientSession(client = {}) {
+  openClientSession(client = {}, { readOnly = false } = {}) {
+    if (readOnly) return this.store.resumeOwnerSessionReadOnly(client);
     return this.store.createOwnerSession({
       harness: client.harness || "unknown",
       clientInstanceId: client.clientInstanceId || null,
@@ -71596,13 +72458,16 @@ var Coordinator = class {
       stableSessionHandle: client.stableSessionHandle || null,
       metadata: {
         pid: Number.isInteger(client.pid) ? client.pid : null,
-        buildVersion: client.buildVersion || null
+        buildVersion: client.buildVersion || null,
+        protocolVersion: Number(client.protocolVersion || BROKER_PROTOCOL_VERSION)
       }
     });
   }
   callerFromContext(context2, { optional = false } = {}) {
     try {
-      return this.store.authenticateOwnerSession(context2?.client);
+      return this.store.authenticateOwnerSession(context2?.client, {
+        touch: Number(context2?.protocolVersion || BROKER_PROTOCOL_VERSION) >= BROKER_MINIMUM_WRITER_PROTOCOL
+      });
     } catch (error) {
       if (optional) return null;
       throw error;
@@ -71615,6 +72480,7 @@ var Coordinator = class {
       jobHandle: params.jobHandle || null,
       caller,
       control,
+      allowCapabilityGrant: Number(context2?.protocolVersion || BROKER_PROTOCOL_VERSION) >= BROKER_MINIMUM_WRITER_PROTOCOL,
       allowLegacyRead: !control && this.writeConcurrency === 1 && process.env.ORACLE_FIREFOX_LEGACY_UUID_READ !== "0"
     });
   }
@@ -71672,7 +72538,14 @@ var Coordinator = class {
         }
       }
       this.store.authorizeJob({ jobId: existing.id, caller, control: false });
-      return { ...publicJob(existing), idempotent: true, authorizationGenerated: generatedAuthorization };
+      return {
+        ...publicJob(existing),
+        idempotent: true,
+        authorizationGenerated: generatedAuthorization,
+        requestDigest: digest2,
+        receiptRecoveryHandle: null,
+        receiptState: "committed"
+      };
     }
     if (this.store.countOutstanding() >= 100) {
       throw codedError("QUEUE_FULL", "Oracle Firefox has reached its 100-job queue limit.", { safeToRetry: true });
@@ -71722,6 +72595,21 @@ var Coordinator = class {
         resolvedProjectTitle: discovered.projectTitle,
         resolvedProjectUrl: match.projectUrl || discovered.projectUrl
       };
+    }
+    if (operation === "continue_chat" && resolvedInput.conversationUrl && !internalChain) {
+      const canonicalScope = normalizeConversationUrl(resolvedInput.conversationUrl);
+      const blockers = this.store.inputBlockers(canonicalScope);
+      if (blockers.length) {
+        throw codedError(
+          "INPUT_REQUIRED_BLOCKING",
+          "This exact conversation lane is waiting for explicit owner input and cannot accept another start.",
+          {
+            safeToRetry: false,
+            recoveryAction: "The owning session must resolve or explicitly abandon the outstanding input request.",
+            details: { blockers }
+          }
+        );
+      }
     }
     const rootAuthorizationId = internalChain ? this.store.requireJob(internalChain.rootJobId).authorizationId : authorizationId;
     resolvedInput = {
@@ -71773,7 +72661,14 @@ var Coordinator = class {
             recoveryHandle: receiptRecoveryHandle
           }, null, caller, { idempotent: true, authorizationGenerated: generatedAuthorization });
         }
-        return { ...publicJob(created.job), idempotent: true, authorizationGenerated: generatedAuthorization };
+        return {
+          ...publicJob(created.job),
+          idempotent: true,
+          authorizationGenerated: generatedAuthorization,
+          requestDigest: digest2,
+          receiptRecoveryHandle: receiptRecoveryHandle || null,
+          receiptState: "committed"
+        };
       }
       this.store.transition(created.job.id, "snapshotted");
       const queued = this.store.transition(created.job.id, "queued");
@@ -71782,6 +72677,9 @@ var Coordinator = class {
         ...publicJob(queued),
         idempotent: false,
         authorizationGenerated: generatedAuthorization,
+        requestDigest: digest2,
+        receiptRecoveryHandle: receiptRecoveryHandle || null,
+        receiptState: "committed",
         ...finalControlCapability ? {
           jobHandle: finalControlCapability.handle,
           readHandle: finalReadCapability.handle,
@@ -71804,6 +72702,9 @@ var Coordinator = class {
       ...publicJob(recovered.job),
       ...extras,
       receiptRecovered: true,
+      requestDigest: recovered.job.requestDigest,
+      receiptRecoveryHandle: params.recoveryHandle,
+      receiptState: "recovered",
       jobHandle: recovered.jobHandle,
       readHandle: recovered.readHandle,
       completionHandle: recovered.completionHandle
@@ -71882,6 +72783,20 @@ var Coordinator = class {
     }, Math.max(1, Date.parse(when) - Date.now()));
     this.executionWakeTimer.unref?.();
   }
+  scheduleAttentionWake() {
+    clearTimeout(this.attentionWakeTimer);
+    this.attentionWakeTimer = null;
+    if (this.closed || this.safeMode) return;
+    const when = this.store.earliestAttentionWake();
+    if (!when) return;
+    this.attentionWakeTimer = setTimeout(() => {
+      this.attentionWakeTimer = null;
+      const marked = this.store.sweepAttentionRequired();
+      if (marked.length) this.queueSystemNotifications();
+      this.scheduleAttentionWake();
+    }, Math.max(1, Date.parse(when) - Date.now()));
+    this.attentionWakeTimer.unref?.();
+  }
   sweepAbandonedExecutions({ nowMs = Date.now() } = {}) {
     return this.store.sweepAbandonedExecutionClaims({
       activeExecutorIds: this.active.keys(),
@@ -71933,15 +72848,7 @@ var Coordinator = class {
       if (await fileExists(emergencyLockPath())) {
         throw codedError("EMERGENCY_LOCKED", "The user-wide emergency lock was enabled before submission.", { safeToRetry: true });
       }
-      for (; ; ) {
-        try {
-          return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: this.minimumSubmissionIntervalMs });
-        } catch (error) {
-          if (error?.code !== "SUBMIT_PACING_WAIT") throw error;
-          const retryAt = Date.parse(error.details?.retryAt || 0);
-          await new Promise((resolve7) => setTimeout(resolve7, Math.max(1, retryAt - Date.now())));
-        }
-      }
+      return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: this.minimumSubmissionIntervalMs });
     } finally {
       release();
     }
@@ -72137,6 +73044,7 @@ var Coordinator = class {
     const chain = this.store.jobChain(requested.rootJobId);
     const active = followRetries ? chain.at(-1) : requested;
     return publicJob(active, {
+      logicalState: this.store.logicalStateForJob(active.id),
       requestedJobId: requested.id,
       activeJobId: active.id,
       recoveryChain: chain.map((job) => job.id),
@@ -72147,7 +73055,17 @@ var Coordinator = class {
     return this.jobView(jobId, followRetries);
   }
   listJobs(params, caller) {
-    return { jobs: this.store.listJobsForSession(caller.id, params).map(publicJob) };
+    const logical = this.store.logicalQueueSnapshot(caller.id);
+    return {
+      jobs: this.store.listJobsForSession(caller.id, params).map((job) => publicJob(job, {
+        logicalState: logical.byChainId.get(job.chainId) || null
+      })),
+      attention: this.store.attentionForSession(caller.id),
+      logicalCounts: logical.counts
+    };
+  }
+  listAttention(caller) {
+    return { attention: this.store.attentionForSession(caller.id) };
   }
   async waitForJob(jobId, timeoutSeconds = 55, followRetries = true) {
     const bounded = Math.max(0, Math.min(55, Number(timeoutSeconds) || 55));
@@ -72165,9 +73083,10 @@ var Coordinator = class {
     const requested = this.store.requireJob(jobId);
     const chain = this.store.jobChain(requested.rootJobId);
     const job = followRetries ? chain.at(-1) : requested;
-    if (job.state === "completed") {
+    if (job.state === "completed" || job.state === "input_invalid") {
       return {
         ...job.result,
+        ...publicExecutionView(job, this.store.logicalStateForJob(job.id)),
         ...job.inputRequestAbandonedAt ? {
           inputRequestAbandoned: true,
           inputRequestAbandonedAt: job.inputRequestAbandonedAt,
@@ -72326,7 +73245,6 @@ var Coordinator = class {
     });
     this.schedule();
     return {
-      conversationUrl: canonicalUrl,
       abandoned: true,
       laneReleased: true,
       templateFalsePositive: released.templateFalsePositive,
@@ -72371,12 +73289,14 @@ var Coordinator = class {
         messageSent: false
       };
     }
-    const matches = await this.findSubmittedTurnMatches(job);
+    const reconciliation = await this.findSubmittedTurnMatches(job);
+    const matches = Array.isArray(reconciliation?.matches) ? reconciliation.matches : [];
     if (matches.length !== 1) {
       return {
         ...view,
         reconciled: false,
         observedMatches: matches.length,
+        candidateCount: Number(reconciliation?.candidateCount || 0),
         reason: matches.length ? "More than one exact user turn matched; attribution remains ambiguous." : "No exact submitted user turn was found.",
         recoveryAction: "Manually inspect the exact conversation before any acknowledgement.",
         messageSent: false
@@ -72458,6 +73378,12 @@ var Coordinator = class {
   async replyWithLocalData(input2, context2) {
     this.requireWritable();
     const { job: parent, chain } = this.accessibleJob(input2, context2, { control: true });
+    if (chain.state === "input_invalid" || parent.assistantDisposition === "input_invalid") {
+      throw codedError(
+        "INPUT_INVALID",
+        "The assistant emitted a malformed local-data request. Oracle preserved it but will not construct or send an automated reply."
+      );
+    }
     if (chain.state !== "input_required" || chain.inputRequestAbandonedAt) {
       throw codedError("LOCAL_DATA_REQUEST_ABANDONED", "This local-data request was abandoned or is no longer the active input request for its conversation lane.");
     }
@@ -72581,14 +73507,19 @@ var Coordinator = class {
           linkText: input2.linkText,
           scope: input2.scope,
           maxBytes: input2.maxBytes,
-          allowBrowserDownload: this.browserManager.browserName !== "safari"
+          allowBrowserDownload: this.browserManager.browserName !== "safari",
+          browserGeneration: this.browserManager.browserGeneration
         })
       }))
     );
   }
   async methods() {
     return {
-      "broker.openSession": (params, context2) => this.openClientSession({ ...context2?.client || {}, ...params }),
+      "broker.openSession": (params, context2) => this.openClientSession({
+        ...context2?.client || {},
+        ...params,
+        protocolVersion: context2?.protocolVersion
+      }, { readOnly: Boolean(context2?.readOnlyCompatibility) }),
       "broker.status": () => this.statusAsync(),
       "workflow.doctor": async () => ({ ...await browserDoctor(), broker: await this.statusAsync() }),
       "workflow.selectBrowser": (params) => this.selectBrowser(params.browser),
@@ -72644,6 +73575,7 @@ var Coordinator = class {
         return this.result(job.id, params.followRetries !== false);
       },
       "jobs.list": (params, context2) => this.listJobs(params, this.callerFromContext(context2)),
+      "jobs.listAttention": (_params, context2) => this.listAttention(this.callerFromContext(context2)),
       "jobs.inspectQuarantine": (params, context2) => {
         this.callerFromContext(context2);
         return this.inspectQuarantine(params.conversationUrl);
@@ -72747,6 +73679,8 @@ var drainPoll = null;
 var serverInfo = {
   name: "oracle-firefox-broker",
   protocolVersion: BROKER_PROTOCOL_VERSION,
+  minimumReaderProtocol: BROKER_MINIMUM_READER_PROTOCOL,
+  minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
   buildVersion: ORACLE_FIREFOX_VERSION,
   buildId: BROKER_BUILD_ID,
   releaseSequence: BROKER_RELEASE_SEQUENCE,
@@ -72763,9 +73697,9 @@ var hello = () => ({
   leaseGeneration: serverInfo.leaseGeneration,
   state: phase,
   endpoint,
-  protocol: { minimum: BROKER_PROTOCOL_VERSION, maximum: BROKER_PROTOCOL_VERSION },
+  protocol: { minimum: BROKER_MINIMUM_READER_PROTOCOL, maximum: BROKER_PROTOCOL_VERSION },
   schemaVersion: BROKER_SCHEMA_VERSION,
-  minimumWriterProtocol: BROKER_PROTOCOL_VERSION,
+  minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
   releaseSequence: BROKER_RELEASE_SEQUENCE,
   buildVersion: ORACLE_FIREFOX_VERSION,
   buildId: BROKER_BUILD_ID
@@ -72800,7 +73734,7 @@ try {
       device: endpointIdentity.device,
       inode: endpointIdentity.inode
     },
-    protocol: { minimum: BROKER_PROTOCOL_VERSION, maximum: BROKER_PROTOCOL_VERSION },
+    protocol: { minimum: BROKER_MINIMUM_READER_PROTOCOL, maximum: BROKER_PROTOCOL_VERSION },
     releaseSequence: BROKER_RELEASE_SEQUENCE,
     buildVersion: ORACLE_FIREFOX_VERSION,
     buildId: BROKER_BUILD_ID,
@@ -72816,6 +73750,8 @@ try {
     instanceId,
     leaseGeneration: 0,
     protocolVersion: BROKER_PROTOCOL_VERSION,
+    minimumReaderProtocol: BROKER_MINIMUM_READER_PROTOCOL,
+    minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
     releaseSequence: BROKER_RELEASE_SEQUENCE,
     buildVersion: ORACLE_FIREFOX_VERSION,
     buildId: BROKER_BUILD_ID,

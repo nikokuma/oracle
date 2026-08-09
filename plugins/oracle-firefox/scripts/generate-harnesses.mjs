@@ -9,6 +9,29 @@ const mcpbRoot = path.join(pluginRoot, "mcpb");
 const meta = JSON.parse(await readFile(path.join(pluginRoot, "plugin.meta.json"), "utf8"));
 const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
+await mkdir(path.join(pluginRoot, ".codex-plugin"), { recursive: true });
+await writeFile(path.join(pluginRoot, ".codex-plugin", "plugin.json"), json({
+  name: meta.name,
+  version: meta.codexVersion || meta.version,
+  description: meta.codex.description,
+  author: meta.author,
+  homepage: meta.homepage,
+  repository: meta.repository,
+  license: meta.license,
+  keywords: meta.keywords,
+  skills: "./skills/",
+  interface: {
+    displayName: meta.displayName,
+    shortDescription: meta.codex.shortDescription,
+    longDescription: meta.codex.longDescription,
+    developerName: meta.author.name,
+    category: "Developer Tools",
+    capabilities: meta.codex.capabilities,
+    defaultPrompt: meta.codex.defaultPrompt,
+  },
+  mcpServers: "./.mcp.json",
+}));
+
 await rm(claudeRoot, { recursive: true, force: true });
 await mkdir(path.join(claudeRoot, ".claude-plugin"), { recursive: true });
 await mkdir(path.join(claudeRoot, "dist"), { recursive: true });
@@ -22,6 +45,7 @@ await cp(
 );
 await cp(path.join(pluginRoot, "LICENSE"), path.join(claudeRoot, "LICENSE"));
 await cp(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), path.join(claudeRoot, "THIRD_PARTY_NOTICES.md"));
+await cp(path.join(pluginRoot, "MIGRATION.md"), path.join(claudeRoot, "MIGRATION.md"));
 await cp(path.join(pluginRoot, "build-manifest.json"), path.join(claudeRoot, "build-manifest.json"));
 await writeFile(path.join(claudeRoot, ".claude-plugin", "plugin.json"), json({
   name: meta.name,
@@ -87,6 +111,7 @@ for (const name of ["server.mjs.LEGAL.txt", "broker.mjs.LEGAL.txt"]) {
 }
 await cp(path.join(pluginRoot, "LICENSE"), path.join(mcpbRoot, "LICENSE"));
 await cp(path.join(pluginRoot, "THIRD_PARTY_NOTICES.md"), path.join(mcpbRoot, "THIRD_PARTY_NOTICES.md"));
+await cp(path.join(pluginRoot, "MIGRATION.md"), path.join(mcpbRoot, "MIGRATION.md"));
 await cp(path.join(pluginRoot, "build-manifest.json"), path.join(mcpbRoot, "build-manifest.json"));
 await writeFile(path.join(mcpbRoot, "manifest.json"), json({
   manifest_version: "0.3",

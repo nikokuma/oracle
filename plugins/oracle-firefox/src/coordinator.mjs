@@ -22,7 +22,12 @@ import {
 } from "./evidence.mjs";
 import { attachmentManifestKey, assistantSnapshot, normalizeConversationTitle, normalizeConversationUrl, openExistingConversation, projectUrlFromConversationUrl, semanticMismatchDetails, semanticTextHash } from "./firefox.mjs";
 import { requestDigest, StateStore, TERMINAL_JOB_STATES } from "./state-store.mjs";
-import { BROKER_BUILD_VERSION, BROKER_PROTOCOL_VERSION } from "./protocol.mjs";
+import {
+  BROKER_BUILD_VERSION,
+  BROKER_MINIMUM_READER_PROTOCOL,
+  BROKER_MINIMUM_WRITER_PROTOCOL,
+  BROKER_PROTOCOL_VERSION,
+} from "./protocol.mjs";
 import {
   conversationKeyFor,
   discoverChats,
@@ -50,8 +55,43 @@ function inputRequestAbandonReason(value) {
   return reason;
 }
 
+function publicExecutionView(job, logicalState = null) {
+  const executionMode = job.executionKind === "monitor_only" ? "monitor_only" : "pre_submit";
+  let blockedReason = null;
+  if (executionMode === "monitor_only" && job.executionState === "backoff") blockedReason = "MONITOR_REATTACHING";
+  else if (logicalState === "blocked_attention") {
+    blockedReason = job.state === "input_invalid" || job.chainState === "input_invalid"
+      ? "INPUT_INVALID"
+      : "INPUT_REQUIRED_BLOCKING";
+  } else if (logicalState === "blocked_uncertainty") {
+    blockedReason = job.state === "response_uncertain"
+      ? "RESPONSE_UNCERTAIN"
+      : job.state === "submission_uncertain" ? "SUBMISSION_UNCERTAIN" : "CONVERSATION_QUARANTINED";
+  }
+  const monitorRetry = executionMode === "monitor_only" ? {
+    state: job.executionState === "backoff" ? "reattaching" : job.executionState,
+    retryCount: Number(job.executionFailureCount || 0),
+    retryAt: job.nextExecutionNotBefore || null,
+    deadlineAt: job.monitorDeadlineAt || null,
+    finalReconciliationAttemptedAt: job.finalReconciliationAttemptedAt || null,
+    lastError: job.lastExecutorError || null,
+  } : null;
+  return {
+    executionMode,
+    blockedReason,
+    attentionRequired: Boolean(
+      job.attentionRequiredAt ||
+      logicalState === "blocked_attention" ||
+      new Set(["input_required", "input_invalid"]).has(job.chainState)
+    ),
+    resultAvailable: Boolean(job.result),
+    monitorRetry,
+  };
+}
+
 function publicJob(job, extras = {}) {
   if (!job) return null;
+  const logicalState = extras.logicalState ?? null;
   return {
     jobId: job.id,
     authorizationId: job.authorizationId,
@@ -98,6 +138,7 @@ function publicJob(job, extras = {}) {
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
     completedAt: job.completedAt,
+    ...publicExecutionView(job, logicalState),
     ...extras,
   };
 }
@@ -274,9 +315,14 @@ export class Coordinator {
 
   status() {
     const logicalQueue = this.store.logicalQueueCounts();
+    const account = this.store.accountState();
+    const queue = { ...logicalQueue };
     return {
       ready: true,
       protocolVersion: BROKER_PROTOCOL_VERSION,
+      protocol: { minimum: BROKER_MINIMUM_READER_PROTOCOL, maximum: BROKER_PROTOCOL_VERSION },
+      minimumWriterProtocol: BROKER_MINIMUM_WRITER_PROTOCOL,
+      schemaVersion: this.database?.schemaVersion ?? null,
       buildVersion: BROKER_BUILD_VERSION,
       pid: process.pid,
       brokerInstanceId: this.brokerInstanceId,
@@ -294,7 +340,28 @@ export class Coordinator {
       outstandingJobs: logicalQueue.logicalOutstanding,
       writeConcurrency: this.writeConcurrency,
       minimumSubmissionIntervalMs: this.minimumSubmissionIntervalMs,
-      account: this.store.accountState(),
+      queue,
+      account,
+      durableDelivery: this.store.completionDeliveryHealth(),
+      versionSkew: this.store.protocolCompatibilityStatus(),
+      concurrency: {
+        logicalJobSlots: this.writeConcurrency,
+        qualifiedConversationSlots: account.qualifiedConcurrency,
+        effectivePreSubmitSlots: account.effectiveConcurrency,
+        activeExecutors: this.active.size,
+        submissionSerialization: "broker-wide-one-at-a-time",
+        minimumSubmissionIntervalMs: this.minimumSubmissionIntervalMs,
+        configuredBy: this.explicitWriteConcurrency
+          ? "constructor"
+          : process.env.ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS
+            ? "ORACLE_FIREFOX_MAX_ACTIVE_CONVERSATIONS"
+            : process.env.ORACLE_FIREFOX_WRITE_CONCURRENCY
+              ? "ORACLE_FIREFOX_WRITE_CONCURRENCY"
+              : "default-five",
+        qualificationSource: this.qualifiedConcurrencyOverride
+          ? "ORACLE_FIREFOX_QUALIFIED_CONCURRENCY"
+          : "durable-broker-state",
+      },
       recovery: {
         count: this.recovery?.length ?? 0,
         actions: Object.fromEntries(
@@ -319,7 +386,8 @@ export class Coordinator {
     return { ...this.status(), emergencyLocked: await fileExists(emergencyLockPath()) };
   }
 
-  openClientSession(client = {}) {
+  openClientSession(client = {}, { readOnly = false } = {}) {
+    if (readOnly) return this.store.resumeOwnerSessionReadOnly(client);
     return this.store.createOwnerSession({
       harness: client.harness || "unknown",
       clientInstanceId: client.clientInstanceId || null,
@@ -329,13 +397,16 @@ export class Coordinator {
       metadata: {
         pid: Number.isInteger(client.pid) ? client.pid : null,
         buildVersion: client.buildVersion || null,
+        protocolVersion: Number(client.protocolVersion || BROKER_PROTOCOL_VERSION),
       },
     });
   }
 
   callerFromContext(context, { optional = false } = {}) {
     try {
-      return this.store.authenticateOwnerSession(context?.client);
+      return this.store.authenticateOwnerSession(context?.client, {
+        touch: Number(context?.protocolVersion || BROKER_PROTOCOL_VERSION) >= BROKER_MINIMUM_WRITER_PROTOCOL,
+      });
     } catch (error) {
       if (optional) return null;
       throw error;
@@ -349,6 +420,7 @@ export class Coordinator {
       jobHandle: params.jobHandle || null,
       caller,
       control,
+      allowCapabilityGrant: Number(context?.protocolVersion || BROKER_PROTOCOL_VERSION) >= BROKER_MINIMUM_WRITER_PROTOCOL,
       allowLegacyRead: !control && this.writeConcurrency === 1 && process.env.ORACLE_FIREFOX_LEGACY_UUID_READ !== "0",
     });
   }
@@ -411,7 +483,14 @@ export class Coordinator {
         }
       }
       this.store.authorizeJob({ jobId: existing.id, caller, control: false });
-      return { ...publicJob(existing), idempotent: true, authorizationGenerated: generatedAuthorization };
+      return {
+        ...publicJob(existing),
+        idempotent: true,
+        authorizationGenerated: generatedAuthorization,
+        requestDigest: digest,
+        receiptRecoveryHandle: null,
+        receiptState: "committed",
+      };
     }
     if (this.store.countOutstanding() >= 100) {
       throw codedError("QUEUE_FULL", "Oracle Firefox has reached its 100-job queue limit.", { safeToRetry: true });
@@ -532,7 +611,14 @@ export class Coordinator {
             recoveryHandle: receiptRecoveryHandle,
           }, null, caller, { idempotent: true, authorizationGenerated: generatedAuthorization });
         }
-        return { ...publicJob(created.job), idempotent: true, authorizationGenerated: generatedAuthorization };
+        return {
+          ...publicJob(created.job),
+          idempotent: true,
+          authorizationGenerated: generatedAuthorization,
+          requestDigest: digest,
+          receiptRecoveryHandle: receiptRecoveryHandle || null,
+          receiptState: "committed",
+        };
       }
       this.store.transition(created.job.id, "snapshotted");
       const queued = this.store.transition(created.job.id, "queued");
@@ -541,6 +627,9 @@ export class Coordinator {
         ...publicJob(queued),
         idempotent: false,
         authorizationGenerated: generatedAuthorization,
+        requestDigest: digest,
+        receiptRecoveryHandle: receiptRecoveryHandle || null,
+        receiptState: "committed",
         ...(finalControlCapability ? {
           jobHandle: finalControlCapability.handle,
           readHandle: finalReadCapability.handle,
@@ -564,6 +653,9 @@ export class Coordinator {
       ...publicJob(recovered.job),
       ...extras,
       receiptRecovered: true,
+      requestDigest: recovered.job.requestDigest,
+      receiptRecoveryHandle: params.recoveryHandle,
+      receiptState: "recovered",
       jobHandle: recovered.jobHandle,
       readHandle: recovered.readHandle,
       completionHandle: recovered.completionHandle,
@@ -970,6 +1062,10 @@ export class Coordinator {
     };
   }
 
+  listAttention(caller) {
+    return { attention: this.store.attentionForSession(caller.id) };
+  }
+
   async waitForJob(jobId, timeoutSeconds = 55, followRetries = true) {
     const bounded = Math.max(0, Math.min(55, Number(timeoutSeconds) || 55));
     const deadline = Date.now() + bounded * 1_000;
@@ -990,6 +1086,7 @@ export class Coordinator {
     if (job.state === "completed" || job.state === "input_invalid") {
       return {
         ...job.result,
+        ...publicExecutionView(job, this.store.logicalStateForJob(job.id)),
         ...(job.inputRequestAbandonedAt ? {
           inputRequestAbandoned: true,
           inputRequestAbandonedAt: job.inputRequestAbandonedAt,
@@ -1307,7 +1404,7 @@ export class Coordinator {
     const { job: parent, chain } = this.accessibleJob(input, context, { control: true });
     if (chain.state === "input_invalid" || parent.assistantDisposition === "input_invalid") {
       throw codedError(
-        "INPUT_INVALID_AUTOMATED_REPLY_PROHIBITED",
+        "INPUT_INVALID",
         "The assistant emitted a malformed local-data request. Oracle preserved it but will not construct or send an automated reply.",
       );
     }
@@ -1449,7 +1546,11 @@ export class Coordinator {
 
   async methods() {
     return {
-      "broker.openSession": (params, context) => this.openClientSession({ ...(context?.client || {}), ...params }),
+      "broker.openSession": (params, context) => this.openClientSession({
+        ...(context?.client || {}),
+        ...params,
+        protocolVersion: context?.protocolVersion,
+      }, { readOnly: Boolean(context?.readOnlyCompatibility) }),
       "broker.status": () => this.statusAsync(),
       "workflow.doctor": async () => ({ ...(await doctor()), broker: await this.statusAsync() }),
       "workflow.selectBrowser": (params) => this.selectBrowser(params.browser),
@@ -1505,6 +1606,7 @@ export class Coordinator {
         return this.result(job.id, params.followRetries !== false);
       },
       "jobs.list": (params, context) => this.listJobs(params, this.callerFromContext(context)),
+      "jobs.listAttention": (_params, context) => this.listAttention(this.callerFromContext(context)),
       "jobs.inspectQuarantine": (params, context) => {
         this.callerFromContext(context);
         return this.inspectQuarantine(params.conversationUrl);
