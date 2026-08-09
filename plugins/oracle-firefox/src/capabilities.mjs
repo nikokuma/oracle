@@ -3,7 +3,7 @@ import { codedError } from "./errors.mjs";
 
 const CAPABILITY_VERSION = "ofx1";
 const SECRET_BYTES = 32;
-const KINDS = new Set(["session", "read", "control", "subscription", "admin"]);
+const KINDS = new Set(["session", "read", "control", "subscription", "receipt", "admin"]);
 
 function equalHex(left, right) {
   const a = Buffer.from(String(left || ""), "hex");
@@ -60,7 +60,7 @@ export function requireCapability(handle, expectedHash, options = {}) {
 }
 
 export function redactCapabilityText(value) {
-  return String(value ?? "").replace(/ofx1\.(?:session|read|control|subscription|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu, "[REDACTED_CAPABILITY]");
+  return String(value ?? "").replace(/ofx1\.(?:session|read|control|subscription|receipt|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu, "[REDACTED_CAPABILITY]");
 }
 
 export const CAPABILITY_SECRET_BYTES = SECRET_BYTES;

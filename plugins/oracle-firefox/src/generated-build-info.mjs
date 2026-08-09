@@ -4,6 +4,6 @@ export const GENERATED_BUILD_INFO = Object.freeze({
   "protocolVersion": 8,
   "schemaVersion": 8,
   "releaseSequence": 1610,
-  "sourceDigest": "cff26d45b9531d0e8ce6361ab39aee3a0d3e085eed94526d63f3e467875e9ae4",
-  "buildId": "oracle-firefox-1.6.9-cff26d45b9531d0e"
+  "sourceDigest": "d920973d1da26dd43990fc1c479faa792f27a1d6da0d6f2591fa2192b579c4ea",
+  "buildId": "oracle-firefox-1.6.9-d920973d1da26dd4"
 });

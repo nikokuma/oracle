@@ -4,7 +4,7 @@ import { access, mkdir, open, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { AsyncMutex } from "./async-lock.mjs";
 import { BrowserManager } from "./browser-manager.mjs";
-import { mintCapability } from "./capabilities.mjs";
+import { mintCapability, parseCapability } from "./capabilities.mjs";
 import { completionRecordPath, removeCompletionRecord, writeCompletionRecord } from "./completion-records.mjs";
 import { emergencyLockPath } from "./config.mjs";
 import {
@@ -102,6 +102,15 @@ function publicJob(job, extras = {}) {
   };
 }
 
+function committedStartError(error) {
+  const value = error instanceof Error ? error : new Error(String(error));
+  value.details = {
+    ...(value.details && typeof value.details === "object" ? value.details : {}),
+    startReceiptCommitted: true,
+  };
+  return value;
+}
+
 async function fileExists(candidate) {
   try {
     await access(candidate);
@@ -139,6 +148,11 @@ export class Coordinator {
     completionDirectory,
     legacyCompletionFiles,
     completionNotifier = notifyMacOsCompletion,
+    notificationConcurrency = 2,
+    notificationClaimSeconds = 30,
+    notificationRetryBaseMs = 1_000,
+    notificationRetryMaximumMs = 60_000,
+    notificationTimeoutMs = 15_000,
   } = {}) {
     this.store = store;
     this.brokerContext = brokerContext || store.brokerContext;
@@ -176,8 +190,17 @@ export class Coordinator {
     );
     this.completionWrites = new Map();
     this.completionNotifier = completionNotifier;
-    this.notificationCursor = 0;
-    this.notificationPump = Promise.resolve();
+    this.notificationConcurrency = Math.max(1, Math.min(4, Number(notificationConcurrency) || 2));
+    this.notificationClaimSeconds = Math.max(1, Number(notificationClaimSeconds) || 30);
+    this.notificationRetryBaseMs = Math.max(1, Number(notificationRetryBaseMs) || 1_000);
+    this.notificationRetryMaximumMs = Math.max(this.notificationRetryBaseMs, Number(notificationRetryMaximumMs) || 60_000);
+    this.notificationTimeoutMs = Math.max(50, Number(notificationTimeoutMs) || 15_000);
+    this.notificationClaimSeconds = Math.max(
+      this.notificationClaimSeconds,
+      Math.ceil(this.notificationTimeoutMs / 1_000) + 1,
+    );
+    this.notificationWorkers = new Set();
+    this.notificationWakeTimer = null;
     this.accountWakeTimer = null;
     this.executionWakeTimer = null;
     this.abandonedClaimSweepTimer = null;
@@ -190,7 +213,6 @@ export class Coordinator {
 
   async open() {
     await this.store.open();
-    this.notificationCursor = this.store.maxCompletionDeliveryId();
     this.brokerContext = this.store.brokerContext;
     if (
       this.explicitWriteConcurrency &&
@@ -208,6 +230,7 @@ export class Coordinator {
     this.invariants = this.store.checkInvariants();
     this.safeMode = !this.invariants.ok;
     this.recovery = this.safeMode ? [] : this.store.recoverInterruptedJobs();
+    this.deliveryRepair = this.safeMode ? { chainEvents: 0, deliveries: 0 } : this.store.rebuildCompletionDeliveries();
     this.artifactRepair = this.safeMode ? { repaired: [], failed: [] } : await repairTerminalArtifacts(this.store);
     if (this.legacyCompletionFiles) {
       for (const rootJobId of this.store.allRootJobIds()) this.queueCompletionRecord(rootJobId);
@@ -215,6 +238,7 @@ export class Coordinator {
     if (!this.safeMode) {
       this.startAbandonedClaimSweeper();
       this.schedule();
+      this.queueSystemNotifications();
     }
     this.scheduleAccountWake(this.store.accountState().cooldownUntil);
     return this;
@@ -225,10 +249,12 @@ export class Coordinator {
     this.draining = true;
     clearInterval(this.abandonedClaimSweepTimer);
     this.abandonedClaimSweepTimer = null;
+    clearTimeout(this.notificationWakeTimer);
+    this.notificationWakeTimer = null;
     await Promise.allSettled(this.active.values());
     this.store.off("change", this.onStoreChange);
     await Promise.allSettled(this.completionWrites.values());
-    await this.notificationPump.catch(() => undefined);
+    await Promise.allSettled(this.notificationWorkers);
     clearTimeout(this.accountWakeTimer);
     clearTimeout(this.executionWakeTimer);
     await this.browserManager.close();
@@ -286,6 +312,8 @@ export class Coordinator {
       harness: client.harness || "unknown",
       clientInstanceId: client.clientInstanceId || null,
       hostSessionHint: client.hostSessionHint || null,
+      stableSessionId: client.stableSessionId || null,
+      stableSessionHandle: client.stableSessionHandle || null,
       metadata: {
         pid: Number.isInteger(client.pid) ? client.pid : null,
         buildVersion: client.buildVersion || null,
@@ -338,18 +366,39 @@ export class Coordinator {
     if (!new Set(["consult", "continue_chat"]).has(operation)) {
       throw codedError("INVALID_OPERATION", `Unsupported job operation: ${operation}`);
     }
-    const authorizationId = input.authorizationId || (generatedAuthorization ? randomUUID() : null);
+    const {
+      _receiptRecoveryHandle: receiptRecoveryHandle = null,
+      ...authorizedInput
+    } = input;
+    const authorizationId = authorizedInput.authorizationId || (generatedAuthorization ? randomUUID() : null);
     if (!authorizationId || !UUID_PATTERN.test(authorizationId)) {
       throw codedError("AUTHORIZATION_REQUIRED", "authorizationId must be a UUID for asynchronous start tools.");
     }
-    const digest = requestDigest({ operation, ...input, authorizationId: undefined });
+    const digest = requestDigest({ operation, ...authorizedInput, authorizationId: undefined });
+    const receiptCapability = receiptRecoveryHandle
+      ? parseCapability(receiptRecoveryHandle, "receipt")
+      : null;
+    if (receiptRecoveryHandle && receiptCapability?.subjectId !== authorizationId) {
+      throw codedError("START_RECOVERY_CAPABILITY_INVALID", "The private start-receipt recovery capability is invalid.");
+    }
     const existing = this.store.getJobByAuthorization(authorizationId);
     if (existing) {
       if (!caller) throw codedError("CLIENT_SESSION_REQUIRED", "A client session is required to resume an idempotent job.");
-      this.store.authorizeJob({ jobId: existing.id, caller, control: false });
       if (existing.requestDigest !== digest) {
         throw codedError("AUTHORIZATION_REUSED", "This authorizationId was already used for a different request.");
       }
+      if (receiptRecoveryHandle) {
+        try {
+          return this.recoverStartReceipt({
+            authorizationId,
+            requestDigest: digest,
+            recoveryHandle: receiptRecoveryHandle,
+          }, null, caller, { idempotent: true, authorizationGenerated: generatedAuthorization });
+        } catch (error) {
+          throw committedStartError(error);
+        }
+      }
+      this.store.authorizeJob({ jobId: existing.id, caller, control: false });
       return { ...publicJob(existing), idempotent: true, authorizationGenerated: generatedAuthorization };
     }
     if (this.store.countOutstanding() >= 100) {
@@ -358,36 +407,36 @@ export class Coordinator {
     if (await fileExists(emergencyLockPath())) {
       throw codedError("EMERGENCY_LOCKED", `Oracle Firefox submissions are disabled by ${emergencyLockPath()}.`);
     }
-    let resolvedInput = { ...input, browserBackend: this.browserManager.browserName };
-    if (operation === "consult" && input.projectTitle && !input.projectUrl) {
+    let resolvedInput = { ...authorizedInput, browserBackend: this.browserManager.browserName };
+    if (operation === "consult" && authorizedInput.projectTitle && !authorizedInput.projectUrl) {
       const project = await resolveProjectTarget(this.browserManager, {
-        projectTitle: input.projectTitle,
-        headless: input.headless,
+        projectTitle: authorizedInput.projectTitle,
+        headless: authorizedInput.headless,
       });
       resolvedInput = {
         ...resolvedInput,
         projectTitle: undefined,
         projectUrl: project.url,
-        resolvedProjectTitle: project.title || input.projectTitle,
+        resolvedProjectTitle: project.title || authorizedInput.projectTitle,
         resolvedProjectUrl: project.url,
       };
     }
-    if (operation === "continue_chat" && input.chatTitle && !input.conversationUrl) {
+    if (operation === "continue_chat" && authorizedInput.chatTitle && !authorizedInput.conversationUrl) {
       const discovered = await discoverChats(this.browserManager, {
-        query: input.chatTitle,
-        projectTitle: input.projectTitle,
-        projectUrl: input.projectUrl,
+        query: authorizedInput.chatTitle,
+        projectTitle: authorizedInput.projectTitle,
+        projectUrl: authorizedInput.projectUrl,
         timeoutSeconds: 15,
-        headless: input.headless,
+        headless: authorizedInput.headless,
       });
-      const expected = input.chatTitle.replace(/\s+/gu, " ").trim().toLowerCase();
+      const expected = authorizedInput.chatTitle.replace(/\s+/gu, " ").trim().toLowerCase();
       const matches = discovered.chats.filter((chat) => chat.chatTitle.replace(/\s+/gu, " ").trim().toLowerCase() === expected);
       if (matches.length !== 1) {
         throw codedError(
           matches.length > 1 ? "TARGET_AMBIGUOUS" : "TARGET_NOT_FOUND",
           matches.length > 1
-            ? `More than one ChatGPT conversation is titled ${JSON.stringify(input.chatTitle)}. Use conversationUrl.`
-            : `No ChatGPT conversation was found with the exact title ${JSON.stringify(input.chatTitle)}.`,
+            ? `More than one ChatGPT conversation is titled ${JSON.stringify(authorizedInput.chatTitle)}. Use conversationUrl.`
+            : `No ChatGPT conversation was found with the exact title ${JSON.stringify(authorizedInput.chatTitle)}.`,
           { safeToRetry: true, details: { candidates: matches } },
         );
       }
@@ -440,24 +489,57 @@ export class Coordinator {
       attemptKind: prepared.evidenceReply ? "evidence_reply" : (prepared.retryAttempt > 0 ? "response_recovery" : "initial"),
       readCapabilityHash: finalReadCapability?.hash,
       controlCapabilityHash: finalControlCapability?.hash,
+      startReceiptCapabilityHash: receiptCapability?.hash,
       subscriptionId,
       subscriptionCapabilityHash: subscriptionCapability?.hash,
       completionMode: prepared.completionMode,
       retryAttempt: prepared.retryAttempt,
       maxAutomaticResponseRetries: prepared.maxAutomaticResponseRetries,
     });
-    this.store.transition(created.job.id, "snapshotted");
-    const queued = this.store.transition(created.job.id, "queued");
-    this.schedule();
+    try {
+      if (created.idempotent) {
+        if (receiptRecoveryHandle) {
+          return this.recoverStartReceipt({
+            authorizationId,
+            requestDigest: digest,
+            recoveryHandle: receiptRecoveryHandle,
+          }, null, caller, { idempotent: true, authorizationGenerated: generatedAuthorization });
+        }
+        return { ...publicJob(created.job), idempotent: true, authorizationGenerated: generatedAuthorization };
+      }
+      this.store.transition(created.job.id, "snapshotted");
+      const queued = this.store.transition(created.job.id, "queued");
+      this.schedule();
+      return {
+        ...publicJob(queued),
+        idempotent: false,
+        authorizationGenerated: generatedAuthorization,
+        ...(finalControlCapability ? {
+          jobHandle: finalControlCapability.handle,
+          readHandle: finalReadCapability.handle,
+          completionHandle: subscriptionCapability.handle,
+        } : {}),
+      };
+    } catch (error) {
+      throw committedStartError(error);
+    }
+  }
+
+  recoverStartReceipt(params, context, authenticatedCaller = null, extras = {}) {
+    const caller = authenticatedCaller || this.callerFromContext(context);
+    const recovered = this.store.recoverStartReceipt({
+      authorizationId: params.authorizationId,
+      digest: params.requestDigest,
+      recoveryHandle: params.recoveryHandle,
+      caller,
+    });
     return {
-      ...publicJob(queued),
-      idempotent: false,
-      authorizationGenerated: generatedAuthorization,
-      ...(finalControlCapability ? {
-        jobHandle: finalControlCapability.handle,
-        readHandle: finalReadCapability.handle,
-        completionHandle: subscriptionCapability.handle,
-      } : {}),
+      ...publicJob(recovered.job),
+      ...extras,
+      receiptRecovered: true,
+      jobHandle: recovered.jobHandle,
+      readHandle: recovered.readHandle,
+      completionHandle: recovered.completionHandle,
     };
   }
 
@@ -646,19 +728,65 @@ export class Coordinator {
 
   queueSystemNotifications() {
     if (!this.completionNotifier || this.closed) return;
-    this.notificationPump = this.notificationPump
-      .then(() => this.deliverSystemNotifications())
-      .catch(() => undefined);
+    clearTimeout(this.notificationWakeTimer);
+    this.notificationWakeTimer = null;
+    while (this.notificationWorkers.size < this.notificationConcurrency) {
+      let worker;
+      worker = this.deliverSystemNotifications()
+        .catch(() => undefined)
+        .finally(() => {
+          this.notificationWorkers.delete(worker);
+          if (!this.closed) this.scheduleSystemNotificationWake();
+        });
+      this.notificationWorkers.add(worker);
+    }
   }
 
   async deliverSystemNotifications() {
-    const deliveries = this.store.pendingSystemNotifications(this.notificationCursor);
-    for (const delivery of deliveries) {
-      this.notificationCursor = Math.max(this.notificationCursor, delivery.deliveryId);
-      if (await this.completionNotifier(delivery)) {
-        this.store.markSystemNotificationDelivered(delivery.deliveryId);
+    for (;;) {
+      if (this.closed) return;
+      const delivery = this.store.claimSystemNotification({ claimSeconds: this.notificationClaimSeconds });
+      if (!delivery) return;
+      let timeout;
+      const notification = Promise.resolve()
+        .then(() => this.completionNotifier(delivery))
+        .then((delivered) => ({ delivered: delivered === true, error: null }))
+        .catch((error) => ({ delivered: false, error }));
+      const timed = new Promise((resolve) => {
+        timeout = setTimeout(() => resolve({
+          delivered: false,
+          error: codedError("NOTIFICATION_TIMEOUT", "The completion notifier timed out."),
+        }), this.notificationTimeoutMs);
+        timeout.unref?.();
+      });
+      const outcome = await Promise.race([notification, timed]);
+      clearTimeout(timeout);
+      if (outcome.delivered) {
+        this.store.markSystemNotificationDelivered(delivery.deliveryId, delivery.claimId);
+      } else {
+        this.store.retrySystemNotification(
+          delivery.deliveryId,
+          delivery.claimId,
+          outcome.error || codedError("NOTIFICATION_FAILED", "The completion notifier did not accept the delivery."),
+          {
+            baseDelayMs: this.notificationRetryBaseMs,
+            maximumDelayMs: this.notificationRetryMaximumMs,
+          },
+        );
       }
     }
+  }
+
+  scheduleSystemNotificationWake() {
+    if (this.closed || this.notificationWorkers.size > 0 || this.notificationWakeTimer) return;
+    const readyAt = this.store.nextSystemNotificationAt();
+    if (!readyAt) return;
+    const waitMs = Math.max(0, Date.parse(readyAt) - Date.now());
+    this.notificationWakeTimer = setTimeout(() => {
+      this.notificationWakeTimer = null;
+      this.queueSystemNotifications();
+    }, waitMs);
+    this.notificationWakeTimer.unref?.();
   }
 
   async finalizeResponseFailure(jobId, detectedResult, executionClaim = null) {
@@ -1311,6 +1439,7 @@ export class Coordinator {
       "workflow.downloadChatArtifact": (params) => this.downloadChatArtifact(params),
       "jobs.startConsult": (params, context) => this.startJob("consult", params, { caller: this.callerFromContext(context) }),
       "jobs.startContinue": (params, context) => this.startJob("continue_chat", params, { caller: this.callerFromContext(context) }),
+      "jobs.recoverStartReceipt": (params, context) => this.recoverStartReceipt(params, context),
       "jobs.compatConsult": async (params, context) => this.waitCompatibility(await this.startJob("consult", params, { generatedAuthorization: !params.authorizationId, caller: this.callerFromContext(context) }), 240),
       "jobs.compatContinue": async (params, context) => this.waitCompatibility(await this.startJob("continue_chat", params, { generatedAuthorization: !params.authorizationId, caller: this.callerFromContext(context) }), 240),
       "jobs.status": (params, context) => {

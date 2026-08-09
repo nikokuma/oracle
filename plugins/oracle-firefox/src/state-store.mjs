@@ -294,6 +294,7 @@ export class StateStore extends EventEmitter {
         if (!hasBrokerGenerationGuards) this.registerBrokerTakeover();
         this.migrateEight();
       }
+      this.migrateDisconnectRecovery();
       this.backfillUntrackedUncertaintyQuarantines();
       return this;
     } catch (error) {
@@ -718,6 +719,44 @@ export class StateStore extends EventEmitter {
     });
   }
 
+  migrateDisconnectRecovery() {
+    const addColumns = (table, columns) => {
+      const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
+      for (const [name, definition] of columns) {
+        if (!known.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+      }
+    };
+    this.transaction(() => {
+      addColumns("job_chains", [
+        ["start_receipt_cap_hash", "TEXT"],
+        ["start_receipt_recovered_at", "TEXT"],
+        ["start_receipt_recovery_count", "INTEGER NOT NULL DEFAULT 0"],
+      ]);
+      addColumns("completion_deliveries", [
+        ["claim_kind", "TEXT"],
+        ["claim_expires_at", "TEXT"],
+        ["attempt_count", "INTEGER NOT NULL DEFAULT 0"],
+        ["next_attempt_at", "TEXT"],
+        ["last_error_json", "TEXT"],
+      ]);
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS completion_deliveries_system_ready
+          ON completion_deliveries(state, next_attempt_at, claim_expires_at, id);
+      `);
+      this.db.exec(`
+        UPDATE completion_deliveries
+        SET state='pending', claim_id=NULL, claimed_at=NULL
+        WHERE state='claimed' AND claim_kind IS NULL;
+
+        UPDATE completion_deliveries
+        SET claim_id=NULL, claimed_at=NULL, claim_kind=NULL, claim_expires_at=NULL,
+            next_attempt_at=NULL, last_error_json=NULL
+        WHERE state IN ('delivered', 'acknowledged');
+      `);
+      this.installWriterGuards();
+    });
+  }
+
   installWriterGuards() {
     const operational = [
       "jobs", "job_events", "quarantines", "owner_sessions", "scheduler_tickets",
@@ -1034,17 +1073,61 @@ export class StateStore extends EventEmitter {
     `;
   }
 
-  createOwnerSession({ harness = "unknown", clientInstanceId = null, hostSessionHint = null, metadata = {} } = {}) {
-    const id = randomUUID();
-    const capability = mintCapability("session", id);
+  createOwnerSession({
+    harness = "unknown",
+    clientInstanceId = null,
+    hostSessionHint = null,
+    stableSessionId = null,
+    stableSessionHandle = null,
+    metadata = {},
+  } = {}) {
+    const stableCapability = stableSessionHandle ? parseCapability(stableSessionHandle, "session") : null;
+    if (stableSessionId || stableSessionHandle) {
+      if (!stableCapability || stableCapability.subjectId !== stableSessionId) {
+        throw codedError("CLIENT_SESSION_REQUIRED", "The stable Oracle Firefox host-session identity is invalid.");
+      }
+    }
+    const id = stableCapability?.subjectId || randomUUID();
+    const capability = stableCapability
+      ? { handle: stableSessionHandle, hash: stableCapability.hash }
+      : mintCapability("session", id);
     const now = new Date().toISOString();
-    this.db.prepare(`
-      INSERT INTO owner_sessions(
-        id, harness, client_instance_id, host_session_hint, session_cap_hash,
-        isolation_strength, metadata_json, created_at, last_seen_at
-      ) VALUES (?, ?, ?, ?, ?, 'chain', ?, ?, ?)
-    `).run(id, String(harness || "unknown"), clientInstanceId, hostSessionHint, capability.hash, json(metadata) || "{}", now, now);
-    return { sessionId: id, sessionHandle: capability.handle, harness: String(harness || "unknown") };
+    const normalizedHarness = String(harness || "unknown");
+    const normalizedHint = hostSessionHint == null ? null : String(hostSessionHint);
+    this.transaction(() => {
+      const existing = this.db.prepare("SELECT * FROM owner_sessions WHERE id = ?").get(id);
+      if (existing) {
+        const sameIdentity =
+          existing.revoked_at == null &&
+          existing.harness === normalizedHarness &&
+          (existing.host_session_hint ?? null) === normalizedHint &&
+          verifyCapability(capability.handle, existing.session_cap_hash, { kind: "session", subjectId: id });
+        if (!sameIdentity) {
+          throw codedError("CLIENT_SESSION_REQUIRED", "The stable Oracle Firefox host-session identity does not match this owner session.");
+        }
+        this.db.prepare(`
+          UPDATE owner_sessions SET client_instance_id=?, metadata_json=?, last_seen_at=? WHERE id=?
+        `).run(clientInstanceId, json(metadata) || "{}", now, id);
+        return;
+      }
+      this.db.prepare(`
+        INSERT INTO owner_sessions(
+          id, harness, client_instance_id, host_session_hint, session_cap_hash,
+          isolation_strength, metadata_json, created_at, last_seen_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id,
+        normalizedHarness,
+        clientInstanceId,
+        normalizedHint,
+        capability.hash,
+        stableCapability ? "host_session" : "chain",
+        json(metadata) || "{}",
+        now,
+        now,
+      );
+    });
+    return { sessionId: id, sessionHandle: capability.handle, harness: normalizedHarness };
   }
 
   authenticateOwnerSession(client) {
@@ -1055,6 +1138,12 @@ export class StateStore extends EventEmitter {
     const row = this.db.prepare("SELECT * FROM owner_sessions WHERE id = ? AND revoked_at IS NULL").get(parsed.subjectId);
     if (!row || !verifyCapability(client.sessionHandle, row.session_cap_hash, { kind: "session", subjectId: row.id })) {
       throw codedError("CLIENT_SESSION_REQUIRED", "The Oracle Firefox client session is invalid or expired.");
+    }
+    if (
+      client?.harness && String(client.harness) !== row.harness ||
+      client?.hostSessionHint != null && String(client.hostSessionHint) !== (row.host_session_hint ?? null)
+    ) {
+      throw codedError("CLIENT_SESSION_REQUIRED", "The Oracle Firefox client session belongs to a different harness or host session.");
     }
     this.db.prepare("UPDATE owner_sessions SET last_seen_at = ? WHERE id = ?").run(new Date().toISOString(), row.id);
     return {
@@ -1278,8 +1367,8 @@ export class StateStore extends EventEmitter {
           INSERT INTO job_chains(
             id, root_job_id, origin_session_id, accepted_sequence, state, active_job_id,
             target_kind, conversation_key, canonical_url, completion_mode,
-            read_cap_hash, control_cap_hash, legacy_mode, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            read_cap_hash, control_cap_hash, start_receipt_cap_hash, legacy_mode, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).run(
           chainId,
           rootJobId,
@@ -1292,6 +1381,7 @@ export class StateStore extends EventEmitter {
           input.completionMode || input.request?.completionMode || "manual",
           input.readCapabilityHash ?? null,
           input.controlCapabilityHash ?? null,
+          input.startReceiptCapabilityHash ?? null,
           legacyMode,
           now,
           now,
@@ -1371,6 +1461,71 @@ export class StateStore extends EventEmitter {
         AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
         AND j.assistant_turn_hash IS NOT NULL
     `, "ORDER BY j.completed_at, j.created_at")).all().map(rowToJob);
+  }
+
+  terminalJobsForArtifactRepair() {
+    const states = Array.from(TERMINAL_JOB_STATES);
+    return this.db.prepare(this.jobSelect(
+      `WHERE j.state IN (${states.map(() => "?").join(",")})`,
+      "ORDER BY j.completed_at, j.created_at",
+    )).all(...states).map(rowToJob);
+  }
+
+  recoverStartReceipt({ authorizationId, digest, recoveryHandle, caller }) {
+    const failClosed = () => codedError(
+      "START_RECEIPT_NOT_FOUND",
+      "No recoverable Oracle Firefox start receipt matches this caller, request, and private recovery capability.",
+      { safeToRetry: false },
+    );
+    return this.transaction(() => {
+      const job = this.getJobByAuthorization(authorizationId);
+      if (!job || !caller || job.requestDigest !== digest) throw failClosed();
+      const chain = this.chainAccessRow(job.chainId);
+      if (
+        !chain ||
+        chain.origin_session_id !== caller.id ||
+        !verifyCapability(recoveryHandle, chain.start_receipt_cap_hash, {
+          kind: "receipt",
+          subjectId: authorizationId,
+        })
+      ) throw failClosed();
+
+      const readCapability = mintCapability("read", chain.id);
+      const controlCapability = mintCapability("control", chain.id);
+      let subscription = this.db.prepare(`
+        SELECT * FROM completion_subscriptions
+        WHERE chain_id=? AND owner_session_id=?
+        ORDER BY created_at LIMIT 1
+      `).get(chain.id, caller.id);
+      const subscriptionId = subscription?.id || randomUUID();
+      const subscriptionCapability = mintCapability("subscription", subscriptionId);
+      const now = new Date().toISOString();
+      this.db.prepare(`
+        UPDATE job_chains
+        SET read_cap_hash=?, control_cap_hash=?, start_receipt_recovered_at=?,
+            start_receipt_recovery_count=start_receipt_recovery_count+1, updated_at=?
+        WHERE id=?
+      `).run(readCapability.hash, controlCapability.hash, now, now, chain.id);
+      if (subscription) {
+        this.db.prepare(`
+          UPDATE completion_subscriptions SET capability_hash=? WHERE id=?
+        `).run(subscriptionCapability.hash, subscriptionId);
+      } else {
+        this.db.prepare(`
+          INSERT INTO completion_subscriptions(
+            id, chain_id, owner_session_id, mode, capability_hash, state, created_at
+          ) VALUES (?, ?, ?, ?, ?, 'open', ?)
+        `).run(subscriptionId, chain.id, caller.id, chain.completion_mode, subscriptionCapability.hash, now);
+        subscription = { id: subscriptionId };
+      }
+      return {
+        job: this.requireJob(job.id),
+        jobHandle: controlCapability.handle,
+        readHandle: readCapability.handle,
+        completionHandle: subscriptionCapability.handle,
+        recoveredAt: now,
+      };
+    });
   }
 
   queuedJobs() {
@@ -2690,12 +2845,14 @@ export class StateStore extends EventEmitter {
     return this.transaction(() => {
       const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
       if (subscription.state !== "open") return null;
-      const staleBefore = new Date(Date.now() - Math.max(10, claimSeconds) * 1_000).toISOString();
+      const now = new Date().toISOString();
       this.db.prepare(`
         UPDATE completion_deliveries
-        SET state = 'pending', claim_id = NULL, claimed_at = NULL
-        WHERE subscription_id = ? AND state = 'claimed' AND claimed_at < ?
-      `).run(subscription.id, staleBefore);
+        SET state = 'pending', claim_id = NULL, claimed_at = NULL,
+            claim_kind = NULL, claim_expires_at = NULL
+        WHERE subscription_id = ? AND state = 'claimed' AND claim_kind = 'subscriber'
+          AND claim_expires_at <= ?
+      `).run(subscription.id, now);
       const delivery = this.db.prepare(`
         SELECT d.*, e.chain_id, e.active_job_id, e.state AS event_state,
                e.created_at AS event_created_at
@@ -2707,11 +2864,19 @@ export class StateStore extends EventEmitter {
       if (!delivery) return null;
       if (delivery.state === "delivered") return this.publicCompletionDelivery(delivery, subscription);
       const claimId = randomUUID();
-      const now = new Date().toISOString();
+      const expiresAt = new Date(Date.now() + Math.max(10, claimSeconds) * 1_000).toISOString();
       this.db.prepare(`
-        UPDATE completion_deliveries SET state = 'claimed', claim_id = ?, claimed_at = ? WHERE id = ?
-      `).run(claimId, now, delivery.id);
-      return this.publicCompletionDelivery({ ...delivery, state: "claimed", claim_id: claimId, claimed_at: now }, subscription);
+        UPDATE completion_deliveries
+        SET state = 'claimed', claim_id = ?, claimed_at = ?, claim_kind = 'subscriber', claim_expires_at = ?
+        WHERE id = ? AND state = 'pending'
+      `).run(claimId, now, expiresAt, delivery.id);
+      return this.publicCompletionDelivery({
+        ...delivery,
+        state: "claimed",
+        claim_id: claimId,
+        claimed_at: now,
+        claim_expires_at: expiresAt,
+      }, subscription);
     });
   }
 
@@ -2734,8 +2899,11 @@ export class StateStore extends EventEmitter {
       const now = new Date().toISOString();
       const changed = this.db.prepare(`
         UPDATE completion_deliveries
-        SET state = 'delivered', delivered_at = ?
-        WHERE id = ? AND subscription_id = ? AND state = 'claimed' AND claim_id = ?
+        SET state='delivered', delivered_at=?, claim_id=NULL, claimed_at=NULL,
+            claim_kind=NULL, claim_expires_at=NULL, next_attempt_at=NULL,
+            last_error_json=NULL
+        WHERE id = ? AND subscription_id = ? AND state = 'claimed'
+          AND claim_kind = 'subscriber' AND claim_id = ?
       `).run(now, deliveryId, subscription.id, claimId);
       if (Number(changed.changes) !== 1) throw codedError("COMPLETION_CLAIM_LOST", "The completion delivery claim is no longer active.");
       return { deliveryId, delivered: true, acknowledged: false };
@@ -2753,11 +2921,13 @@ export class StateStore extends EventEmitter {
         WHERE d.id = ? AND d.subscription_id = ?
       `).get(deliveryId, subscription.id);
       if (!row) throw codedError("COMPLETION_NOT_FOUND", "No accessible completion delivery matches that reference.");
-      if (row.state !== "acknowledged") {
-        this.db.prepare(`
-          UPDATE completion_deliveries SET state = 'acknowledged', acknowledged_at = ? WHERE id = ?
-        `).run(now, deliveryId);
-      }
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?),
+            claim_id=NULL, claimed_at=NULL, claim_kind=NULL, claim_expires_at=NULL,
+            next_attempt_at=NULL, last_error_json=NULL
+        WHERE id=?
+      `).run(now, deliveryId);
       if (TERMINAL_CHAIN_STATES.has(row.event_state)) {
         this.db.prepare(`
           UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
@@ -2796,13 +2966,133 @@ export class StateStore extends EventEmitter {
     }));
   }
 
-  markSystemNotificationDelivered(deliveryId) {
+  claimSystemNotification({ claimSeconds = 30 } = {}) {
+    return this.transaction(() => {
+      const now = new Date().toISOString();
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='pending', claim_id=NULL, claimed_at=NULL, claim_kind=NULL,
+            claim_expires_at=NULL
+        WHERE state='claimed' AND claim_kind='system' AND claim_expires_at <= ?
+      `).run(now);
+      const row = this.db.prepare(`
+        SELECT d.id AS delivery_id, d.subscription_id,
+               e.chain_id, e.active_job_id, e.state AS event_state, e.created_at AS event_created_at,
+               s.mode, o.harness, d.attempt_count
+        FROM completion_deliveries d
+        JOIN completion_subscriptions s ON s.id = d.subscription_id
+        JOIN owner_sessions o ON o.id = s.owner_session_id
+        JOIN chain_events e ON e.sequence = d.chain_event_sequence
+        WHERE d.state='pending' AND s.state='open'
+          AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?)
+          AND (s.mode='notify' OR (s.mode='harness' AND o.harness='claude-desktop-mcp'))
+        ORDER BY d.id LIMIT 1
+      `).get(now);
+      if (!row) return null;
+      const claimId = randomUUID();
+      const expiresAt = new Date(Date.now() + Math.max(1, claimSeconds) * 1_000).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='claimed', claim_id=?, claimed_at=?, claim_kind='system',
+            claim_expires_at=?, attempt_count=attempt_count+1, next_attempt_at=NULL
+        WHERE id=? AND state='pending'
+      `).run(claimId, now, expiresAt, row.delivery_id);
+      if (Number(changed.changes) !== 1) return null;
+      return {
+        deliveryId: Number(row.delivery_id),
+        subscriptionId: row.subscription_id,
+        chainId: row.chain_id,
+        activeJobId: row.active_job_id,
+        state: row.event_state,
+        createdAt: row.event_created_at,
+        mode: row.mode,
+        harness: row.harness,
+        claimId,
+        claimExpiresAt: expiresAt,
+        attempt: Number(row.attempt_count || 0) + 1,
+      };
+    });
+  }
+
+  markSystemNotificationDelivered(deliveryId, claimId) {
+    if (!claimId) return false;
     const now = new Date().toISOString();
     const changed = this.db.prepare(`
-      UPDATE completion_deliveries SET state = 'delivered', delivered_at = ?
-      WHERE id = ? AND state = 'pending'
-    `).run(now, deliveryId);
+      UPDATE completion_deliveries
+      SET state='delivered', delivered_at=?, claim_id=NULL, claimed_at=NULL,
+          claim_kind=NULL, claim_expires_at=NULL, next_attempt_at=NULL,
+          last_error_json=NULL
+      WHERE id=? AND state='claimed' AND claim_kind='system' AND claim_id=?
+    `).run(now, deliveryId, claimId);
     return Number(changed.changes) === 1;
+  }
+
+  retrySystemNotification(deliveryId, claimId, error, { baseDelayMs = 1_000, maximumDelayMs = 60_000 } = {}) {
+    return this.transaction(() => {
+      const row = this.db.prepare(`
+        SELECT attempt_count FROM completion_deliveries
+        WHERE id=? AND state='claimed' AND claim_kind='system' AND claim_id=?
+      `).get(deliveryId, claimId);
+      if (!row) return null;
+      const minimumDelay = Math.max(1, Number(baseDelayMs) || 1);
+      const maximumDelay = Math.max(minimumDelay, Number(maximumDelayMs) || minimumDelay);
+      const delayMs = Math.min(
+        maximumDelay,
+        minimumDelay * (2 ** Math.min(10, Math.max(0, Number(row.attempt_count) - 1))),
+      );
+      const retryAt = new Date(Date.now() + delayMs).toISOString();
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='pending', claim_id=NULL, claimed_at=NULL, claim_kind=NULL,
+            claim_expires_at=NULL, next_attempt_at=?, last_error_json=?
+        WHERE id=? AND state='claimed' AND claim_kind='system' AND claim_id=?
+      `).run(retryAt, json(structuredError(error)), deliveryId, claimId);
+      return { deliveryId, retryAt, attempt: Number(row.attempt_count) };
+    });
+  }
+
+  nextSystemNotificationAt() {
+    return this.db.prepare(`
+      SELECT MIN(
+        CASE d.state
+          WHEN 'pending' THEN COALESCE(d.next_attempt_at, d.created_at)
+          WHEN 'claimed' THEN d.claim_expires_at
+        END
+      ) AS ready_at
+      FROM completion_deliveries d
+      JOIN completion_subscriptions s ON s.id=d.subscription_id
+      JOIN owner_sessions o ON o.id=s.owner_session_id
+      WHERE s.state='open'
+        AND (d.state='pending' OR (d.state='claimed' AND d.claim_kind='system'))
+        AND (s.mode='notify' OR (s.mode='harness' AND o.harness='claude-desktop-mcp'))
+    `).get()?.ready_at || null;
+  }
+
+  rebuildCompletionDeliveries() {
+    return this.transaction(() => {
+      const now = new Date().toISOString();
+      const terminalChains = this.db.prepare(`
+        SELECT c.id, c.active_job_id, c.state
+        FROM job_chains c
+        WHERE c.state IN (${Array.from(WAKE_CHAIN_STATES).map(() => "?").join(",")})
+          AND NOT EXISTS (
+            SELECT 1 FROM chain_events e
+            WHERE e.chain_id=c.id AND e.active_job_id=c.active_job_id AND e.state=c.state
+          )
+      `).all(...WAKE_CHAIN_STATES);
+      for (const chain of terminalChains) this.createChainEvent(chain.id, chain.active_job_id, chain.state, null, now);
+      const inserted = this.db.prepare(`
+        INSERT OR IGNORE INTO completion_deliveries(
+          subscription_id, chain_event_sequence, state, created_at
+        )
+        SELECT s.id, e.sequence, 'pending', ?
+        FROM completion_subscriptions s
+        JOIN chain_events e ON e.chain_id=s.chain_id
+        WHERE s.state='open' AND s.mode!='manual'
+          AND e.state IN (${Array.from(WAKE_CHAIN_STATES).map(() => "?").join(",")})
+      `).run(now, ...WAKE_CHAIN_STATES);
+      return { chainEvents: terminalChains.length, deliveries: Number(inserted.changes) };
+    });
   }
 
   waitForChange(timeoutMs) {

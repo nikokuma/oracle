@@ -3230,8 +3230,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path4) {
-      let input = path4;
+    function removeDotSegments(path5) {
+      let input = path5;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3483,8 +3483,8 @@ var require_schemes = __commonJS({
         wsComponent.secure = void 0;
       }
       if (wsComponent.resourceName) {
-        const [path4, query] = wsComponent.resourceName.split("?");
-        wsComponent.path = path4 && path4 !== "/" ? path4 : void 0;
+        const [path5, query] = wsComponent.resourceName.split("?");
+        wsComponent.path = path5 && path5 !== "/" ? path5 : void 0;
         wsComponent.query = query;
         wsComponent.resourceName = void 0;
       }
@@ -6897,7 +6897,7 @@ var require_dist = __commonJS({
 });
 
 // src/server.mjs
-import { randomUUID as randomUUID5 } from "node:crypto";
+import { randomUUID as randomUUID6 } from "node:crypto";
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/zod/v3/helpers/util.js
 var util;
@@ -7258,8 +7258,8 @@ function getErrorMap() {
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path4, errorMaps, issueData } = params;
-  const fullPath = [...path4, ...issueData.path || []];
+  const { data, path: path5, errorMaps, issueData } = params;
+  const fullPath = [...path5, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -7374,11 +7374,11 @@ var errorUtil;
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path4, key) {
+  constructor(parent, value, path5, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path4;
+    this._path = path5;
     this._key = key;
   }
   get path() {
@@ -11298,10 +11298,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path4) {
-  if (!path4)
+function getElementAtPath(obj, path5) {
+  if (!path5)
     return obj;
-  return path4.reduce((acc, key) => acc?.[key], obj);
+  return path5.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -11710,11 +11710,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path4, issues) {
+function prefixIssues(path5, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path4);
+    iss.path.unshift(path5);
     return iss;
   });
 }
@@ -11861,16 +11861,16 @@ function flattenError(error51, mapper = (issue2) => issue2.message) {
 }
 function formatError(error51, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error52, path4 = []) => {
+  const processError = (error52, path5 = []) => {
     for (const issue2 of error52.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -11897,17 +11897,17 @@ function formatError(error51, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error51, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error52, path4 = []) => {
+  const processError = (error52, path5 = []) => {
     var _a3, _b;
     for (const issue2 of error52.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -11939,8 +11939,8 @@ function treeifyError(error51, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path4 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path4) {
+  const path5 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path5) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -25065,13 +25065,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path4 = ref.slice(1).split("/").filter(Boolean);
-  if (path4.length === 0) {
+  const path5 = ref.slice(1).split("/").filter(Boolean);
+  if (path5.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path4[0] === defsKey) {
-    const key = path4[1];
+  if (path5[0] === defsKey) {
+    const key = path5[1];
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -30964,8 +30964,9 @@ var StdioServerTransport = class {
 
 // src/broker-client.mjs
 import { spawn } from "node:child_process";
-import { randomBytes, randomUUID as randomUUID4 } from "node:crypto";
+import { createHash as createHash5, randomBytes as randomBytes2, randomUUID as randomUUID5 } from "node:crypto";
 import { chmod as chmod3, link as link2, mkdir as mkdir4, open as open3, readFile as readFile3, rm as rm3 } from "node:fs/promises";
+import path4 from "node:path";
 import { fileURLToPath } from "node:url";
 
 // src/generated-build-info.mjs
@@ -30974,8 +30975,8 @@ var GENERATED_BUILD_INFO = Object.freeze({
   "protocolVersion": 8,
   "schemaVersion": 8,
   "releaseSequence": 1610,
-  "sourceDigest": "cff26d45b9531d0e8ce6361ab39aee3a0d3e085eed94526d63f3e467875e9ae4",
-  "buildId": "oracle-firefox-1.6.9-cff26d45b9531d0e"
+  "sourceDigest": "d920973d1da26dd43990fc1c479faa792f27a1d6da0d6f2591fa2192b579c4ea",
+  "buildId": "oracle-firefox-1.6.9-d920973d1da26dd4"
 });
 
 // src/build-info.mjs
@@ -31056,7 +31057,7 @@ var OracleFirefoxError = class extends Error {
     this.details = options.details ?? null;
   }
 };
-var CAPABILITY_PATTERN = /ofx1\.(?:session|read|control|subscription|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu;
+var CAPABILITY_PATTERN = /ofx1\.(?:session|read|control|subscription|receipt|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu;
 function redact(value) {
   if (typeof value === "string") return value.replace(CAPABILITY_PATTERN, "[REDACTED_CAPABILITY]");
   if (Array.isArray(value)) return value.map(redact);
@@ -31359,9 +31360,37 @@ async function resolveCoordinatorIdentity() {
   };
 }
 
+// src/capabilities.mjs
+import { createHash as createHash3, randomBytes, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+var CAPABILITY_VERSION = "ofx1";
+var SECRET_BYTES = 32;
+var KINDS = /* @__PURE__ */ new Set(["session", "read", "control", "subscription", "receipt", "admin"]);
+function hashCapabilitySecret(secret) {
+  return createHash3("sha256").update(String(secret), "utf8").digest("hex");
+}
+function mintCapability(kind, subjectId) {
+  if (!KINDS.has(kind)) throw new Error(`Unsupported Oracle capability kind: ${kind}`);
+  const secret = randomBytes(SECRET_BYTES).toString("base64url");
+  return {
+    kind,
+    subjectId,
+    secret,
+    hash: hashCapabilitySecret(secret),
+    handle: `${CAPABILITY_VERSION}.${kind}.${subjectId}.${secret}`
+  };
+}
+function parseCapability(handle, expectedKind = null) {
+  const value = String(handle || "");
+  const [version2, kind, subjectId, secret, ...extra] = value.split(".");
+  if (version2 !== CAPABILITY_VERSION || !KINDS.has(kind) || !subjectId || !secret || extra.length || expectedKind && kind !== expectedKind) {
+    return null;
+  }
+  return { kind, subjectId, secret, hash: hashCapabilitySecret(secret) };
+}
+
 // src/protocol.mjs
 import net from "node:net";
-import { randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var BROKER_BUILD_VERSION = ORACLE_FIREFOX_VERSION;
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
@@ -31411,6 +31440,7 @@ function rpcRequest(endpoint, token, method, params = {}, options = {}) {
     const timer = setTimeout(() => {
       finish(reject, codedError("BROKER_TIMEOUT", `Broker request ${method} timed out after ${timeoutMs}ms.`));
     }, timeoutMs);
+    timer.unref?.();
     const decoder = createFrameDecoder((response) => {
       if (response?.id !== id) return;
       if (response.ok) return finish(resolve, response.result);
@@ -31418,14 +31448,20 @@ function rpcRequest(endpoint, token, method, params = {}, options = {}) {
       finish(reject, codedError(value.code || "BROKER_ERROR", value.message || "Broker request failed.", value));
     }, (error51) => finish(reject, error51));
     socket.once("connect", () => {
-      socket.write(encodeFrame({
-        id,
-        token,
-        protocolVersion: BROKER_PROTOCOL_VERSION,
-        method,
-        params,
-        client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION }
-      }));
+      try {
+        socket.write(encodeFrame({
+          id,
+          token,
+          protocolVersion: BROKER_PROTOCOL_VERSION,
+          method,
+          params,
+          client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION }
+        }), (error51) => {
+          if (error51) finish(reject, error51);
+        });
+      } catch (error51) {
+        finish(reject, error51);
+      }
     });
     socket.on("data", decoder);
     socket.once("error", (error51) => finish(reject, error51));
@@ -31435,9 +31471,83 @@ function rpcRequest(endpoint, token, method, params = {}, options = {}) {
   });
 }
 
+// src/state-store.mjs
+import { backup, DatabaseSync as DatabaseSync2 } from "node:sqlite";
+import { createHash as createHash4, randomUUID as randomUUID4 } from "node:crypto";
+
+// src/evidence.mjs
+var LOCAL_DATA_SENTINEL = "ORACLE_LOCAL_DATA_REQUEST_V1";
+var LOCAL_DATA_PROTOCOL_VERSION = 1;
+var LOCAL_DATA_NONCE_PATTERN = /^[a-f0-9]{32}$/u;
+function localDataProtocol(nonce) {
+  if (!LOCAL_DATA_NONCE_PATTERN.test(String(nonce || ""))) {
+    throw codedError("LOCAL_DATA_NONCE_REQUIRED", "Oracle requires a per-job local-data nonce before preparing a prompt.");
+  }
+  return `
+When forming conclusions, label material claims as verified, inferred, or proposed.
+Do not guess when a material conclusion depends on facts that are only available in the local workspace or runtime.
+If local facts are required, stop and end your response with exactly one ${LOCAL_DATA_SENTINEL} JSON block using this nonce and shape:
+{
+  "version": ${LOCAL_DATA_PROTOCOL_VERSION},
+  "oracleNonce": "${nonce}",
+  "requestId": "short-stable-id",
+  "requests": [
+    { "id": "fact-id", "fact": "exact fact needed", "why": "why it changes the answer", "suggestedReadOnlyCheck": "a safe read-only check" }
+  ]
+}
+Replace every descriptive placeholder with a concrete value. Never repeat this example as an answer.
+Never request credentials, cookies, tokens, passwords, private keys, browser-profile contents, unrelated chats, or unrelated private files. Do not request writes or state changes.
+`.trim();
+}
+var LOCAL_DATA_PROTOCOL = localDataProtocol("00000000000000000000000000000000");
+
+// src/state-store.mjs
+var JOB_STATES = Object.freeze([
+  "accepted",
+  "snapshotted",
+  "queued",
+  "page_leased",
+  "target_verified",
+  "attachment_processing",
+  "composer_verified",
+  "model_verified",
+  "submit_intent",
+  "user_turn_confirmed",
+  "awaiting_response",
+  "response_failed_detected",
+  "response_confirmed",
+  "completed",
+  "cancelled_pre_submit",
+  "failed_pre_submit",
+  "submission_uncertain",
+  "response_uncertain",
+  "response_failed",
+  "quarantined"
+]);
+var STATE_INDEX = new Map(JOB_STATES.map((state, index) => [state, index]));
+var SUBMIT_INDEX = STATE_INDEX.get("submit_intent");
+var PRE_SUBMIT_JOB_STATES = new Set(JOB_STATES.slice(0, SUBMIT_INDEX));
+function requestDigest(request) {
+  const canonicalize2 = (value) => {
+    if (Array.isArray(value)) return value.map(canonicalize2);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.keys(value).filter((key) => value[key] !== void 0).sort().map((key) => [key, canonicalize2(value[key])])
+      );
+    }
+    return value;
+  };
+  return createHash4("sha256").update(JSON.stringify(canonicalize2(request))).digest("hex");
+}
+
 // src/broker-client.mjs
-var clientInstanceId = randomUUID4();
+var clientInstanceId = randomUUID5();
 var clientSessions = /* @__PURE__ */ new Map();
+var processScopedClientIdentities = /* @__PURE__ */ new Map();
+var START_OPERATIONS = /* @__PURE__ */ new Map([
+  ["jobs.startConsult", "consult"],
+  ["jobs.startContinue", "continue_chat"]
+]);
 var KNOWN_RELEASE_SEQUENCES = /* @__PURE__ */ new Map([
   ["1.2.1", 1201],
   ["1.3.0", 1300],
@@ -31459,6 +31569,22 @@ async function ensurePrivateDirectory2(directory) {
   await mkdir4(directory, { recursive: true, mode: 448 });
   await chmod3(directory, 448);
 }
+async function writeExclusivePrivateJson(target, value) {
+  const handle = await open3(target, "wx", 384);
+  try {
+    await handle.writeFile(`${JSON.stringify(value, null, 2)}
+`, "utf8");
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+  const directory = await open3(path4.dirname(target), "r").catch(() => null);
+  try {
+    await directory?.sync();
+  } finally {
+    await directory?.close();
+  }
+}
 async function readOrCreateBrokerToken() {
   await ensurePrivateDirectory2(coordinatorDirectory());
   const tokenPath = brokerTokenPath();
@@ -31474,8 +31600,8 @@ async function readOrCreateBrokerToken() {
   } catch (error51) {
     if (error51?.code !== "ENOENT") throw error51;
   }
-  const candidate = randomBytes(32).toString("hex");
-  const temporary = `${tokenPath}.${process.pid}.${randomUUID4()}.tmp`;
+  const candidate = randomBytes2(32).toString("hex");
+  const temporary = `${tokenPath}.${process.pid}.${randomUUID5()}.tmp`;
   const handle = await open3(temporary, "wx", 384);
   try {
     try {
@@ -31514,6 +31640,145 @@ function clientMetadata(harness, hostSessionHint = null, session = null) {
     sessionId: session?.sessionId,
     sessionHandle: session?.sessionHandle
   };
+}
+function stableClientIdentityPath(identity, harness, hostSessionHint) {
+  if (hostSessionHint == null) {
+    throw codedError("CLIENT_IDENTITY_INVALID", "A durable Oracle Firefox client identity requires a stable host-session identity.");
+  }
+  const key = createHash5("sha256").update([
+    "oracle-firefox-host-session-v1",
+    identity.coordinatorId,
+    String(harness || "unknown"),
+    String(hostSessionHint)
+  ].join("\0")).digest("hex");
+  return path4.join(identity.coordinatorPath || coordinatorDirectory(), "client-sessions", `${key}.json`);
+}
+function processScopedClientIdentity(identity, harness) {
+  const normalizedHarness = String(harness || "unknown");
+  const key = [identity.coordinatorId, normalizedHarness].join(":");
+  let value = processScopedClientIdentities.get(key);
+  if (value) return value;
+  const sessionId = randomUUID5();
+  const capability = mintCapability("session", sessionId);
+  value = {
+    version: 1,
+    coordinatorId: identity.coordinatorId,
+    harness: normalizedHarness,
+    hostSessionHint: null,
+    sessionId,
+    sessionHandle: capability.handle,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+    durable: false
+  };
+  processScopedClientIdentities.set(key, value);
+  return value;
+}
+async function readStableClientIdentity(target, expected) {
+  const value = JSON.parse(await readFile3(target, "utf8"));
+  const parsed = parseCapability(value.sessionHandle, "session");
+  if (value.version !== 1 || value.coordinatorId !== expected.coordinatorId || value.harness !== expected.harness || (value.hostSessionHint ?? null) !== expected.hostSessionHint || !parsed || parsed.subjectId !== value.sessionId) {
+    throw codedError("CLIENT_IDENTITY_INVALID", "The durable Oracle Firefox host-session identity is invalid and was not replaced automatically.");
+  }
+  return value;
+}
+async function readOrCreateStableClientIdentity(identity, harness, hostSessionHint) {
+  const normalized = {
+    coordinatorId: identity.coordinatorId,
+    harness: String(harness || "unknown"),
+    hostSessionHint: hostSessionHint == null ? null : String(hostSessionHint)
+  };
+  const target = stableClientIdentityPath(identity, normalized.harness, normalized.hostSessionHint);
+  try {
+    return { ...await readStableClientIdentity(target, normalized), target };
+  } catch (error51) {
+    if (error51?.code !== "ENOENT") throw error51;
+  }
+  await ensurePrivateDirectory2(path4.dirname(target));
+  const sessionId = randomUUID5();
+  const capability = mintCapability("session", sessionId);
+  const candidate = {
+    version: 1,
+    ...normalized,
+    sessionId,
+    sessionHandle: capability.handle,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  try {
+    await writeExclusivePrivateJson(target, candidate);
+    return { ...candidate, target };
+  } catch (error51) {
+    if (error51?.code !== "EEXIST") throw error51;
+    return { ...await readStableClientIdentity(target, normalized), target };
+  }
+}
+async function clientIdentity(identity, harness, hostSessionHint) {
+  if (hostSessionHint == null) return processScopedClientIdentity(identity, harness);
+  return readOrCreateStableClientIdentity(identity, harness, hostSessionHint);
+}
+function pendingReceiptPath(identity, stableIdentity, authorizationId) {
+  const receiptKey = createHash5("sha256").update(String(authorizationId)).digest("hex");
+  return path4.join(
+    identity.coordinatorPath || coordinatorDirectory(),
+    "pending-start-receipts",
+    stableIdentity.sessionId,
+    `${receiptKey}.json`
+  );
+}
+async function readOrCreatePendingReceipt(identity, stableIdentity, authorizationId, digest2) {
+  const target = pendingReceiptPath(identity, stableIdentity, authorizationId);
+  const readExisting = async () => {
+    const value = JSON.parse(await readFile3(target, "utf8"));
+    const parsed = parseCapability(value.recoveryHandle, "receipt");
+    if (value.version !== 1 || value.coordinatorId !== identity.coordinatorId || value.ownerSessionId !== stableIdentity.sessionId || value.authorizationId !== authorizationId || value.requestDigest !== digest2 || !parsed || parsed.subjectId !== authorizationId) {
+      throw codedError("START_RECEIPT_RECOVERY_INVALID", "The pending Oracle Firefox start receipt does not match this exact request and stable caller.");
+    }
+    return value;
+  };
+  try {
+    return { ...await readExisting(), target, existing: true };
+  } catch (error51) {
+    if (error51?.code !== "ENOENT") throw error51;
+  }
+  await ensurePrivateDirectory2(path4.dirname(target));
+  const recovery = mintCapability("receipt", authorizationId);
+  const candidate = {
+    version: 1,
+    coordinatorId: identity.coordinatorId,
+    ownerSessionId: stableIdentity.sessionId,
+    authorizationId,
+    requestDigest: digest2,
+    recoveryHandle: recovery.handle,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  try {
+    await writeExclusivePrivateJson(target, candidate);
+    return { ...candidate, target, existing: false };
+  } catch (error51) {
+    if (error51?.code !== "EEXIST") throw error51;
+    return { ...await readExisting(), target, existing: true };
+  }
+}
+function transportUncertain(error51) {
+  return (/* @__PURE__ */ new Set([
+    "BROKER_TIMEOUT",
+    "BROKER_DISCONNECTED",
+    "EPIPE",
+    "ECONNRESET",
+    "ECONNABORTED",
+    "ETIMEDOUT"
+  ])).has(error51?.code);
+}
+function unresolvedReceiptError(error51) {
+  return codedError(
+    "START_RECEIPT_UNCERTAIN",
+    "Oracle Firefox could not prove whether the preserved start was committed. It did not submit the start request again.",
+    {
+      cause: error51,
+      safeToRetry: false,
+      submissionMayHaveOccurred: true,
+      recoveryAction: "retry this exact start with the same authorizationId and stable host-session identity to check the preserved receipt again"
+    }
+  );
 }
 function normalizeLegacyBrokerStatus(status, endpoint) {
   const protocolVersion = Number(status?.protocolVersion || status?.protocol?.minimum || 0);
@@ -31753,15 +32018,19 @@ async function compatibleBroker(identity, token) {
 async function callBroker(method, params = {}, options = {}) {
   const identity = await resolveCoordinatorIdentity();
   const token = await readOrCreateBrokerToken();
-  const { hello, endpoint } = await compatibleBroker(identity, token);
+  const { endpoint } = await compatibleBroker(identity, token);
   const harness = options.harness || "unknown";
-  const hostSessionHint = options.hostSessionHint || null;
-  const sessionKey = [identity.coordinatorId, hello.instanceId, harness, hostSessionHint || ""].join(":");
+  const normalizedHostSessionHint = options.hostSessionHint == null ? null : String(options.hostSessionHint).trim();
+  const hostSessionHint = normalizedHostSessionHint || null;
+  const ownerIdentity = await clientIdentity(identity, harness, hostSessionHint);
+  const sessionKey = [identity.coordinatorId, harness, ownerIdentity.sessionId].join(":");
   let session = clientSessions.get(sessionKey);
   const openSession = async () => rpcRequest(endpoint, token, "broker.openSession", {
     harness,
     clientInstanceId,
-    hostSessionHint
+    hostSessionHint,
+    stableSessionId: ownerIdentity.sessionId,
+    stableSessionHandle: ownerIdentity.sessionHandle
   }, {
     timeoutMs: 1e4,
     client: clientMetadata(harness, hostSessionHint)
@@ -31770,18 +32039,62 @@ async function callBroker(method, params = {}, options = {}) {
     session = await openSession();
     clientSessions.set(sessionKey, session);
   }
-  const invoke = () => rpcRequest(endpoint, token, method, params, {
-    timeoutMs: options.timeoutMs ?? 6e4,
-    client: clientMetadata(harness, hostSessionHint, session)
-  });
+  const invoke = async (rpcMethod, rpcParams, timeoutMs = options.timeoutMs ?? 6e4) => {
+    const request = () => rpcRequest(endpoint, token, rpcMethod, rpcParams, {
+      timeoutMs,
+      client: clientMetadata(harness, hostSessionHint, session)
+    });
+    try {
+      return await request();
+    } catch (error51) {
+      if (!(/* @__PURE__ */ new Set(["CLIENT_SESSION_REQUIRED", "OWNER_SESSION_NOT_FOUND"])).has(error51?.code)) throw error51;
+      clientSessions.delete(sessionKey);
+      session = await openSession();
+      clientSessions.set(sessionKey, session);
+      return request();
+    }
+  };
+  const operation = START_OPERATIONS.get(method);
+  if (!operation || !params.authorizationId) return invoke(method, params);
+  const digest2 = requestDigest({ operation, ...params, authorizationId: void 0 });
+  const pending = await readOrCreatePendingReceipt(
+    identity,
+    ownerIdentity,
+    params.authorizationId,
+    digest2
+  );
+  const recover = () => invoke("jobs.recoverStartReceipt", {
+    authorizationId: params.authorizationId,
+    requestDigest: digest2,
+    recoveryHandle: pending.recoveryHandle
+  }, Math.max(1e4, options.timeoutMs ?? 6e4));
+  if (pending.existing) {
+    try {
+      const recovered = await recover();
+      await rm3(pending.target, { force: true });
+      return recovered;
+    } catch (error51) {
+      throw unresolvedReceiptError(error51);
+    }
+  }
   try {
-    return await invoke();
+    const result = await invoke(method, { ...params, _receiptRecoveryHandle: pending.recoveryHandle });
+    await rm3(pending.target, { force: true });
+    return result;
   } catch (error51) {
-    if (!(/* @__PURE__ */ new Set(["CLIENT_SESSION_REQUIRED", "OWNER_SESSION_NOT_FOUND"])).has(error51?.code)) throw error51;
-    clientSessions.delete(sessionKey);
-    session = await openSession();
-    clientSessions.set(sessionKey, session);
-    return invoke();
+    if (!transportUncertain(error51)) {
+      if (error51?.submissionMayHaveOccurred !== true && error51?.details?.startReceiptCommitted !== true && error51?.code !== "START_RECEIPT_NOT_FOUND") {
+        await rm3(pending.target, { force: true });
+      }
+      throw error51;
+    }
+    try {
+      const recovered = await recover();
+      await rm3(pending.target, { force: true });
+      return recovered;
+    } catch (recoveryError) {
+      throw unresolvedReceiptError(recoveryError);
+    }
   }
 }
 
@@ -31945,7 +32258,7 @@ register("consult", {
   inputSchema: { authorizationId: external_exports.string().uuid().optional(), ...consultFields }
 }, "jobs.compatConsult", 245e3, (params) => ({
   ...prepareExecutionParams(params),
-  authorizationId: params.authorizationId ?? randomUUID5()
+  authorizationId: params.authorizationId ?? randomUUID6()
 }));
 register("continue_chat", {
   title: "Continue an existing ChatGPT conversation",
@@ -31953,7 +32266,7 @@ register("continue_chat", {
   inputSchema: { authorizationId: external_exports.string().uuid().optional(), ...continueFields }
 }, "jobs.compatContinue", 245e3, (params) => ({
   ...prepareExecutionParams(params),
-  authorizationId: params.authorizationId ?? randomUUID5()
+  authorizationId: params.authorizationId ?? randomUUID6()
 }));
 register("job_status", {
   title: "Read Oracle Firefox job status",

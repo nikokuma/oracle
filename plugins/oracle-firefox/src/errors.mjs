@@ -11,7 +11,7 @@ export class OracleFirefoxError extends Error {
   }
 }
 
-const CAPABILITY_PATTERN = /ofx1\.(?:session|read|control|subscription|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu;
+const CAPABILITY_PATTERN = /ofx1\.(?:session|read|control|subscription|receipt|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu;
 
 function redact(value) {
   if (typeof value === "string") return value.replace(CAPABILITY_PATTERN, "[REDACTED_CAPABILITY]");

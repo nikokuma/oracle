@@ -4,8 +4,9 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { mintCapability } from "../src/capabilities.mjs";
+import { mintCapability, redactCapabilityText } from "../src/capabilities.mjs";
 import { Coordinator } from "../src/coordinator.mjs";
+import { structuredError } from "../src/errors.mjs";
 import { StateStore } from "../src/state-store.mjs";
 
 async function withStore(callback) {
@@ -381,11 +382,75 @@ test("completion outbox is exact-subscription, claimable, delivered, and acknowl
       store.markCompletionDelivered(owned.subscription.handle, caller, claimed.deliveryId, claimed.claimId),
       { deliveryId: claimed.deliveryId, delivered: true, acknowledged: false },
     );
+    const deliveredRow = store.db.prepare(`
+      SELECT state, claim_id, claimed_at, claim_kind, claim_expires_at
+      FROM completion_deliveries WHERE id=?
+    `).get(claimed.deliveryId);
+    assert.deepEqual({ ...deliveredRow }, {
+      state: "delivered",
+      claim_id: null,
+      claimed_at: null,
+      claim_kind: null,
+      claim_expires_at: null,
+    });
     assert.deepEqual(
       store.acknowledgeCompletion(owned.subscription.handle, caller, claimed.deliveryId),
       { deliveryId: claimed.deliveryId, delivered: true, acknowledged: true },
     );
+    const acknowledgedRow = store.db.prepare(`
+      SELECT state, claim_id, claimed_at, claim_kind, claim_expires_at
+      FROM completion_deliveries WHERE id=?
+    `).get(claimed.deliveryId);
+    assert.deepEqual({ ...acknowledgedRow }, {
+      state: "acknowledged",
+      claim_id: null,
+      claimed_at: null,
+      claim_kind: null,
+      claim_expires_at: null,
+    });
     assert.equal(store.claimCompletion(owned.subscription.handle, caller), null);
+  });
+});
+
+test("acknowledging an active subscriber claim clears all durable claim ownership", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex" });
+    const caller = authenticate(store, session, "codex");
+    const owned = ownedJob(store, caller);
+    store.transition(owned.job.id, "completed", { result: { answer: "private answer" } });
+    const claimed = store.claimCompletion(owned.subscription.handle, caller);
+
+    assert.deepEqual(
+      store.acknowledgeCompletion(owned.subscription.handle, caller, claimed.deliveryId),
+      { deliveryId: claimed.deliveryId, delivered: false, acknowledged: true },
+    );
+    const row = store.db.prepare(`
+      SELECT state, claim_id, claimed_at, claim_kind, claim_expires_at
+      FROM completion_deliveries WHERE id=?
+    `).get(claimed.deliveryId);
+    assert.deepEqual({ ...row }, {
+      state: "acknowledged",
+      claim_id: null,
+      claimed_at: null,
+      claim_kind: null,
+      claim_expires_at: null,
+    });
+    store.db.prepare(`
+      UPDATE completion_deliveries
+      SET claim_id='legacy-claim', claimed_at=?, claim_kind='system', claim_expires_at=?
+      WHERE id=?
+    `).run(new Date().toISOString(), new Date(Date.now() + 60_000).toISOString(), claimed.deliveryId);
+    store.acknowledgeCompletion(owned.subscription.handle, caller, claimed.deliveryId);
+    const repeated = store.db.prepare(`
+      SELECT claim_id, claimed_at, claim_kind, claim_expires_at
+      FROM completion_deliveries WHERE id=?
+    `).get(claimed.deliveryId);
+    assert.deepEqual({ ...repeated }, {
+      claim_id: null,
+      claimed_at: null,
+      claim_kind: null,
+      claim_expires_at: null,
+    });
   });
 });
 
@@ -411,12 +476,109 @@ test("Desktop harness completions are eligible for one broker-owned notification
     const pending = store.pendingSystemNotifications(0);
     assert.equal(pending.length, 1);
     assert.equal(pending[0].harness, "claude-desktop-mcp");
-    assert.equal(store.markSystemNotificationDelivered(pending[0].deliveryId), true);
+    const systemClaim = store.claimSystemNotification();
+    assert.equal(systemClaim.deliveryId, pending[0].deliveryId);
+    assert.equal(store.markSystemNotificationDelivered(systemClaim.deliveryId, systemClaim.claimId), true);
+    const deliveredRow = store.db.prepare(`
+      SELECT claim_id, claimed_at, claim_kind, claim_expires_at
+      FROM completion_deliveries WHERE id=?
+    `).get(systemClaim.deliveryId);
+    assert.deepEqual({ ...deliveredRow }, {
+      claim_id: null,
+      claimed_at: null,
+      claim_kind: null,
+      claim_expires_at: null,
+    });
     const delivered = store.claimCompletion(owned.subscription.handle, caller);
     assert.equal(delivered.deliveryState, "delivered");
     store.acknowledgeCompletion(owned.subscription.handle, caller, delivered.deliveryId);
     assert.equal(store.claimCompletion(owned.subscription.handle, caller), null);
   });
+});
+
+test("a private start-receipt capability reissues handles without duplicating the committed job", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex", hostSessionHint: "stable-task" });
+    const caller = authenticate(store, session, "codex");
+    const authorizationId = crypto.randomUUID();
+    const recovery = mintCapability("receipt", authorizationId);
+    const owned = ownedJob(store, caller, {
+      authorizationId,
+      startReceiptCapabilityHash: recovery.hash,
+    });
+
+    const first = store.recoverStartReceipt({
+      authorizationId,
+      digest: owned.job.requestDigest,
+      recoveryHandle: recovery.handle,
+      caller,
+    });
+    assert.equal(first.job.id, owned.job.id);
+    assert.equal(store.listJobsForSession(caller.id).length, 1);
+    const resumeSession = store.createOwnerSession({ harness: "claude", hostSessionHint: "resume-1" });
+    const resumeCaller = authenticate(store, resumeSession, "claude");
+    assert.throws(
+      () => store.authorizeJob({ jobId: owned.job.id, jobHandle: owned.control.handle, caller: resumeCaller, control: true }),
+      (error) => error.code === "JOB_NOT_FOUND",
+      "receipt recovery rotates the lost response's handles",
+    );
+    assert.equal(store.authorizeJob({ jobId: owned.job.id, jobHandle: first.jobHandle, caller: resumeCaller, control: true }).job.id, owned.job.id);
+
+    const second = store.recoverStartReceipt({
+      authorizationId,
+      digest: owned.job.requestDigest,
+      recoveryHandle: recovery.handle,
+      caller,
+    });
+    assert.equal(second.job.id, owned.job.id);
+    assert.equal(store.listJobsForSession(caller.id).length, 1, "repeated recovery never creates a second job");
+    const secondResumeSession = store.createOwnerSession({ harness: "claude", hostSessionHint: "resume-2" });
+    const secondResumeCaller = authenticate(store, secondResumeSession, "claude");
+    assert.throws(
+      () => store.authorizeJob({ jobId: owned.job.id, jobHandle: first.jobHandle, caller: secondResumeCaller, control: true }),
+      (error) => error.code === "JOB_NOT_FOUND",
+    );
+    assert.equal(store.authorizeJob({ jobId: owned.job.id, jobHandle: second.jobHandle, caller: secondResumeCaller, control: true }).job.id, owned.job.id);
+  });
+});
+
+test("start-receipt recovery fails closed for foreign callers, digests, and capabilities", async () => {
+  await withStore(async (store) => {
+    const ownerSession = store.createOwnerSession({ harness: "codex", hostSessionHint: "owner-task" });
+    const foreignSession = store.createOwnerSession({ harness: "codex", hostSessionHint: "foreign-task" });
+    const owner = authenticate(store, ownerSession, "codex");
+    const foreign = authenticate(store, foreignSession, "codex");
+    const authorizationId = crypto.randomUUID();
+    const recovery = mintCapability("receipt", authorizationId);
+    const owned = ownedJob(store, owner, {
+      authorizationId,
+      startReceiptCapabilityHash: recovery.hash,
+    });
+    const attempts = [
+      { caller: foreign, digest: owned.job.requestDigest, recoveryHandle: recovery.handle },
+      { caller: owner, digest: "0".repeat(64), recoveryHandle: recovery.handle },
+      { caller: owner, digest: owned.job.requestDigest, recoveryHandle: mintCapability("receipt", authorizationId).handle },
+    ];
+    for (const attempt of attempts) {
+      assert.throws(
+        () => store.recoverStartReceipt({ authorizationId, ...attempt }),
+        (error) => error.code === "START_RECEIPT_NOT_FOUND" && !JSON.stringify(error).includes(owned.job.id),
+      );
+    }
+    assert.equal(store.listJobsForSession(foreign.id).length, 0);
+  });
+});
+
+test("private receipt capabilities are redacted from structured failures", () => {
+  const receipt = mintCapability("receipt", crypto.randomUUID());
+  const error = Object.assign(new Error(`lost ${receipt.handle}`), {
+    code: "FIXTURE",
+    details: { recoveryHandle: receipt.handle },
+  });
+  const value = structuredError(error);
+  assert.equal(JSON.stringify(value).includes(receipt.handle), false);
+  assert.equal(value.message, "lost [REDACTED_CAPABILITY]");
+  assert.equal(redactCapabilityText(`lost ${receipt.handle}`), "lost [REDACTED_CAPABILITY]");
 });
 
 test("durable account cooldown invalidates open permits across database reopen", async () => {

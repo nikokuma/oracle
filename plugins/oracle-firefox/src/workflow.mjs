@@ -414,10 +414,11 @@ async function writeCompletedArtifacts(job, result) {
 export async function repairTerminalArtifacts(store) {
   const repaired = [];
   const failed = [];
-  for (const job of store.completedJobsWithExactProof()) {
+  const exactCompleted = new Set(store.completedJobsWithExactProof().map((job) => job.id));
+  for (const job of store.terminalJobsForArtifactRepair()) {
     const { responsePath, metadataPath } = terminalArtifactPaths(job);
     try {
-      if (!(await artifactExists(responsePath))) {
+      if (exactCompleted.has(job.id) && !(await artifactExists(responsePath))) {
         await writeSessionFile(
           { id: path.basename(job.sessionPath), directory: job.sessionPath },
           "response.md",
@@ -426,7 +427,24 @@ export async function repairTerminalArtifacts(store) {
         repaired.push({ jobId: job.id, artifact: "response.md" });
       }
       if (!(await artifactExists(metadataPath))) {
-        await writeFinalMetadata(job, { ...job.result, responsePath });
+        const durable = job.result || {
+          jobId: job.id,
+          authorizationId: job.authorizationId,
+          state: job.state,
+          status: job.state,
+          browser: job.request?.browser || "firefox",
+          error: job.error,
+          conversationUrl: job.conversationUrl,
+          projectUrl: job.projectUrl,
+          sessionPath: job.sessionPath,
+          safeToRetry: job.error?.safeToRetry ?? false,
+          submissionMayHaveOccurred: job.submissionMayHaveOccurred,
+          recoveryAction: job.recoveryAction,
+        };
+        await writeFinalMetadata(job, {
+          ...durable,
+          ...(exactCompleted.has(job.id) ? { responsePath } : {}),
+        });
         repaired.push({ jobId: job.id, artifact: "metadata.json" });
       }
     } catch (error) {

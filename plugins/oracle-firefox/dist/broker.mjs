@@ -3211,13 +3211,13 @@ var init_util = __esm({
 });
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js
-var EventEmitter;
+var EventEmitter2;
 var init_EventEmitter = __esm({
   "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js"() {
     init_mitt();
     init_disposable();
     init_util();
-    EventEmitter = class {
+    EventEmitter2 = class {
       #emitter;
       #handlers = /* @__PURE__ */ new Map();
       /**
@@ -3363,7 +3363,7 @@ var init_Browser = __esm({
       // chrome-specific permissions we have.
       ["midi-sysex", "midiSysex"]
     ]);
-    Browser = class extends EventEmitter {
+    Browser = class extends EventEmitter2 {
       /**
        * @internal
        */
@@ -3645,7 +3645,7 @@ var init_BrowserContext = __esm({
     init_util();
     init_disposable();
     init_Mutex();
-    BrowserContext = class extends EventEmitter {
+    BrowserContext = class extends EventEmitter2 {
       /**
        * @internal
        */
@@ -3797,7 +3797,7 @@ var init_CDPSession = __esm({
       CDPSessionEvent2.SessionAttached = "sessionattached";
       CDPSessionEvent2.SessionDetached = "sessiondetached";
     })(CDPSessionEvent || (CDPSessionEvent = {}));
-    CDPSession = class extends EventEmitter {
+    CDPSession = class extends EventEmitter2 {
       /**
        * @internal
        */
@@ -5486,7 +5486,7 @@ var init_locators = __esm({
     (function(LocatorEvent2) {
       LocatorEvent2["Action"] = "action";
     })(LocatorEvent || (LocatorEvent = {}));
-    Locator = class extends EventEmitter {
+    Locator = class extends EventEmitter2 {
       /**
        * Creates a race between multiple locators trying to locate elements in
        * parallel but ensures that only a single element receives the action.
@@ -7660,7 +7660,7 @@ var init_Frame = __esm({
       return `Attempted to use detached Frame '${frame._id}'.`;
     });
     Frame = (() => {
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _frameElement_decorators;
       let _evaluateHandle_decorators;
@@ -9093,7 +9093,7 @@ var init_Page = __esm({
       return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
     });
     Page = (() => {
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _screenshot_decorators;
       return class Page extends _classSuper {
@@ -10719,7 +10719,7 @@ var init_WebWorker = __esm({
       WebWorkerEvent2["Console"] = "console";
       WebWorkerEvent2["Error"] = "error";
     })(WebWorkerEvent || (WebWorkerEvent = {}));
-    WebWorker = class extends EventEmitter {
+    WebWorker = class extends EventEmitter2 {
       /**
        * @internal
        */
@@ -11961,7 +11961,7 @@ var init_Connection = __esm({
     init_CdpSession();
     debugProtocolSend = debug("puppeteer:protocol:SEND \u25BA");
     debugProtocolReceive = debug("puppeteer:protocol:RECV \u25C0");
-    Connection = class extends EventEmitter {
+    Connection = class extends EventEmitter2 {
       #url;
       #transport;
       #delay;
@@ -12340,7 +12340,7 @@ var init_Coverage = __esm({
         this.#scriptURLs.clear();
         this.#scriptSources.clear();
         this.#subscriptions = new DisposableStack();
-        const clientEmitter = this.#subscriptions.use(new EventEmitter(this.#client));
+        const clientEmitter = this.#subscriptions.use(new EventEmitter2(this.#client));
         clientEmitter.on("Debugger.scriptParsed", this.#onScriptParsed.bind(this));
         clientEmitter.on("Runtime.executionContextsCleared", this.#onExecutionContextsCleared.bind(this));
         await Promise.all([
@@ -12436,7 +12436,7 @@ var init_Coverage = __esm({
         this.#stylesheetURLs.clear();
         this.#stylesheetSources.clear();
         this.#eventListeners = new DisposableStack();
-        const clientEmitter = this.#eventListeners.use(new EventEmitter(this.#client));
+        const clientEmitter = this.#eventListeners.use(new EventEmitter2(this.#client));
         clientEmitter.on("CSS.styleSheetAdded", this.#onStyleSheet.bind(this));
         clientEmitter.on("Runtime.executionContextsCleared", this.#onExecutionContextsCleared.bind(this));
         await Promise.all([
@@ -13781,7 +13781,7 @@ var init_ExecutionContext = __esm({
         return elements;
       }, ...await AsyncIterableUtil.collect(results));
     }), "");
-    ExecutionContext = class extends EventEmitter {
+    ExecutionContext = class extends EventEmitter2 {
       #client;
       #world;
       #id;
@@ -13795,7 +13795,7 @@ var init_ExecutionContext = __esm({
         if (contextPayload.name) {
           this.#name = contextPayload.name;
         }
-        const clientEmitter = this.#disposables.use(new EventEmitter(this.#client));
+        const clientEmitter = this.#disposables.use(new EventEmitter2(this.#client));
         clientEmitter.on("Runtime.bindingCalled", this.#onBindingCalled.bind(this));
         clientEmitter.on("Runtime.executionContextDestroyed", async (event) => {
           if (event.executionContextId === this.#id) {
@@ -14190,7 +14190,7 @@ var init_WebWorker2 = __esm({
         this.#client = client;
         this.#targetType = targetType;
         this.#world = new IsolatedWorld(this, new TimeoutSettings(), MAIN_WORLD);
-        this.#emitter = new EventEmitter();
+        this.#emitter = new EventEmitter2();
         this.#client.once("Runtime.executionContextCreated", async (event) => {
           this.#world.setContext(new ExecutionContext(client, event.context, this.#world));
         });
@@ -14284,7 +14284,7 @@ var init_IsolatedWorld = __esm({
     init_WebWorker2();
     IsolatedWorld = class extends Realm {
       #context;
-      #emitter = new EventEmitter();
+      #emitter = new EventEmitter2();
       #worldId;
       #origin;
       #frameOrWorker;
@@ -14490,15 +14490,15 @@ var init_LifecycleWatcher = __esm({
         });
         this.#frame = frame;
         this.#timeout = timeout2;
-        const frameManagerEmitter = this.#subscriptions.use(new EventEmitter(frame._frameManager));
+        const frameManagerEmitter = this.#subscriptions.use(new EventEmitter2(frame._frameManager));
         frameManagerEmitter.on(FrameManagerEvent.LifecycleEvent, this.#checkLifecycleComplete.bind(this));
-        const frameEmitter = this.#subscriptions.use(new EventEmitter(frame));
+        const frameEmitter = this.#subscriptions.use(new EventEmitter2(frame));
         frameEmitter.on(FrameEvent.FrameNavigatedWithinDocument, this.#navigatedWithinDocument.bind(this));
         frameEmitter.on(FrameEvent.FrameNavigated, this.#navigated.bind(this));
         frameEmitter.on(FrameEvent.FrameSwapped, this.#frameSwapped.bind(this));
         frameEmitter.on(FrameEvent.FrameSwappedByActivation, this.#frameSwapped.bind(this));
         frameEmitter.on(FrameEvent.FrameDetached, this.#onFrameDetached.bind(this));
-        const networkManagerEmitter = this.#subscriptions.use(new EventEmitter(networkManager));
+        const networkManagerEmitter = this.#subscriptions.use(new EventEmitter2(networkManager));
         networkManagerEmitter.on(NetworkManagerEvent.Request, this.#onRequest.bind(this));
         networkManagerEmitter.on(NetworkManagerEvent.Response, this.#onResponse.bind(this));
         networkManagerEmitter.on(NetworkManagerEvent.RequestFailed, this.#onRequestFailed.bind(this));
@@ -15585,7 +15585,7 @@ var init_NetworkManager = __esm({
     init_HTTPRequest2();
     init_HTTPResponse2();
     init_NetworkEventManager();
-    NetworkManager = class extends EventEmitter {
+    NetworkManager = class extends EventEmitter2 {
       #frameManager;
       #networkEventManager = new NetworkEventManager();
       #extraHTTPHeaders;
@@ -15627,7 +15627,7 @@ var init_NetworkManager = __esm({
         }
         const subscriptions = new DisposableStack();
         this.#clients.set(client, subscriptions);
-        const clientEmitter = subscriptions.use(new EventEmitter(client));
+        const clientEmitter = subscriptions.use(new EventEmitter2(client));
         for (const [event, handler] of this.#handlers) {
           clientEmitter.on(event, (arg) => {
             return handler.bind(this)(client, arg);
@@ -16111,7 +16111,7 @@ var init_FrameManager = __esm({
     init_IsolatedWorlds();
     init_NetworkManager();
     CHROME_EXTENSION_PREFIX = "chrome-extension://";
-    FrameManager = class extends EventEmitter {
+    FrameManager = class extends EventEmitter2 {
       #page;
       #networkManager;
       #timeoutSettings;
@@ -17509,7 +17509,7 @@ var init_WebMCP = __esm({
     init_EventEmitter();
     init_util();
     init_IsolatedWorlds();
-    WebMCPTool = class extends EventEmitter {
+    WebMCPTool = class extends EventEmitter2 {
       #webmcp;
       #backendNodeId;
       #formElement;
@@ -17620,7 +17620,7 @@ var init_WebMCP = __esm({
         }
       }
     };
-    WebMCP = class extends EventEmitter {
+    WebMCP = class extends EventEmitter2 {
       #client;
       #frameManager;
       #tools = /* @__PURE__ */ new Map();
@@ -17938,7 +17938,7 @@ var init_Page2 = __esm({
         this.#coverage = new Coverage(client);
         this.#viewport = null;
         this.#cdpBluetoothEmulation = new CdpBluetoothEmulation(this.#primaryTargetClient.connection());
-        const frameManagerEmitter = new EventEmitter(this.#frameManager);
+        const frameManagerEmitter = new EventEmitter2(this.#frameManager);
         frameManagerEmitter.on(FrameManagerEvent.FrameAttached, (frame) => {
           this.emit("frameattached", frame);
         });
@@ -17954,7 +17954,7 @@ var init_Page2 = __esm({
         frameManagerEmitter.on(FrameManagerEvent.BindingCalled, ([world, event]) => {
           void this.#onBindingCalled(world, event);
         });
-        const networkManagerEmitter = new EventEmitter(this.#frameManager.networkManager);
+        const networkManagerEmitter = new EventEmitter2(this.#frameManager.networkManager);
         networkManagerEmitter.on(NetworkManagerEvent.Request, (request3) => {
           this.emit("request", request3);
         });
@@ -18027,7 +18027,7 @@ var init_Page2 = __esm({
        * during a navigation to a prerended page.
        */
       #setupPrimaryTargetListeners() {
-        const clientEmitter = new EventEmitter(this.#primaryTargetClient);
+        const clientEmitter = new EventEmitter2(this.#primaryTargetClient);
         clientEmitter.on(CDPSessionEvent.Ready, this.#onAttachedToTarget);
         clientEmitter.on(CDPSessionEvent.Disconnected, () => {
           this.#sessionCloseDeferred.reject(new TargetCloseError("Target closed"));
@@ -20044,7 +20044,7 @@ var init_TargetManager = __esm({
     init_Deferred();
     init_CdpSession();
     init_Target2();
-    TargetManager = class extends EventEmitter {
+    TargetManager = class extends EventEmitter2 {
       #connection;
       /**
        * Keeps track of the following events: 'Target.targetCreated',
@@ -22569,11 +22569,11 @@ var init_mitt2 = __esm({
 });
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/EventEmitter.js
-var EventEmitter2;
+var EventEmitter3;
 var init_EventEmitter2 = __esm({
   "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/EventEmitter.js"() {
     init_mitt2();
-    EventEmitter2 = class {
+    EventEmitter3 = class {
       #emitter = mitt_default2();
       on(type, handler) {
         this.#emitter.on(type, handler);
@@ -27532,7 +27532,7 @@ var init_CommandProcessor = __esm({
     init_StorageProcessor();
     init_WebExtensionProcessor();
     init_OutgoingMessage();
-    CommandProcessor = class extends EventEmitter2 {
+    CommandProcessor = class extends EventEmitter3 {
       // keep-sorted start
       #bluetoothProcessor;
       #browserCdpClient;
@@ -33105,7 +33105,7 @@ var init_BrowsingContextStorage = __esm({
       #contexts = /* @__PURE__ */ new Map();
       /** Event emitter for browsing context storage eventsis not expected to be exposed to
        * the outside world. */
-      #eventEmitter = new EventEmitter2();
+      #eventEmitter = new EventEmitter3();
       /** Gets all top-level contexts, i.e. those with no parent. */
       getTopLevelContexts() {
         return this.getAllContexts().filter((context2) => context2.isTopLevelContext());
@@ -33666,7 +33666,7 @@ var init_EventManager = __esm({
       }
     };
     eventBufferLength = /* @__PURE__ */ new Map([[chromium_bidi_exports.Log.EventNames.LogEntryAdded, 100]]);
-    EventManager = class extends EventEmitter2 {
+    EventManager = class extends EventEmitter3 {
       /**
        * Maps event name to a set of contexts where this event already happened.
        * Needed for getting buffered events from all the contexts in case of
@@ -33928,7 +33928,7 @@ var init_BidiServer = __esm({
     init_RealmStorage();
     init_EventManager();
     init_SpeculationProcessor();
-    BidiServer = class _BidiServer extends EventEmitter2 {
+    BidiServer = class _BidiServer extends EventEmitter3 {
       #messageQueue;
       #transport;
       #commandProcessor;
@@ -34053,7 +34053,7 @@ var init_BidiServer = __esm({
 var BidiMapper_exports = {};
 __export(BidiMapper_exports, {
   BidiServer: () => BidiServer,
-  EventEmitter: () => EventEmitter2,
+  EventEmitter: () => EventEmitter3,
   OutgoingMessage: () => OutgoingMessage
 });
 var init_BidiMapper = __esm({
@@ -34181,7 +34181,7 @@ var init_Connection2 = __esm({
     init_CDPSession2();
     debugProtocolSend2 = debug("puppeteer:webDriverBiDi:SEND \u25BA");
     debugProtocolReceive2 = debug("puppeteer:webDriverBiDi:RECV \u25C0");
-    BidiConnection = class extends EventEmitter {
+    BidiConnection = class extends EventEmitter2 {
       #url;
       #transport;
       #delay;
@@ -34604,7 +34604,7 @@ var init_Navigation = __esm({
     };
     Navigation = (() => {
       var _a10;
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
       return class Navigation2 extends _classSuper {
@@ -34628,7 +34628,7 @@ var init_Navigation = __esm({
           this.#browsingContext = context2;
         }
         #initialize() {
-          const browsingContextEmitter = this.#disposables.use(new EventEmitter(this.#browsingContext));
+          const browsingContextEmitter = this.#disposables.use(new EventEmitter2(this.#browsingContext));
           browsingContextEmitter.once("closed", () => {
             this.emit("failed", {
               url: this.#browsingContext.url,
@@ -34644,12 +34644,12 @@ var init_Navigation = __esm({
             }
             this.#request = request3;
             this.emit("request", request3);
-            const requestEmitter = this.#disposables.use(new EventEmitter(this.#request));
+            const requestEmitter = this.#disposables.use(new EventEmitter2(this.#request));
             requestEmitter.on("redirect", (request4) => {
               this.#request = request4;
             });
           });
-          const sessionEmitter = this.#disposables.use(new EventEmitter(this.#session));
+          const sessionEmitter = this.#disposables.use(new EventEmitter2(this.#session));
           sessionEmitter.on("browsingContext.navigationStarted", (info) => {
             if (info.context !== this.#browsingContext.id || this.#navigation !== void 0) {
               return;
@@ -34768,7 +34768,7 @@ var init_Realm3 = __esm({
       done = true;
     };
     Realm3 = (() => {
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
       let _disown_decorators;
@@ -34867,11 +34867,11 @@ var init_Realm3 = __esm({
         this.sandbox = sandbox;
       }
       #initialize() {
-        const browsingContextEmitter = this.disposables.use(new EventEmitter(this.browsingContext));
+        const browsingContextEmitter = this.disposables.use(new EventEmitter2(this.browsingContext));
         browsingContextEmitter.on("closed", (reason) => {
           this.dispose(reason);
         });
-        const sessionEmitter = this.disposables.use(new EventEmitter(this.session));
+        const sessionEmitter = this.disposables.use(new EventEmitter2(this.session));
         sessionEmitter.on("script.realmCreated", (info) => {
           if (info.type !== "window" || info.context !== this.browsingContext.id || info.sandbox !== this.sandbox) {
             return;
@@ -34890,7 +34890,7 @@ var init_Realm3 = __esm({
           }
           const realm = DedicatedWorkerRealm.from(this, info.realm, info.origin);
           this.#workers.set(realm.id, realm);
-          const realmEmitter = this.disposables.use(new EventEmitter(realm));
+          const realmEmitter = this.disposables.use(new EventEmitter2(realm));
           realmEmitter.once("destroyed", () => {
             realmEmitter.removeAllListeners();
             this.#workers.delete(realm.id);
@@ -34924,7 +34924,7 @@ var init_Realm3 = __esm({
         this.owners = /* @__PURE__ */ new Set([owner]);
       }
       #initialize() {
-        const sessionEmitter = this.disposables.use(new EventEmitter(this.session));
+        const sessionEmitter = this.disposables.use(new EventEmitter2(this.session));
         sessionEmitter.on("script.realmDestroyed", (info) => {
           if (info.realm !== this.id) {
             return;
@@ -34940,7 +34940,7 @@ var init_Realm3 = __esm({
           }
           const realm = _a7.from(this, info.realm, info.origin);
           this.#workers.set(realm.id, realm);
-          const realmEmitter = this.disposables.use(new EventEmitter(realm));
+          const realmEmitter = this.disposables.use(new EventEmitter2(realm));
           realmEmitter.once("destroyed", () => {
             this.#workers.delete(realm.id);
           });
@@ -34971,7 +34971,7 @@ var init_Realm3 = __esm({
         this.browser = browser;
       }
       #initialize() {
-        const sessionEmitter = this.disposables.use(new EventEmitter(this.session));
+        const sessionEmitter = this.disposables.use(new EventEmitter2(this.session));
         sessionEmitter.on("script.realmDestroyed", (info) => {
           if (info.realm !== this.id) {
             return;
@@ -34987,7 +34987,7 @@ var init_Realm3 = __esm({
           }
           const realm = DedicatedWorkerRealm.from(this, info.realm, info.origin);
           this.#workers.set(realm.id, realm);
-          const realmEmitter = this.disposables.use(new EventEmitter(realm));
+          const realmEmitter = this.disposables.use(new EventEmitter2(realm));
           realmEmitter.once("destroyed", () => {
             this.#workers.delete(realm.id);
           });
@@ -35057,7 +35057,7 @@ var init_Request = __esm({
     };
     Request = (() => {
       var _a10;
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
       return class Request2 extends _classSuper {
@@ -35085,13 +35085,13 @@ var init_Request = __esm({
           this.#event = event;
         }
         #initialize() {
-          const browsingContextEmitter = this.#disposables.use(new EventEmitter(this.#browsingContext));
+          const browsingContextEmitter = this.#disposables.use(new EventEmitter2(this.#browsingContext));
           browsingContextEmitter.once("closed", (reason) => {
             this.#error = reason;
             this.emit("error", reason);
             this.dispose();
           });
-          const sessionEmitter = this.#disposables.use(new EventEmitter(this.#session));
+          const sessionEmitter = this.#disposables.use(new EventEmitter2(this.#session));
           sessionEmitter.on("network.beforeRequestSent", (event) => {
             if (event.context !== this.#browsingContext.id || event.request.request !== this.id) {
               return;
@@ -35345,7 +35345,7 @@ var init_UserPrompt = __esm({
       done = true;
     };
     UserPrompt = (() => {
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
       let _handle_decorators;
@@ -35372,11 +35372,11 @@ var init_UserPrompt = __esm({
           this.info = info;
         }
         #initialize() {
-          const browserContextEmitter = this.#disposables.use(new EventEmitter(this.browsingContext));
+          const browserContextEmitter = this.#disposables.use(new EventEmitter2(this.browsingContext));
           browserContextEmitter.once("closed", (reason) => {
             this.dispose(`User prompt already closed: ${reason}`);
           });
-          const sessionEmitter = this.#disposables.use(new EventEmitter(this.#session));
+          const sessionEmitter = this.#disposables.use(new EventEmitter2(this.#session));
           sessionEmitter.on("browsingContext.userPromptClosed", (parameters) => {
             if (parameters.context !== this.browsingContext.id) {
               return;
@@ -35484,7 +35484,7 @@ var init_BrowsingContext = __esm({
     };
     BrowsingContext2 = (() => {
       var _a10;
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
       let _activate_decorators;
@@ -35590,11 +35590,11 @@ var init_BrowsingContext = __esm({
           this.#deviceRequestPromptManager = new BidiDeviceRequestPromptManager(this.id, this.#session);
         }
         #initialize() {
-          const userContextEmitter = this.#disposables.use(new EventEmitter(this.userContext));
+          const userContextEmitter = this.#disposables.use(new EventEmitter2(this.userContext));
           userContextEmitter.once("closed", (reason) => {
             this.dispose(`Browsing context already closed: ${reason}`);
           });
-          const sessionEmitter = this.#disposables.use(new EventEmitter(this.#session));
+          const sessionEmitter = this.#disposables.use(new EventEmitter2(this.#session));
           sessionEmitter.on("input.fileDialogOpened", (info) => {
             if (this.id !== info.context) {
               return;
@@ -35607,7 +35607,7 @@ var init_BrowsingContext = __esm({
             }
             const browsingContext = BrowsingContext3.from(this.userContext, this, info.context, info.url, info.originalOpener, info.clientWindow);
             this.#children.set(info.context, browsingContext);
-            const browsingContextEmitter = this.#disposables.use(new EventEmitter(browsingContext));
+            const browsingContextEmitter = this.#disposables.use(new EventEmitter2(browsingContext));
             browsingContextEmitter.once("closed", () => {
               browsingContextEmitter.removeAllListeners();
               this.#children.delete(browsingContext.id);
@@ -35649,7 +35649,7 @@ var init_BrowsingContext = __esm({
               return;
             }
             this.#navigation = Navigation.from(this);
-            const navigationEmitter = this.#disposables.use(new EventEmitter(this.#navigation));
+            const navigationEmitter = this.#disposables.use(new EventEmitter2(this.#navigation));
             for (const eventName of ["fragment", "failed", "aborted"]) {
               navigationEmitter.once(eventName, ({ url }) => {
                 navigationEmitter[disposeSymbol]();
@@ -36069,7 +36069,7 @@ var init_UserContext = __esm({
       done = true;
     };
     UserContext = (() => {
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
       let _createBrowsingContext_decorators;
@@ -36106,14 +36106,14 @@ var init_UserContext = __esm({
           this.browser = browser;
         }
         #initialize() {
-          const browserEmitter = this.#disposables.use(new EventEmitter(this.browser));
+          const browserEmitter = this.#disposables.use(new EventEmitter2(this.browser));
           browserEmitter.once("closed", (reason) => {
             this.dispose(`User context was closed: ${reason}`);
           });
           browserEmitter.once("disconnected", (reason) => {
             this.dispose(`User context was closed: ${reason}`);
           });
-          const sessionEmitter = this.#disposables.use(new EventEmitter(this.#session));
+          const sessionEmitter = this.#disposables.use(new EventEmitter2(this.#session));
           sessionEmitter.on("browsingContext.contextCreated", (info) => {
             if (info.parent) {
               return;
@@ -36123,7 +36123,7 @@ var init_UserContext = __esm({
             }
             const browsingContext = BrowsingContext2.from(this, void 0, info.context, info.url, info.originalOpener, info.clientWindow);
             this.#browsingContexts.set(browsingContext.id, browsingContext);
-            const browsingContextEmitter = this.#disposables.use(new EventEmitter(browsingContext));
+            const browsingContextEmitter = this.#disposables.use(new EventEmitter2(browsingContext));
             browsingContextEmitter.on("closed", () => {
               browsingContextEmitter.removeAllListeners();
               this.#browsingContexts.delete(browsingContext.id);
@@ -36705,7 +36705,7 @@ var init_ExposedFunction = __esm({
             ownership: "root"
           }
         };
-        const connectionEmitter = this.#disposables.use(new EventEmitter(connection));
+        const connectionEmitter = this.#disposables.use(new EventEmitter2(connection));
         connectionEmitter.on("script.message", this.#handleMessage);
         const functionDeclaration = stringifyFunction(interpolateFunction((callback) => {
           Object.assign(globalThis, {
@@ -39181,7 +39181,7 @@ var init_Page3 = __esm({
           page.#initialize();
           return page;
         }
-        #trustedEmitter_accessor_storage = __runInitializers17(this, _trustedEmitter_initializers, new EventEmitter());
+        #trustedEmitter_accessor_storage = __runInitializers17(this, _trustedEmitter_initializers, new EventEmitter2());
         get trustedEmitter() {
           return this.#trustedEmitter_accessor_storage;
         }
@@ -40078,7 +40078,7 @@ var init_BrowserContext3 = __esm({
           context2.#initialize();
           return context2;
         }
-        #trustedEmitter_accessor_storage = __runInitializers18(this, _trustedEmitter_initializers, new EventEmitter());
+        #trustedEmitter_accessor_storage = __runInitializers18(this, _trustedEmitter_initializers, new EventEmitter2());
         get trustedEmitter() {
           return this.#trustedEmitter_accessor_storage;
         }
@@ -40435,7 +40435,7 @@ var init_Browser3 = __esm({
       return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
     });
     Browser2 = (() => {
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _dispose_decorators;
       let _close_decorators;
@@ -40478,7 +40478,7 @@ var init_Browser3 = __esm({
           this.session = session;
         }
         async #initialize() {
-          const sessionEmitter = this.#disposables.use(new EventEmitter(this.session));
+          const sessionEmitter = this.#disposables.use(new EventEmitter2(this.session));
           sessionEmitter.once("ended", (reason) => {
             this.dispose(reason);
           });
@@ -40503,7 +40503,7 @@ var init_Browser3 = __esm({
           {
             const env_1 = { stack: [], error: void 0, hasError: false };
             try {
-              const sessionEmitter = __addDisposableResource19(env_1, new EventEmitter(this.session), false);
+              const sessionEmitter = __addDisposableResource19(env_1, new EventEmitter2(this.session), false);
               sessionEmitter.on("browsingContext.contextCreated", (info) => {
                 contextIds.add(info.context);
               });
@@ -40528,7 +40528,7 @@ var init_Browser3 = __esm({
         #createUserContext(id) {
           const userContext = UserContext.create(this, id);
           this.#userContexts.set(userContext.id, userContext);
-          const userContextEmitter = this.#disposables.use(new EventEmitter(userContext));
+          const userContextEmitter = this.#disposables.use(new EventEmitter2(userContext));
           userContextEmitter.once("closed", () => {
             userContextEmitter.removeAllListeners();
             this.#userContexts.delete(userContext.id);
@@ -40717,7 +40717,7 @@ var init_Session = __esm({
       done = true;
     };
     Session = (() => {
-      let _classSuper = EventEmitter;
+      let _classSuper = EventEmitter2;
       let _instanceExtraInitializers = [];
       let _connection_decorators;
       let _connection_initializers = [];
@@ -40991,7 +40991,7 @@ var init_Browser4 = __esm({
           browser.#initialize();
           return browser;
         }
-        #trustedEmitter_accessor_storage = __runInitializers21(this, _private_trustedEmitter_initializers, new EventEmitter());
+        #trustedEmitter_accessor_storage = __runInitializers21(this, _private_trustedEmitter_initializers, new EventEmitter2());
         get #trustedEmitter() {
           return _private_trustedEmitter_descriptor.get.call(this);
         }
@@ -43539,7 +43539,7 @@ var require_websocket = __commonJS({
     var http2 = __require("http");
     var net4 = __require("net");
     var tls = __require("tls");
-    var { randomBytes: randomBytes3, createHash: createHash10 } = __require("crypto");
+    var { randomBytes: randomBytes3, createHash: createHash11 } = __require("crypto");
     var { Duplex, Readable: Readable2 } = __require("stream");
     var { URL: URL3 } = __require("url");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -44207,7 +44207,7 @@ var require_websocket = __commonJS({
           abortHandshake(websocket, socket, "Invalid Upgrade header");
           return;
         }
-        const digest2 = createHash10("sha1").update(key + GUID).digest("base64");
+        const digest2 = createHash11("sha1").update(key + GUID).digest("base64");
         if (res.headers["sec-websocket-accept"] !== digest2) {
           abortHandshake(websocket, socket, "Invalid Sec-WebSocket-Accept header");
           return;
@@ -44576,7 +44576,7 @@ var require_websocket_server = __commonJS({
     var EventEmitter5 = __require("events");
     var http2 = __require("http");
     var { Duplex } = __require("stream");
-    var { createHash: createHash10 } = __require("crypto");
+    var { createHash: createHash11 } = __require("crypto");
     var extension2 = require_extension();
     var PerMessageDeflate2 = require_permessage_deflate();
     var subprotocol2 = require_subprotocol();
@@ -44883,7 +44883,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (this._state > RUNNING) return abortHandshake(socket, 503);
-        const digest2 = createHash10("sha1").update(key + GUID).digest("base64");
+        const digest2 = createHash11("sha1").update(key + GUID).digest("base64");
         const headers = [
           "HTTP/1.1 101 Switching Protocols",
           "Upgrade: websocket",
@@ -45089,7 +45089,7 @@ var init_types = __esm({
 });
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/httpUtil.js
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash7 } from "node:crypto";
 import { createWriteStream, unlinkSync } from "node:fs";
 import * as http from "node:http";
 import * as https from "node:https";
@@ -45222,7 +45222,7 @@ var HashVerifier;
 var init_httpUtil = __esm({
   "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/httpUtil.js"() {
     HashVerifier = class {
-      #hash = createHash3("sha256");
+      #hash = createHash7("sha256");
       update(chunk) {
         this.#hash.update(chunk);
       }
@@ -45246,7 +45246,7 @@ var init_httpUtil = __esm({
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome.js
 import { execSync } from "node:child_process";
 import os3 from "node:os";
-import path6 from "node:path";
+import path7 from "node:path";
 function folder(platform) {
   switch (platform) {
     case BrowserPlatform.LINUX_ARM:
@@ -45272,13 +45272,13 @@ function relativeExecutablePath(platform, _buildId) {
   switch (platform) {
     case BrowserPlatform.MAC:
     case BrowserPlatform.MAC_ARM:
-      return path6.join("chrome-" + folder(platform), "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing");
+      return path7.join("chrome-" + folder(platform), "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing");
     case BrowserPlatform.LINUX_ARM:
     case BrowserPlatform.LINUX:
-      return path6.join("chrome-linux64", "chrome");
+      return path7.join("chrome-linux64", "chrome");
     case BrowserPlatform.WIN32:
     case BrowserPlatform.WIN64:
-      return path6.join("chrome-" + folder(platform), "chrome.exe");
+      return path7.join("chrome-" + folder(platform), "chrome.exe");
   }
 }
 async function getLastKnownGoodReleaseForChannel(channel) {
@@ -45329,7 +45329,7 @@ function getChromeWindowsLocation(channel, locationsPrefixes) {
       break;
   }
   return [...locationsPrefixes.values()].map((l) => {
-    return path6.win32.join(l, suffix);
+    return path7.win32.join(l, suffix);
   });
 }
 function getWslVariable(variable) {
@@ -45437,48 +45437,48 @@ function resolveDefaultUserDataDir(platform, channel) {
     case BrowserPlatform.WIN32:
       switch (channel) {
         case ChromeReleaseChannel.STABLE:
-          return path6.join(getLocalAppDataWin(), "Google", "Chrome", "User Data");
+          return path7.join(getLocalAppDataWin(), "Google", "Chrome", "User Data");
         case ChromeReleaseChannel.BETA:
-          return path6.join(getLocalAppDataWin(), "Google", "Chrome Beta", "User Data");
+          return path7.join(getLocalAppDataWin(), "Google", "Chrome Beta", "User Data");
         case ChromeReleaseChannel.CANARY:
-          return path6.join(getLocalAppDataWin(), "Google", "Chrome SxS", "User Data");
+          return path7.join(getLocalAppDataWin(), "Google", "Chrome SxS", "User Data");
         case ChromeReleaseChannel.DEV:
-          return path6.join(getLocalAppDataWin(), "Google", "Chrome Dev", "User Data");
+          return path7.join(getLocalAppDataWin(), "Google", "Chrome Dev", "User Data");
       }
     case BrowserPlatform.MAC_ARM:
     case BrowserPlatform.MAC:
       switch (channel) {
         case ChromeReleaseChannel.STABLE:
-          return path6.join(getBaseUserDataDirPathMac(), "Chrome");
+          return path7.join(getBaseUserDataDirPathMac(), "Chrome");
         case ChromeReleaseChannel.BETA:
-          return path6.join(getBaseUserDataDirPathMac(), "Chrome Beta");
+          return path7.join(getBaseUserDataDirPathMac(), "Chrome Beta");
         case ChromeReleaseChannel.DEV:
-          return path6.join(getBaseUserDataDirPathMac(), "Chrome Dev");
+          return path7.join(getBaseUserDataDirPathMac(), "Chrome Dev");
         case ChromeReleaseChannel.CANARY:
-          return path6.join(getBaseUserDataDirPathMac(), "Chrome Canary");
+          return path7.join(getBaseUserDataDirPathMac(), "Chrome Canary");
       }
     case BrowserPlatform.LINUX_ARM:
     case BrowserPlatform.LINUX:
       switch (channel) {
         case ChromeReleaseChannel.STABLE:
-          return path6.join(getConfigHomeLinux(), "google-chrome");
+          return path7.join(getConfigHomeLinux(), "google-chrome");
         case ChromeReleaseChannel.BETA:
-          return path6.join(getConfigHomeLinux(), "google-chrome-beta");
+          return path7.join(getConfigHomeLinux(), "google-chrome-beta");
         case ChromeReleaseChannel.CANARY:
-          return path6.join(getConfigHomeLinux(), "google-chrome-canary");
+          return path7.join(getConfigHomeLinux(), "google-chrome-canary");
         case ChromeReleaseChannel.DEV:
-          return path6.join(getConfigHomeLinux(), "google-chrome-unstable");
+          return path7.join(getConfigHomeLinux(), "google-chrome-unstable");
       }
   }
 }
 function getLocalAppDataWin() {
-  return process.env["LOCALAPPDATA"] || path6.join(os3.homedir(), "AppData", "Local");
+  return process.env["LOCALAPPDATA"] || path7.join(os3.homedir(), "AppData", "Local");
 }
 function getConfigHomeLinux() {
-  return process.env["CHROME_CONFIG_HOME"] || process.env["XDG_CONFIG_HOME"] || path6.join(os3.homedir(), ".config");
+  return process.env["CHROME_CONFIG_HOME"] || process.env["XDG_CONFIG_HOME"] || path7.join(os3.homedir(), ".config");
 }
 function getBaseUserDataDirPathMac() {
-  return path6.join(os3.homedir(), "Library", "Application Support", "Google");
+  return path7.join(os3.homedir(), "Library", "Application Support", "Google");
 }
 function compareVersions(a2, b2) {
   const cleanA = a2.trim();
@@ -45521,7 +45521,7 @@ var init_chrome = __esm({
 });
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js
-import path7 from "node:path";
+import path8 from "node:path";
 function folder2(platform) {
   switch (platform) {
     case BrowserPlatform.LINUX_ARM:
@@ -45551,13 +45551,13 @@ function relativeExecutablePath2(platform, _buildId) {
   switch (platform) {
     case BrowserPlatform.MAC:
     case BrowserPlatform.MAC_ARM:
-      return path7.join("chrome-headless-shell-" + folder2(platform), "chrome-headless-shell");
+      return path8.join("chrome-headless-shell-" + folder2(platform), "chrome-headless-shell");
     case BrowserPlatform.LINUX_ARM:
     case BrowserPlatform.LINUX:
-      return path7.join("chrome-headless-shell-linux64", "chrome-headless-shell");
+      return path8.join("chrome-headless-shell-linux64", "chrome-headless-shell");
     case BrowserPlatform.WIN32:
     case BrowserPlatform.WIN64:
-      return path7.join("chrome-headless-shell-" + folder2(platform), "chrome-headless-shell.exe");
+      return path8.join("chrome-headless-shell-" + folder2(platform), "chrome-headless-shell.exe");
   }
 }
 var init_chrome_headless_shell = __esm({
@@ -45568,7 +45568,7 @@ var init_chrome_headless_shell = __esm({
 });
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js
-import path8 from "node:path";
+import path9 from "node:path";
 function folder3(platform) {
   switch (platform) {
     case BrowserPlatform.LINUX_ARM:
@@ -45594,13 +45594,13 @@ function relativeExecutablePath3(platform, _buildId) {
   switch (platform) {
     case BrowserPlatform.MAC:
     case BrowserPlatform.MAC_ARM:
-      return path8.join("chromedriver-" + folder3(platform), "chromedriver");
+      return path9.join("chromedriver-" + folder3(platform), "chromedriver");
     case BrowserPlatform.LINUX_ARM:
     case BrowserPlatform.LINUX:
-      return path8.join("chromedriver-linux64", "chromedriver");
+      return path9.join("chromedriver-linux64", "chromedriver");
     case BrowserPlatform.WIN32:
     case BrowserPlatform.WIN64:
-      return path8.join("chromedriver-" + folder3(platform), "chromedriver.exe");
+      return path9.join("chromedriver-" + folder3(platform), "chromedriver.exe");
   }
 }
 var init_chromedriver = __esm({
@@ -45611,7 +45611,7 @@ var init_chromedriver = __esm({
 });
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromium.js
-import path9 from "node:path";
+import path10 from "node:path";
 function archive(platform, buildId) {
   switch (platform) {
     case BrowserPlatform.LINUX_ARM:
@@ -45650,13 +45650,13 @@ function relativeExecutablePath4(platform, _buildId) {
   switch (platform) {
     case BrowserPlatform.MAC:
     case BrowserPlatform.MAC_ARM:
-      return path9.join("chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium");
+      return path10.join("chrome-mac", "Chromium.app", "Contents", "MacOS", "Chromium");
     case BrowserPlatform.LINUX_ARM:
     case BrowserPlatform.LINUX:
-      return path9.join("chrome-linux", "chrome");
+      return path10.join("chrome-linux", "chrome");
     case BrowserPlatform.WIN32:
     case BrowserPlatform.WIN64:
-      return path9.join("chrome-win", "chrome.exe");
+      return path10.join("chrome-win", "chrome.exe");
   }
 }
 async function resolveBuildId2(platform) {
@@ -45674,7 +45674,7 @@ var init_chromium = __esm({
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/firefox.js
 import fs2 from "node:fs";
-import path10 from "node:path";
+import path11 from "node:path";
 function getFormat(buildId) {
   const majorVersion = Number(buildId.split(".").shift());
   return majorVersion >= 135 ? "xz" : "bz2";
@@ -45770,13 +45770,13 @@ function relativeExecutablePath5(platform, buildId) {
       switch (platform) {
         case BrowserPlatform.MAC_ARM:
         case BrowserPlatform.MAC:
-          return path10.join("Firefox Nightly.app", "Contents", "MacOS", "firefox");
+          return path11.join("Firefox Nightly.app", "Contents", "MacOS", "firefox");
         case BrowserPlatform.LINUX_ARM:
         case BrowserPlatform.LINUX:
-          return path10.join("firefox", "firefox");
+          return path11.join("firefox", "firefox");
         case BrowserPlatform.WIN32:
         case BrowserPlatform.WIN64:
-          return path10.join("firefox", "firefox.exe");
+          return path11.join("firefox", "firefox.exe");
       }
     case FirefoxChannel.BETA:
     case FirefoxChannel.DEVEDITION:
@@ -45785,13 +45785,13 @@ function relativeExecutablePath5(platform, buildId) {
       switch (platform) {
         case BrowserPlatform.MAC_ARM:
         case BrowserPlatform.MAC:
-          return path10.join("Firefox.app", "Contents", "MacOS", "firefox");
+          return path11.join("Firefox.app", "Contents", "MacOS", "firefox");
         case BrowserPlatform.LINUX_ARM:
         case BrowserPlatform.LINUX:
-          return path10.join("firefox", "firefox");
+          return path11.join("firefox", "firefox");
         case BrowserPlatform.WIN32:
         case BrowserPlatform.WIN64:
-          return path10.join("core", "firefox.exe");
+          return path11.join("core", "firefox.exe");
       }
   }
 }
@@ -45993,8 +45993,8 @@ async function backupFile(input2) {
   await fs2.promises.copyFile(input2, input2 + ".puppeteer");
 }
 async function syncPreferences(options) {
-  const prefsPath = path10.join(options.path, "prefs.js");
-  const userPath = path10.join(options.path, "user.js");
+  const prefsPath = path11.join(options.path, "prefs.js");
+  const userPath = path11.join(options.path, "user.js");
   const lines = Object.entries(options.preferences).map(([key, value]) => {
     return `user_pref(${JSON.stringify(key)}, ${JSON.stringify(value)});`;
   });
@@ -46269,9 +46269,9 @@ var init_detectPlatform = __esm({
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/Cache.js
 import fs3 from "node:fs";
 import os5 from "node:os";
-import path11 from "node:path";
+import path12 from "node:path";
 function parseFolderPath(folderPath) {
-  const name = path11.basename(folderPath);
+  const name = path12.basename(folderPath);
   const splits = name.split("-");
   if (splits.length !== 2) {
     return;
@@ -46335,10 +46335,10 @@ var init_Cache = __esm({
         return this.#rootDir;
       }
       browserRoot(browser) {
-        return path11.join(this.#rootDir, browser);
+        return path12.join(this.#rootDir, browser);
       }
       metadataFile(browser) {
-        return path11.join(this.browserRoot(browser), ".metadata");
+        return path12.join(this.browserRoot(browser), ".metadata");
       }
       readMetadata(browser) {
         const metatadaPath = this.metadataFile(browser);
@@ -46353,7 +46353,7 @@ var init_Cache = __esm({
       }
       writeMetadata(browser, metadata) {
         const metatadaPath = this.metadataFile(browser);
-        fs3.mkdirSync(path11.dirname(metatadaPath), { recursive: true });
+        fs3.mkdirSync(path12.dirname(metatadaPath), { recursive: true });
         fs3.writeFileSync(metatadaPath, JSON.stringify(metadata, null, 2));
       }
       readExecutablePath(browser, platform, buildId) {
@@ -46378,7 +46378,7 @@ var init_Cache = __esm({
         return metadata.aliases[alias];
       }
       installationDir(browser, platform, buildId) {
-        return path11.join(this.browserRoot(browser), `${platform}-${buildId}`);
+        return path12.join(this.browserRoot(browser), `${platform}-${buildId}`);
       }
       clear() {
         fs3.rmSync(this.#rootDir, {
@@ -46418,7 +46418,7 @@ var init_Cache = __esm({
         return browsers.flatMap((browser) => {
           const files = fs3.readdirSync(this.browserRoot(browser));
           return files.map((file) => {
-            const result = parseFolderPath(path11.join(this.browserRoot(browser), file));
+            const result = parseFolderPath(path12.join(this.browserRoot(browser), file));
             if (!result) {
               return null;
             }
@@ -46441,9 +46441,9 @@ var init_Cache = __esm({
         const installationDir = this.installationDir(options.browser, options.platform, options.buildId);
         const storedExecutablePath = this.readExecutablePath(options.browser, options.platform, options.buildId);
         if (storedExecutablePath) {
-          return path11.join(installationDir, storedExecutablePath);
+          return path12.join(installationDir, storedExecutablePath);
         }
-        return path11.join(installationDir, executablePathByBrowser[options.browser](options.platform, options.buildId));
+        return path12.join(installationDir, executablePathByBrowser[options.browser](options.platform, options.buildId));
       }
     };
   }
@@ -46451,7 +46451,7 @@ var init_Cache = __esm({
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/launch.js
 import childProcess from "node:child_process";
-import { EventEmitter as EventEmitter3 } from "node:events";
+import { EventEmitter as EventEmitter4 } from "node:events";
 import { accessSync } from "node:fs";
 import os6 from "node:os";
 import readline from "node:readline";
@@ -46571,7 +46571,7 @@ var init_launch = __esm({
       #browserProcessExiting;
       #logs = [];
       #maxLogLinesSize = 1e3;
-      #lineEmitter = new EventEmitter3();
+      #lineEmitter = new EventEmitter4();
       #onAbort = () => {
         this.kill();
       };
@@ -47495,12 +47495,12 @@ __export(fs_exports, {
 import * as fs4 from "node:fs";
 import * as fsp from "node:fs/promises";
 import { cpus } from "node:os";
-import * as path12 from "node:path";
+import * as path13 from "node:path";
 import { Readable, Writable } from "node:stream";
 function validateBounds(targetPath, destDir, errorMessage) {
-  const target = path12.resolve(targetPath);
-  const dest = path12.resolve(destDir);
-  if (target !== dest && !target.startsWith(dest + path12.sep)) throw new Error(errorMessage);
+  const target = path13.resolve(targetPath);
+  const dest = path13.resolve(destDir);
+  if (target !== dest && !target.startsWith(dest + path13.sep)) throw new Error(errorMessage);
 }
 function normalizeName(name) {
   const path31 = name.replace(/\\/g, "/");
@@ -47521,14 +47521,14 @@ function packTar(sources, options = {}) {
     let realBaseDir;
     let jobs;
     if (typeof sources === "string") {
-      const source2 = path12.resolve(sources);
+      const source2 = path13.resolve(sources);
       directoryPath = source2;
       const before = await fsp.stat(source2, BIGINT_STAT);
       const entries = await fsp.readdir(source2, WITH_FILE_TYPES);
       const after = await fsp.stat(source2, BIGINT_STAT);
       jobs = before.dev === after.dev && before.ino === after.ino ? entries.map((entry) => ({
         type: entry.isDirectory() ? DIRECTORY : FILE,
-        source: path12.join(source2, entry.name),
+        source: path13.join(source2, entry.name),
         target: entry.name
       })) : [];
     } else jobs = sources.map((source2) => ({ ...source2 }));
@@ -47656,8 +47656,8 @@ function packTar(sources, options = {}) {
         let stat9 = await fsp.lstat(source2, BIGINT_STAT);
         if (dereference && stat9.isSymbolicLink()) {
           source2 = await fsp.realpath(source2);
-          const relativeToBase = path12.relative(realBaseDir ??= await fsp.realpath(baseDir ?? directoryPath ?? process.cwd()), source2);
-          if (relativeToBase === ".." || relativeToBase.startsWith(".." + path12.sep) || path12.isAbsolute(relativeToBase)) return;
+          const relativeToBase = path13.relative(realBaseDir ??= await fsp.realpath(baseDir ?? directoryPath ?? process.cwd()), source2);
+          if (relativeToBase === ".." || relativeToBase.startsWith(".." + path13.sep) || path13.isAbsolute(relativeToBase)) return;
           stat9 = await fsp.lstat(source2, BIGINT_STAT);
           if (stat9.isSymbolicLink()) return;
         }
@@ -47683,7 +47683,7 @@ function packTar(sources, options = {}) {
             if (!after.isDirectory() || stat9.dev !== after.dev || stat9.ino !== after.ino) return;
             for (const d of entries) jobs.push({
               type: d.isDirectory() ? DIRECTORY : FILE,
-              source: path12.join(source2, d.name),
+              source: path13.join(source2, d.name),
               target: `${header.name}${d.name}`
             });
           } catch {
@@ -48117,12 +48117,12 @@ var init_fs = __esm({
       let symlinks;
       const realDirCache = createCache();
       const initializeDestDir = async (destDirPath2) => {
-        const symbolic = path12.resolve(destDirPath2);
+        const symbolic = path13.resolve(destDirPath2);
         try {
           await fsp.mkdir(symbolic, { recursive: true });
         } catch (err) {
           if (err.code === ENOENT) {
-            const parentDir = path12.dirname(symbolic);
+            const parentDir = path13.dirname(symbolic);
             if (parentDir === symbolic) throw err;
             await fsp.mkdir(parentDir, { recursive: true });
             await fsp.mkdir(symbolic, { recursive: true });
@@ -48162,7 +48162,7 @@ var init_fs = __esm({
         if (promise) return promise;
         promise = (async () => {
           if (dirPath === (await destDirPromise).symbolic) return;
-          await prepareDirectory(path12.dirname(dirPath));
+          await prepareDirectory(path13.dirname(dirPath));
           try {
             const stat9 = await fsp.lstat(dirPath);
             if (stat9.isDirectory()) return;
@@ -48193,7 +48193,7 @@ var init_fs = __esm({
           const { name, linkname, type, mode, mtime } = header;
           const normalizedName = normalizeHeaderName(name);
           const destDir = await destDirPromise;
-          const outPath = path12.join(destDir.symbolic, normalizedName);
+          const outPath = path13.join(destDir.symbolic, normalizedName);
           if (maxDepth !== Infinity) {
             let depth = 1;
             for (const char of normalizedName) if (char === "/" && ++depth > maxDepth) throw new Error("Tar exceeds max specified depth.");
@@ -48203,7 +48203,7 @@ var init_fs = __esm({
             if (prevOp === "directory" && type !== "directory" || prevOp !== "directory" && type === "directory") throw new Error(`Path conflict ${type} over existing ${prevOp} at "${name}"`);
             return;
           }
-          const parentDir = path12.dirname(outPath);
+          const parentDir = path13.dirname(outPath);
           switch (type) {
             case DIRECTORY: {
               pathConflicts.set(normalizedName, DIRECTORY);
@@ -48216,16 +48216,16 @@ var init_fs = __esm({
             case FILE:
               pathConflicts.set(normalizedName, FILE);
               await prepareDirectory(parentDir);
-              return path12.join(await getRealDir(parentDir, `File "${name}" points outside the extraction directory.`), path12.basename(outPath));
+              return path13.join(await getRealDir(parentDir, `File "${name}" points outside the extraction directory.`), path13.basename(outPath));
             case SYMLINK: {
               pathConflicts.set(normalizedName, SYMLINK);
               if (!linkname) return;
-              validateBounds(path12.resolve(parentDir, linkname), destDir.symbolic, `Symlink "${linkname}" points outside the extraction directory.`);
+              validateBounds(path13.resolve(parentDir, linkname), destDir.symbolic, `Symlink "${linkname}" points outside the extraction directory.`);
               await prepareDirectory(parentDir);
               const realParentDir = await fsp.realpath(parentDir);
               validateBounds(realParentDir, destDir.real, "Symlink parent changed.");
-              validateBounds(path12.resolve(realParentDir, linkname), destDir.real, `Symlink "${linkname}" points outside the extraction directory.`);
-              const realOutPath = path12.join(realParentDir, path12.basename(outPath));
+              validateBounds(path13.resolve(realParentDir, linkname), destDir.real, `Symlink "${linkname}" points outside the extraction directory.`);
+              const realOutPath = path13.join(realParentDir, path13.basename(outPath));
               try {
                 await fsp.symlink(linkname, realOutPath);
               } catch (err) {
@@ -48244,8 +48244,8 @@ var init_fs = __esm({
             case LINK: {
               pathConflicts.set(normalizedName, LINK);
               if (!linkname) return;
-              if (path12.isAbsolute(linkname)) throw new Error(`Hardlink "${linkname}" points outside the extraction directory.`);
-              const linkTarget = path12.join(destDir.symbolic, linkname);
+              if (path13.isAbsolute(linkname)) throw new Error(`Hardlink "${linkname}" points outside the extraction directory.`);
+              const linkTarget = path13.join(destDir.symbolic, linkname);
               validateBounds(linkTarget, destDir.symbolic, `Hardlink "${linkname}" points outside the extraction directory.`);
               await prepareDirectory(parentDir);
               if (linkTarget !== outPath) deferredLinks.push({
@@ -48261,11 +48261,11 @@ var init_fs = __esm({
         async checkSymlinks() {
           if (!symlinks) return;
           const { symbolic: dest, real } = await destDirPromise;
-          const realPrefix = real + path12.sep;
-          const root = path12.parse(real).root;
+          const realPrefix = real + path13.sep;
+          const root = path13.parse(real).root;
           const depth = linkParts(real.slice(root.length)).length;
           const targetParts = (linkname, resolvedParts, message) => {
-            if (!path12.isAbsolute(linkname)) return linkParts(linkname);
+            if (!path13.isAbsolute(linkname)) return linkParts(linkname);
             validateBounds(linkname, real, message);
             resolvedParts.length = 0;
             const parts = linkParts(linkname.slice(root.length));
@@ -48273,7 +48273,7 @@ var init_fs = __esm({
             return parts;
           };
           const getSymlinkError = async ([name, storedLinkname]) => {
-            const outPath = path12.join(dest, name);
+            const outPath = path13.join(dest, name);
             try {
               try {
                 const resolved = await fsp.realpath(outPath);
@@ -48285,9 +48285,9 @@ var init_fs = __esm({
               if (!(await fsp.lstat(outPath)).isSymbolicLink()) return;
               const linkname = await fsp.readlink(outPath);
               const message = `Symlink "${linkname}" points outside the extraction directory.`;
-              const realParent = await fsp.realpath(path12.dirname(outPath));
+              const realParent = await fsp.realpath(path13.dirname(outPath));
               validateBounds(realParent, real, message);
-              const resolvedParts = linkParts(path12.relative(real, realParent));
+              const resolvedParts = linkParts(path13.relative(real, realParent));
               const pendingParts = targetParts(linkname, resolvedParts, message);
               let followedSymlinks = 0;
               for (let i = 0; i < pendingParts.length; i++) {
@@ -48298,7 +48298,7 @@ var init_fs = __esm({
                   continue;
                 }
                 resolvedParts.push(part);
-                const nextPath = path12.join(real, ...resolvedParts);
+                const nextPath = path13.join(real, ...resolvedParts);
                 let nextStat;
                 try {
                   nextStat = await fsp.lstat(nextPath);
@@ -48321,7 +48321,7 @@ var init_fs = __esm({
             const errors = await Promise.all(batch.map((symlink3) => opQueue.add(() => getSymlinkError(symlink3))));
             for (const [i, error] of errors.entries()) {
               if (error === void 0) continue;
-              await fsp.rm(path12.join(dest, batch[i][0]), { force: true });
+              await fsp.rm(path13.join(dest, batch[i][0]), { force: true });
               throw error;
             }
           }
@@ -48329,17 +48329,17 @@ var init_fs = __esm({
         async applyLinks() {
           const destRoot = (await destDirPromise).real;
           for (const { linkTarget, outPath } of deferredLinks) try {
-            const realTargetDir = await fsp.realpath(path12.dirname(linkTarget));
+            const realTargetDir = await fsp.realpath(path13.dirname(linkTarget));
             validateBounds(realTargetDir, destRoot, `Hardlink "${linkTarget}" points outside the extraction directory.`);
-            const realTarget = path12.join(realTargetDir, path12.basename(linkTarget));
-            const [targetResult, outDirResult] = await Promise.allSettled([opQueue.add(() => fsp.lstat(realTarget)), opQueue.add(() => fsp.realpath(path12.dirname(outPath)))]);
+            const realTarget = path13.join(realTargetDir, path13.basename(linkTarget));
+            const [targetResult, outDirResult] = await Promise.allSettled([opQueue.add(() => fsp.lstat(realTarget)), opQueue.add(() => fsp.realpath(path13.dirname(outPath)))]);
             if (targetResult.status === "rejected") throw targetResult.reason;
             const targetStat = targetResult.value;
             if (targetStat.isSymbolicLink()) throw new Error(`Hardlink "${linkTarget}" is a symlink.`);
             if (outDirResult.status === "rejected") throw outDirResult.reason;
             const realOutDir = outDirResult.value;
             validateBounds(realOutDir, destRoot, `Hardlink "${outPath}" points outside the extraction directory.`);
-            const realOutPath = path12.join(realOutDir, path12.basename(outPath));
+            const realOutPath = path13.join(realOutDir, path13.basename(outPath));
             try {
               await fsp.link(realTarget, realOutPath);
             } catch (err) {
@@ -48372,22 +48372,22 @@ var init_fs = __esm({
 // ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/fileUtil.js
 import { spawnSync, spawn, execFile as execFile2 } from "node:child_process";
 import { constants as constants2, createReadStream, createWriteStream as createWriteStream2 } from "node:fs";
-import { mkdir as mkdir6, readdir as readdir2, symlink as symlink2 } from "node:fs/promises";
-import * as path13 from "node:path";
+import { mkdir as mkdir7, readdir as readdir2, symlink as symlink2 } from "node:fs/promises";
+import * as path14 from "node:path";
 import { Stream, Writable as Writable2 } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { promisify as promisify2 } from "node:util";
 async function unpackArchive(archivePath, folderPath) {
-  if (!path13.isAbsolute(folderPath)) {
-    folderPath = path13.resolve(process.cwd(), folderPath);
+  if (!path14.isAbsolute(folderPath)) {
+    folderPath = path14.resolve(process.cwd(), folderPath);
   }
   if (archivePath.endsWith(".zip")) {
-    await mkdir6(folderPath, { recursive: true });
+    await mkdir7(folderPath, { recursive: true });
     await extractZip(archivePath, folderPath);
   } else if (archivePath.endsWith(".tar.bz2")) {
     await extractTar(archivePath, folderPath, "bzip2");
   } else if (archivePath.endsWith(".dmg")) {
-    await mkdir6(folderPath);
+    await mkdir7(folderPath);
     await installDMG(archivePath, folderPath);
   } else if (archivePath.endsWith(".exe")) {
     const result = spawnSync(archivePath, [`/ExtractDir=${folderPath}`], {
@@ -48483,7 +48483,7 @@ async function installDMG(dmgPath, folderPath) {
     if (!appName) {
       throw new Error(`Cannot find app in ${mountPath}`);
     }
-    const mountedPath = path13.join(mountPath, appName);
+    const mountedPath = path14.join(mountPath, appName);
     await execFileAsync2("cp", ["-R", mountedPath, folderPath]);
   } finally {
     await execFileAsync2("hdiutil", ["detach", mountPath, "-quiet"]);
@@ -48566,9 +48566,9 @@ async function extractZipWithCli(archivePath, folderPath) {
   }
 }
 function isInsideDirectory(directory, candidate) {
-  const resolvedDirectory = path13.resolve(directory);
-  const resolvedCandidate = path13.resolve(candidate);
-  return resolvedCandidate === resolvedDirectory || resolvedCandidate.startsWith(resolvedDirectory + path13.sep);
+  const resolvedDirectory = path14.resolve(directory);
+  const resolvedCandidate = path14.resolve(candidate);
+  return resolvedCandidate === resolvedDirectory || resolvedCandidate.startsWith(resolvedDirectory + path14.sep);
 }
 async function extractZipEntry(zipFile, entry, folderPath) {
   const { S_IFMT, S_IFDIR, S_IFLNK } = constants2;
@@ -48576,12 +48576,12 @@ async function extractZipEntry(zipFile, entry, folderPath) {
   const isDirectory = (unixMode & S_IFMT) === S_IFDIR || entry.fileName.endsWith("/") || entry.versionMadeBy >> 8 === 0 && entry.externalFileAttributes === 16;
   const isSymlink = (unixMode & S_IFMT) === S_IFLNK;
   const mode = unixMode === 0 ? isDirectory ? 493 : 420 : unixMode & 511;
-  const destination = path13.join(folderPath, entry.fileName);
+  const destination = path14.join(folderPath, entry.fileName);
   if (isDirectory) {
-    await mkdir6(destination, { recursive: true, mode });
+    await mkdir7(destination, { recursive: true, mode });
     return;
   }
-  await mkdir6(path13.dirname(destination), { recursive: true });
+  await mkdir7(path14.dirname(destination), { recursive: true });
   const readStream = await promisify2(zipFile.openReadStream.bind(zipFile))(entry);
   if (isSymlink) {
     const chunks = [];
@@ -48594,7 +48594,7 @@ async function extractZipEntry(zipFile, entry, folderPath) {
       }
     }));
     const linkTarget = Buffer.concat(chunks).toString();
-    const resolvedLinkTarget = path13.resolve(path13.dirname(destination), linkTarget);
+    const resolvedLinkTarget = path14.resolve(path14.dirname(destination), linkTarget);
     if (!isInsideDirectory(folderPath, resolvedLinkTarget)) {
       throw new Error(`Zip symlink "${entry.fileName}" would point outside of the target directory.`);
     }
@@ -48749,9 +48749,9 @@ var init_ProgressBar = __esm({
 import assert3 from "node:assert";
 import { spawnSync as spawnSync2 } from "node:child_process";
 import { existsSync, readFileSync as readFileSync2 } from "node:fs";
-import { mkdir as mkdir7, unlink } from "node:fs/promises";
+import { mkdir as mkdir8, unlink } from "node:fs/promises";
 import os7 from "node:os";
-import path14 from "node:path";
+import path15 from "node:path";
 function debugTime(label) {
   times.set(label, process.hrtime());
 }
@@ -48802,7 +48802,7 @@ async function installWithProviders(options) {
       }
       debugInstall?.(`Successfully got URL from ${provider.getName()}: ${url}`);
       if (!existsSync(browserRoot)) {
-        await mkdir7(browserRoot, { recursive: true });
+        await mkdir8(browserRoot, { recursive: true });
       }
       return await installUrl(url, options, provider);
     } catch (err) {
@@ -48832,7 +48832,7 @@ async function installDeps(installedBrowser) {
   if (process.platform !== "linux" || installedBrowser.platform !== BrowserPlatform.LINUX) {
     return;
   }
-  const depsPath = path14.join(path14.dirname(installedBrowser.executablePath), "deb.deps");
+  const depsPath = path15.join(path15.dirname(installedBrowser.executablePath), "deb.deps");
   if (!existsSync(depsPath)) {
     debugInstall?.(`deb.deps file was not found at ${depsPath}`);
     return;
@@ -48873,9 +48873,9 @@ async function installUrl(url, options, provider) {
   assert3(fileName, `A malformed download URL was found: ${url}.`);
   const cache = new Cache(options.cacheDir);
   const browserRoot = cache.browserRoot(options.browser);
-  const archivePath = path14.join(browserRoot, `${options.buildId}-${fileName}`);
+  const archivePath = path15.join(browserRoot, `${options.buildId}-${fileName}`);
   if (!existsSync(browserRoot)) {
-    await mkdir7(browserRoot, { recursive: true });
+    await mkdir8(browserRoot, { recursive: true });
   }
   if (options.expectedHash) {
     debugInstall?.(`Using provided checksum for ${fileName}: ${options.expectedHash}`);
@@ -48950,12 +48950,12 @@ async function runSetup(installedBrowser) {
   if ((installedBrowser.platform === BrowserPlatform.WIN32 || installedBrowser.platform === BrowserPlatform.WIN64) && installedBrowser.browser === Browser3.CHROME && installedBrowser.platform === detectBrowserPlatform()) {
     try {
       debugTime("permissions");
-      const browserDir = path14.dirname(installedBrowser.executablePath);
-      const setupExePath = path14.join(browserDir, "setup.exe");
+      const browserDir = path15.dirname(installedBrowser.executablePath);
+      const setupExePath = path15.join(browserDir, "setup.exe");
       if (!existsSync(setupExePath)) {
         return;
       }
-      spawnSync2(path14.join(browserDir, "setup.exe"), [`--configure-browser-in-directory=` + browserDir], {
+      spawnSync2(path15.join(browserDir, "setup.exe"), [`--configure-browser-in-directory=` + browserDir], {
         shell: false
       });
     } finally {
@@ -54644,7 +54644,7 @@ var init_helpers = __esm({
 import { spawn as spawn2 } from "node:child_process";
 import fs5 from "node:fs";
 import os8 from "node:os";
-import path15 from "node:path";
+import path16 from "node:path";
 import { stdin as input, stdout as output } from "node:process";
 import * as readline2 from "node:readline";
 function isValidBrowser(browser) {
@@ -54885,7 +54885,7 @@ var init_CLI = __esm({
         }, async (args) => {
           const isScript = args.path.endsWith(".mjs") || args.path.endsWith(".cjs") || args.path.endsWith(".js");
           const testCommand = isScript ? `PUPPETEER_EXECUTABLE_PATH=%p node ${args.path}` : `BINARY=%p npm run ${args.path}`;
-          const bisectScriptPath = path15.join(os8.homedir(), "bisect-builds.py");
+          const bisectScriptPath = path16.join(os8.homedir(), "bisect-builds.py");
           if (!fs5.existsSync(bisectScriptPath)) {
             console.log("Downloading bisect-builds.py...");
             const response = await fetch("https://chromium.googlesource.com/chromium/src.git/+/main/tools/bisect-builds.py?format=TEXT");
@@ -61114,7 +61114,7 @@ var OracleFirefoxError = class extends Error {
     this.details = options.details ?? null;
   }
 };
-var CAPABILITY_PATTERN = /ofx1\.(?:session|read|control|subscription|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu;
+var CAPABILITY_PATTERN = /ofx1\.(?:session|read|control|subscription|receipt|admin)\.[^.\s]+\.[A-Za-z0-9_-]+/gu;
 function redact(value) {
   if (typeof value === "string") return value.replace(CAPABILITY_PATTERN, "[REDACTED_CAPABILITY]");
   if (Array.isArray(value)) return value.map(redact);
@@ -61285,8 +61285,8 @@ var BrokerLifetimeLease = class _BrokerLifetimeLease {
 };
 
 // src/broker-client.mjs
-import { randomBytes, randomUUID as randomUUID4 } from "node:crypto";
-import { chmod as chmod3, link as link2, mkdir as mkdir4, open as open3, readFile as readFile3, rm as rm4 } from "node:fs/promises";
+import { createHash as createHash6, randomBytes as randomBytes2, randomUUID as randomUUID5 } from "node:crypto";
+import { chmod as chmod4, link as link2, mkdir as mkdir5, open as open3, readFile as readFile3, rm as rm4 } from "node:fs/promises";
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
@@ -61294,8 +61294,8 @@ var GENERATED_BUILD_INFO = Object.freeze({
   "protocolVersion": 8,
   "schemaVersion": 8,
   "releaseSequence": 1610,
-  "sourceDigest": "cff26d45b9531d0e8ce6361ab39aee3a0d3e085eed94526d63f3e467875e9ae4",
-  "buildId": "oracle-firefox-1.6.9-cff26d45b9531d0e"
+  "sourceDigest": "d920973d1da26dd43990fc1c479faa792f27a1d6da0d6f2591fa2192b579c4ea",
+  "buildId": "oracle-firefox-1.6.9-d920973d1da26dd4"
 });
 
 // src/build-info.mjs
@@ -61688,9 +61688,48 @@ async function resolveCoordinatorIdentity() {
   };
 }
 
+// src/capabilities.mjs
+import { createHash as createHash3, randomBytes, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+var CAPABILITY_VERSION = "ofx1";
+var SECRET_BYTES = 32;
+var KINDS = /* @__PURE__ */ new Set(["session", "read", "control", "subscription", "receipt", "admin"]);
+function equalHex(left2, right2) {
+  const a2 = Buffer.from(String(left2 || ""), "hex");
+  const b2 = Buffer.from(String(right2 || ""), "hex");
+  return a2.length === b2.length && a2.length > 0 && timingSafeEqual2(a2, b2);
+}
+function hashCapabilitySecret(secret) {
+  return createHash3("sha256").update(String(secret), "utf8").digest("hex");
+}
+function mintCapability(kind, subjectId) {
+  if (!KINDS.has(kind)) throw new Error(`Unsupported Oracle capability kind: ${kind}`);
+  const secret = randomBytes(SECRET_BYTES).toString("base64url");
+  return {
+    kind,
+    subjectId,
+    secret,
+    hash: hashCapabilitySecret(secret),
+    handle: `${CAPABILITY_VERSION}.${kind}.${subjectId}.${secret}`
+  };
+}
+function parseCapability(handle, expectedKind = null) {
+  const value = String(handle || "");
+  const [version, kind, subjectId, secret, ...extra] = value.split(".");
+  if (version !== CAPABILITY_VERSION || !KINDS.has(kind) || !subjectId || !secret || extra.length || expectedKind && kind !== expectedKind) {
+    return null;
+  }
+  return { kind, subjectId, secret, hash: hashCapabilitySecret(secret) };
+}
+function verifyCapability(handle, expectedHash, { kind, subjectId } = {}) {
+  const parsed = parseCapability(handle, kind);
+  return Boolean(
+    parsed && (!subjectId || parsed.subjectId === subjectId) && equalHex(parsed.hash, expectedHash)
+  );
+}
+
 // src/protocol.mjs
 import net from "node:net";
-import { randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var BROKER_BUILD_VERSION = ORACLE_FIREFOX_VERSION;
 var MAX_FRAME_BYTES = 8 * 1024 * 1024;
 function encodeFrame(value) {
@@ -61727,12 +61766,40 @@ function createFrameDecoder(onMessage, onError) {
 function tokensEqual(actual, expected) {
   const left2 = Buffer.from(String(actual || ""));
   const right2 = Buffer.from(String(expected || ""));
-  return left2.length === right2.length && left2.length > 0 && timingSafeEqual2(left2, right2);
+  return left2.length === right2.length && left2.length > 0 && timingSafeEqual3(left2, right2);
 }
-function attachRpcServer(socket, { token: token2, methods: methods2, serverInfo: serverInfo2 }) {
+function attachRpcServer(socket, { token: token2, methods: methods2, serverInfo: serverInfo2, socketTimeoutMs = 5 * 6e4 }) {
   socket.setNoDelay(true);
-  const send = (value) => socket.write(encodeFrame(value));
-  const decoder2 = createFrameDecoder(async (request3) => {
+  const boundedSocketTimeoutMs = Math.max(1e3, Number(socketTimeoutMs) || 5 * 6e4);
+  let connected = true;
+  let writeQueue = Promise.resolve();
+  const abandon = () => {
+    connected = false;
+  };
+  const send = (value) => {
+    if (!connected || socket.destroyed || !socket.writable) return Promise.resolve(false);
+    let frame;
+    try {
+      frame = encodeFrame(value);
+    } catch {
+      return Promise.resolve(false);
+    }
+    const queued = writeQueue.then(() => new Promise((resolve7) => {
+      if (!connected || socket.destroyed || !socket.writable) return resolve7(false);
+      try {
+        socket.write(frame, (error) => {
+          if (error) abandon();
+          resolve7(!error && connected);
+        });
+      } catch {
+        abandon();
+        resolve7(false);
+      }
+    }));
+    writeQueue = queued.catch(() => false);
+    return queued;
+  };
+  const handleRequest = async (request3) => {
     const id = request3?.id || randomUUID3();
     try {
       if (!tokensEqual(request3?.token, token2)) {
@@ -61754,15 +61821,27 @@ function attachRpcServer(socket, { token: token2, methods: methods2, serverInfo:
       const handler = methods2[request3.method];
       if (!handler) throw codedError("METHOD_NOT_FOUND", `Unknown broker method: ${request3.method}`);
       const result = await handler(request3.params ?? {}, { requestId: id, client: request3.client ?? null });
-      send({ id, ok: true, result, server: serverInfo2 });
+      await send({ id, ok: true, result, server: serverInfo2 });
     } catch (error) {
-      send({ id, ok: false, error: structuredError(error), server: serverInfo2 });
+      await send({ id, ok: false, error: structuredError(error), server: serverInfo2 });
     }
+  };
+  const decoder2 = createFrameDecoder((request3) => {
+    void handleRequest(request3).catch(() => void 0);
   }, (error) => {
-    send({ id: null, ok: false, error: structuredError(error), server: serverInfo2 });
+    void send({ id: null, ok: false, error: structuredError(error), server: serverInfo2 }).finally(() => socket.destroy());
+  });
+  socket.setTimeout(boundedSocketTimeoutMs);
+  socket.on("data", decoder2);
+  socket.on("error", () => {
+    abandon();
+    if (!socket.destroyed) socket.destroy();
+  });
+  socket.on("close", abandon);
+  socket.on("timeout", () => {
+    abandon();
     socket.destroy();
   });
-  socket.on("data", decoder2);
 }
 function rpcRequest(endpoint2, token2, method, params = {}, options = {}) {
   const timeoutMs = Math.max(250, options.timeoutMs ?? 1e4);
@@ -61780,6 +61859,7 @@ function rpcRequest(endpoint2, token2, method, params = {}, options = {}) {
     const timer2 = setTimeout(() => {
       finish(reject, codedError("BROKER_TIMEOUT", `Broker request ${method} timed out after ${timeoutMs}ms.`));
     }, timeoutMs);
+    timer2.unref?.();
     const decoder2 = createFrameDecoder((response) => {
       if (response?.id !== id) return;
       if (response.ok) return finish(resolve7, response.result);
@@ -61787,14 +61867,20 @@ function rpcRequest(endpoint2, token2, method, params = {}, options = {}) {
       finish(reject, codedError(value.code || "BROKER_ERROR", value.message || "Broker request failed.", value));
     }, (error) => finish(reject, error));
     socket.once("connect", () => {
-      socket.write(encodeFrame({
-        id,
-        token: token2,
-        protocolVersion: BROKER_PROTOCOL_VERSION,
-        method,
-        params,
-        client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION }
-      }));
+      try {
+        socket.write(encodeFrame({
+          id,
+          token: token2,
+          protocolVersion: BROKER_PROTOCOL_VERSION,
+          method,
+          params,
+          client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION }
+        }), (error) => {
+          if (error) finish(reject, error);
+        });
+      } catch (error) {
+        finish(reject, error);
+      }
     });
     socket.on("data", decoder2);
     socket.once("error", (error) => finish(reject, error));
@@ -61804,11 +61890,3173 @@ function rpcRequest(endpoint2, token2, method, params = {}, options = {}) {
   });
 }
 
+// src/state-store.mjs
+import { backup, DatabaseSync as DatabaseSync2 } from "node:sqlite";
+import { createHash as createHash5, randomUUID as randomUUID4 } from "node:crypto";
+import { EventEmitter } from "node:events";
+import { chmod as chmod3, mkdir as mkdir4, stat as stat2 } from "node:fs/promises";
+import path5 from "node:path";
+
+// src/evidence.mjs
+import { createHash as createHash4 } from "node:crypto";
+var LOCAL_DATA_SENTINEL = "ORACLE_LOCAL_DATA_REQUEST_V1";
+var LOCAL_DATA_PROTOCOL_VERSION = 1;
+var LOCAL_DATA_NONCE_PATTERN = /^[a-f0-9]{32}$/u;
+var LOCAL_DATA_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/iu;
+var TEMPLATE_PLACEHOLDERS = /* @__PURE__ */ new Set([
+  "short-stable-id",
+  "fact-id",
+  "exact fact needed",
+  "why it changes the answer",
+  "a safe read-only check"
+]);
+function deriveLocalDataNonce(rootAuthorizationId) {
+  return createHash4("sha256").update(`oracle-local-data-nonce-v1:${String(rootAuthorizationId)}`).digest("hex").slice(0, 32);
+}
+function localDataProtocol(nonce) {
+  if (!LOCAL_DATA_NONCE_PATTERN.test(String(nonce || ""))) {
+    throw codedError("LOCAL_DATA_NONCE_REQUIRED", "Oracle requires a per-job local-data nonce before preparing a prompt.");
+  }
+  return `
+When forming conclusions, label material claims as verified, inferred, or proposed.
+Do not guess when a material conclusion depends on facts that are only available in the local workspace or runtime.
+If local facts are required, stop and end your response with exactly one ${LOCAL_DATA_SENTINEL} JSON block using this nonce and shape:
+{
+  "version": ${LOCAL_DATA_PROTOCOL_VERSION},
+  "oracleNonce": "${nonce}",
+  "requestId": "short-stable-id",
+  "requests": [
+    { "id": "fact-id", "fact": "exact fact needed", "why": "why it changes the answer", "suggestedReadOnlyCheck": "a safe read-only check" }
+  ]
+}
+Replace every descriptive placeholder with a concrete value. Never repeat this example as an answer.
+Never request credentials, cookies, tokens, passwords, private keys, browser-profile contents, unrelated chats, or unrelated private files. Do not request writes or state changes.
+`.trim();
+}
+var LOCAL_DATA_PROTOCOL = localDataProtocol("00000000000000000000000000000000");
+function withLocalDataProtocol(prompt, nonce) {
+  return `${String(prompt).trim()}
+
+[ORACLE LOCAL DATA PROTOCOL]
+${localDataProtocol(nonce)}`;
+}
+function extractTerminalJson(text) {
+  const source2 = String(text ?? "").trimEnd();
+  const marker = source2.lastIndexOf(LOCAL_DATA_SENTINEL);
+  if (marker < 0) return null;
+  if (marker > 0 && source2[marker - 1] !== "\n" && source2[marker - 1] !== "\r") return null;
+  const tail = source2.slice(marker + LOCAL_DATA_SENTINEL.length);
+  const fenced = tail.match(/^\s*```(?:json)?\s*([\s\S]*?)```\s*$/iu);
+  if (fenced) return fenced[1];
+  const firstBrace = tail.indexOf("{");
+  if (firstBrace < 0 || tail.slice(0, firstBrace).trim()) return null;
+  const candidate = tail.slice(firstBrace);
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let start = -1;
+  for (let index = 0; index < candidate.length; index += 1) {
+    const char = candidate[index];
+    if (start < 0) {
+      if (char === "{") {
+        start = index;
+        depth = 1;
+      }
+      continue;
+    }
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        if (candidate.slice(index + 1).trim()) return null;
+        return candidate.slice(start, index + 1);
+      }
+    }
+  }
+  return candidate;
+}
+function isTemplateLocalDataRequest(value) {
+  if (!value || typeof value !== "object") return false;
+  if (TEMPLATE_PLACEHOLDERS.has(String(value.requestId || "").trim().toLowerCase())) return true;
+  return Array.isArray(value.requests) && value.requests.some(
+    (request3) => request3 && [request3.id, request3.fact, request3.why, request3.suggestedReadOnlyCheck].some((entry) => TEMPLATE_PLACEHOLDERS.has(String(entry || "").trim().toLowerCase()))
+  );
+}
+function parseLocalDataRequest(text, { expectedNonce = null } = {}) {
+  const raw = extractTerminalJson(text);
+  if (!raw) return null;
+  let value;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contained invalid JSON.`);
+  }
+  if (!value || typeof value !== "object") {
+    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} did not match the required schema.`);
+  }
+  if (isTemplateLocalDataRequest(value)) return null;
+  if (expectedNonce && (value.version !== LOCAL_DATA_PROTOCOL_VERSION || value.oracleNonce !== expectedNonce)) return null;
+  if (value.oracleNonce != null && !LOCAL_DATA_NONCE_PATTERN.test(String(value.oracleNonce))) {
+    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contained an invalid Oracle nonce.`);
+  }
+  if (typeof value.requestId !== "string" || !value.requestId.trim() || !LOCAL_DATA_ID_PATTERN.test(value.requestId.trim()) || !Array.isArray(value.requests) || value.requests.length < 1 || value.requests.length > 20) {
+    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} did not match the required schema.`);
+  }
+  const requests2 = value.requests.map((request3) => {
+    if (!request3 || ![request3.id, request3.fact, request3.why, request3.suggestedReadOnlyCheck].every((entry) => typeof entry === "string" && entry.trim()) || !LOCAL_DATA_ID_PATTERN.test(request3.id.trim())) {
+      throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contains an incomplete fact request.`);
+    }
+    return {
+      id: request3.id.trim(),
+      fact: request3.fact.trim(),
+      why: request3.why.trim(),
+      suggestedReadOnlyCheck: request3.suggestedReadOnlyCheck.trim()
+    };
+  });
+  const requestIds = requests2.map((request3) => request3.id);
+  if (new Set(requestIds).size !== requestIds.length) {
+    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contains duplicate fact ids.`);
+  }
+  const prohibited = /\b(password|credential|cookie|token|private key|secret|browser profile|unrelated chat|write|delete|modify|install|send)\b/iu;
+  const unsafe = requests2.find((request3) => prohibited.test(`${request3.fact} ${request3.suggestedReadOnlyCheck}`));
+  return {
+    version: LOCAL_DATA_PROTOCOL_VERSION,
+    oracleNonce: value.oracleNonce ?? null,
+    requestId: value.requestId.trim(),
+    requests: requests2,
+    safeReadOnly: !unsafe,
+    unsafeRequestId: unsafe?.id ?? null
+  };
+}
+function scanEvidenceForSecrets(value) {
+  const serialized = JSON.stringify(value);
+  const patterns = [
+    /-----BEGIN [A-Z ]*PRIVATE KEY-----/u,
+    /\b(?:sk|rk|pk)-[A-Za-z0-9_-]{20,}\b/u,
+    /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/u,
+    /\bAIza[A-Za-z0-9_-]{30,}\b/u,
+    /\bgh(?:p|o|u|s|r)_[A-Za-z0-9]{20,}\b/u,
+    /\bgithub_pat_[A-Za-z0-9_]{20,}\b/u,
+    /\bglpat-[A-Za-z0-9_-]{20,}\b/u,
+    /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/u,
+    /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/u,
+    /\b(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[^\s"']{8,}/iu,
+    /\b(?:session|auth)[_-]?cookie\s*[:=]/iu
+  ];
+  return patterns.some((pattern) => pattern.test(serialized));
+}
+function buildLocalDataReply({ request: request3, facts = [], unavailable = [] }) {
+  if (!request3?.requestId) throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "A parsed local-data request is required.");
+  const payload = {
+    protocol: "ORACLE_LOCAL_DATA_RESPONSE_V1",
+    ...request3.oracleNonce ? { oracleNonce: request3.oracleNonce } : {},
+    requestId: request3.requestId,
+    facts: facts.map((fact) => ({ id: String(fact.id), value: fact.value, source: String(fact.source || "read-only local check") })),
+    unavailable: unavailable.map((item) => ({ id: String(item.id), reason: String(item.reason) }))
+  };
+  if (scanEvidenceForSecrets(payload)) {
+    throw codedError("SENSITIVE_EVIDENCE_REJECTED", "Local evidence appears to contain a secret or credential and was not sent.");
+  }
+  return `ORACLE_LOCAL_DATA_RESPONSE_V1
+
+\`\`\`json
+${JSON.stringify(payload, null, 2)}
+\`\`\``;
+}
+function deriveEvidenceAuthorizationId(parentAuthorizationId, round) {
+  const hex = createHash4("sha256").update(`${parentAuthorizationId}:evidence:${round}`).digest("hex").slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
+}
+function deriveResponseRecoveryAuthorizationId(rootAuthorizationId, attempt) {
+  const hex = createHash4("sha256").update(`${rootAuthorizationId}:response-recovery:${attempt}`).digest("hex").slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
+}
+
+// src/state-store.mjs
+var JOB_STATES = Object.freeze([
+  "accepted",
+  "snapshotted",
+  "queued",
+  "page_leased",
+  "target_verified",
+  "attachment_processing",
+  "composer_verified",
+  "model_verified",
+  "submit_intent",
+  "user_turn_confirmed",
+  "awaiting_response",
+  "response_failed_detected",
+  "response_confirmed",
+  "completed",
+  "cancelled_pre_submit",
+  "failed_pre_submit",
+  "submission_uncertain",
+  "response_uncertain",
+  "response_failed",
+  "quarantined"
+]);
+var TERMINAL_JOB_STATES = /* @__PURE__ */ new Set([
+  "completed",
+  "cancelled_pre_submit",
+  "failed_pre_submit",
+  "submission_uncertain",
+  "response_uncertain",
+  "response_failed",
+  "quarantined"
+]);
+var STATE_INDEX = new Map(JOB_STATES.map((state, index) => [state, index]));
+var SUBMIT_INDEX = STATE_INDEX.get("submit_intent");
+var PRE_SUBMIT_JOB_STATES = new Set(JOB_STATES.slice(0, SUBMIT_INDEX));
+var MONITOR_JOB_STATES = /* @__PURE__ */ new Set([
+  "user_turn_confirmed",
+  "awaiting_response",
+  "response_failed_detected",
+  "response_confirmed"
+]);
+function isCanonicalConversationUrl(value) {
+  try {
+    const parsed = new URL(String(value));
+    return parsed.protocol === "https:" && parsed.hostname === "chatgpt.com" && !parsed.search && !parsed.hash && (/^\/c\/[a-zA-Z0-9-]+$/u.test(parsed.pathname) || /^\/g\/g-p-[^/]+\/c\/[a-zA-Z0-9-]+$/u.test(parsed.pathname));
+  } catch {
+    return false;
+  }
+}
+function hasExactUserTurnProof(job) {
+  return Boolean(
+    job?.submitIntentAt && isCanonicalConversationUrl(job?.conversationUrl) && (job?.userTurnId || job?.userTurnHash)
+  );
+}
+function json(value) {
+  return value == null ? null : JSON.stringify(value);
+}
+function parse(value) {
+  if (value == null) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+function rowToJob(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    authorizationId: row.authorization_id,
+    operation: row.operation,
+    state: row.state,
+    request: parse(row.request_json),
+    requestDigest: row.request_digest,
+    conversationKey: row.conversation_key,
+    conversationUrl: row.canonical_url,
+    projectTitle: row.project_title,
+    projectUrl: row.project_url,
+    chatTitle: row.chat_title,
+    sessionPath: row.session_path,
+    userTurnId: row.user_turn_id,
+    userTurnHash: row.user_turn_hash,
+    submittedMessageHash: row.submitted_message_hash,
+    attachmentManifest: parse(row.attachment_manifest_json) ?? [],
+    modelEvidence: parse(row.model_evidence_json),
+    assistantDisposition: row.assistant_disposition,
+    responseDisposition: row.response_disposition,
+    responseFailure: parse(row.response_failure_json),
+    localDataRequest: parse(row.local_data_request_json),
+    evidenceRound: row.evidence_round,
+    maxAutomaticEvidenceReplies: row.max_evidence_replies,
+    submissionMayHaveOccurred: Boolean(row.submission_may_have_happened),
+    submitIntentAt: row.submit_intent_at,
+    result: parse(row.result_json),
+    error: parse(row.error_json),
+    recoveryAction: row.recovery_action,
+    parentJobId: row.parent_job_id,
+    rootJobId: row.root_job_id || row.id,
+    replacementJobId: row.replacement_job_id,
+    retryAttempt: row.retry_attempt ?? 0,
+    maxAutomaticResponseRetries: row.max_response_retries ?? 0,
+    chainId: row.chain_id || row.root_job_id || row.id,
+    attemptKind: row.attempt_kind || "initial",
+    attemptOrdinal: row.attempt_ordinal ?? 0,
+    executionEpoch: row.execution_epoch ?? 0,
+    executionOwnerInstanceId: row.execution_owner_instance_id ?? null,
+    executionLeaseGeneration: row.execution_lease_generation ?? null,
+    executionState: row.execution_state ?? "idle",
+    executionKind: row.execution_kind ?? "pre_submit",
+    executionFailureCount: row.execution_failure_count ?? 0,
+    nextExecutionNotBefore: row.next_execution_not_before ?? null,
+    monitorDeadlineAt: row.monitor_deadline_at ?? null,
+    finalReconciliationAttemptedAt: row.final_reconciliation_attempted_at ?? null,
+    assistantTurnId: row.assistant_turn_id ?? null,
+    assistantTurnHash: row.assistant_turn_hash ?? null,
+    chainState: row.chain_state ?? null,
+    inputRequestAbandonedAt: row.input_required_abandoned_at ?? null,
+    inputRequestAbandonedReason: row.input_required_abandoned_reason ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    version: row.version,
+    lastRecoveryGeneration: row.last_recovery_generation ?? 0
+  };
+}
+function rowToChain(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    rootJobId: row.root_job_id,
+    originSessionId: row.origin_session_id,
+    acceptedSequence: row.accepted_sequence,
+    state: row.state,
+    activeJobId: row.active_job_id,
+    targetKind: row.target_kind,
+    conversationKey: row.conversation_key,
+    conversationUrl: row.canonical_url,
+    completionMode: row.completion_mode,
+    legacyMode: row.legacy_mode,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    terminalAt: row.terminal_at,
+    inputRequestAbandonedAt: row.input_required_abandoned_at,
+    inputRequestAbandonedJobId: row.input_required_abandoned_job_id,
+    inputRequestAbandonedReason: row.input_required_abandoned_reason
+  };
+}
+function quarantineFingerprint(row) {
+  if (!row) return null;
+  return createHash5("sha256").update([
+    "oracle-firefox-quarantine-v1",
+    row.scope_key,
+    row.job_id,
+    row.created_at,
+    row.job_state,
+    row.job_updated_at
+  ].map((value) => String(value ?? "")).join("\0")).digest("hex");
+}
+function inputRequestFingerprint(row) {
+  if (!row) return null;
+  return createHash5("sha256").update([
+    "oracle-firefox-input-request-v1",
+    row.conversation_key,
+    row.id,
+    row.active_job_id,
+    row.updated_at,
+    row.job_updated_at,
+    row.local_data_request_json
+  ].map((value) => String(value ?? "")).join("\0")).digest("hex");
+}
+var WAKE_CHAIN_STATES = /* @__PURE__ */ new Set([
+  "input_required",
+  "completed",
+  "failed",
+  "cancelled",
+  "submission_uncertain",
+  "response_uncertain",
+  "quarantined"
+]);
+var TERMINAL_CHAIN_STATES = /* @__PURE__ */ new Set([
+  "completed",
+  "failed",
+  "cancelled",
+  "submission_uncertain",
+  "response_uncertain",
+  "quarantined",
+  "legacy_inconsistent"
+]);
+function requestDigest(request3) {
+  const canonicalize2 = (value) => {
+    if (Array.isArray(value)) return value.map(canonicalize2);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.keys(value).filter((key) => value[key] !== void 0).sort().map((key) => [key, canonicalize2(value[key])])
+      );
+    }
+    return value;
+  };
+  return createHash5("sha256").update(JSON.stringify(canonicalize2(request3))).digest("hex");
+}
+var StateStore = class extends EventEmitter {
+  constructor(databasePath = coordinatorDatabasePath(), options = {}) {
+    super();
+    this.databasePath = databasePath;
+    this.db = null;
+    this.productionFencing = Boolean(options.brokerContext) && options.allowUnfenced !== true;
+    this.brokerContext = options.brokerContext || {
+      coordinatorId: `test:${createHash5("sha256").update(path5.resolve(databasePath)).digest("hex")}`,
+      instanceId: `test-${randomUUID4()}`,
+      leaseGeneration: 0,
+      protocolVersion: BROKER_PROTOCOL_VERSION,
+      releaseSequence: BROKER_RELEASE_SEQUENCE,
+      buildVersion: ORACLE_FIREFOX_VERSION,
+      buildId: BROKER_BUILD_ID,
+      pid: process.pid,
+      processStartId: "test-process",
+      endpoint: "test://state-store",
+      endpointKind: "test",
+      endpointDevice: null,
+      endpointInode: null
+    };
+  }
+  async open() {
+    if (this.db) return this;
+    try {
+      await mkdir4(path5.dirname(this.databasePath), { recursive: true, mode: 448 });
+      await chmod3(path5.dirname(this.databasePath), 448);
+      this.db = new DatabaseSync2(this.databasePath);
+      await chmod3(this.databasePath, 384);
+      this.registerWriterFunctions();
+      if (this.productionFencing) {
+        this.db.exec("PRAGMA busy_timeout=0; PRAGMA locking_mode=EXCLUSIVE; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; BEGIN EXCLUSIVE; COMMIT;");
+      } else {
+        this.db.exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");
+      }
+      const existingVersion = this.schemaVersionBeforeMigration();
+      if (existingVersion >= BROKER_SCHEMA_VERSION) {
+        this.registerBrokerTakeover();
+        this.migrateSix({ existing: true });
+        this.migrateEight();
+      } else {
+        if (this.productionFencing && existingVersion > 0) await this.backupBeforeMigration();
+        const integrity = this.db.prepare("PRAGMA integrity_check").get()?.integrity_check;
+        if (integrity !== "ok" || this.db.prepare("PRAGMA foreign_key_check").all().length > 0) {
+          throw codedError("COORDINATOR_DATABASE_INVALID", "Oracle Firefox refused to migrate a coordinator database that failed integrity checks.");
+        }
+        const hasBrokerGenerationGuards = existingVersion >= 6;
+        if (hasBrokerGenerationGuards) this.registerBrokerTakeover();
+        this.migrateLegacy();
+        this.migrateSix({ existing: hasBrokerGenerationGuards });
+        if (!hasBrokerGenerationGuards) this.registerBrokerTakeover();
+        this.migrateEight();
+      }
+      this.migrateDisconnectRecovery();
+      this.backfillUntrackedUncertaintyQuarantines();
+      return this;
+    } catch (error) {
+      try {
+        this.db?.close();
+      } catch {
+      }
+      this.db = null;
+      throw error;
+    }
+  }
+  registerWriterFunctions() {
+    this.db.function("oracle_writer_protocol", () => Number(this.brokerContext.protocolVersion || 0));
+    this.db.function("oracle_broker_instance", () => String(this.brokerContext.instanceId || ""));
+    this.db.function("oracle_lease_generation", () => Number(this.brokerContext.leaseGeneration || 0));
+    this.db.function("oracle_canonical_conversation_url", (value) => isCanonicalConversationUrl(value) ? 1 : 0);
+  }
+  schemaVersionBeforeMigration() {
+    try {
+      return Number(this.db.prepare("SELECT COALESCE(MAX(version), 0) version FROM schema_migrations").get().version);
+    } catch {
+      return 0;
+    }
+  }
+  async backupBeforeMigration() {
+    const target = `${this.databasePath}.pre-v${BROKER_SCHEMA_VERSION}.bak`;
+    const exists = await stat2(target).then(() => true, () => false);
+    if (!exists) await backup(this.db, target);
+  }
+  migrateLegacy() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version INTEGER PRIMARY KEY,
+        applied_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS jobs (
+        id TEXT PRIMARY KEY,
+        authorization_id TEXT NOT NULL UNIQUE,
+        operation TEXT NOT NULL,
+        state TEXT NOT NULL,
+        request_json TEXT NOT NULL,
+        request_digest TEXT NOT NULL,
+        conversation_key TEXT NOT NULL,
+        canonical_url TEXT,
+        project_title TEXT,
+        project_url TEXT,
+        chat_title TEXT,
+        session_path TEXT NOT NULL,
+        user_turn_id TEXT,
+        user_turn_hash TEXT,
+        submitted_message_hash TEXT,
+        attachment_manifest_json TEXT,
+        model_evidence_json TEXT,
+        assistant_disposition TEXT,
+        response_disposition TEXT,
+        response_failure_json TEXT,
+        local_data_request_json TEXT,
+        evidence_round INTEGER NOT NULL DEFAULT 0,
+        max_evidence_replies INTEGER NOT NULL DEFAULT 3,
+        submission_may_have_happened INTEGER NOT NULL DEFAULT 0,
+        submit_intent_at TEXT,
+        result_json TEXT,
+        error_json TEXT,
+        recovery_action TEXT,
+        parent_job_id TEXT,
+        root_job_id TEXT,
+        replacement_job_id TEXT,
+        retry_attempt INTEGER NOT NULL DEFAULT 0,
+        max_response_retries INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        started_at TEXT,
+        completed_at TEXT,
+        version INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS jobs_state_created ON jobs(state, created_at);
+      CREATE INDEX IF NOT EXISTS jobs_conversation_state ON jobs(conversation_key, state, created_at);
+      CREATE TABLE IF NOT EXISTS job_events (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+        state TEXT NOT NULL,
+        details_json TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS job_events_job_sequence ON job_events(job_id, sequence);
+      CREATE TABLE IF NOT EXISTS quarantines (
+        scope_key TEXT PRIMARY KEY,
+        job_id TEXT NOT NULL REFERENCES jobs(id),
+        reason TEXT NOT NULL,
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        acknowledged_at TEXT
+      );
+      INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (1, datetime('now'));
+    `);
+    const jobColumns = new Set(this.db.prepare("PRAGMA table_info(jobs)").all().map((column) => column.name));
+    if (!jobColumns.has("submitted_message_hash")) {
+      this.db.exec("ALTER TABLE jobs ADD COLUMN submitted_message_hash TEXT");
+    }
+    this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (2, ?)").run((/* @__PURE__ */ new Date()).toISOString());
+    const durableColumns = [
+      ["response_disposition", "TEXT"],
+      ["response_failure_json", "TEXT"],
+      ["parent_job_id", "TEXT"],
+      ["root_job_id", "TEXT"],
+      ["replacement_job_id", "TEXT"],
+      ["retry_attempt", "INTEGER NOT NULL DEFAULT 0"],
+      ["max_response_retries", "INTEGER NOT NULL DEFAULT 0"]
+    ];
+    for (const [name, definition] of durableColumns) {
+      if (!jobColumns.has(name)) this.db.exec(`ALTER TABLE jobs ADD COLUMN ${name} ${definition}`);
+    }
+    this.db.exec("UPDATE jobs SET root_job_id = id WHERE root_job_id IS NULL");
+    this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (3, ?)").run((/* @__PURE__ */ new Date()).toISOString());
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS owner_sessions (
+        id TEXT PRIMARY KEY,
+        harness TEXT NOT NULL,
+        client_instance_id TEXT,
+        host_session_hint TEXT,
+        session_cap_hash TEXT,
+        isolation_strength TEXT NOT NULL DEFAULT 'chain'
+          CHECK (isolation_strength IN ('chain', 'host_session', 'legacy', 'admin')),
+        metadata_json TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL,
+        last_seen_at TEXT NOT NULL,
+        revoked_at TEXT
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS owner_sessions_cap_hash
+        ON owner_sessions(session_cap_hash) WHERE session_cap_hash IS NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS scheduler_tickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS job_chains (
+        id TEXT PRIMARY KEY,
+        root_job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id) DEFERRABLE INITIALLY DEFERRED,
+        origin_session_id TEXT NOT NULL REFERENCES owner_sessions(id),
+        accepted_sequence INTEGER NOT NULL UNIQUE,
+        state TEXT NOT NULL,
+        active_job_id TEXT REFERENCES jobs(id) DEFERRABLE INITIALLY DEFERRED,
+        target_kind TEXT NOT NULL CHECK (target_kind IN ('existing', 'new_standalone', 'new_project')),
+        conversation_key TEXT NOT NULL,
+        canonical_url TEXT,
+        completion_mode TEXT NOT NULL DEFAULT 'manual',
+        read_cap_hash TEXT,
+        control_cap_hash TEXT,
+        legacy_mode TEXT NOT NULL DEFAULT 'none'
+          CHECK (legacy_mode IN ('none', 'unclaimed', 'claimed', 'inconsistent')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        terminal_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS job_chains_scope_sequence
+        ON job_chains(conversation_key, accepted_sequence);
+      CREATE INDEX IF NOT EXISTS job_chains_state_sequence
+        ON job_chains(state, accepted_sequence);
+
+      CREATE TABLE IF NOT EXISTS job_attempts (
+        job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE,
+        chain_id TEXT NOT NULL REFERENCES job_chains(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('initial', 'response_recovery', 'evidence_reply')),
+        ordinal INTEGER NOT NULL,
+        parent_job_id TEXT REFERENCES jobs(id),
+        execution_epoch INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        UNIQUE(chain_id, ordinal)
+      );
+      CREATE INDEX IF NOT EXISTS job_attempts_chain ON job_attempts(chain_id, ordinal);
+
+      CREATE TABLE IF NOT EXISTS chain_session_grants (
+        chain_id TEXT NOT NULL REFERENCES job_chains(id) ON DELETE CASCADE,
+        session_id TEXT NOT NULL REFERENCES owner_sessions(id) ON DELETE CASCADE,
+        can_read INTEGER NOT NULL DEFAULT 1 CHECK (can_read IN (0, 1)),
+        can_control INTEGER NOT NULL DEFAULT 0 CHECK (can_control IN (0, 1)),
+        can_list INTEGER NOT NULL DEFAULT 1 CHECK (can_list IN (0, 1)),
+        granted_at TEXT NOT NULL,
+        revoked_at TEXT,
+        PRIMARY KEY(chain_id, session_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS chain_events (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        chain_id TEXT NOT NULL REFERENCES job_chains(id) ON DELETE CASCADE,
+        active_job_id TEXT REFERENCES jobs(id),
+        state TEXT NOT NULL,
+        details_json TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS chain_events_chain_sequence
+        ON chain_events(chain_id, sequence);
+
+      CREATE TABLE IF NOT EXISTS completion_subscriptions (
+        id TEXT PRIMARY KEY,
+        chain_id TEXT NOT NULL REFERENCES job_chains(id) ON DELETE CASCADE,
+        owner_session_id TEXT NOT NULL REFERENCES owner_sessions(id),
+        mode TEXT NOT NULL CHECK (mode IN ('manual', 'notify', 'harness')),
+        capability_hash TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'closed')),
+        created_at TEXT NOT NULL,
+        closed_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS completion_subscriptions_owner
+        ON completion_subscriptions(owner_session_id, state, created_at);
+
+      CREATE TABLE IF NOT EXISTS completion_deliveries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subscription_id TEXT NOT NULL REFERENCES completion_subscriptions(id) ON DELETE CASCADE,
+        chain_event_sequence INTEGER NOT NULL REFERENCES chain_events(sequence) ON DELETE CASCADE,
+        state TEXT NOT NULL DEFAULT 'pending'
+          CHECK (state IN ('pending', 'claimed', 'delivered', 'acknowledged')),
+        claim_id TEXT,
+        claimed_at TEXT,
+        delivered_at TEXT,
+        acknowledged_at TEXT,
+        created_at TEXT NOT NULL,
+        UNIQUE(subscription_id, chain_event_sequence)
+      );
+      CREATE INDEX IF NOT EXISTS completion_deliveries_subscription_state
+        ON completion_deliveries(subscription_id, state, id);
+
+      CREATE TABLE IF NOT EXISTS account_state (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        gate_version INTEGER NOT NULL DEFAULT 0,
+        next_submit_not_before TEXT,
+        cooldown_until TEXT,
+        cooldown_code TEXT,
+        cooldown_count INTEGER NOT NULL DEFAULT 0,
+        effective_concurrency INTEGER NOT NULL DEFAULT 5,
+        success_streak INTEGER NOT NULL DEFAULT 0,
+        probe_in_flight INTEGER NOT NULL DEFAULT 0,
+        last_success_at TEXT,
+        updated_at TEXT NOT NULL
+      );
+      INSERT OR IGNORE INTO account_state(id, updated_at) VALUES (1, datetime('now'));
+
+      CREATE TABLE IF NOT EXISTS submit_permits (
+        id TEXT PRIMARY KEY,
+        job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+        gate_version INTEGER NOT NULL,
+        issued_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        consumed_at TEXT,
+        invalidated_at TEXT
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS submit_permits_open_job
+        ON submit_permits(job_id) WHERE consumed_at IS NULL AND invalidated_at IS NULL;
+    `);
+    this.backfillLegacyChains();
+    this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (4, ?)").run((/* @__PURE__ */ new Date()).toISOString());
+    const migrationFive = this.db.prepare("SELECT 1 present FROM schema_migrations WHERE version = 5").get();
+    if (!migrationFive) {
+      const account = this.db.prepare("SELECT cooldown_until FROM account_state WHERE id = 1").get();
+      const cooldownActive = account?.cooldown_until && Date.parse(account.cooldown_until) > Date.now();
+      this.db.prepare("UPDATE account_state SET effective_concurrency = ?, updated_at = ? WHERE id = 1").run(cooldownActive ? 0 : 5, (/* @__PURE__ */ new Date()).toISOString());
+      this.db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES (5, ?)").run((/* @__PURE__ */ new Date()).toISOString());
+    }
+  }
+  migrateSix({ existing = false } = {}) {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.transaction(() => {
+      this.db.exec(`
+        CREATE TABLE IF NOT EXISTS broker_instances (
+          instance_id TEXT PRIMARY KEY,
+          coordinator_id TEXT NOT NULL,
+          lease_generation INTEGER NOT NULL UNIQUE,
+          pid INTEGER NOT NULL,
+          process_start_id TEXT,
+          endpoint TEXT NOT NULL,
+          endpoint_kind TEXT NOT NULL,
+          endpoint_device TEXT,
+          endpoint_inode TEXT,
+          protocol_version INTEGER NOT NULL,
+          release_sequence INTEGER NOT NULL,
+          build_version TEXT NOT NULL,
+          build_id TEXT NOT NULL,
+          state TEXT NOT NULL,
+          started_at TEXT NOT NULL,
+          ready_at TEXT,
+          heartbeat_at TEXT NOT NULL,
+          draining_at TEXT,
+          released_at TEXT,
+          exit_reason TEXT
+        );
+        CREATE INDEX IF NOT EXISTS broker_instances_generation ON broker_instances(lease_generation);
+        CREATE TABLE IF NOT EXISTS broker_state (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          coordinator_id TEXT NOT NULL,
+          current_instance_id TEXT REFERENCES broker_instances(instance_id),
+          current_lease_generation INTEGER NOT NULL DEFAULT 0,
+          last_recovery_generation INTEGER NOT NULL DEFAULT 0,
+          minimum_reader_protocol INTEGER NOT NULL,
+          minimum_writer_protocol INTEGER NOT NULL,
+          qualified_concurrency INTEGER NOT NULL DEFAULT 1,
+          updated_at TEXT NOT NULL
+        );
+      `);
+      this.db.prepare(`
+        INSERT OR IGNORE INTO broker_state(
+          id, coordinator_id, current_lease_generation, last_recovery_generation,
+          minimum_reader_protocol, minimum_writer_protocol, qualified_concurrency, updated_at
+        ) VALUES (1, ?, 0, 0, ?, ?, 1, ?)
+      `).run(this.brokerContext.coordinatorId, BROKER_PROTOCOL_VERSION, BROKER_PROTOCOL_VERSION, now);
+      const addColumns = (table, columns) => {
+        const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
+        for (const [name, definition] of columns) {
+          if (!known.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+        }
+      };
+      addColumns("job_attempts", [
+        ["execution_owner_instance_id", "TEXT"],
+        ["execution_lease_generation", "INTEGER"],
+        ["execution_state", "TEXT NOT NULL DEFAULT 'idle'"],
+        ["execution_started_at", "TEXT"],
+        ["execution_heartbeat_at", "TEXT"],
+        ["execution_failure_count", "INTEGER NOT NULL DEFAULT 0"],
+        ["next_execution_not_before", "TEXT"],
+        ["last_executor_error_json", "TEXT"]
+      ]);
+      addColumns("jobs", [["last_recovery_generation", "INTEGER NOT NULL DEFAULT 0"]]);
+      addColumns("job_chains", [
+        ["input_required_abandoned_at", "TEXT"],
+        ["input_required_abandoned_job_id", "TEXT"],
+        ["input_required_abandoned_reason", "TEXT"]
+      ]);
+      addColumns("job_events", [
+        ["broker_instance_id", "TEXT"],
+        ["lease_generation", "INTEGER"]
+      ]);
+      addColumns("chain_events", [
+        ["broker_instance_id", "TEXT"],
+        ["lease_generation", "INTEGER"]
+      ]);
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS job_attempts_execution_ready
+          ON job_attempts(execution_state, next_execution_not_before, execution_lease_generation);
+        CREATE INDEX IF NOT EXISTS jobs_recovery_generation
+          ON jobs(last_recovery_generation, state);
+      `);
+      if (!existing) {
+        this.db.prepare("UPDATE account_state SET effective_concurrency = CASE WHEN cooldown_until IS NULL THEN 1 ELSE 0 END, updated_at = ? WHERE id = 1").run(now);
+      }
+      this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (7, ?)").run(now);
+      this.installWriterGuards();
+    });
+    if (existing) this.assertCoordinatorIdentity();
+  }
+  migrateEight() {
+    const migration = this.db.prepare("SELECT 1 present FROM schema_migrations WHERE version = 8").get();
+    if (migration) {
+      this.installWriterGuards();
+      return;
+    }
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.transaction(() => {
+      const addColumns = (table, columns) => {
+        const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
+        for (const [name, definition] of columns) {
+          if (!known.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+        }
+      };
+      addColumns("job_attempts", [
+        ["execution_kind", "TEXT NOT NULL DEFAULT 'pre_submit' CHECK (execution_kind IN ('pre_submit', 'monitor_only'))"],
+        ["monitor_deadline_at", "TEXT"],
+        ["final_reconciliation_attempted_at", "TEXT"]
+      ]);
+      addColumns("jobs", [
+        ["assistant_turn_id", "TEXT"],
+        ["assistant_turn_hash", "TEXT"]
+      ]);
+      const submitted = this.db.prepare(`
+        SELECT j.id, j.submit_intent_at, j.request_json, j.canonical_url,
+               j.user_turn_id, j.user_turn_hash, j.state
+        FROM jobs j JOIN job_attempts a ON a.job_id = j.id
+        WHERE j.submit_intent_at IS NOT NULL
+      `).all();
+      for (const row of submitted) {
+        const request3 = parse(row.request_json) || {};
+        const timeoutSeconds = Math.max(30, Math.min(86400, Number(request3.responseTimeoutSeconds) || 10800));
+        const submittedAt = Number.isFinite(Date.parse(row.submit_intent_at)) ? Date.parse(row.submit_intent_at) : Date.now();
+        const deadline = new Date(submittedAt + timeoutSeconds * 1e3).toISOString();
+        const exactTurn = Boolean(isCanonicalConversationUrl(row.canonical_url) && (row.user_turn_id || row.user_turn_hash));
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_kind=?, monitor_deadline_at=COALESCE(monitor_deadline_at, ?)
+          WHERE job_id=?
+        `).run(exactTurn ? "monitor_only" : "pre_submit", deadline, row.id);
+        if (exactTurn && PRE_SUBMIT_JOB_STATES.has(row.state)) {
+          this.db.prepare(`
+            UPDATE jobs SET state='awaiting_response', updated_at=?, version=version+1,
+              recovery_action='reattach submitted turn without resending'
+            WHERE id=?
+          `).run(now, row.id);
+          const attempt = this.db.prepare("SELECT chain_id FROM job_attempts WHERE job_id=?").get(row.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=?").run(now, attempt.chain_id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, 'awaiting_response', ?, ?, ?, ?)
+          `).run(row.id, json({ migratedMonitorOnly: true, schemaVersion: 8 }), now, this.brokerContext.instanceId, this.brokerContext.leaseGeneration);
+        }
+      }
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS job_attempts_execution_kind_ready
+          ON job_attempts(execution_kind, execution_state, next_execution_not_before, monitor_deadline_at);
+      `);
+      this.db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES (8, ?)").run(now);
+      this.installWriterGuards();
+    });
+  }
+  migrateDisconnectRecovery() {
+    const addColumns = (table, columns) => {
+      const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
+      for (const [name, definition] of columns) {
+        if (!known.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+      }
+    };
+    this.transaction(() => {
+      addColumns("job_chains", [
+        ["start_receipt_cap_hash", "TEXT"],
+        ["start_receipt_recovered_at", "TEXT"],
+        ["start_receipt_recovery_count", "INTEGER NOT NULL DEFAULT 0"]
+      ]);
+      addColumns("completion_deliveries", [
+        ["claim_kind", "TEXT"],
+        ["claim_expires_at", "TEXT"],
+        ["attempt_count", "INTEGER NOT NULL DEFAULT 0"],
+        ["next_attempt_at", "TEXT"],
+        ["last_error_json", "TEXT"]
+      ]);
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS completion_deliveries_system_ready
+          ON completion_deliveries(state, next_attempt_at, claim_expires_at, id);
+      `);
+      this.db.exec(`
+        UPDATE completion_deliveries
+        SET state='pending', claim_id=NULL, claimed_at=NULL
+        WHERE state='claimed' AND claim_kind IS NULL;
+
+        UPDATE completion_deliveries
+        SET claim_id=NULL, claimed_at=NULL, claim_kind=NULL, claim_expires_at=NULL,
+            next_attempt_at=NULL, last_error_json=NULL
+        WHERE state IN ('delivered', 'acknowledged');
+      `);
+      this.installWriterGuards();
+    });
+  }
+  installWriterGuards() {
+    const operational = [
+      "jobs",
+      "job_events",
+      "quarantines",
+      "owner_sessions",
+      "scheduler_tickets",
+      "job_chains",
+      "job_attempts",
+      "chain_session_grants",
+      "chain_events",
+      "completion_subscriptions",
+      "completion_deliveries",
+      "account_state",
+      "submit_permits"
+    ];
+    const metadata = ["schema_migrations", "broker_instances", "broker_state"];
+    for (const table of operational) {
+      for (const action of ["INSERT", "UPDATE", "DELETE"]) {
+        const name = `oracle_guard_${table}_${action.toLowerCase()}`;
+        this.db.exec(`
+          DROP TRIGGER IF EXISTS ${name};
+          CREATE TRIGGER ${name} BEFORE ${action} ON ${table}
+          BEGIN
+            SELECT CASE WHEN
+              oracle_writer_protocol() < (SELECT minimum_writer_protocol FROM broker_state WHERE id = 1)
+              OR oracle_broker_instance() IS NOT (SELECT current_instance_id FROM broker_state WHERE id = 1)
+              OR oracle_lease_generation() != (SELECT current_lease_generation FROM broker_state WHERE id = 1)
+            THEN RAISE(ABORT, 'ORACLE_BROKER_FENCE') END;
+          END;
+        `);
+      }
+    }
+    for (const table of metadata) {
+      for (const action of ["INSERT", "UPDATE", "DELETE"]) {
+        const name = `oracle_protocol_guard_${table}_${action.toLowerCase()}`;
+        this.db.exec(`
+          DROP TRIGGER IF EXISTS ${name};
+          CREATE TRIGGER ${name} BEFORE ${action} ON ${table}
+          BEGIN
+            SELECT CASE WHEN
+              oracle_writer_protocol() < (SELECT minimum_writer_protocol FROM broker_state WHERE id = 1)
+            THEN RAISE(ABORT, 'ORACLE_WRITER_PROTOCOL_TOO_OLD') END;
+          END;
+        `);
+      }
+    }
+  }
+  assertCoordinatorIdentity() {
+    const row = this.db.prepare("SELECT coordinator_id FROM broker_state WHERE id = 1").get();
+    if (row?.coordinator_id !== this.brokerContext.coordinatorId) {
+      throw codedError(
+        "COORDINATOR_ID_MISMATCH",
+        "The coordinator identity file does not match the durable database. Oracle Firefox stopped before recovery or scheduling."
+      );
+    }
+  }
+  backfillUntrackedUncertaintyQuarantines() {
+    this.assertCurrentBroker();
+    this.db.prepare(`
+      INSERT OR IGNORE INTO quarantines(scope_key, job_id, reason, active, created_at)
+      SELECT conversation_key, id,
+             'Uncertain submission imported from an older Oracle Firefox build; reconcile it before another send.',
+             1, COALESCE(completed_at, updated_at, created_at)
+      FROM jobs
+      WHERE state IN ('submission_uncertain', 'response_uncertain', 'quarantined')
+        AND conversation_key IS NOT NULL
+    `).run();
+  }
+  registerBrokerTakeover() {
+    const context2 = this.brokerContext;
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const generation = this.transaction(() => {
+      const state = this.db.prepare("SELECT * FROM broker_state WHERE id = 1").get();
+      if (!state) throw codedError("BROKER_STATE_MISSING", "Oracle Firefox broker state is unavailable.");
+      if (state.coordinator_id !== context2.coordinatorId) {
+        throw codedError("COORDINATOR_ID_MISMATCH", "The coordinator identity does not match the durable database.");
+      }
+      if (state.current_instance_id) {
+        this.db.prepare("UPDATE broker_instances SET state='crashed', released_at=?, exit_reason=? WHERE instance_id=? AND state NOT IN ('released','failed')").run(now, "exclusive lifetime lease acquired by successor", state.current_instance_id);
+      }
+      const next = Number(state.current_lease_generation) + 1;
+      this.db.prepare(`
+        INSERT INTO broker_instances(
+          instance_id, coordinator_id, lease_generation, pid, process_start_id,
+          endpoint, endpoint_kind, endpoint_device, endpoint_inode,
+          protocol_version, release_sequence, build_version, build_id,
+          state, started_at, heartbeat_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'starting', ?, ?)
+      `).run(
+        context2.instanceId,
+        context2.coordinatorId,
+        next,
+        context2.pid || process.pid,
+        context2.processStartId || null,
+        context2.endpoint || "unknown",
+        context2.endpointKind || "unknown",
+        context2.endpointDevice || null,
+        context2.endpointInode || null,
+        context2.protocolVersion,
+        context2.releaseSequence,
+        context2.buildVersion,
+        context2.buildId,
+        now,
+        now
+      );
+      this.db.prepare(`
+        UPDATE broker_state SET current_instance_id=?, current_lease_generation=?,
+          minimum_reader_protocol=MAX(minimum_reader_protocol, ?),
+          minimum_writer_protocol=MAX(minimum_writer_protocol, ?), updated_at=? WHERE id=1
+      `).run(context2.instanceId, next, BROKER_PROTOCOL_VERSION, BROKER_PROTOCOL_VERSION, now);
+      return next;
+    });
+    context2.leaseGeneration = generation;
+    return context2;
+  }
+  markBrokerReady() {
+    this.assertCurrentBroker();
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.db.prepare("UPDATE broker_instances SET state='ready', ready_at=?, heartbeat_at=? WHERE instance_id=?").run(now, now, this.brokerContext.instanceId);
+  }
+  heartbeatBroker() {
+    this.assertCurrentBroker();
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.db.prepare("UPDATE broker_instances SET heartbeat_at=? WHERE instance_id=?").run(now, this.brokerContext.instanceId);
+    return now;
+  }
+  markBrokerReleased(reason = "graceful shutdown") {
+    if (!this.db) return;
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.transaction(() => {
+      const state = this.db.prepare("SELECT * FROM broker_state WHERE id=1").get();
+      if (state?.current_instance_id !== this.brokerContext.instanceId || Number(state.current_lease_generation) !== Number(this.brokerContext.leaseGeneration)) return;
+      this.db.prepare("UPDATE broker_instances SET state='released', released_at=?, exit_reason=? WHERE instance_id=?").run(now, reason, this.brokerContext.instanceId);
+      this.db.prepare("UPDATE broker_state SET current_instance_id=NULL, updated_at=? WHERE id=1").run(now);
+    });
+  }
+  assertCurrentBroker() {
+    const row = this.db.prepare("SELECT current_instance_id, current_lease_generation FROM broker_state WHERE id=1").get();
+    if (row?.current_instance_id !== this.brokerContext.instanceId || Number(row?.current_lease_generation) !== Number(this.brokerContext.leaseGeneration)) {
+      throw codedError("BROKER_LEASE_LOST", "This Oracle Firefox broker no longer owns the coordinator database.");
+    }
+    return true;
+  }
+  backfillLegacyChains() {
+    const unassigned = this.db.prepare(`
+      SELECT j.*, j.rowid AS _rowid FROM jobs j
+      LEFT JOIN job_attempts a ON a.job_id = j.id
+      WHERE a.job_id IS NULL
+      ORDER BY j.created_at, j.rowid
+    `).all();
+    if (!unassigned.length) return;
+    return this.transaction(() => {
+      const byId = new Map(unassigned.map((row) => [row.id, row]));
+      const parent = new Map(unassigned.map((row) => [row.id, row.id]));
+      const find = (id) => {
+        let root = id;
+        while (parent.get(root) !== root) root = parent.get(root);
+        while (parent.get(id) !== id) {
+          const next = parent.get(id);
+          parent.set(id, root);
+          id = next;
+        }
+        return root;
+      };
+      const union = (left2, right2) => {
+        if (!byId.has(left2) || !byId.has(right2)) return;
+        const a2 = find(left2);
+        const b2 = find(right2);
+        if (a2 !== b2) parent.set(b2, a2);
+      };
+      for (const row of unassigned) {
+        if (row.parent_job_id) union(row.id, row.parent_job_id);
+        if (row.replacement_job_id) union(row.id, row.replacement_job_id);
+        if (row.root_job_id) union(row.id, row.root_job_id);
+      }
+      const groups = /* @__PURE__ */ new Map();
+      for (const row of unassigned) {
+        const key = find(row.id);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(row);
+      }
+      for (const rows of groups.values()) {
+        rows.sort((a2, b2) => a2.created_at.localeCompare(b2.created_at) || a2._rowid - b2._rowid);
+        const rowIds = new Set(rows.map((row) => row.id));
+        const roots = rows.filter((row) => !row.parent_job_id || !rowIds.has(row.parent_job_id));
+        const missingParent = rows.some((row) => row.parent_job_id && !byId.has(row.parent_job_id));
+        const canonicalUrls = new Set(rows.map((row) => row.canonical_url).filter(Boolean));
+        const nonterminalRows = rows.filter((row) => !TERMINAL_JOB_STATES.has(row.state));
+        const childCounts = /* @__PURE__ */ new Map();
+        for (const row of rows) {
+          if (row.parent_job_id && rowIds.has(row.parent_job_id)) {
+            childCounts.set(row.parent_job_id, (childCounts.get(row.parent_job_id) || 0) + 1);
+          }
+        }
+        const hasCycle = (edgeFor) => {
+          const visiting = /* @__PURE__ */ new Set();
+          const visited = /* @__PURE__ */ new Set();
+          const visit = (id) => {
+            if (visiting.has(id)) return true;
+            if (visited.has(id)) return false;
+            visiting.add(id);
+            const next = edgeFor(byId.get(id));
+            if (next && rowIds.has(next) && visit(next)) return true;
+            visiting.delete(id);
+            visited.add(id);
+            return false;
+          };
+          return rows.some((row) => visit(row.id));
+        };
+        const inconsistent = missingParent || roots.length !== 1 || canonicalUrls.size > 1 || nonterminalRows.length > 1 || [...childCounts.values()].some((count) => count > 1) || hasCycle((row) => row?.parent_job_id) || hasCycle((row) => row?.replacement_job_id);
+        const root = roots[0] || rows[0];
+        const ownerId = `legacy-${root.id}`;
+        const now = (/* @__PURE__ */ new Date()).toISOString();
+        this.db.prepare(`
+        INSERT OR IGNORE INTO owner_sessions(
+          id, harness, isolation_strength, metadata_json, created_at, last_seen_at
+        ) VALUES (?, 'legacy', 'legacy', '{}', ?, ?)
+      `).run(ownerId, root.created_at || now, now);
+        const ticket = Number(this.db.prepare("INSERT INTO scheduler_tickets(created_at) VALUES (?)").run(root.created_at || now).lastInsertRowid);
+        const active = rows.findLast((row) => !TERMINAL_JOB_STATES.has(row.state)) || rows.at(-1);
+        const targetKind = root.operation === "continue_chat" ? "existing" : root.project_url ? "new_project" : "new_standalone";
+        this.db.prepare(`
+        INSERT OR IGNORE INTO job_chains(
+          id, root_job_id, origin_session_id, accepted_sequence, state, active_job_id,
+          target_kind, conversation_key, canonical_url, completion_mode, legacy_mode,
+          created_at, updated_at, terminal_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unclaimed', ?, ?, ?)
+      `).run(
+          root.id,
+          root.id,
+          ownerId,
+          ticket,
+          inconsistent ? "legacy_inconsistent" : this.chainStateForJob(active),
+          active.id,
+          targetKind,
+          active.conversation_key,
+          active.canonical_url,
+          parse(root.request_json)?.completionMode || "manual",
+          root.created_at || now,
+          active.updated_at || now,
+          inconsistent || TERMINAL_JOB_STATES.has(active.state) ? active.completed_at || now : null
+        );
+        if (inconsistent) {
+          this.db.prepare("UPDATE job_chains SET legacy_mode = 'inconsistent' WHERE id = ?").run(root.id);
+        }
+        rows.forEach((row, ordinal) => {
+          const kind = row.evidence_round > 0 ? "evidence_reply" : row.retry_attempt > 0 ? "response_recovery" : "initial";
+          this.db.prepare(`
+          INSERT OR IGNORE INTO job_attempts(
+            job_id, chain_id, kind, ordinal, parent_job_id, execution_epoch, created_at
+          ) VALUES (?, ?, ?, ?, ?, 0, ?)
+        `).run(row.id, root.id, kind, ordinal, row.parent_job_id, row.created_at || now);
+          if (!inconsistent) this.db.prepare("UPDATE jobs SET root_job_id = ? WHERE id = ?").run(root.id, row.id);
+        });
+      }
+    });
+  }
+  close() {
+    this.db?.close();
+    this.db = null;
+  }
+  transaction(fn) {
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const value = fn();
+      this.db.exec("COMMIT");
+      return value;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  chainStateForJob(job, chain = null) {
+    if (!job) return "failed";
+    if (job.state === "completed" && parse(job.local_data_request_json) && chain?.input_required_abandoned_job_id !== job.id) return "input_required";
+    if (job.state === "completed") return "completed";
+    if (job.state === "cancelled_pre_submit") return "cancelled";
+    if (job.state === "submission_uncertain") return "submission_uncertain";
+    if (job.state === "response_uncertain") return "response_uncertain";
+    if (job.state === "quarantined") return "quarantined";
+    if (TERMINAL_JOB_STATES.has(job.state)) return "failed";
+    if (job.state === "accepted" || job.state === "snapshotted" || job.state === "queued") return "queued";
+    return "running";
+  }
+  jobSelect(where = "", suffix = "") {
+    return `
+      SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
+             a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+      FROM jobs j
+      LEFT JOIN job_attempts a ON a.job_id = j.id
+      LEFT JOIN job_chains c ON c.id = a.chain_id
+      ${where}
+      ${suffix}
+    `;
+  }
+  createOwnerSession({
+    harness = "unknown",
+    clientInstanceId: clientInstanceId2 = null,
+    hostSessionHint = null,
+    stableSessionId = null,
+    stableSessionHandle = null,
+    metadata = {}
+  } = {}) {
+    const stableCapability = stableSessionHandle ? parseCapability(stableSessionHandle, "session") : null;
+    if (stableSessionId || stableSessionHandle) {
+      if (!stableCapability || stableCapability.subjectId !== stableSessionId) {
+        throw codedError("CLIENT_SESSION_REQUIRED", "The stable Oracle Firefox host-session identity is invalid.");
+      }
+    }
+    const id = stableCapability?.subjectId || randomUUID4();
+    const capability = stableCapability ? { handle: stableSessionHandle, hash: stableCapability.hash } : mintCapability("session", id);
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const normalizedHarness = String(harness || "unknown");
+    const normalizedHint = hostSessionHint == null ? null : String(hostSessionHint);
+    this.transaction(() => {
+      const existing = this.db.prepare("SELECT * FROM owner_sessions WHERE id = ?").get(id);
+      if (existing) {
+        const sameIdentity = existing.revoked_at == null && existing.harness === normalizedHarness && (existing.host_session_hint ?? null) === normalizedHint && verifyCapability(capability.handle, existing.session_cap_hash, { kind: "session", subjectId: id });
+        if (!sameIdentity) {
+          throw codedError("CLIENT_SESSION_REQUIRED", "The stable Oracle Firefox host-session identity does not match this owner session.");
+        }
+        this.db.prepare(`
+          UPDATE owner_sessions SET client_instance_id=?, metadata_json=?, last_seen_at=? WHERE id=?
+        `).run(clientInstanceId2, json(metadata) || "{}", now, id);
+        return;
+      }
+      this.db.prepare(`
+        INSERT INTO owner_sessions(
+          id, harness, client_instance_id, host_session_hint, session_cap_hash,
+          isolation_strength, metadata_json, created_at, last_seen_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id,
+        normalizedHarness,
+        clientInstanceId2,
+        normalizedHint,
+        capability.hash,
+        stableCapability ? "host_session" : "chain",
+        json(metadata) || "{}",
+        now,
+        now
+      );
+    });
+    return { sessionId: id, sessionHandle: capability.handle, harness: normalizedHarness };
+  }
+  authenticateOwnerSession(client) {
+    const parsed = parseCapability(client?.sessionHandle, "session");
+    if (!parsed || parsed.subjectId !== client?.sessionId) {
+      throw codedError("CLIENT_SESSION_REQUIRED", "Open an Oracle Firefox client session before accessing jobs.");
+    }
+    const row = this.db.prepare("SELECT * FROM owner_sessions WHERE id = ? AND revoked_at IS NULL").get(parsed.subjectId);
+    if (!row || !verifyCapability(client.sessionHandle, row.session_cap_hash, { kind: "session", subjectId: row.id })) {
+      throw codedError("CLIENT_SESSION_REQUIRED", "The Oracle Firefox client session is invalid or expired.");
+    }
+    if (client?.harness && String(client.harness) !== row.harness || client?.hostSessionHint != null && String(client.hostSessionHint) !== (row.host_session_hint ?? null)) {
+      throw codedError("CLIENT_SESSION_REQUIRED", "The Oracle Firefox client session belongs to a different harness or host session.");
+    }
+    this.db.prepare("UPDATE owner_sessions SET last_seen_at = ? WHERE id = ?").run((/* @__PURE__ */ new Date()).toISOString(), row.id);
+    return {
+      id: row.id,
+      harness: row.harness,
+      clientInstanceId: row.client_instance_id,
+      hostSessionHint: row.host_session_hint,
+      isolationStrength: row.isolation_strength
+    };
+  }
+  getChain(chainId) {
+    return rowToChain(this.db.prepare("SELECT * FROM job_chains WHERE id = ?").get(chainId));
+  }
+  chainForJob(jobId) {
+    return rowToChain(this.db.prepare(`
+      SELECT c.* FROM job_chains c
+      JOIN job_attempts a ON a.chain_id = c.id
+      WHERE a.job_id = ?
+    `).get(jobId));
+  }
+  chainAccessRow(chainId) {
+    return this.db.prepare("SELECT * FROM job_chains WHERE id = ?").get(chainId);
+  }
+  sessionGrant(chainId, sessionId) {
+    return this.db.prepare(`
+      SELECT * FROM chain_session_grants
+      WHERE chain_id = ? AND session_id = ? AND revoked_at IS NULL
+    `).get(chainId, sessionId);
+  }
+  authorizeJob({ jobId, jobHandle = null, caller = null, control = false, allowLegacyRead = false } = {}) {
+    let job = null;
+    let chain = null;
+    const parsedHandle = parseCapability(jobHandle);
+    if (parsedHandle && (/* @__PURE__ */ new Set(["read", "control"])).has(parsedHandle.kind)) {
+      chain = this.getChain(parsedHandle.subjectId);
+      if (chain) {
+        const raw = this.chainAccessRow(chain.id);
+        const expectedHash = parsedHandle.kind === "control" ? raw.control_cap_hash : raw.read_cap_hash;
+        if (verifyCapability(jobHandle, expectedHash, { kind: parsedHandle.kind, subjectId: chain.id }) && (!control || parsedHandle.kind === "control")) {
+          job = jobId ? this.getJob(jobId) : this.getJob(chain.rootJobId);
+          if (!job || job.chainId !== chain.id) job = null;
+          if (job && caller) {
+            const now = (/* @__PURE__ */ new Date()).toISOString();
+            this.db.prepare(`
+              INSERT INTO chain_session_grants(
+                chain_id, session_id, can_read, can_control, can_list, granted_at, revoked_at
+              ) VALUES (?, ?, 1, ?, 1, ?, NULL)
+              ON CONFLICT(chain_id, session_id) DO UPDATE SET
+                can_read = 1,
+                can_control = MAX(can_control, excluded.can_control),
+                can_list = 1,
+                revoked_at = NULL
+            `).run(chain.id, caller.id, parsedHandle.kind === "control" ? 1 : 0, now);
+          }
+        }
+      }
+    }
+    if (!job && jobId && caller) {
+      const candidate = this.getJob(jobId);
+      const candidateChain = candidate ? this.getChain(candidate.chainId) : null;
+      const grant = candidateChain ? this.sessionGrant(candidateChain.id, caller.id) : null;
+      if (candidate && candidateChain && grant && (control ? grant.can_control : grant.can_read)) {
+        job = candidate;
+        chain = candidateChain;
+      }
+    }
+    if (!job && jobId && allowLegacyRead && !control) {
+      const candidate = this.getJob(jobId);
+      const candidateChain = candidate ? this.getChain(candidate.chainId) : null;
+      if (candidate && candidateChain?.legacyMode === "unclaimed") {
+        job = candidate;
+        chain = candidateChain;
+      }
+    }
+    if (!job || !chain) {
+      throw codedError("JOB_NOT_FOUND", "No accessible Oracle Firefox job matches that reference.");
+    }
+    return { job, chain };
+  }
+  listJobsForSession(sessionId, params = {}) {
+    const capped = Math.max(1, Math.min(200, Number(params.limit) || 50));
+    const states = (params.states || []).filter((state) => STATE_INDEX.has(state));
+    const stateClause = states.length ? `AND j.state IN (${states.map(() => "?").join(",")})` : "";
+    return this.db.prepare(`
+      SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
+             a.execution_epoch, a.execution_kind, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at, c.state AS chain_state,
+             c.input_required_abandoned_at, c.input_required_abandoned_job_id,
+             c.input_required_abandoned_reason
+      FROM jobs j
+      JOIN job_attempts a ON a.job_id = j.id
+      JOIN job_chains c ON c.id = a.chain_id
+      JOIN chain_session_grants g ON g.chain_id = a.chain_id
+      WHERE g.session_id = ? AND g.can_list = 1 AND g.revoked_at IS NULL ${stateClause}
+      ORDER BY j.created_at DESC, j.rowid DESC LIMIT ?
+    `).all(sessionId, ...states, capped).map(rowToJob);
+  }
+  createJob(input2) {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const digest2 = input2.requestDigest || requestDigest(input2.request);
+    const created = this.transaction(() => {
+      const existing = this.db.prepare("SELECT * FROM jobs WHERE authorization_id = ?").get(input2.authorizationId);
+      if (existing) {
+        const existingJob = this.getJob(existing.id);
+        const existingChain = this.getChain(existingJob.chainId);
+        if (input2.ownerSessionId && existingChain?.legacyMode === "none" && existingChain.originSessionId !== input2.ownerSessionId && !this.sessionGrant(existingChain.id, input2.ownerSessionId)) {
+          throw codedError("JOB_NOT_FOUND", "No accessible Oracle Firefox job matches that authorization.");
+        }
+        if (existing.request_digest !== digest2) {
+          throw codedError(
+            "AUTHORIZATION_REUSED",
+            "This authorizationId was already used for a different request.",
+            { safeToRetry: false }
+          );
+        }
+        return { job: existingJob, chain: existingChain, idempotent: true };
+      }
+      const activeQuarantine = this.db.prepare("SELECT * FROM quarantines WHERE scope_key = ? AND active = 1").get(input2.conversationKey);
+      if (activeQuarantine) {
+        throw codedError(
+          "CONVERSATION_QUARANTINED",
+          "This conversation or new-chat scope is quarantined until its uncertain submission is reconciled.",
+          {
+            recoveryAction: /^https:\/\/chatgpt\.com\//u.test(input2.conversationKey) ? `inspect_quarantine for ${input2.conversationKey}` : `reconcile_job ${activeQuarantine.job_id}`,
+            details: {
+              exactScopeRequired: true,
+              capabilityRecoveryAvailable: /^https:\/\/chatgpt\.com\//u.test(input2.conversationKey)
+            }
+          }
+        );
+      }
+      const id = input2.id || randomUUID4();
+      const parentAttempt = input2.parentJobId ? this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(input2.parentJobId) : null;
+      const inheritedChain = parentAttempt ? this.chainAccessRow(parentAttempt.chain_id) : null;
+      const chainId = input2.chainId || inheritedChain?.id || id;
+      const rootJobId = inheritedChain?.root_job_id || input2.rootJobId || id;
+      this.db.prepare(`
+        INSERT INTO jobs (
+          id, authorization_id, operation, state, request_json, request_digest,
+          conversation_key, canonical_url, project_title, project_url, chat_title,
+          session_path, evidence_round, max_evidence_replies, parent_job_id, root_job_id,
+          retry_attempt, max_response_retries, created_at, updated_at
+        ) VALUES (?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id,
+        input2.authorizationId,
+        input2.operation,
+        json(input2.request),
+        digest2,
+        input2.conversationKey,
+        input2.conversationUrl ?? null,
+        input2.projectTitle ?? null,
+        input2.projectUrl ?? null,
+        input2.chatTitle ?? null,
+        input2.sessionPath,
+        input2.evidenceRound ?? 0,
+        input2.maxAutomaticEvidenceReplies ?? 3,
+        input2.parentJobId ?? null,
+        rootJobId,
+        input2.retryAttempt ?? 0,
+        input2.maxAutomaticResponseRetries ?? 0,
+        now,
+        now
+      );
+      this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'accepted', ?, ?)").run(id, json({ operation: input2.operation }), now);
+      let chain;
+      if (inheritedChain) {
+        if (input2.ownerSessionId && inheritedChain.origin_session_id !== input2.ownerSessionId && !this.sessionGrant(inheritedChain.id, input2.ownerSessionId)?.can_control) {
+          throw codedError("JOB_NOT_FOUND", "No accessible Oracle Firefox logical chain matches the parent job.");
+        }
+        const ordinal = Number(this.db.prepare("SELECT COALESCE(MAX(ordinal), -1) + 1 value FROM job_attempts WHERE chain_id = ?").get(chainId).value);
+        const kind = input2.attemptKind || (input2.evidenceRound > 0 ? "evidence_reply" : "response_recovery");
+        this.db.prepare(`
+          INSERT INTO job_attempts(job_id, chain_id, kind, ordinal, parent_job_id, execution_epoch, created_at)
+          VALUES (?, ?, ?, ?, ?, 0, ?)
+        `).run(id, chainId, kind, ordinal, input2.parentJobId, now);
+        this.db.prepare(`
+          UPDATE job_chains
+          SET active_job_id = ?, state = 'queued', updated_at = ?, terminal_at = NULL
+          WHERE id = ?
+        `).run(id, now, chainId);
+        chain = this.getChain(chainId);
+      } else {
+        let ownerSessionId = input2.ownerSessionId;
+        let legacyMode = "none";
+        if (!ownerSessionId) {
+          ownerSessionId = `legacy-${id}`;
+          legacyMode = "unclaimed";
+          this.db.prepare(`
+            INSERT INTO owner_sessions(id, harness, isolation_strength, metadata_json, created_at, last_seen_at)
+            VALUES (?, 'legacy', 'legacy', '{}', ?, ?)
+          `).run(ownerSessionId, now, now);
+        }
+        const ticket = Number(this.db.prepare("INSERT INTO scheduler_tickets(created_at) VALUES (?)").run(now).lastInsertRowid);
+        const targetKind = input2.operation === "continue_chat" ? "existing" : input2.projectUrl ? "new_project" : "new_standalone";
+        this.db.prepare(`
+          INSERT INTO job_chains(
+            id, root_job_id, origin_session_id, accepted_sequence, state, active_job_id,
+            target_kind, conversation_key, canonical_url, completion_mode,
+            read_cap_hash, control_cap_hash, start_receipt_cap_hash, legacy_mode, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          chainId,
+          rootJobId,
+          ownerSessionId,
+          ticket,
+          id,
+          targetKind,
+          input2.conversationKey,
+          input2.conversationUrl ?? null,
+          input2.completionMode || input2.request?.completionMode || "manual",
+          input2.readCapabilityHash ?? null,
+          input2.controlCapabilityHash ?? null,
+          input2.startReceiptCapabilityHash ?? null,
+          legacyMode,
+          now,
+          now
+        );
+        this.db.prepare(`
+          INSERT INTO job_attempts(job_id, chain_id, kind, ordinal, parent_job_id, execution_epoch, created_at)
+          VALUES (?, ?, 'initial', 0, NULL, 0, ?)
+        `).run(id, chainId, now);
+        this.db.prepare(`
+          INSERT INTO chain_session_grants(chain_id, session_id, can_read, can_control, can_list, granted_at)
+          VALUES (?, ?, 1, ?, 1, ?)
+        `).run(chainId, ownerSessionId, legacyMode === "none" ? 1 : 0, now);
+        this.db.prepare("INSERT INTO chain_events(chain_id, active_job_id, state, details_json, created_at) VALUES (?, ?, 'queued', ?, ?)").run(chainId, id, json({ operation: input2.operation }), now);
+        if (input2.subscriptionId && input2.subscriptionCapabilityHash) {
+          this.db.prepare(`
+            INSERT INTO completion_subscriptions(
+              id, chain_id, owner_session_id, mode, capability_hash, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+          `).run(
+            input2.subscriptionId,
+            chainId,
+            ownerSessionId,
+            input2.completionMode || input2.request?.completionMode || "manual",
+            input2.subscriptionCapabilityHash,
+            now
+          );
+        }
+        chain = this.getChain(chainId);
+      }
+      return { job: this.getJob(id), chain, idempotent: false };
+    });
+    if (!created.idempotent) this.emit("change", created.job);
+    return created;
+  }
+  getJob(id) {
+    return rowToJob(this.db.prepare(this.jobSelect("WHERE j.id = ?")).get(id));
+  }
+  getJobByAuthorization(authorizationId) {
+    return rowToJob(this.db.prepare(this.jobSelect("WHERE j.authorization_id = ?")).get(authorizationId));
+  }
+  requireJob(id) {
+    const job = this.getJob(id);
+    if (!job) throw codedError("JOB_NOT_FOUND", `No Oracle Firefox job exists with id ${id}.`);
+    return job;
+  }
+  listJobs({ limit = 50, states = [] } = {}) {
+    const capped = Math.max(1, Math.min(200, Number(limit) || 50));
+    if (states.length) {
+      const valid = states.filter((state) => STATE_INDEX.has(state));
+      if (!valid.length) return [];
+      const placeholders = valid.map(() => "?").join(",");
+      return this.db.prepare(this.jobSelect(`WHERE j.state IN (${placeholders})`, "ORDER BY j.created_at DESC, j.rowid DESC LIMIT ?")).all(...valid, capped).map(rowToJob);
+    }
+    return this.db.prepare(this.jobSelect("", "ORDER BY j.created_at DESC, j.rowid DESC LIMIT ?")).all(capped).map(rowToJob);
+  }
+  allRootJobIds() {
+    return this.db.prepare("SELECT root_job_id FROM job_chains").all().map((row) => row.root_job_id);
+  }
+  completedJobsWithExactProof() {
+    return this.db.prepare(this.jobSelect(`
+      WHERE j.state='completed' AND j.result_json IS NOT NULL
+        AND j.submit_intent_at IS NOT NULL
+        AND oracle_canonical_conversation_url(j.canonical_url) = 1
+        AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
+        AND j.assistant_turn_hash IS NOT NULL
+    `, "ORDER BY j.completed_at, j.created_at")).all().map(rowToJob);
+  }
+  terminalJobsForArtifactRepair() {
+    const states = Array.from(TERMINAL_JOB_STATES);
+    return this.db.prepare(this.jobSelect(
+      `WHERE j.state IN (${states.map(() => "?").join(",")})`,
+      "ORDER BY j.completed_at, j.created_at"
+    )).all(...states).map(rowToJob);
+  }
+  recoverStartReceipt({ authorizationId, digest: digest2, recoveryHandle, caller }) {
+    const failClosed = () => codedError(
+      "START_RECEIPT_NOT_FOUND",
+      "No recoverable Oracle Firefox start receipt matches this caller, request, and private recovery capability.",
+      { safeToRetry: false }
+    );
+    return this.transaction(() => {
+      const job = this.getJobByAuthorization(authorizationId);
+      if (!job || !caller || job.requestDigest !== digest2) throw failClosed();
+      const chain = this.chainAccessRow(job.chainId);
+      if (!chain || chain.origin_session_id !== caller.id || !verifyCapability(recoveryHandle, chain.start_receipt_cap_hash, {
+        kind: "receipt",
+        subjectId: authorizationId
+      })) throw failClosed();
+      const readCapability = mintCapability("read", chain.id);
+      const controlCapability = mintCapability("control", chain.id);
+      let subscription = this.db.prepare(`
+        SELECT * FROM completion_subscriptions
+        WHERE chain_id=? AND owner_session_id=?
+        ORDER BY created_at LIMIT 1
+      `).get(chain.id, caller.id);
+      const subscriptionId = subscription?.id || randomUUID4();
+      const subscriptionCapability = mintCapability("subscription", subscriptionId);
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      this.db.prepare(`
+        UPDATE job_chains
+        SET read_cap_hash=?, control_cap_hash=?, start_receipt_recovered_at=?,
+            start_receipt_recovery_count=start_receipt_recovery_count+1, updated_at=?
+        WHERE id=?
+      `).run(readCapability.hash, controlCapability.hash, now, now, chain.id);
+      if (subscription) {
+        this.db.prepare(`
+          UPDATE completion_subscriptions SET capability_hash=? WHERE id=?
+        `).run(subscriptionCapability.hash, subscriptionId);
+      } else {
+        this.db.prepare(`
+          INSERT INTO completion_subscriptions(
+            id, chain_id, owner_session_id, mode, capability_hash, state, created_at
+          ) VALUES (?, ?, ?, ?, ?, 'open', ?)
+        `).run(subscriptionId, chain.id, caller.id, chain.completion_mode, subscriptionCapability.hash, now);
+        subscription = { id: subscriptionId };
+      }
+      return {
+        job: this.requireJob(job.id),
+        jobHandle: controlCapability.handle,
+        readHandle: readCapability.handle,
+        completionHandle: subscriptionCapability.handle,
+        recoveredAt: now
+      };
+    });
+  }
+  queuedJobs() {
+    return this.db.prepare(`
+      SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
+             a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+      FROM jobs j
+      JOIN job_attempts a ON a.job_id = j.id
+      JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
+      WHERE j.state = 'queued'
+      ORDER BY c.accepted_sequence ASC, a.ordinal ASC
+    `).all().map(rowToJob);
+  }
+  countOutstanding() {
+    const terminals = Array.from(TERMINAL_JOB_STATES);
+    const placeholders = terminals.map(() => "?").join(",");
+    return Number(this.db.prepare(`SELECT COUNT(*) count FROM jobs WHERE state NOT IN (${placeholders})`).get(...terminals).count);
+  }
+  transition(id, nextState, patch = {}, details = null) {
+    if (!STATE_INDEX.has(nextState)) throw new Error(`Unknown job state: ${nextState}`);
+    const transitioned = this.transaction(() => this.transitionInCurrentTransaction(id, nextState, patch, details));
+    this.emit("change", transitioned);
+    return transitioned;
+  }
+  transitionInCurrentTransaction(id, nextState, patch = {}, details = null, suppliedNow = null) {
+    if (!STATE_INDEX.has(nextState)) throw new Error(`Unknown job state: ${nextState}`);
+    const current = this.requireJob(id);
+    if (TERMINAL_JOB_STATES.has(current.state) && current.state !== nextState) {
+      throw codedError("JOB_TERMINAL", `Job ${id} is already terminal in state ${current.state}.`);
+    }
+    if (current.submitIntentAt && PRE_SUBMIT_JOB_STATES.has(nextState)) {
+      throw codedError(
+        "INVALID_JOB_TRANSITION",
+        `Cannot return submitted job ${id} to pre-submit lifecycle state ${nextState}.`
+      );
+    }
+    for (const [field, label] of [
+      ["userTurnId", "user-turn id"],
+      ["userTurnHash", "user-turn hash"],
+      ["assistantTurnId", "assistant-turn id"],
+      ["assistantTurnHash", "assistant-turn hash"]
+    ]) {
+      if (current[field] && field in patch && patch[field] !== current[field]) {
+        throw codedError(
+          "IMMUTABLE_TURN_PROOF",
+          `The durable ${label} for job ${id} cannot be replaced.`,
+          { submissionMayHaveOccurred: Boolean(current.submitIntentAt) }
+        );
+      }
+    }
+    const currentIndex = STATE_INDEX.get(current.state);
+    const nextIndex = STATE_INDEX.get(nextState);
+    if (!TERMINAL_JOB_STATES.has(nextState) && nextIndex < currentIndex) {
+      throw codedError("INVALID_JOB_TRANSITION", `Cannot move job ${id} backward from ${current.state} to ${nextState}.`);
+    }
+    const now = suppliedNow || (/* @__PURE__ */ new Date()).toISOString();
+    const submitted = nextState === "submit_intent" || Boolean(current.submitIntentAt);
+    const assignments = ["state = ?", "updated_at = ?", "version = version + 1", "submission_may_have_happened = ?"];
+    const values = [nextState, now, submitted ? 1 : 0];
+    const columns = {
+      conversationKey: "conversation_key",
+      conversationUrl: "canonical_url",
+      projectTitle: "project_title",
+      projectUrl: "project_url",
+      chatTitle: "chat_title",
+      userTurnId: "user_turn_id",
+      userTurnHash: "user_turn_hash",
+      submittedMessageHash: "submitted_message_hash",
+      attachmentManifest: "attachment_manifest_json",
+      modelEvidence: "model_evidence_json",
+      assistantDisposition: "assistant_disposition",
+      responseDisposition: "response_disposition",
+      responseFailure: "response_failure_json",
+      localDataRequest: "local_data_request_json",
+      assistantTurnId: "assistant_turn_id",
+      assistantTurnHash: "assistant_turn_hash",
+      result: "result_json",
+      error: "error_json",
+      recoveryAction: "recovery_action",
+      replacementJobId: "replacement_job_id"
+    };
+    for (const [key, column] of Object.entries(columns)) {
+      if (!(key in patch)) continue;
+      assignments.push(`${column} = ?`);
+      values.push(["attachmentManifest", "modelEvidence", "responseFailure", "localDataRequest", "result", "error"].includes(key) ? json(patch[key]) : patch[key]);
+    }
+    if (nextState === "page_leased" && !current.startedAt) {
+      assignments.push("started_at = ?");
+      values.push(now);
+    }
+    if (nextState === "submit_intent" && !current.submitIntentAt) {
+      assignments.push("submit_intent_at = ?");
+      values.push(now);
+    }
+    if (TERMINAL_JOB_STATES.has(nextState)) {
+      assignments.push("completed_at = ?");
+      values.push(now);
+    }
+    values.push(id);
+    this.db.prepare(`UPDATE jobs SET ${assignments.join(", ")} WHERE id = ?`).run(...values);
+    if (nextState === "submit_intent") {
+      const timeoutSeconds = Math.max(30, Math.min(86400, Number(current.request?.responseTimeoutSeconds) || 10800));
+      this.db.prepare(`
+        UPDATE job_attempts SET monitor_deadline_at=COALESCE(monitor_deadline_at, ?)
+        WHERE job_id=?
+      `).run(new Date(Date.parse(current.submitIntentAt || now) + timeoutSeconds * 1e3).toISOString(), id);
+    }
+    if (nextState === "user_turn_confirmed") {
+      const updated = this.requireJob(id);
+      if (!isCanonicalConversationUrl(updated.conversationUrl) || !updated.userTurnId && !updated.userTurnHash || !updated.submitIntentAt) {
+        throw codedError(
+          "EXACT_TURN_PROOF_REQUIRED",
+          "Monitor-only execution requires submit intent, a canonical conversation URL, and an exact user-turn id or unambiguous semantic hash.",
+          { submissionMayHaveOccurred: true }
+        );
+      }
+      this.db.prepare(`
+        UPDATE job_attempts SET execution_kind='monitor_only' WHERE job_id=?
+      `).run(id);
+    }
+    this.db.prepare(`
+      INSERT INTO job_events(job_id, state, details_json, created_at, broker_instance_id, lease_generation)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      nextState,
+      json(details ?? patch),
+      now,
+      this.brokerContext.instanceId,
+      this.brokerContext.leaseGeneration
+    );
+    this.syncChainForJob(id, now, details ?? patch);
+    return this.getJob(id);
+  }
+  syncChainForJob(jobId, now = (/* @__PURE__ */ new Date()).toISOString(), details = null) {
+    const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(jobId);
+    if (!attempt) return null;
+    const chain = this.db.prepare("SELECT * FROM job_chains WHERE id = ?").get(attempt.chain_id);
+    if (!chain) return null;
+    const rawJob = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(jobId);
+    const activeJobId = chain.active_job_id || jobId;
+    const active = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(activeJobId) || rawJob;
+    const nextState = this.chainStateForJob(active, chain);
+    const conversationKey = active.conversation_key || chain.conversation_key;
+    const canonicalUrl = active.canonical_url || chain.canonical_url;
+    if (canonicalUrl && canonicalUrl !== chain.canonical_url) {
+      const collision = this.db.prepare(`
+        SELECT id FROM job_chains
+        WHERE id <> ? AND canonical_url = ?
+          AND state NOT IN ('completed', 'failed', 'cancelled')
+        ORDER BY accepted_sequence LIMIT 1
+      `).get(chain.id, canonicalUrl);
+      if (collision) {
+        throw codedError("CONVERSATION_LANE_COLLISION", "The canonical conversation is already owned by another active logical chain. Oracle stopped without another send.", {
+          submissionMayHaveOccurred: true,
+          recoveryAction: "inspect both logical chains and reconcile the submitted turn"
+        });
+      }
+    }
+    const changed = chain.state !== nextState || chain.active_job_id !== active.id || chain.conversation_key !== conversationKey || chain.canonical_url !== canonicalUrl;
+    this.db.prepare(`
+      UPDATE job_chains
+      SET state = ?, active_job_id = ?, conversation_key = ?, canonical_url = ?,
+          updated_at = ?, terminal_at = ?
+      WHERE id = ?
+    `).run(
+      nextState,
+      active.id,
+      conversationKey,
+      canonicalUrl,
+      now,
+      TERMINAL_CHAIN_STATES.has(nextState) ? active.completed_at || now : null,
+      chain.id
+    );
+    if (changed) this.createChainEvent(chain.id, active.id, nextState, details, now);
+    return this.getChain(chain.id);
+  }
+  createChainEvent(chainId, activeJobId, state, details = null, now = (/* @__PURE__ */ new Date()).toISOString()) {
+    const inserted = this.db.prepare(`
+      INSERT INTO chain_events(
+        chain_id, active_job_id, state, details_json, created_at, broker_instance_id, lease_generation
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      chainId,
+      activeJobId,
+      state,
+      json(details),
+      now,
+      this.brokerContext.instanceId,
+      this.brokerContext.leaseGeneration
+    );
+    const sequence = Number(inserted.lastInsertRowid);
+    if (WAKE_CHAIN_STATES.has(state)) {
+      this.db.prepare(`
+        INSERT OR IGNORE INTO completion_deliveries(
+          subscription_id, chain_event_sequence, state, created_at
+        )
+        SELECT id, ?, 'pending', ?
+        FROM completion_subscriptions
+        WHERE chain_id = ? AND state = 'open' AND mode != 'manual'
+      `).run(sequence, now, chainId);
+    }
+    if (TERMINAL_CHAIN_STATES.has(state)) {
+      this.db.prepare(`
+        UPDATE completion_subscriptions
+        SET state = 'closed', closed_at = ?
+        WHERE chain_id = ? AND state = 'open' AND mode = 'manual'
+      `).run(now, chainId);
+    }
+    return sequence;
+  }
+  markFailure(id, error) {
+    const job = this.requireJob(id);
+    const structured = structuredError(error, { jobState: job.state });
+    if (!job.submitIntentAt) {
+      return this.transition(id, "failed_pre_submit", {
+        error: structured,
+        recoveryAction: structured.safeToRetry ? "start a new authorized job" : structured.recoveryAction
+      });
+    }
+    const state = hasExactUserTurnProof(job) ? "response_uncertain" : "submission_uncertain";
+    const recoveryAction = `reconcile_job ${id}`;
+    const result = this.transition(id, state, {
+      error: { ...structured, submissionMayHaveOccurred: true },
+      recoveryAction
+    });
+    this.quarantine(job.conversationKey, id, structured.message);
+    return result;
+  }
+  markFailureClaimed(claim, error) {
+    const job = this.requireJob(claim.jobId);
+    const structured = structuredError(error, { jobState: job.state });
+    if (!job.submitIntentAt) {
+      return this.transitionClaimed(claim, "failed_pre_submit", {
+        error: structured,
+        recoveryAction: structured.safeToRetry ? "start a new authorized job" : structured.recoveryAction
+      });
+    }
+    const state = hasExactUserTurnProof(job) ? "response_uncertain" : "submission_uncertain";
+    const recoveryAction = `reconcile_job ${job.id}`;
+    const result = this.transitionClaimed(claim, state, {
+      error: { ...structured, submissionMayHaveOccurred: true },
+      recoveryAction
+    });
+    this.quarantine(job.conversationKey, job.id, structured.message);
+    return result;
+  }
+  quarantine(scopeKey, jobId, reason) {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.db.prepare(`
+      INSERT INTO quarantines(scope_key, job_id, reason, active, created_at)
+      VALUES (?, ?, ?, 1, ?)
+      ON CONFLICT(scope_key) DO UPDATE SET job_id=excluded.job_id, reason=excluded.reason, active=1, created_at=excluded.created_at, acknowledged_at=NULL
+    `).run(scopeKey, jobId, reason, now);
+  }
+  activeQuarantineRecord(scopeKey) {
+    return this.db.prepare(`
+      SELECT q.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.canonical_url, j.submitted_message_hash, j.attachment_manifest_json,
+             a.chain_id, c.state AS chain_state
+      FROM quarantines q
+      JOIN jobs j ON j.id = q.job_id
+      JOIN job_attempts a ON a.job_id = j.id
+      JOIN job_chains c ON c.id = a.chain_id
+      WHERE q.scope_key = ? AND q.active = 1
+    `).get(scopeKey);
+  }
+  quarantineView(scopeKey) {
+    const row = this.activeQuarantineRecord(scopeKey);
+    if (!row) return { quarantined: false, conversationUrl: scopeKey };
+    const canReconcileReadOnly = Boolean(row.canonical_url && row.submitted_message_hash);
+    return {
+      quarantined: true,
+      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.scope_key) ? row.scope_key : null),
+      fingerprint: quarantineFingerprint(row),
+      jobState: row.job_state,
+      createdAt: row.created_at,
+      canReconcileReadOnly,
+      capabilityRecoveryRequired: true,
+      recoveryActions: canReconcileReadOnly ? ["reconcile", "acknowledge-after-manual-inspection"] : ["acknowledge-after-manual-inspection"]
+    };
+  }
+  requireMatchingQuarantine(scopeKey, fingerprint) {
+    const row = this.activeQuarantineRecord(scopeKey);
+    if (!row) {
+      throw codedError("QUARANTINE_NOT_FOUND", "No active Oracle Firefox quarantine matches that exact conversation URL.");
+    }
+    const currentFingerprint = quarantineFingerprint(row);
+    if (!fingerprint || fingerprint !== currentFingerprint) {
+      throw codedError(
+        "QUARANTINE_CHANGED",
+        "The quarantine changed after inspection. Inspect the exact conversation quarantine again before recovering it.",
+        { safeToRetry: true }
+      );
+    }
+    if (!(/* @__PURE__ */ new Set(["submission_uncertain", "response_uncertain", "quarantined"])).has(row.job_state)) {
+      throw codedError("QUARANTINE_NOT_RECOVERABLE", "The quarantined job is no longer in an uncertain terminal state.");
+    }
+    return row;
+  }
+  orphanedQuarantineJob(scopeKey, fingerprint) {
+    const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+    return this.requireJob(row.job_id);
+  }
+  acknowledgeOrphanedQuarantine(scopeKey, fingerprint) {
+    const result = this.transaction(() => {
+      const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE quarantines SET active = 0, acknowledged_at = ?
+        WHERE scope_key = ? AND job_id = ? AND active = 1
+      `).run(now, scopeKey, row.job_id);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("QUARANTINE_CHANGED", "The quarantine changed while it was being acknowledged.", { safeToRetry: true });
+      }
+      return { conversationUrl: row.canonical_url || scopeKey, fingerprint, acknowledgedAt: now };
+    });
+    return {
+      ...result,
+      acknowledged: true,
+      messageSent: false,
+      replacementAuthorized: false,
+      recoveryAction: "A fresh submission still requires its own explicit user authorization."
+    };
+  }
+  recoverOrphanedQuarantineForMonitoring({
+    scopeKey,
+    fingerprint,
+    caller,
+    userTurnId,
+    userTurnHash,
+    readCapabilityHash,
+    controlCapabilityHash,
+    subscriptionId,
+    subscriptionCapabilityHash,
+    completionMode = "manual"
+  }) {
+    const recovered = this.transaction(() => {
+      const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
+      const job = this.requireJob(row.job_id);
+      const chain = this.getChain(row.chain_id);
+      if (!caller?.id || !chain || chain.activeJobId !== job.id) {
+        throw codedError("QUARANTINE_NOT_RECOVERABLE", "The uncertain logical chain cannot be safely adopted for monitoring.");
+      }
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      this.db.prepare(`
+        UPDATE job_chains SET read_cap_hash = ?, control_cap_hash = ?, updated_at = ? WHERE id = ?
+      `).run(readCapabilityHash, controlCapabilityHash, now, chain.id);
+      this.db.prepare(`
+        INSERT INTO chain_session_grants(
+          chain_id, session_id, can_read, can_control, can_list, granted_at, revoked_at
+        ) VALUES (?, ?, 1, 1, 1, ?, NULL)
+        ON CONFLICT(chain_id, session_id) DO UPDATE SET
+          can_read = 1, can_control = 1, can_list = 1,
+          granted_at = excluded.granted_at, revoked_at = NULL
+      `).run(chain.id, caller.id, now);
+      this.db.prepare(`
+        UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
+        WHERE chain_id = ? AND state = 'open'
+      `).run(now, chain.id);
+      this.db.prepare(`
+        INSERT INTO completion_subscriptions(
+          id, chain_id, owner_session_id, mode, capability_hash, state, created_at
+        ) VALUES (?, ?, ?, ?, ?, 'open', ?)
+      `).run(subscriptionId, chain.id, caller.id, completionMode, subscriptionCapabilityHash, now);
+      const reopened = this.reopenForMonitoringInCurrentTransaction(job.id, { userTurnId, userTurnHash }, now);
+      this.db.prepare(`
+        UPDATE quarantines SET active = 0, acknowledged_at = ?
+        WHERE scope_key = ? AND job_id = ? AND active = 1
+      `).run(now, scopeKey, job.id);
+      return reopened;
+    });
+    this.emit("change", recovered);
+    return recovered;
+  }
+  acknowledge(jobId) {
+    const job = this.requireJob(jobId);
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.db.prepare("UPDATE quarantines SET active = 0, acknowledged_at = ? WHERE job_id = ?").run(now, jobId);
+    return { jobId, acknowledged: true, conversationKey: job.conversationKey };
+  }
+  activeInputRequestRecord(scopeKey) {
+    const rows = this.db.prepare(`
+      SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.assistant_disposition, j.local_data_request_json
+      FROM job_chains c
+      JOIN jobs j ON j.id = c.active_job_id
+      WHERE c.conversation_key = ? AND c.state = 'input_required'
+        AND j.state = 'completed' AND j.local_data_request_json IS NOT NULL
+      ORDER BY c.accepted_sequence
+      LIMIT 2
+    `).all(scopeKey);
+    if (rows.length > 1) {
+      throw codedError("INPUT_REQUEST_AMBIGUOUS", "More than one durable input request occupies this exact conversation lane. Oracle refused to guess.");
+    }
+    return rows[0] || null;
+  }
+  inputRequestView(scopeKey) {
+    const row = this.activeInputRequestRecord(scopeKey);
+    if (!row) return { inputRequired: false, conversationUrl: scopeKey };
+    const request3 = parse(row.local_data_request_json);
+    return {
+      inputRequired: true,
+      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.conversation_key) ? row.conversation_key : null),
+      fingerprint: inputRequestFingerprint(row),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      safeReadOnly: request3?.safeReadOnly === true,
+      templateFalsePositive: isTemplateLocalDataRequest(request3),
+      capabilityRecoveryRequired: true,
+      recoveryActions: ["reply-with-local-data", "abandon-after-user-confirmation"]
+    };
+  }
+  requireMatchingInputRequest(scopeKey, fingerprint) {
+    const row = this.activeInputRequestRecord(scopeKey);
+    if (!row) {
+      throw codedError("INPUT_REQUEST_NOT_FOUND", "No active Oracle Firefox input request matches that exact conversation URL.");
+    }
+    const currentFingerprint = inputRequestFingerprint(row);
+    if (!fingerprint || fingerprint !== currentFingerprint) {
+      throw codedError(
+        "INPUT_REQUEST_CHANGED",
+        "The input request changed after inspection. Inspect the exact conversation lane again before abandoning it.",
+        { safeToRetry: true }
+      );
+    }
+    return row;
+  }
+  abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode }, now = (/* @__PURE__ */ new Date()).toISOString()) {
+    const request3 = parse(row.local_data_request_json);
+    if (row.state !== "input_required" || row.job_state !== "completed" || row.assistant_disposition !== "local_data_request" || !request3) {
+      throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected logical chain is not waiting for a valid local-data request.");
+    }
+    const changed = this.db.prepare(`
+      UPDATE job_chains
+      SET state = 'completed', terminal_at = ?, updated_at = ?,
+          input_required_abandoned_at = ?, input_required_abandoned_job_id = ?,
+          input_required_abandoned_reason = ?
+      WHERE id = ? AND active_job_id = ? AND state = 'input_required'
+    `).run(now, now, now, row.active_job_id, reason, row.id, row.active_job_id);
+    if (Number(changed.changes) !== 1) {
+      throw codedError("INPUT_REQUEST_CHANGED", "The input request changed while Oracle was abandoning it.", { safeToRetry: true });
+    }
+    this.createChainEvent(row.id, row.active_job_id, "completed", {
+      inputRequestAbandoned: true,
+      reason,
+      recoveryMode,
+      messageSent: false,
+      replacementAuthorized: false
+    }, now);
+    return {
+      job: this.requireJob(row.active_job_id),
+      chain: this.getChain(row.id),
+      abandonedAt: now,
+      reason,
+      templateFalsePositive: isTemplateLocalDataRequest(request3)
+    };
+  }
+  abandonInputRequest(jobId, { reason = "user-declined" } = {}) {
+    let released;
+    this.transaction(() => {
+      const job = this.requireJob(jobId);
+      const chain = this.chainAccessRow(job.chainId);
+      if (chain?.input_required_abandoned_job_id === job.id && chain.state === "completed") {
+        released = {
+          job,
+          chain: this.getChain(chain.id),
+          abandonedAt: chain.input_required_abandoned_at,
+          reason: chain.input_required_abandoned_reason,
+          templateFalsePositive: isTemplateLocalDataRequest(job.localDataRequest),
+          idempotent: true
+        };
+        return;
+      }
+      if (!chain || chain.active_job_id !== job.id) {
+        throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "Only the active input request in a logical chain can be abandoned.");
+      }
+      const row = {
+        ...chain,
+        job_state: job.state,
+        job_updated_at: job.updatedAt,
+        assistant_disposition: job.assistantDisposition,
+        local_data_request_json: json(job.localDataRequest)
+      };
+      released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "capability" });
+    });
+    this.emit("change", released.job);
+    return released;
+  }
+  abandonOrphanedInputRequest(scopeKey, fingerprint, { reason = "user-declined" } = {}) {
+    let released;
+    this.transaction(() => {
+      const row = this.requireMatchingInputRequest(scopeKey, fingerprint);
+      released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "orphaned-capability" });
+    });
+    this.emit("change", released.job);
+    return released;
+  }
+  cancel(jobId) {
+    const job = this.requireJob(jobId);
+    if (TERMINAL_JOB_STATES.has(job.state)) return { ...job, cancelled: job.state === "cancelled_pre_submit", detached: false };
+    if (job.submitIntentAt || job.submissionMayHaveOccurred) {
+      return { ...job, cancelled: false, detached: true };
+    }
+    const cancelled = this.transition(jobId, "cancelled_pre_submit", {
+      recoveryAction: "start a new job only with a new explicit authorization"
+    });
+    return { ...cancelled, cancelled: true, detached: false };
+  }
+  reopenForMonitoring(jobId, { userTurnId, userTurnHash }) {
+    const reopened = this.transaction(() => this.reopenForMonitoringInCurrentTransaction(
+      jobId,
+      { userTurnId, userTurnHash },
+      (/* @__PURE__ */ new Date()).toISOString()
+    ));
+    this.emit("change", reopened);
+    return reopened;
+  }
+  reopenForMonitoringInCurrentTransaction(jobId, { userTurnId, userTurnHash }, now) {
+    const job = this.requireJob(jobId);
+    if (!job.submitIntentAt || !isCanonicalConversationUrl(job.conversationUrl) || !userTurnId && !userTurnHash) {
+      throw codedError(
+        "EXACT_TURN_PROOF_REQUIRED",
+        "Monitor-only recovery requires immutable submit intent, a canonical conversation URL, and an exact user-turn id or unambiguous semantic hash.",
+        { submissionMayHaveOccurred: Boolean(job.submitIntentAt) }
+      );
+    }
+    if (job.userTurnId && job.userTurnId !== userTurnId || job.userTurnHash && job.userTurnHash !== userTurnHash) {
+      throw codedError(
+        "IMMUTABLE_TURN_PROOF",
+        "Monitor-only recovery cannot replace the durable exact user-turn proof.",
+        { submissionMayHaveOccurred: true }
+      );
+    }
+    this.db.prepare(`
+      UPDATE jobs
+      SET state='awaiting_response', user_turn_id=?, user_turn_hash=?, error_json=NULL,
+          recovery_action='reattach submitted turn without resending', completed_at=NULL,
+          updated_at=?, version=version+1
+      WHERE id=?
+    `).run(userTurnId ?? null, userTurnHash ?? null, now, jobId);
+    this.db.prepare(`
+      UPDATE job_attempts
+      SET execution_state='idle', execution_owner_instance_id=NULL,
+          execution_lease_generation=NULL, execution_heartbeat_at=NULL,
+          next_execution_not_before=NULL, execution_kind='monitor_only',
+          final_reconciliation_attempted_at=NULL
+      WHERE job_id=?
+    `).run(jobId);
+    this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'awaiting_response', ?, ?)").run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
+    this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
+    return this.requireJob(jobId);
+  }
+  jobChain(jobId) {
+    const requested = this.requireJob(jobId);
+    return this.db.prepare(`
+      SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
+             a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
+             c.state AS chain_state, c.input_required_abandoned_at,
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+      FROM job_attempts a
+      JOIN jobs j ON j.id = a.job_id
+      JOIN job_chains c ON c.id = a.chain_id
+      WHERE a.chain_id = ?
+      ORDER BY a.ordinal ASC
+    `).all(requested.chainId).map(rowToJob);
+  }
+  activeJob(jobId) {
+    const requested = this.requireJob(jobId);
+    const chain = this.getChain(requested.chainId);
+    return this.requireJob(chain.activeJobId);
+  }
+  isRunnable(jobId) {
+    const job = this.requireJob(jobId);
+    const chain = this.getChain(job.chainId);
+    if (!chain || chain.activeJobId !== job.id || TERMINAL_JOB_STATES.has(job.state)) return false;
+    const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(jobId);
+    if (!attempt || !(/* @__PURE__ */ new Set(["idle", "backoff"])).has(attempt.execution_state || "idle")) return false;
+    if (attempt.next_execution_not_before && Date.parse(attempt.next_execution_not_before) > Date.now()) return false;
+    const executionKind = attempt.execution_kind || "pre_submit";
+    if (executionKind === "pre_submit" && (job.state !== "queued" || chain.state !== "queued" || job.submitIntentAt)) return false;
+    if (executionKind === "monitor_only" && (!MONITOR_JOB_STATES.has(job.state) || !hasExactUserTurnProof(job))) return false;
+    if (this.db.prepare("SELECT 1 blocked FROM quarantines WHERE scope_key=? AND active=1").get(chain.conversationKey)) return false;
+    const earlier = this.db.prepare(`
+      SELECT id FROM job_chains
+      WHERE conversation_key = ?
+        AND accepted_sequence < ?
+        AND state IN ('queued', 'running', 'input_required')
+      ORDER BY accepted_sequence LIMIT 1
+    `).get(chain.conversationKey, chain.acceptedSequence);
+    if (earlier) return false;
+    const unqualifiedCreation = this.db.prepare(`
+      SELECT id FROM job_chains
+      WHERE target_kind IN ('new_standalone', 'new_project')
+        AND canonical_url IS NULL
+        AND state IN ('queued', 'running')
+      ORDER BY accepted_sequence LIMIT 1
+    `).get();
+    if (unqualifiedCreation && unqualifiedCreation.id !== chain.id) return false;
+    return true;
+  }
+  claimNextRunnable({ allowPreSubmit = true } = {}) {
+    return this.claimRunnable(null, { allowPreSubmit });
+  }
+  claimRunnable(jobId = null, { allowPreSubmit = true } = {}) {
+    return this.transaction(() => {
+      this.assertCurrentBroker();
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const candidate = this.db.prepare(`
+        SELECT j.id AS job_id, a.chain_id, a.execution_epoch, a.execution_kind, c.accepted_sequence
+        FROM jobs j
+        JOIN job_attempts a ON a.job_id = j.id
+        JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
+        WHERE j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
+          AND a.execution_state IN ('idle', 'backoff')
+          AND (a.next_execution_not_before IS NULL OR a.next_execution_not_before <= ?)
+          AND (? IS NULL OR j.id = ?)
+          AND (
+            (a.execution_kind = 'pre_submit' AND j.state = 'queued' AND c.state = 'queued'
+              AND j.submit_intent_at IS NULL AND ? = 1)
+            OR
+            (a.execution_kind = 'monitor_only' AND j.state IN ('user_turn_confirmed','awaiting_response','response_failed_detected','response_confirmed')
+              AND j.submit_intent_at IS NOT NULL AND j.canonical_url IS NOT NULL
+              AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
+              AND a.monitor_deadline_at IS NOT NULL
+              AND oracle_canonical_conversation_url(j.canonical_url) = 1)
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM quarantines q WHERE q.scope_key=c.conversation_key AND q.active=1
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM job_chains earlier
+            WHERE earlier.conversation_key = c.conversation_key
+              AND earlier.accepted_sequence < c.accepted_sequence
+              AND earlier.state IN ('queued', 'running', 'input_required')
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM job_chains creation
+            WHERE creation.target_kind IN ('new_standalone', 'new_project')
+              AND creation.canonical_url IS NULL
+              AND creation.state IN ('queued', 'running')
+              AND creation.id != c.id
+              AND creation.accepted_sequence < c.accepted_sequence
+          )
+        ORDER BY c.accepted_sequence, a.ordinal
+        LIMIT 1
+      `).get(...TERMINAL_JOB_STATES, now, jobId, jobId, allowPreSubmit ? 1 : 0);
+      if (!candidate) return null;
+      const attemptUpdate = this.db.prepare(`
+        UPDATE job_attempts
+        SET execution_epoch = execution_epoch + 1,
+            execution_owner_instance_id = ?, execution_lease_generation = ?,
+            execution_state = 'running', execution_started_at = ?, execution_heartbeat_at = ?,
+            next_execution_not_before = NULL
+        WHERE job_id = ? AND execution_epoch = ? AND execution_state IN ('idle', 'backoff')
+      `).run(
+        this.brokerContext.instanceId,
+        this.brokerContext.leaseGeneration,
+        now,
+        now,
+        candidate.job_id,
+        candidate.execution_epoch
+      );
+      if (Number(attemptUpdate.changes) !== 1) return null;
+      const chainUpdate = this.db.prepare(`
+        UPDATE job_chains SET state='running', updated_at=?
+        WHERE id=? AND active_job_id=? AND state IN ('queued','running')
+      `).run(now, candidate.chain_id, candidate.job_id);
+      if (Number(chainUpdate.changes) !== 1) throw codedError("EXECUTION_CLAIM_RACE", "The logical chain changed while Oracle Firefox was claiming it.");
+      return {
+        jobId: candidate.job_id,
+        chainId: candidate.chain_id,
+        executionEpoch: Number(candidate.execution_epoch) + 1,
+        executionKind: candidate.execution_kind,
+        brokerInstanceId: this.brokerContext.instanceId,
+        leaseGeneration: this.brokerContext.leaseGeneration
+      };
+    });
+  }
+  beginExecution(jobId) {
+    return this.claimRunnable(jobId);
+  }
+  assertExecution(claim) {
+    if (!claim?.jobId || !claim?.chainId) {
+      throw codedError("STALE_EXECUTION", "No valid Oracle Firefox execution claim was supplied.");
+    }
+    const row = this.db.prepare(`
+      SELECT a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
+             a.execution_state, c.active_job_id, c.state,
+             b.current_instance_id, b.current_lease_generation
+      FROM job_attempts a
+      JOIN job_chains c ON c.id = a.chain_id
+      JOIN broker_state b ON b.id = 1
+      WHERE a.job_id = ? AND a.chain_id = ?
+    `).get(claim?.jobId, claim?.chainId);
+    if (!row || Number(row.execution_epoch) !== Number(claim?.executionEpoch) || row.execution_owner_instance_id !== claim?.brokerInstanceId || Number(row.execution_lease_generation) !== Number(claim?.leaseGeneration) || row.execution_state !== "running" || row.active_job_id !== claim?.jobId || row.state !== "running" || row.current_instance_id !== claim?.brokerInstanceId || Number(row.current_lease_generation) !== Number(claim?.leaseGeneration)) {
+      throw codedError("STALE_EXECUTION", "This browser executor no longer owns the logical job. No browser action was attempted.");
+    }
+    return true;
+  }
+  heartbeatExecution(claim) {
+    return this.transaction(() => {
+      this.assertExecution(claim);
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET execution_heartbeat_at = ?
+        WHERE job_id = ? AND execution_epoch = ? AND execution_state = 'running'
+      `).run(now, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("STALE_EXECUTION", "The Oracle Firefox execution heartbeat no longer owns this job.");
+      }
+      return now;
+    });
+  }
+  transitionClaimed(claim, nextState, patch = {}, details = null) {
+    let transitioned;
+    this.transaction(() => {
+      this.assertExecution(claim);
+      transitioned = this.transitionInCurrentTransaction(claim.jobId, nextState, patch, details);
+      if (TERMINAL_JOB_STATES.has(nextState)) {
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
+            execution_lease_generation=NULL, execution_heartbeat_at=? WHERE job_id=?
+        `).run((/* @__PURE__ */ new Date()).toISOString(), claim.jobId);
+      }
+    });
+    this.emit("change", transitioned);
+    return transitioned;
+  }
+  completeResponseClaimed(claim, {
+    assistantTurnId,
+    assistantTurnHash,
+    assistantTurnBound = false,
+    assistantDisposition,
+    responseDisposition = "completed",
+    localDataRequest = null,
+    result,
+    recoveryAction = null
+  }) {
+    if (!assistantTurnHash || !assistantTurnId && assistantTurnBound !== true || !result) {
+      throw codedError(
+        "ASSISTANT_PROOF_REQUIRED",
+        "A completed response requires an assistant id or unambiguous exact-turn binding, plus its content hash and complete durable result.",
+        { submissionMayHaveOccurred: true }
+      );
+    }
+    let completed;
+    this.transaction(() => {
+      this.assertExecution(claim);
+      const job = this.requireJob(claim.jobId);
+      if (!hasExactUserTurnProof(job) || job.executionKind !== "monitor_only") {
+        throw codedError(
+          "MONITOR_CLAIM_REQUIRED",
+          "Only the exact monitor-only execution claim may commit an assistant response.",
+          { submissionMayHaveOccurred: true }
+        );
+      }
+      completed = this.transitionInCurrentTransaction(claim.jobId, "completed", {
+        assistantTurnId: assistantTurnId || null,
+        assistantTurnHash,
+        assistantDisposition,
+        responseDisposition,
+        localDataRequest,
+        result,
+        error: null,
+        recoveryAction
+      }, {
+        assistantTurnId,
+        assistantTurnHash,
+        responseDisposition,
+        terminalAtomicCommit: true
+      });
+      const releasedAt = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
+          execution_lease_generation=NULL, execution_heartbeat_at=?, next_execution_not_before=NULL
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+      `).run(releasedAt, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("STALE_EXECUTION", "The monitor claim changed before its terminal result could be committed.");
+      }
+      completed = this.requireJob(claim.jobId);
+    });
+    this.emit("change", completed);
+    return completed;
+  }
+  beginFinalMonitorReconciliation(claim) {
+    return this.transaction(() => {
+      this.assertExecution(claim);
+      const job = this.requireJob(claim.jobId);
+      if (claim.executionKind !== "monitor_only" || !hasExactUserTurnProof(job)) {
+        throw codedError("MONITOR_CLAIM_REQUIRED", "Final reconciliation requires the exact monitor-only execution claim.");
+      }
+      if (!job.monitorDeadlineAt || Date.parse(job.monitorDeadlineAt) > Date.now()) {
+        throw codedError("MONITOR_DEADLINE_ACTIVE", "The original response-monitor deadline has not expired.", { safeToRetry: true });
+      }
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET final_reconciliation_attempted_at=?
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+          AND final_reconciliation_attempted_at IS NULL
+      `).run(now, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError(
+          "FINAL_RECONCILIATION_ALREADY_ATTEMPTED",
+          "The one final exact-turn reconciliation attempt was already consumed.",
+          { submissionMayHaveOccurred: true }
+        );
+      }
+      return now;
+    });
+  }
+  releaseExecutionWithBackoff(claim, error, { maximumFailures = 5, backoffDelays = null } = {}) {
+    let released;
+    this.transaction(() => {
+      this.assertExecution(claim);
+      const job = this.requireJob(claim.jobId);
+      const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id=?").get(claim.jobId);
+      const failures = Number(attempt.execution_failure_count || 0) + 1;
+      const structured = structuredError(error, { jobState: job.state });
+      const releaseTerminal = (state, recoveryAction) => {
+        released = this.transitionInCurrentTransaction(claim.jobId, state, {
+          error: { ...structured, submissionMayHaveOccurred: state !== "failed_pre_submit" },
+          recoveryAction
+        });
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
+            execution_lease_generation=NULL, execution_failure_count=?, last_executor_error_json=?,
+            next_execution_not_before=NULL WHERE job_id=? AND execution_epoch=?
+        `).run(failures, json(structured), claim.jobId, claim.executionEpoch);
+        if (state === "submission_uncertain" || state === "response_uncertain") {
+          this.quarantine(job.conversationKey, job.id, structured.message);
+        }
+      };
+      if (!job.submitIntentAt) {
+        if (failures >= maximumFailures) {
+          releaseTerminal("failed_pre_submit", "inspect the repeated pre-submit executor failure before authorizing another job");
+          return;
+        }
+        const delays2 = backoffDelays?.length ? backoffDelays : [250, 1e3, 4e3, 15e3, 3e4];
+        const delay4 = delays2[Math.min(failures - 1, delays2.length - 1)];
+        const retryAt2 = new Date(Date.now() + delay4).toISOString();
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_state='backoff', execution_kind='pre_submit',
+            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+            execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
+          WHERE job_id=? AND execution_epoch=?
+        `).run(failures, retryAt2, json(structured), claim.jobId, claim.executionEpoch);
+        this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?").run((/* @__PURE__ */ new Date()).toISOString(), claim.chainId, claim.jobId);
+        released = this.requireJob(claim.jobId);
+        return;
+      }
+      if (!hasExactUserTurnProof(job)) {
+        releaseTerminal("submission_uncertain", `reconcile_job ${job.id}`);
+        return;
+      }
+      if (attempt.final_reconciliation_attempted_at) {
+        releaseTerminal("response_uncertain", `reconcile_job ${job.id}`);
+        return;
+      }
+      const delays = backoffDelays?.length ? backoffDelays : [250, 1e3, 4e3, 15e3, 3e4];
+      const delay3 = delays[Math.min(failures - 1, delays.length - 1)];
+      const deadlineMs = Date.parse(attempt.monitor_deadline_at || job.monitorDeadlineAt || 0);
+      const retryMs = Number.isFinite(deadlineMs) && deadlineMs > 0 ? Math.min(Date.now() + delay3, deadlineMs) : Date.now() + delay3;
+      const retryAt = new Date(Math.max(Date.now(), retryMs)).toISOString();
+      this.db.prepare(`
+        UPDATE job_attempts SET execution_state='backoff', execution_kind='monitor_only',
+          execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+          execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
+        WHERE job_id=? AND execution_epoch=?
+      `).run(failures, retryAt, json(structured), claim.jobId, claim.executionEpoch);
+      this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?").run((/* @__PURE__ */ new Date()).toISOString(), claim.chainId, claim.jobId);
+      released = this.requireJob(claim.jobId);
+    });
+    this.emit("change", released);
+    return released;
+  }
+  releaseExecutionClaim(claim, error = null) {
+    try {
+      this.assertExecution(claim);
+    } catch {
+      return false;
+    }
+    const job = this.requireJob(claim.jobId);
+    if (!TERMINAL_JOB_STATES.has(job.state)) {
+      return this.releaseExecutionWithBackoff(
+        claim,
+        error || codedError(
+          "EXECUTOR_EXITED_WITHOUT_SETTLEMENT",
+          "The browser executor exited without committing a terminal result; its durable claim was recovered.",
+          { safeToRetry: true, submissionMayHaveOccurred: Boolean(job.submitIntentAt) }
+        )
+      );
+    }
+    let released = false;
+    this.transaction(() => {
+      try {
+        this.assertExecution(claim);
+      } catch {
+        return;
+      }
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
+          execution_lease_generation=NULL, execution_heartbeat_at=?
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+      `).run((/* @__PURE__ */ new Date()).toISOString(), claim.jobId, claim.executionEpoch);
+      released = Number(changed.changes) === 1;
+    });
+    return released;
+  }
+  sweepAbandonedExecutionClaims({
+    activeExecutorIds = [],
+    heartbeatTimeoutMs = 2e4,
+    nowMs = Date.now()
+  } = {}) {
+    const live = new Set(Array.from(activeExecutorIds, (value) => String(value)));
+    const boundedTimeout = Math.max(1, Number(heartbeatTimeoutMs) || 2e4);
+    const sweepNow = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
+    const staleBefore = new Date(sweepNow - boundedTimeout).toISOString();
+    const recovered = [];
+    const changed = [];
+    this.transaction(() => {
+      this.assertCurrentBroker();
+      const candidates = this.db.prepare(this.jobSelect(`
+        WHERE a.execution_state='running'
+          AND a.execution_owner_instance_id=?
+          AND a.execution_lease_generation=?
+          AND COALESCE(a.execution_heartbeat_at, a.execution_started_at, a.created_at) <= ?
+          AND j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
+      `, "ORDER BY a.execution_heartbeat_at, j.created_at")).all(
+        this.brokerContext.instanceId,
+        this.brokerContext.leaseGeneration,
+        staleBefore,
+        ...TERMINAL_JOB_STATES
+      ).map(rowToJob);
+      for (const job of candidates) {
+        if (live.has(job.id)) continue;
+        const monitorOnly = Boolean(job.submitIntentAt && hasExactUserTurnProof(job));
+        const terminalUncertainty = Boolean(job.submitIntentAt && !monitorOnly);
+        const nextExecutionState = terminalUncertainty ? "released" : "idle";
+        const nextExecutionKind = monitorOnly ? "monitor_only" : "pre_submit";
+        const reclaimed = this.db.prepare(`
+          UPDATE job_attempts
+          SET execution_epoch=execution_epoch+1, execution_state=?, execution_kind=?,
+              execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+              execution_started_at=NULL, execution_heartbeat_at=NULL,
+              next_execution_not_before=NULL
+          WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+            AND execution_owner_instance_id=? AND execution_lease_generation=?
+            AND COALESCE(execution_heartbeat_at, execution_started_at, created_at) <= ?
+        `).run(
+          nextExecutionState,
+          nextExecutionKind,
+          job.id,
+          job.executionEpoch,
+          this.brokerContext.instanceId,
+          this.brokerContext.leaseGeneration,
+          staleBefore
+        );
+        if (Number(reclaimed.changes) !== 1) continue;
+        const now = new Date(sweepNow).toISOString();
+        if (!job.submitIntentAt) {
+          this.db.prepare(`
+            UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
+              submission_may_have_happened=0,
+              user_turn_id=NULL, user_turn_hash=NULL,
+              assistant_turn_id=NULL, assistant_turn_hash=NULL,
+              version=version+1 WHERE id=?
+          `).run(now, "recovered abandoned pre-submit executor", job.id);
+          this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?").run(now, job.chainId, job.id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, 'queued', ?, ?, ?, ?)
+          `).run(
+            job.id,
+            json({ abandonedClaim: true, recoveredFrom: job.state, executionEpoch: job.executionEpoch }),
+            now,
+            this.brokerContext.instanceId,
+            this.brokerContext.leaseGeneration
+          );
+          recovered.push({ id: job.id, action: "requeued-pre-submit" });
+        } else if (monitorOnly) {
+          const recoveredState = PRE_SUBMIT_JOB_STATES.has(job.state) || job.state === "submit_intent" ? "awaiting_response" : job.state;
+          this.db.prepare(`
+            UPDATE jobs SET state=?, updated_at=?, recovery_action=?,
+              submission_may_have_happened=1, version=version+1 WHERE id=?
+          `).run(recoveredState, now, "recovered abandoned monitor-only executor without resending", job.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?").run(now, job.chainId, job.id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(
+            job.id,
+            recoveredState,
+            json({ abandonedClaim: true, monitorOnly: true, executionEpoch: job.executionEpoch }),
+            now,
+            this.brokerContext.instanceId,
+            this.brokerContext.leaseGeneration
+          );
+          recovered.push({ id: job.id, action: "resumed-monitor-only" });
+        } else {
+          this.transitionInCurrentTransaction(job.id, "submission_uncertain", {
+            error: {
+              code: "SUBMISSION_UNCERTAIN",
+              message: "A submitted executor was abandoned without exact canonical user-turn proof.",
+              submissionMayHaveOccurred: true
+            },
+            recoveryAction: `reconcile_job ${job.id}`
+          }, { abandonedClaim: true, executionEpoch: job.executionEpoch });
+          this.quarantine(job.conversationKey, job.id, "Abandoned submitted executor without exact user-turn proof");
+          recovered.push({ id: job.id, action: "submission-uncertain" });
+        }
+        changed.push(job.id);
+      }
+    });
+    for (const id of changed) this.emit("change", this.requireJob(id));
+    return recovered;
+  }
+  earliestExecutionWake() {
+    return this.db.prepare(`
+      SELECT MIN(next_execution_not_before) wake_at FROM job_attempts
+      WHERE execution_state='backoff' AND next_execution_not_before IS NOT NULL
+    `).get()?.wake_at || null;
+  }
+  accountState() {
+    const row = this.db.prepare("SELECT * FROM account_state WHERE id = 1").get();
+    const broker = this.db.prepare("SELECT qualified_concurrency FROM broker_state WHERE id = 1").get();
+    return {
+      gateVersion: row.gate_version,
+      nextSubmitNotBefore: row.next_submit_not_before,
+      cooldownUntil: row.cooldown_until,
+      cooldownCode: row.cooldown_code,
+      cooldownCount: row.cooldown_count,
+      effectiveConcurrency: row.effective_concurrency,
+      successStreak: row.success_streak,
+      probeInFlight: Boolean(row.probe_in_flight),
+      lastSuccessAt: row.last_success_at,
+      updatedAt: row.updated_at,
+      qualifiedConcurrency: Number(broker?.qualified_concurrency || 1)
+    };
+  }
+  setQualifiedConcurrency(value) {
+    this.assertCurrentBroker();
+    const qualified = Math.max(1, Math.min(5, Number(value) || 1));
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.transaction(() => {
+      this.db.prepare("UPDATE broker_state SET qualified_concurrency=?, updated_at=? WHERE id=1").run(qualified, now);
+      this.db.prepare(`
+        UPDATE account_state SET effective_concurrency=?, updated_at=?
+        WHERE id=1 AND cooldown_until IS NULL
+      `).run(qualified, now);
+    });
+    return qualified;
+  }
+  databaseStatus() {
+    return {
+      sqliteVersion: this.db.prepare("SELECT sqlite_version() version").get().version,
+      journalMode: this.db.prepare("PRAGMA journal_mode").get().journal_mode,
+      synchronous: this.db.prepare("PRAGMA synchronous").get().synchronous,
+      foreignKeys: Boolean(this.db.prepare("PRAGMA foreign_keys").get().foreign_keys),
+      schemaVersion: Number(this.db.prepare("SELECT COALESCE(MAX(version), 0) version FROM schema_migrations").get().version)
+    };
+  }
+  checkInvariants() {
+    const violations = [];
+    const foreign = this.db.prepare("PRAGMA foreign_key_check").all();
+    if (foreign.length) violations.push({ invariant: "DB-FOREIGN-KEYS", count: foreign.length });
+    const missingAttempts = this.db.prepare(`
+      SELECT COUNT(*) count FROM jobs j LEFT JOIN job_attempts a ON a.job_id = j.id WHERE a.job_id IS NULL
+    `).get().count;
+    if (missingAttempts) violations.push({ invariant: "CHAIN-EVERY-JOB", count: Number(missingAttempts) });
+    const invalidActive = this.db.prepare(`
+      SELECT COUNT(*) count FROM job_chains c
+      LEFT JOIN job_attempts a ON a.job_id = c.active_job_id AND a.chain_id = c.id
+      WHERE a.job_id IS NULL
+    `).get().count;
+    if (invalidActive) violations.push({ invariant: "CHAIN-ACTIVE-ATTEMPT", count: Number(invalidActive) });
+    const ownerless = this.db.prepare(`
+      SELECT COUNT(*) count FROM job_chains
+      WHERE legacy_mode = 'none' AND (read_cap_hash IS NULL OR control_cap_hash IS NULL)
+    `).get().count;
+    if (ownerless) violations.push({ invariant: "CAP-NEW-CHAINS", count: Number(ownerless) });
+    const duplicateRunningLanes = this.db.prepare(`
+      SELECT COUNT(*) count FROM (
+        SELECT conversation_key FROM job_chains WHERE state = 'running'
+        GROUP BY conversation_key HAVING COUNT(*) > 1
+      )
+    `).get().count;
+    if (duplicateRunningLanes) violations.push({ invariant: "LANE-ONE-OWNER", count: Number(duplicateRunningLanes) });
+    return { ok: violations.length === 0, violations };
+  }
+  issueSubmitPermit(jobId, { minimumIntervalMs = 2e3, ttlMs = 3e4 } = {}) {
+    return this.transaction(() => {
+      const nowMs = Date.now();
+      const state = this.accountState();
+      const cooldownMs = state.cooldownUntil ? Date.parse(state.cooldownUntil) : 0;
+      if (cooldownMs > nowMs) {
+        throw codedError("ACCOUNT_COOLDOWN", "ChatGPT submissions are paused by the broker-wide account cooldown.", {
+          safeToRetry: true,
+          recoveryAction: `wait until ${state.cooldownUntil} before submitting again`,
+          details: { cooldownUntil: state.cooldownUntil, cooldownCode: state.cooldownCode }
+        });
+      }
+      const paceMs = state.nextSubmitNotBefore ? Date.parse(state.nextSubmitNotBefore) : 0;
+      if (paceMs > nowMs) {
+        throw codedError("SUBMIT_PACING_WAIT", "The durable account submission interval has not elapsed.", {
+          safeToRetry: true,
+          details: { retryAt: state.nextSubmitNotBefore }
+        });
+      }
+      const id = randomUUID4();
+      const now = new Date(nowMs).toISOString();
+      const expiresAt = new Date(nowMs + ttlMs).toISOString();
+      this.db.prepare(`
+        UPDATE submit_permits SET invalidated_at = ?
+        WHERE consumed_at IS NULL AND invalidated_at IS NULL AND expires_at <= ?
+      `).run(now, now);
+      const reopening = Boolean(state.cooldownUntil && cooldownMs <= nowMs);
+      if (reopening) {
+        this.db.prepare(`
+          UPDATE account_state
+          SET cooldown_until = NULL, cooldown_code = NULL, effective_concurrency = 1,
+              probe_in_flight = 1, updated_at = ?
+          WHERE id = 1
+        `).run(now);
+      }
+      this.db.prepare(`
+        INSERT INTO submit_permits(id, job_id, gate_version, issued_at, expires_at)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(id, jobId, state.gateVersion, now, expiresAt);
+      this.db.prepare("UPDATE account_state SET next_submit_not_before = ?, updated_at = ? WHERE id = 1").run(new Date(nowMs + (reopening ? Math.max(minimumIntervalMs, 3e4) : minimumIntervalMs)).toISOString(), now);
+      return { id, jobId, gateVersion: state.gateVersion, issuedAt: now, expiresAt };
+    });
+  }
+  consumeSubmitPermit(jobId, permitId, patch = {}, details = null) {
+    const transitioned = this.transaction(() => {
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const permit = this.db.prepare("SELECT * FROM submit_permits WHERE id = ? AND job_id = ?").get(permitId, jobId);
+      const account = this.db.prepare("SELECT * FROM account_state WHERE id = 1").get();
+      const job = this.requireJob(jobId);
+      if (!permit || permit.consumed_at || permit.invalidated_at || job.submitIntentAt || job.state === "cancelled_pre_submit" || Date.parse(permit.expires_at) <= Date.now() || permit.gate_version !== account.gate_version || account.cooldown_until && Date.parse(account.cooldown_until) > Date.now()) {
+        throw codedError("SUBMIT_PERMIT_INVALID", "The broker-wide submit permit expired or was invalidated. No message was sent.", { safeToRetry: true });
+      }
+      this.db.prepare("UPDATE submit_permits SET consumed_at = ? WHERE id = ?").run(now, permitId);
+      return this.transitionInCurrentTransaction(jobId, "submit_intent", patch, details, now);
+    });
+    this.emit("change", transitioned);
+    return transitioned;
+  }
+  consumeSubmitPermitClaimed(claim, permitId, patch = {}, details = null) {
+    let transitioned;
+    this.transaction(() => {
+      this.assertExecution(claim);
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const permit = this.db.prepare("SELECT * FROM submit_permits WHERE id = ? AND job_id = ?").get(permitId, claim.jobId);
+      const account = this.db.prepare("SELECT * FROM account_state WHERE id = 1").get();
+      const job = this.requireJob(claim.jobId);
+      if (!permit || permit.consumed_at || permit.invalidated_at || job.submitIntentAt || Date.parse(permit.expires_at) <= Date.now() || permit.gate_version !== account.gate_version || account.cooldown_until && Date.parse(account.cooldown_until) > Date.now() || job.state === "cancelled_pre_submit") {
+        throw codedError("SUBMIT_PERMIT_INVALID", "The broker-wide submit permit or execution claim is no longer valid. No message was sent.", { safeToRetry: true });
+      }
+      this.db.prepare("UPDATE submit_permits SET consumed_at = ? WHERE id = ?").run(now, permitId);
+      transitioned = this.transitionInCurrentTransaction(claim.jobId, "submit_intent", patch, details, now);
+    });
+    this.emit("change", transitioned);
+    return transitioned;
+  }
+  recordAccountCooldown(error, { minimumMs = 12e4, maximumMs = 30 * 6e4 } = {}) {
+    return this.transaction(() => {
+      const current = this.accountState();
+      const count = current.cooldownCount + 1;
+      const duration = Math.min(maximumMs, minimumMs * 2 ** Math.min(4, count - 1));
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const until = new Date(Date.now() + duration).toISOString();
+      this.db.prepare(`
+        UPDATE account_state
+        SET gate_version = gate_version + 1, cooldown_until = ?, cooldown_code = ?,
+            cooldown_count = ?, effective_concurrency = 0,
+            success_streak = 0, probe_in_flight = 0, updated_at = ?
+        WHERE id = 1
+      `).run(until, error?.code || "ACCOUNT_COOLDOWN", count, now);
+      this.db.prepare("UPDATE submit_permits SET invalidated_at = ? WHERE consumed_at IS NULL AND invalidated_at IS NULL").run(now);
+      return this.accountState();
+    });
+  }
+  recordSubmissionSuccess() {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const qualified = Number(this.db.prepare("SELECT qualified_concurrency FROM broker_state WHERE id=1").get()?.qualified_concurrency || 1);
+    this.db.prepare(`
+      UPDATE account_state
+      SET cooldown_until = NULL, cooldown_code = NULL, cooldown_count = 0,
+          success_streak = success_streak + 1, probe_in_flight = 0,
+          effective_concurrency = MIN(?, MAX(effective_concurrency, 1 + CAST((success_streak + 1) / 3 AS INTEGER))),
+          last_success_at = ?, updated_at = ?
+      WHERE id = 1
+    `).run(qualified, now, now);
+    return this.accountState();
+  }
+  subscriptionForChain(chainId, ownerSessionId) {
+    return this.db.prepare(`
+      SELECT * FROM completion_subscriptions
+      WHERE chain_id = ? AND owner_session_id = ? AND state = 'open'
+      ORDER BY created_at LIMIT 1
+    `).get(chainId, ownerSessionId);
+  }
+  authorizeSubscription({ subscriptionHandle, caller }) {
+    const parsed = parseCapability(subscriptionHandle, "subscription");
+    let row = null;
+    if (parsed) row = this.db.prepare("SELECT * FROM completion_subscriptions WHERE id = ?").get(parsed.subjectId);
+    if (!row || !verifyCapability(subscriptionHandle, row.capability_hash, { kind: "subscription", subjectId: row.id })) {
+      throw codedError("COMPLETION_NOT_FOUND", "No accessible Oracle Firefox completion subscription matches that reference.");
+    }
+    return row;
+  }
+  claimCompletion(subscriptionHandle, caller, { claimSeconds = 90 } = {}) {
+    return this.transaction(() => {
+      const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
+      if (subscription.state !== "open") return null;
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state = 'pending', claim_id = NULL, claimed_at = NULL,
+            claim_kind = NULL, claim_expires_at = NULL
+        WHERE subscription_id = ? AND state = 'claimed' AND claim_kind = 'subscriber'
+          AND claim_expires_at <= ?
+      `).run(subscription.id, now);
+      const delivery = this.db.prepare(`
+        SELECT d.*, e.chain_id, e.active_job_id, e.state AS event_state,
+               e.created_at AS event_created_at
+        FROM completion_deliveries d
+        JOIN chain_events e ON e.sequence = d.chain_event_sequence
+        WHERE d.subscription_id = ? AND d.state IN ('pending', 'delivered')
+        ORDER BY d.id LIMIT 1
+      `).get(subscription.id);
+      if (!delivery) return null;
+      if (delivery.state === "delivered") return this.publicCompletionDelivery(delivery, subscription);
+      const claimId = randomUUID4();
+      const expiresAt = new Date(Date.now() + Math.max(10, claimSeconds) * 1e3).toISOString();
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state = 'claimed', claim_id = ?, claimed_at = ?, claim_kind = 'subscriber', claim_expires_at = ?
+        WHERE id = ? AND state = 'pending'
+      `).run(claimId, now, expiresAt, delivery.id);
+      return this.publicCompletionDelivery({
+        ...delivery,
+        state: "claimed",
+        claim_id: claimId,
+        claimed_at: now,
+        claim_expires_at: expiresAt
+      }, subscription);
+    });
+  }
+  publicCompletionDelivery(delivery, subscription) {
+    return {
+      deliveryId: delivery.id,
+      subscriptionId: subscription.id,
+      chainId: delivery.chain_id,
+      activeJobId: delivery.active_job_id,
+      state: delivery.event_state,
+      deliveryState: delivery.state,
+      claimId: delivery.claim_id || null,
+      createdAt: delivery.event_created_at
+    };
+  }
+  markCompletionDelivered(subscriptionHandle, caller, deliveryId, claimId) {
+    return this.transaction(() => {
+      const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='delivered', delivered_at=?, claim_id=NULL, claimed_at=NULL,
+            claim_kind=NULL, claim_expires_at=NULL, next_attempt_at=NULL,
+            last_error_json=NULL
+        WHERE id = ? AND subscription_id = ? AND state = 'claimed'
+          AND claim_kind = 'subscriber' AND claim_id = ?
+      `).run(now, deliveryId, subscription.id, claimId);
+      if (Number(changed.changes) !== 1) throw codedError("COMPLETION_CLAIM_LOST", "The completion delivery claim is no longer active.");
+      return { deliveryId, delivered: true, acknowledged: false };
+    });
+  }
+  acknowledgeCompletion(subscriptionHandle, caller, deliveryId) {
+    return this.transaction(() => {
+      const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const row = this.db.prepare(`
+        SELECT d.*, e.state AS event_state
+        FROM completion_deliveries d
+        JOIN chain_events e ON e.sequence = d.chain_event_sequence
+        WHERE d.id = ? AND d.subscription_id = ?
+      `).get(deliveryId, subscription.id);
+      if (!row) throw codedError("COMPLETION_NOT_FOUND", "No accessible completion delivery matches that reference.");
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?),
+            claim_id=NULL, claimed_at=NULL, claim_kind=NULL, claim_expires_at=NULL,
+            next_attempt_at=NULL, last_error_json=NULL
+        WHERE id=?
+      `).run(now, deliveryId);
+      if (TERMINAL_CHAIN_STATES.has(row.event_state)) {
+        this.db.prepare(`
+          UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
+          WHERE id = ? AND state = 'open'
+        `).run(now, subscription.id);
+      }
+      return { deliveryId, delivered: Boolean(row.delivered_at), acknowledged: true };
+    });
+  }
+  maxCompletionDeliveryId() {
+    return Number(this.db.prepare("SELECT COALESCE(MAX(id), 0) AS id FROM completion_deliveries").get()?.id || 0);
+  }
+  pendingSystemNotifications(afterId = 0) {
+    return this.db.prepare(`
+      SELECT d.id AS delivery_id, d.subscription_id, d.state AS delivery_state,
+             e.chain_id, e.active_job_id, e.state AS event_state, e.created_at AS event_created_at,
+             s.mode, o.harness
+      FROM completion_deliveries d
+      JOIN completion_subscriptions s ON s.id = d.subscription_id
+      JOIN owner_sessions o ON o.id = s.owner_session_id
+      JOIN chain_events e ON e.sequence = d.chain_event_sequence
+      WHERE d.id > ? AND d.state = 'pending' AND s.state = 'open'
+        AND (s.mode = 'notify' OR (s.mode = 'harness' AND o.harness = 'claude-desktop-mcp'))
+      ORDER BY d.id
+    `).all(Math.max(0, Number(afterId) || 0)).map((row) => ({
+      deliveryId: Number(row.delivery_id),
+      subscriptionId: row.subscription_id,
+      chainId: row.chain_id,
+      activeJobId: row.active_job_id,
+      state: row.event_state,
+      createdAt: row.event_created_at,
+      mode: row.mode,
+      harness: row.harness
+    }));
+  }
+  claimSystemNotification({ claimSeconds = 30 } = {}) {
+    return this.transaction(() => {
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='pending', claim_id=NULL, claimed_at=NULL, claim_kind=NULL,
+            claim_expires_at=NULL
+        WHERE state='claimed' AND claim_kind='system' AND claim_expires_at <= ?
+      `).run(now);
+      const row = this.db.prepare(`
+        SELECT d.id AS delivery_id, d.subscription_id,
+               e.chain_id, e.active_job_id, e.state AS event_state, e.created_at AS event_created_at,
+               s.mode, o.harness, d.attempt_count
+        FROM completion_deliveries d
+        JOIN completion_subscriptions s ON s.id = d.subscription_id
+        JOIN owner_sessions o ON o.id = s.owner_session_id
+        JOIN chain_events e ON e.sequence = d.chain_event_sequence
+        WHERE d.state='pending' AND s.state='open'
+          AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?)
+          AND (s.mode='notify' OR (s.mode='harness' AND o.harness='claude-desktop-mcp'))
+        ORDER BY d.id LIMIT 1
+      `).get(now);
+      if (!row) return null;
+      const claimId = randomUUID4();
+      const expiresAt = new Date(Date.now() + Math.max(1, claimSeconds) * 1e3).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='claimed', claim_id=?, claimed_at=?, claim_kind='system',
+            claim_expires_at=?, attempt_count=attempt_count+1, next_attempt_at=NULL
+        WHERE id=? AND state='pending'
+      `).run(claimId, now, expiresAt, row.delivery_id);
+      if (Number(changed.changes) !== 1) return null;
+      return {
+        deliveryId: Number(row.delivery_id),
+        subscriptionId: row.subscription_id,
+        chainId: row.chain_id,
+        activeJobId: row.active_job_id,
+        state: row.event_state,
+        createdAt: row.event_created_at,
+        mode: row.mode,
+        harness: row.harness,
+        claimId,
+        claimExpiresAt: expiresAt,
+        attempt: Number(row.attempt_count || 0) + 1
+      };
+    });
+  }
+  markSystemNotificationDelivered(deliveryId, claimId) {
+    if (!claimId) return false;
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const changed = this.db.prepare(`
+      UPDATE completion_deliveries
+      SET state='delivered', delivered_at=?, claim_id=NULL, claimed_at=NULL,
+          claim_kind=NULL, claim_expires_at=NULL, next_attempt_at=NULL,
+          last_error_json=NULL
+      WHERE id=? AND state='claimed' AND claim_kind='system' AND claim_id=?
+    `).run(now, deliveryId, claimId);
+    return Number(changed.changes) === 1;
+  }
+  retrySystemNotification(deliveryId, claimId, error, { baseDelayMs = 1e3, maximumDelayMs = 6e4 } = {}) {
+    return this.transaction(() => {
+      const row = this.db.prepare(`
+        SELECT attempt_count FROM completion_deliveries
+        WHERE id=? AND state='claimed' AND claim_kind='system' AND claim_id=?
+      `).get(deliveryId, claimId);
+      if (!row) return null;
+      const minimumDelay = Math.max(1, Number(baseDelayMs) || 1);
+      const maximumDelay = Math.max(minimumDelay, Number(maximumDelayMs) || minimumDelay);
+      const delayMs = Math.min(
+        maximumDelay,
+        minimumDelay * 2 ** Math.min(10, Math.max(0, Number(row.attempt_count) - 1))
+      );
+      const retryAt = new Date(Date.now() + delayMs).toISOString();
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='pending', claim_id=NULL, claimed_at=NULL, claim_kind=NULL,
+            claim_expires_at=NULL, next_attempt_at=?, last_error_json=?
+        WHERE id=? AND state='claimed' AND claim_kind='system' AND claim_id=?
+      `).run(retryAt, json(structuredError(error)), deliveryId, claimId);
+      return { deliveryId, retryAt, attempt: Number(row.attempt_count) };
+    });
+  }
+  nextSystemNotificationAt() {
+    return this.db.prepare(`
+      SELECT MIN(
+        CASE d.state
+          WHEN 'pending' THEN COALESCE(d.next_attempt_at, d.created_at)
+          WHEN 'claimed' THEN d.claim_expires_at
+        END
+      ) AS ready_at
+      FROM completion_deliveries d
+      JOIN completion_subscriptions s ON s.id=d.subscription_id
+      JOIN owner_sessions o ON o.id=s.owner_session_id
+      WHERE s.state='open'
+        AND (d.state='pending' OR (d.state='claimed' AND d.claim_kind='system'))
+        AND (s.mode='notify' OR (s.mode='harness' AND o.harness='claude-desktop-mcp'))
+    `).get()?.ready_at || null;
+  }
+  rebuildCompletionDeliveries() {
+    return this.transaction(() => {
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const terminalChains = this.db.prepare(`
+        SELECT c.id, c.active_job_id, c.state
+        FROM job_chains c
+        WHERE c.state IN (${Array.from(WAKE_CHAIN_STATES).map(() => "?").join(",")})
+          AND NOT EXISTS (
+            SELECT 1 FROM chain_events e
+            WHERE e.chain_id=c.id AND e.active_job_id=c.active_job_id AND e.state=c.state
+          )
+      `).all(...WAKE_CHAIN_STATES);
+      for (const chain of terminalChains) this.createChainEvent(chain.id, chain.active_job_id, chain.state, null, now);
+      const inserted = this.db.prepare(`
+        INSERT OR IGNORE INTO completion_deliveries(
+          subscription_id, chain_event_sequence, state, created_at
+        )
+        SELECT s.id, e.sequence, 'pending', ?
+        FROM completion_subscriptions s
+        JOIN chain_events e ON e.chain_id=s.chain_id
+        WHERE s.state='open' AND s.mode!='manual'
+          AND e.state IN (${Array.from(WAKE_CHAIN_STATES).map(() => "?").join(",")})
+      `).run(now, ...WAKE_CHAIN_STATES);
+      return { chainEvents: terminalChains.length, deliveries: Number(inserted.changes) };
+    });
+  }
+  waitForChange(timeoutMs) {
+    const bounded = Math.max(0, Number(timeoutMs) || 0);
+    if (bounded === 0) return Promise.resolve(null);
+    return new Promise((resolve7) => {
+      let timer2;
+      const finish = (job) => {
+        clearTimeout(timer2);
+        this.off("change", finish);
+        resolve7(job ?? null);
+      };
+      this.on("change", finish);
+      timer2 = setTimeout(() => finish(null), bounded);
+      timer2.unref?.();
+    });
+  }
+  eventsAfter(jobId, sequence = 0) {
+    return this.db.prepare("SELECT sequence, state, details_json, created_at FROM job_events WHERE job_id = ? AND sequence > ? ORDER BY sequence").all(jobId, sequence).map((row) => ({ sequence: row.sequence, state: row.state, details: parse(row.details_json), createdAt: row.created_at }));
+  }
+  recoverInterruptedJobs() {
+    const recovered = [];
+    const changed = [];
+    this.transaction(() => {
+      this.assertCurrentBroker();
+      const generation = Number(this.brokerContext.leaseGeneration);
+      const brokerState = this.db.prepare("SELECT last_recovery_generation FROM broker_state WHERE id=1").get();
+      if (Number(brokerState.last_recovery_generation) >= generation) return;
+      const jobs = this.db.prepare(`
+        SELECT j.*, a.chain_id, a.execution_state, a.execution_lease_generation
+        FROM jobs j JOIN job_attempts a ON a.job_id=j.id
+        WHERE j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
+        ORDER BY j.created_at
+      `).all(...TERMINAL_JOB_STATES).map(rowToJob);
+      for (const job of jobs) {
+        const preSubmitDebris = !job.submitIntentAt && Boolean(
+          job.submissionMayHaveOccurred || job.userTurnId || job.userTurnHash || job.assistantTurnId || job.assistantTurnHash
+        );
+        const interrupted = job.executionState === "running" || (job.submitIntentAt ? job.executionState !== "released" : job.state !== "queued" || preSubmitDebris);
+        if (!interrupted || Number(job.lastRecoveryGeneration || 0) >= generation) continue;
+        const now = (/* @__PURE__ */ new Date()).toISOString();
+        let executionKind = "pre_submit";
+        let executionState = "idle";
+        if (!job.submitIntentAt) {
+          this.db.prepare(`
+            UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
+              last_recovery_generation=?, version=version+1,
+              submission_may_have_happened=0,
+              user_turn_id=NULL, user_turn_hash=NULL,
+              assistant_turn_id=NULL, assistant_turn_hash=NULL
+            WHERE id=?
+          `).run(now, "resumed safely before submission", generation, job.id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, 'queued', ?, ?, ?, ?)
+          `).run(job.id, json({ recoveredFrom: job.state, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
+          this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=?").run(now, job.chainId);
+          recovered.push({ id: job.id, action: "requeued" });
+        } else if (hasExactUserTurnProof(job)) {
+          executionKind = "monitor_only";
+          const recoveredState = PRE_SUBMIT_JOB_STATES.has(job.state) || job.state === "submit_intent" ? "awaiting_response" : job.state;
+          this.db.prepare(`
+            UPDATE jobs SET state=?, updated_at=?, recovery_action=?,
+              last_recovery_generation=?, version=version+1 WHERE id=?
+          `).run(recoveredState, now, "reattach submitted turn without resending", generation, job.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=?").run(now, job.chainId);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(job.id, recoveredState, json({ monitorOnly: true, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
+          recovered.push({ id: job.id, action: "monitor-only" });
+        } else {
+          this.transitionInCurrentTransaction(job.id, "submission_uncertain", {
+            error: { code: "SUBMISSION_UNCERTAIN", message: "Broker restarted after submit_intent without a proven user turn.", submissionMayHaveOccurred: true },
+            recoveryAction: `reconcile_job ${job.id}`
+          }, { recoveryGeneration: generation });
+          this.db.prepare("UPDATE jobs SET last_recovery_generation=? WHERE id=?").run(generation, job.id);
+          this.quarantine(job.conversationKey, job.id, "Restart after submit_intent without a proven user turn");
+          recovered.push({ id: job.id, action: "quarantined" });
+          executionState = "released";
+        }
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state=?,
+            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+            execution_started_at=NULL, execution_heartbeat_at=NULL,
+            execution_kind=? WHERE job_id=?
+        `).run(executionState, executionKind, job.id);
+        changed.push(job.id);
+      }
+      const terminalClaims = this.db.prepare(`
+        SELECT a.job_id FROM job_attempts a JOIN jobs j ON j.id=a.job_id
+        WHERE a.execution_state='running'
+          AND j.state IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
+      `).all(...TERMINAL_JOB_STATES);
+      for (const row of terminalClaims) {
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state='released',
+            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+            execution_heartbeat_at=? WHERE job_id=? AND execution_state='running'
+        `).run((/* @__PURE__ */ new Date()).toISOString(), row.job_id);
+        recovered.push({ id: row.job_id, action: "released-terminal" });
+        changed.push(row.job_id);
+      }
+      this.db.prepare("UPDATE broker_state SET last_recovery_generation=?, updated_at=? WHERE id=1").run(generation, (/* @__PURE__ */ new Date()).toISOString());
+    });
+    for (const id of changed) this.emit("change", this.requireJob(id));
+    return recovered;
+  }
+};
+
 // src/broker-client.mjs
-var clientInstanceId = randomUUID4();
+var clientInstanceId = randomUUID5();
 async function ensurePrivateDirectory2(directory) {
-  await mkdir4(directory, { recursive: true, mode: 448 });
-  await chmod3(directory, 448);
+  await mkdir5(directory, { recursive: true, mode: 448 });
+  await chmod4(directory, 448);
 }
 async function readOrCreateBrokerToken() {
   await ensurePrivateDirectory2(coordinatorDirectory());
@@ -61825,8 +65073,8 @@ async function readOrCreateBrokerToken() {
   } catch (error) {
     if (error?.code !== "ENOENT") throw error;
   }
-  const candidate = randomBytes(32).toString("hex");
-  const temporary = `${tokenPath}.${process.pid}.${randomUUID4()}.tmp`;
+  const candidate = randomBytes2(32).toString("hex");
+  const temporary = `${tokenPath}.${process.pid}.${randomUUID5()}.tmp`;
   const handle = await open3(temporary, "wx", 384);
   try {
     try {
@@ -61856,9 +65104,9 @@ async function readOrCreateBrokerToken() {
 
 // src/browser-manager.mjs
 import { execFile as execFile5 } from "node:child_process";
-import { randomUUID as randomUUID5 } from "node:crypto";
-import { mkdir as mkdir10, readFile as readFile4, rm as rm8 } from "node:fs/promises";
-import path20 from "node:path";
+import { randomUUID as randomUUID6 } from "node:crypto";
+import { mkdir as mkdir11, readFile as readFile4, rm as rm8 } from "node:fs/promises";
+import path21 from "node:path";
 import { promisify as promisify5 } from "node:util";
 
 // src/async-lock.mjs
@@ -61912,20 +65160,20 @@ var AsyncMutex = class {
 
 // src/browser-backends.mjs
 import { constants as fsConstants2 } from "node:fs";
-import { access as access2, lstat as lstat5, mkdir as mkdir9, realpath as realpath3, stat as stat4 } from "node:fs/promises";
+import { access as access2, lstat as lstat5, mkdir as mkdir10, realpath as realpath3, stat as stat5 } from "node:fs/promises";
 import { execFile as execFile4 } from "node:child_process";
 import os12 from "node:os";
-import path19 from "node:path";
+import path20 from "node:path";
 import { promisify as promisify4 } from "node:util";
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node-env-setup.js
 init_environment();
 import fs from "node:fs";
-import path5 from "node:path";
+import path6 from "node:path";
 import { debuglog } from "node:util";
 environment.value = {
   fs,
-  path: path5,
+  path: path6,
   debuglog,
   ScreenRecorder: environment.value.ScreenRecorder
 };
@@ -61939,7 +65187,7 @@ init_util();
 init_assert();
 import { mkdtemp } from "node:fs/promises";
 import os9 from "node:os";
-import path16 from "node:path";
+import path17 from "node:path";
 
 // ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
 init_main();
@@ -61972,7 +65220,7 @@ var PipeTransport = class {
     const pipeReadEmitter = this.#subscriptions.use(
       // NodeJS event emitters don't support `*` so we need to typecast
       // As long as we don't use it we should be OK.
-      new EventEmitter(pipeRead)
+      new EventEmitter2(pipeRead)
     );
     pipeReadEmitter.on("data", (buffer) => {
       return this.#dispatch(buffer);
@@ -61986,7 +65234,7 @@ var PipeTransport = class {
     const pipeWriteEmitter = this.#subscriptions.use(
       // NodeJS event emitters don't support `*` so we need to typecast
       // As long as we don't use it we should be OK.
-      new EventEmitter(pipeWrite)
+      new EventEmitter2(pipeWrite)
     );
     pipeWriteEmitter.on("error", debugCatchError);
   }
@@ -62501,7 +65749,7 @@ var ChromeLauncher = class extends BrowserLauncher {
       chromeArguments.push("--no-sandbox");
     }
     if (userDataDir) {
-      chromeArguments.push(`--user-data-dir=${path16.posix.isAbsolute(userDataDir) || path16.win32.isAbsolute(userDataDir) ? userDataDir : path16.resolve(userDataDir)}`);
+      chromeArguments.push(`--user-data-dir=${path17.posix.isAbsolute(userDataDir) || path17.win32.isAbsolute(userDataDir) ? userDataDir : path17.resolve(userDataDir)}`);
     }
     if (devtools) {
       chromeArguments.push("--auto-open-devtools-for-tabs");
@@ -62563,7 +65811,7 @@ init_assert();
 import fs7 from "node:fs";
 import { rename as rename2, unlink as unlink2, mkdtemp as mkdtemp2 } from "node:fs/promises";
 import os10 from "node:os";
-import path17 from "node:path";
+import path18 from "node:path";
 var FirefoxLauncher = class _FirefoxLauncher extends BrowserLauncher {
   constructor(puppeteer2) {
     super(puppeteer2, "firefox");
@@ -62651,9 +65899,9 @@ var FirefoxLauncher = class _FirefoxLauncher extends BrowserLauncher {
         const backupSuffix = ".puppeteer";
         const backupFiles = ["prefs.js", "user.js"];
         const results = await Promise.allSettled(backupFiles.map(async (file) => {
-          const prefsBackupPath = path17.join(userDataDir, file + backupSuffix);
+          const prefsBackupPath = path18.join(userDataDir, file + backupSuffix);
           if (fs7.existsSync(prefsBackupPath)) {
-            const prefsPath = path17.join(userDataDir, file);
+            const prefsPath = path18.join(userDataDir, file);
             await unlink2(prefsPath);
             await rename2(prefsBackupPath, prefsPath);
           }
@@ -63238,9 +66486,9 @@ var puppeteer_core_default = puppeteer;
 
 // src/firefox.mjs
 import { execFile as execFile3 } from "node:child_process";
-import { createHash as createHash4 } from "node:crypto";
-import { mkdir as mkdir8, stat as stat3 } from "node:fs/promises";
-import path18 from "node:path";
+import { createHash as createHash8 } from "node:crypto";
+import { mkdir as mkdir9, stat as stat4 } from "node:fs/promises";
+import path19 from "node:path";
 import { promisify as promisify3 } from "node:util";
 
 // src/owned-browser.mjs
@@ -63366,7 +66614,7 @@ function normalizeSemanticText(value) {
   return String(value ?? "").replace(/\r\n?/gu, "\n").replace(/\u00a0/gu, " ").replace(/\t/gu, "    ").normalize("NFC").replace(/[ \t]+\n/gu, "\n").replace(/\n[ \t]+/gu, "\n").trim();
 }
 function semanticTextHash(value) {
-  return createHash4("sha256").update(normalizeSemanticText(value)).digest("hex");
+  return createHash8("sha256").update(normalizeSemanticText(value)).digest("hex");
 }
 function semanticMismatchDetails(expected, observed) {
   const expectedNormalized = normalizeSemanticText(expected);
@@ -63941,7 +67189,7 @@ async function launchFirefox({ headless = false, profileDir = profileDirectory()
       "Firefox was not found. Set ORACLE_FIREFOX_PATH to the Firefox executable and retry."
     );
   }
-  await mkdir8(profileDir, { recursive: true, mode: 448 });
+  await mkdir9(profileDir, { recursive: true, mode: 448 });
   return wrapOwnedBrowser(await puppeteer_core_default.launch({
     browser: "firefox",
     protocol: "webDriverBiDi",
@@ -64336,7 +67584,7 @@ async function uploadAttachmentFiles(page, filePaths, { timeoutMs = 6e5 } = {}) 
   const uploadStartedAt = Date.now();
   const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
   if (paths.length < 1) throw codedError("ATTACHMENT_REQUIRED", "At least one attachment path is required.");
-  const filenames = paths.map((filePath) => path18.basename(filePath));
+  const filenames = paths.map((filePath) => path19.basename(filePath));
   if (new Set(filenames.map((name) => name.toLocaleLowerCase("en-US"))).size !== filenames.length) {
     throw codedError("ATTACHMENT_FILENAME_DUPLICATE", "Attachment filenames must be unique.");
   }
@@ -65126,7 +68374,7 @@ var MAC_CHROME_TEAM_ID = "EQHXZ8M8AV";
 var MAC_SAFARI_BUNDLE_ID = "com.apple.Safari";
 async function executable(candidate) {
   try {
-    const info = await stat4(candidate);
+    const info = await stat5(candidate);
     if (!info.isFile()) return false;
     if (process.platform === "win32") return true;
     await access2(candidate, fsConstants2.X_OK);
@@ -65136,14 +68384,14 @@ async function executable(candidate) {
   }
 }
 function appRootForExecutable(candidate) {
-  const normalized = path19.resolve(candidate);
+  const normalized = path20.resolve(candidate);
   const marker = ".app/Contents/MacOS/";
   const index = normalized.indexOf(marker);
   return index < 0 ? null : normalized.slice(0, index + 4);
 }
 function macChromePathRejectionReason(candidate, { homeDirectory = os12.homedir() } = {}) {
   if (!candidate) return "Chrome executable path is empty.";
-  const normalized = path19.resolve(candidate);
+  const normalized = path20.resolve(candidate);
   const lower = normalized.toLowerCase();
   const rejectedFragments = [
     "/applications (parallels)/",
@@ -65155,7 +68403,7 @@ function macChromePathRejectionReason(candidate, { homeDirectory = os12.homedir(
   if (rejectedFragments.some((fragment) => lower.includes(fragment))) {
     return "The Chrome candidate is inside a VM, Parallels, Windows-app, or mounted-volume path.";
   }
-  const allowedRoots = ["/Applications/", path19.join(homeDirectory, "Applications") + path19.sep];
+  const allowedRoots = ["/Applications/", path20.join(homeDirectory, "Applications") + path20.sep];
   if (!allowedRoots.some((root) => normalized.startsWith(root))) {
     return "Native macOS Chrome must be installed under /Applications or the current user's Applications directory.";
   }
@@ -65171,7 +68419,7 @@ async function readBundleValue(appRoot, key) {
     "raw",
     "-o",
     "-",
-    path19.join(appRoot, "Contents", "Info.plist")
+    path20.join(appRoot, "Contents", "Info.plist")
   ], { timeout: 1e4 });
   return stdout.trim();
 }
@@ -65235,10 +68483,10 @@ async function resolveChromePath({
 } = {}) {
   const candidates = configured ? [configured] : platform === "darwin" ? [
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    path19.join(homeDirectory, "Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome")
+    path20.join(homeDirectory, "Applications", "Google Chrome.app", "Contents", "MacOS", "Google Chrome")
   ] : platform === "win32" ? [
-    path19.join(process.env.ProgramFiles || "C:\\Program Files", "Google", "Chrome", "Application", "chrome.exe"),
-    path19.join(process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe")
+    path20.join(process.env.ProgramFiles || "C:\\Program Files", "Google", "Chrome", "Application", "chrome.exe"),
+    path20.join(process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe")
   ] : ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/opt/google/chrome/chrome"];
   const rejected = [];
   for (const candidate of candidates) {
@@ -65343,7 +68591,7 @@ async function browserDoctor(browser = configuredBrowserName()) {
     firefoxPath,
     version: selected.version,
     profileDirectory: selected.profileDirectory,
-    profileInitialized: selected.profileDirectory ? await stat4(selected.profileDirectory).then((value) => value.isDirectory(), () => false) : false,
+    profileInitialized: selected.profileDirectory ? await stat5(selected.profileDirectory).then((value) => value.isDirectory(), () => false) : false,
     launchError: selected.launchError,
     browsers
   };
@@ -65372,7 +68620,7 @@ async function launchChrome({ headless = false, profileDir = browserProfileDirec
       `Native Google Chrome was not found or could not be verified.${details ? ` ${details}` : ""}`
     );
   }
-  await mkdir9(profileDir, { recursive: true, mode: 448 });
+  await mkdir10(profileDir, { recursive: true, mode: 448 });
   const browser = wrapOwnedBrowser(await puppeteer_core_default.launch({
     browser: "chrome",
     protocol: "cdp",
@@ -65452,11 +68700,11 @@ function pidAlive(pid) {
   }
 }
 function uniqueOwnerPath(owner, options = {}) {
-  return path20.join(options.ownersDirectory || browserOwnersDirectory(), `${owner.brokerInstanceId}.json`);
+  return path21.join(options.ownersDirectory || browserOwnersDirectory(), `${owner.brokerInstanceId}.json`);
 }
 async function writeOwner(owner, options = {}) {
   const owners = options.ownersDirectory || browserOwnersDirectory();
-  await mkdir10(owners, { recursive: true, mode: 448 });
+  await mkdir11(owners, { recursive: true, mode: 448 });
   await writeAtomicJson(uniqueOwnerPath(owner, options), owner);
   await writeAtomicJson(options.ownerPath || browserOwnerPath(), owner);
 }
@@ -65555,7 +68803,7 @@ var BrowserManager = class {
     this.pageCloseTimeoutMs = Math.max(1, Number(pageCloseTimeoutMs) || 1e4);
     this.browserCloseTimeoutMs = Math.max(1, Number(browserCloseTimeoutMs) || 12e3);
     this.brokerContext = brokerContext || {
-      instanceId: `test-browser-${randomUUID5()}`,
+      instanceId: `test-browser-${randomUUID6()}`,
       leaseGeneration: 1,
       coordinatorId: "test-browser",
       processStartId: "test-process",
@@ -65587,7 +68835,7 @@ var BrowserManager = class {
       this.ownerChecked = true;
     }
     const downloadPath = browserDownloadStagingDirectory();
-    await mkdir10(downloadPath, { recursive: true, mode: 448 });
+    await mkdir11(downloadPath, { recursive: true, mode: 448 });
     const browser = await this.launcher({
       browserName: this.browserName,
       headless: forceVisible ? false : this.browserMode === "headless",
@@ -65692,7 +68940,7 @@ var BrowserManager = class {
         page,
         discovery,
         browserGeneration: generation,
-        leaseId: randomUUID5(),
+        leaseId: randomUUID6(),
         invalidated: false,
         leasedAt: (/* @__PURE__ */ new Date()).toISOString()
       };
@@ -65848,60 +69096,21 @@ import { execFile as execFile7 } from "node:child_process";
 import { access as access5, mkdir as mkdir16, open as open9, readFile as readFile9, rm as rm13 } from "node:fs/promises";
 import path29 from "node:path";
 
-// src/capabilities.mjs
-import { createHash as createHash5, randomBytes as randomBytes2, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
-var CAPABILITY_VERSION = "ofx1";
-var SECRET_BYTES = 32;
-var KINDS = /* @__PURE__ */ new Set(["session", "read", "control", "subscription", "admin"]);
-function equalHex(left2, right2) {
-  const a2 = Buffer.from(String(left2 || ""), "hex");
-  const b2 = Buffer.from(String(right2 || ""), "hex");
-  return a2.length === b2.length && a2.length > 0 && timingSafeEqual3(a2, b2);
-}
-function hashCapabilitySecret(secret) {
-  return createHash5("sha256").update(String(secret), "utf8").digest("hex");
-}
-function mintCapability(kind, subjectId) {
-  if (!KINDS.has(kind)) throw new Error(`Unsupported Oracle capability kind: ${kind}`);
-  const secret = randomBytes2(SECRET_BYTES).toString("base64url");
-  return {
-    kind,
-    subjectId,
-    secret,
-    hash: hashCapabilitySecret(secret),
-    handle: `${CAPABILITY_VERSION}.${kind}.${subjectId}.${secret}`
-  };
-}
-function parseCapability(handle, expectedKind = null) {
-  const value = String(handle || "");
-  const [version, kind, subjectId, secret, ...extra] = value.split(".");
-  if (version !== CAPABILITY_VERSION || !KINDS.has(kind) || !subjectId || !secret || extra.length || expectedKind && kind !== expectedKind) {
-    return null;
-  }
-  return { kind, subjectId, secret, hash: hashCapabilitySecret(secret) };
-}
-function verifyCapability(handle, expectedHash, { kind, subjectId } = {}) {
-  const parsed = parseCapability(handle, kind);
-  return Boolean(
-    parsed && (!subjectId || parsed.subjectId === subjectId) && equalHex(parsed.hash, expectedHash)
-  );
-}
-
 // src/completion-records.mjs
-import { chmod as chmod4, mkdir as mkdir11, open as open6, rename as rename3, rm as rm9 } from "node:fs/promises";
-import path21 from "node:path";
-import { randomUUID as randomUUID6 } from "node:crypto";
+import { chmod as chmod5, mkdir as mkdir12, open as open6, rename as rename3, rm as rm9 } from "node:fs/promises";
+import path22 from "node:path";
+import { randomUUID as randomUUID7 } from "node:crypto";
 function completionRecordPath(directory, rootJobId) {
-  return path21.join(directory, `${rootJobId}.json`);
+  return path22.join(directory, `${rootJobId}.json`);
 }
 async function removeCompletionRecord(directory, rootJobId) {
   await rm9(completionRecordPath(directory, rootJobId), { force: true });
 }
 async function writeCompletionRecord(directory, record) {
-  await mkdir11(directory, { recursive: true, mode: 448 });
-  await chmod4(directory, 448);
+  await mkdir12(directory, { recursive: true, mode: 448 });
+  await chmod5(directory, 448);
   const target = completionRecordPath(directory, record.rootJobId);
-  const temporary = path21.join(directory, `.${record.rootJobId}.${randomUUID6()}.tmp`);
+  const temporary = path22.join(directory, `.${record.rootJobId}.${randomUUID7()}.tmp`);
   const handle = await open6(temporary, "wx", 384);
   try {
     await handle.writeFile(`${JSON.stringify(record, null, 2)}
@@ -65912,7 +69121,7 @@ async function writeCompletionRecord(directory, record) {
   }
   try {
     await rename3(temporary, target);
-    await chmod4(target, 384);
+    await chmod5(target, 384);
   } catch (error) {
     await rm9(temporary, { force: true }).catch(() => void 0);
     throw error;
@@ -65921,10 +69130,10 @@ async function writeCompletionRecord(directory, record) {
 }
 
 // src/downloads.mjs
-import { createHash as createHash6, randomUUID as randomUUID7 } from "node:crypto";
+import { createHash as createHash9, randomUUID as randomUUID8 } from "node:crypto";
 import { createReadStream as createReadStream2 } from "node:fs";
-import { chmod as chmod5, mkdir as mkdir12, open as open7, readdir as readdir3, rename as rename4, rm as rm10, stat as stat5 } from "node:fs/promises";
-import path22 from "node:path";
+import { chmod as chmod6, mkdir as mkdir13, open as open7, readdir as readdir3, rename as rename4, rm as rm10, stat as stat6 } from "node:fs/promises";
+import path23 from "node:path";
 var CHATGPT_DOWNLOAD_BASE_URL = "https://chatgpt.com/";
 var MAX_REDIRECTS = 5;
 var DEFAULT_DOWNLOAD_MAX_BYTES = 1e8;
@@ -65964,9 +69173,9 @@ function sandboxPath(value) {
 }
 function safeBasename(value) {
   try {
-    return decodeURIComponent(path22.posix.basename(value));
+    return decodeURIComponent(path23.posix.basename(value));
   } catch {
-    return path22.posix.basename(value);
+    return path23.posix.basename(value);
   }
 }
 function normalizeChatGptDownloadSource(value) {
@@ -65978,7 +69187,7 @@ function normalizeChatGptDownloadSource(value) {
     return {
       downloadUrl: url2.href,
       sourceKind: "sandbox",
-      sourceFilename: path22.posix.basename(safeSandboxPath)
+      sourceFilename: path23.posix.basename(safeSandboxPath)
     };
   }
   if (!raw || raw.startsWith("blob:") || raw.startsWith("data:")) return null;
@@ -65999,8 +69208,8 @@ function sanitizeFilename(value, fallback = "artifact.bin") {
   let filename = String(value ?? "").normalize("NFKC").replace(/[\u0000-\u001f\u007f]/gu, "").replace(/[\\/]/gu, "_").trim().replace(/^\.+/u, "");
   if (!filename || filename === "." || filename === "..") filename = fallback;
   if (filename.length > 180) {
-    const extension2 = path22.extname(filename).slice(0, 24);
-    filename = `${path22.basename(filename, path22.extname(filename)).slice(0, 180 - extension2.length)}${extension2}`;
+    const extension2 = path23.extname(filename).slice(0, 24);
+    filename = `${path23.basename(filename, path23.extname(filename)).slice(0, 180 - extension2.length)}${extension2}`;
   }
   return filename;
 }
@@ -66123,7 +69332,7 @@ async function listAssistantDownloadCandidates(page, { scope = "last-assistant" 
     if (!source2) continue;
     const label = normalizeLabel(item.label || item.downloadName || source2.sourceFilename);
     const filename = sanitizeFilename(item.downloadName || source2.sourceFilename || label);
-    const linkId = createHash6("sha256").update(`${item.assistantTurnId || ""}\0${item.linkIndex}\0${item.rawHref || item.label}`).digest("hex").slice(0, 20);
+    const linkId = createHash9("sha256").update(`${item.assistantTurnId || ""}\0${item.linkIndex}\0${item.rawHref || item.label}`).digest("hex").slice(0, 20);
     candidates.push({ ...item, label, filename, source: source2, linkId });
   }
   return candidates;
@@ -66162,11 +69371,11 @@ async function browserControlFor(page, candidate) {
   return element;
 }
 async function stagingSnapshot(directory) {
-  await mkdir12(directory, { recursive: true, mode: 448 });
-  await chmod5(directory, 448);
+  await mkdir13(directory, { recursive: true, mode: 448 });
+  await chmod6(directory, 448);
   const snapshot = /* @__PURE__ */ new Map();
   for (const name of await readdir3(directory)) {
-    const info = await stat5(path22.join(directory, name)).catch(() => null);
+    const info = await stat6(path23.join(directory, name)).catch(() => null);
     if (info?.isFile()) snapshot.set(name, `${info.size}:${info.mtimeMs}`);
   }
   return snapshot;
@@ -66179,8 +69388,8 @@ async function waitForBrowserDownload(directory, before, timeoutMs = 6e4) {
     const changed = [];
     for (const name of await readdir3(directory)) {
       if (/\.(?:part|crdownload)$/iu.test(name)) continue;
-      const filePath = path22.join(directory, name);
-      const info = await stat5(filePath).catch(() => null);
+      const filePath = path23.join(directory, name);
+      const info = await stat6(filePath).catch(() => null);
       if (!info?.isFile()) continue;
       if (before.get(name) !== `${info.size}:${info.mtimeMs}`) changed.push({ filePath, name, size: info.size, mtimeMs: info.mtimeMs });
     }
@@ -66201,7 +69410,7 @@ async function waitForBrowserDownload(directory, before, timeoutMs = 6e4) {
   throw codedError("DOWNLOAD_TIMEOUT", `The exact download control was clicked once, but Firefox did not finish one file within ${timeoutMs / 1e3} seconds. It was not clicked again.`);
 }
 async function hashFile(filePath) {
-  const hash = createHash6("sha256");
+  const hash = createHash9("sha256");
   const prefix = [];
   let prefixBytes = 0;
   for await (const chunk of createReadStream2(filePath)) {
@@ -66228,15 +69437,15 @@ async function downloadWithBrowserControl(page, selected, { maxBytes, rootDirect
     throw codedError("DOWNLOAD_TOO_LARGE", `The browser-downloaded ChatGPT file is larger than the ${maxBytes}-byte limit. It was left in private staging for manual inspection.`);
   }
   const filename = sanitizeFilename(downloaded.name, selected.filename);
-  const downloadId = randomUUID7();
-  const directory = path22.join(path22.resolve(rootDirectory), downloadId);
-  const target = path22.join(directory, filename);
-  await mkdir12(directory, { recursive: true, mode: 448 });
-  await chmod5(directory, 448);
+  const downloadId = randomUUID8();
+  const directory = path23.join(path23.resolve(rootDirectory), downloadId);
+  const target = path23.join(directory, filename);
+  await mkdir13(directory, { recursive: true, mode: 448 });
+  await chmod6(directory, 448);
   const digest2 = await hashFile(downloaded.filePath);
   assertArtifactSignature(filename, digest2.prefix);
   await rename4(downloaded.filePath, target);
-  await chmod5(target, 384);
+  await chmod6(target, 384);
   return {
     downloadId,
     path: target,
@@ -66291,7 +69500,7 @@ async function fetchDownload(page, initialUrl, fetchImpl) {
   throw codedError("DOWNLOAD_REDIRECT_INVALID", `The ChatGPT file endpoint exceeded ${MAX_REDIRECTS} redirects.`);
 }
 function assertArtifactSignature(filename, prefix) {
-  if (path22.extname(filename).toLowerCase() !== ".zip") return;
+  if (path23.extname(filename).toLowerCase() !== ".zip") return;
   const signature = prefix.subarray(0, 4).toString("hex");
   if (!(/* @__PURE__ */ new Set(["504b0304", "504b0506", "504b0708"])).has(signature)) {
     throw codedError("DOWNLOAD_CONTENT_INVALID", "The downloaded .zip file did not have a valid ZIP signature.");
@@ -66323,15 +69532,15 @@ async function downloadAssistantArtifact(page, { linkText, scope = "last-assista
   }
   const dispositionName = filenameFromContentDisposition(response.headers.get("content-disposition"));
   let filename = sanitizeFilename(dispositionName || selected.filename);
-  if (!path22.extname(filename)) filename += extensionForMimeType(contentType);
-  const downloadId = randomUUID7();
-  const directory = path22.join(path22.resolve(rootDirectory), downloadId);
-  const target = path22.join(directory, filename);
-  const temporary = path22.join(directory, `.${filename}.${randomUUID7()}.tmp`);
-  await mkdir12(directory, { recursive: true, mode: 448 });
-  await chmod5(directory, 448);
+  if (!path23.extname(filename)) filename += extensionForMimeType(contentType);
+  const downloadId = randomUUID8();
+  const directory = path23.join(path23.resolve(rootDirectory), downloadId);
+  const target = path23.join(directory, filename);
+  const temporary = path23.join(directory, `.${filename}.${randomUUID8()}.tmp`);
+  await mkdir13(directory, { recursive: true, mode: 448 });
+  await chmod6(directory, 448);
   const handle = await open7(temporary, "wx", 384);
-  const hash = createHash6("sha256");
+  const hash = createHash9("sha256");
   const prefixChunks = [];
   let prefixBytes = 0;
   let sizeBytes = 0;
@@ -66359,7 +69568,7 @@ async function downloadAssistantArtifact(page, { linkText, scope = "last-assista
   }
   await handle.close();
   await rename4(temporary, target);
-  await chmod5(target, 384);
+  await chmod6(target, 384);
   return {
     downloadId,
     path: target,
@@ -66378,2904 +69587,13 @@ function publicDownloadCandidates(candidates) {
   return candidates.map(publicCandidate);
 }
 
-// src/evidence.mjs
-import { createHash as createHash7 } from "node:crypto";
-var LOCAL_DATA_SENTINEL = "ORACLE_LOCAL_DATA_REQUEST_V1";
-var LOCAL_DATA_PROTOCOL_VERSION = 1;
-var LOCAL_DATA_NONCE_PATTERN = /^[a-f0-9]{32}$/u;
-var LOCAL_DATA_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/iu;
-var TEMPLATE_PLACEHOLDERS = /* @__PURE__ */ new Set([
-  "short-stable-id",
-  "fact-id",
-  "exact fact needed",
-  "why it changes the answer",
-  "a safe read-only check"
-]);
-function deriveLocalDataNonce(rootAuthorizationId) {
-  return createHash7("sha256").update(`oracle-local-data-nonce-v1:${String(rootAuthorizationId)}`).digest("hex").slice(0, 32);
-}
-function localDataProtocol(nonce) {
-  if (!LOCAL_DATA_NONCE_PATTERN.test(String(nonce || ""))) {
-    throw codedError("LOCAL_DATA_NONCE_REQUIRED", "Oracle requires a per-job local-data nonce before preparing a prompt.");
-  }
-  return `
-When forming conclusions, label material claims as verified, inferred, or proposed.
-Do not guess when a material conclusion depends on facts that are only available in the local workspace or runtime.
-If local facts are required, stop and end your response with exactly one ${LOCAL_DATA_SENTINEL} JSON block using this nonce and shape:
-{
-  "version": ${LOCAL_DATA_PROTOCOL_VERSION},
-  "oracleNonce": "${nonce}",
-  "requestId": "short-stable-id",
-  "requests": [
-    { "id": "fact-id", "fact": "exact fact needed", "why": "why it changes the answer", "suggestedReadOnlyCheck": "a safe read-only check" }
-  ]
-}
-Replace every descriptive placeholder with a concrete value. Never repeat this example as an answer.
-Never request credentials, cookies, tokens, passwords, private keys, browser-profile contents, unrelated chats, or unrelated private files. Do not request writes or state changes.
-`.trim();
-}
-var LOCAL_DATA_PROTOCOL = localDataProtocol("00000000000000000000000000000000");
-function withLocalDataProtocol(prompt, nonce) {
-  return `${String(prompt).trim()}
-
-[ORACLE LOCAL DATA PROTOCOL]
-${localDataProtocol(nonce)}`;
-}
-function extractTerminalJson(text) {
-  const source2 = String(text ?? "").trimEnd();
-  const marker = source2.lastIndexOf(LOCAL_DATA_SENTINEL);
-  if (marker < 0) return null;
-  if (marker > 0 && source2[marker - 1] !== "\n" && source2[marker - 1] !== "\r") return null;
-  const tail = source2.slice(marker + LOCAL_DATA_SENTINEL.length);
-  const fenced = tail.match(/^\s*```(?:json)?\s*([\s\S]*?)```\s*$/iu);
-  if (fenced) return fenced[1];
-  const firstBrace = tail.indexOf("{");
-  if (firstBrace < 0 || tail.slice(0, firstBrace).trim()) return null;
-  const candidate = tail.slice(firstBrace);
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  let start = -1;
-  for (let index = 0; index < candidate.length; index += 1) {
-    const char = candidate[index];
-    if (start < 0) {
-      if (char === "{") {
-        start = index;
-        depth = 1;
-      }
-      continue;
-    }
-    if (inString) {
-      if (escaped) escaped = false;
-      else if (char === "\\") escaped = true;
-      else if (char === '"') inString = false;
-      continue;
-    }
-    if (char === '"') inString = true;
-    else if (char === "{") depth += 1;
-    else if (char === "}") {
-      depth -= 1;
-      if (depth === 0) {
-        if (candidate.slice(index + 1).trim()) return null;
-        return candidate.slice(start, index + 1);
-      }
-    }
-  }
-  return candidate;
-}
-function isTemplateLocalDataRequest(value) {
-  if (!value || typeof value !== "object") return false;
-  if (TEMPLATE_PLACEHOLDERS.has(String(value.requestId || "").trim().toLowerCase())) return true;
-  return Array.isArray(value.requests) && value.requests.some(
-    (request3) => request3 && [request3.id, request3.fact, request3.why, request3.suggestedReadOnlyCheck].some((entry) => TEMPLATE_PLACEHOLDERS.has(String(entry || "").trim().toLowerCase()))
-  );
-}
-function parseLocalDataRequest(text, { expectedNonce = null } = {}) {
-  const raw = extractTerminalJson(text);
-  if (!raw) return null;
-  let value;
-  try {
-    value = JSON.parse(raw);
-  } catch {
-    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contained invalid JSON.`);
-  }
-  if (!value || typeof value !== "object") {
-    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} did not match the required schema.`);
-  }
-  if (isTemplateLocalDataRequest(value)) return null;
-  if (expectedNonce && (value.version !== LOCAL_DATA_PROTOCOL_VERSION || value.oracleNonce !== expectedNonce)) return null;
-  if (value.oracleNonce != null && !LOCAL_DATA_NONCE_PATTERN.test(String(value.oracleNonce))) {
-    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contained an invalid Oracle nonce.`);
-  }
-  if (typeof value.requestId !== "string" || !value.requestId.trim() || !LOCAL_DATA_ID_PATTERN.test(value.requestId.trim()) || !Array.isArray(value.requests) || value.requests.length < 1 || value.requests.length > 20) {
-    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} did not match the required schema.`);
-  }
-  const requests2 = value.requests.map((request3) => {
-    if (!request3 || ![request3.id, request3.fact, request3.why, request3.suggestedReadOnlyCheck].every((entry) => typeof entry === "string" && entry.trim()) || !LOCAL_DATA_ID_PATTERN.test(request3.id.trim())) {
-      throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contains an incomplete fact request.`);
-    }
-    return {
-      id: request3.id.trim(),
-      fact: request3.fact.trim(),
-      why: request3.why.trim(),
-      suggestedReadOnlyCheck: request3.suggestedReadOnlyCheck.trim()
-    };
-  });
-  const requestIds = requests2.map((request3) => request3.id);
-  if (new Set(requestIds).size !== requestIds.length) {
-    throw codedError("LOCAL_DATA_REQUEST_INVALID", `${LOCAL_DATA_SENTINEL} contains duplicate fact ids.`);
-  }
-  const prohibited = /\b(password|credential|cookie|token|private key|secret|browser profile|unrelated chat|write|delete|modify|install|send)\b/iu;
-  const unsafe = requests2.find((request3) => prohibited.test(`${request3.fact} ${request3.suggestedReadOnlyCheck}`));
-  return {
-    version: LOCAL_DATA_PROTOCOL_VERSION,
-    oracleNonce: value.oracleNonce ?? null,
-    requestId: value.requestId.trim(),
-    requests: requests2,
-    safeReadOnly: !unsafe,
-    unsafeRequestId: unsafe?.id ?? null
-  };
-}
-function scanEvidenceForSecrets(value) {
-  const serialized = JSON.stringify(value);
-  const patterns = [
-    /-----BEGIN [A-Z ]*PRIVATE KEY-----/u,
-    /\b(?:sk|rk|pk)-[A-Za-z0-9_-]{20,}\b/u,
-    /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/u,
-    /\bAIza[A-Za-z0-9_-]{30,}\b/u,
-    /\bgh(?:p|o|u|s|r)_[A-Za-z0-9]{20,}\b/u,
-    /\bgithub_pat_[A-Za-z0-9_]{20,}\b/u,
-    /\bglpat-[A-Za-z0-9_-]{20,}\b/u,
-    /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/u,
-    /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/u,
-    /\b(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[^\s"']{8,}/iu,
-    /\b(?:session|auth)[_-]?cookie\s*[:=]/iu
-  ];
-  return patterns.some((pattern) => pattern.test(serialized));
-}
-function buildLocalDataReply({ request: request3, facts = [], unavailable = [] }) {
-  if (!request3?.requestId) throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "A parsed local-data request is required.");
-  const payload = {
-    protocol: "ORACLE_LOCAL_DATA_RESPONSE_V1",
-    ...request3.oracleNonce ? { oracleNonce: request3.oracleNonce } : {},
-    requestId: request3.requestId,
-    facts: facts.map((fact) => ({ id: String(fact.id), value: fact.value, source: String(fact.source || "read-only local check") })),
-    unavailable: unavailable.map((item) => ({ id: String(item.id), reason: String(item.reason) }))
-  };
-  if (scanEvidenceForSecrets(payload)) {
-    throw codedError("SENSITIVE_EVIDENCE_REJECTED", "Local evidence appears to contain a secret or credential and was not sent.");
-  }
-  return `ORACLE_LOCAL_DATA_RESPONSE_V1
-
-\`\`\`json
-${JSON.stringify(payload, null, 2)}
-\`\`\``;
-}
-function deriveEvidenceAuthorizationId(parentAuthorizationId, round) {
-  const hex = createHash7("sha256").update(`${parentAuthorizationId}:evidence:${round}`).digest("hex").slice(0, 32);
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
-}
-function deriveResponseRecoveryAuthorizationId(rootAuthorizationId, attempt) {
-  const hex = createHash7("sha256").update(`${rootAuthorizationId}:response-recovery:${attempt}`).digest("hex").slice(0, 32);
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20)}`;
-}
-
-// src/state-store.mjs
-import { backup, DatabaseSync as DatabaseSync2 } from "node:sqlite";
-import { createHash as createHash8, randomUUID as randomUUID8 } from "node:crypto";
-import { EventEmitter as EventEmitter4 } from "node:events";
-import { chmod as chmod6, mkdir as mkdir13, stat as stat6 } from "node:fs/promises";
-import path23 from "node:path";
-var JOB_STATES = Object.freeze([
-  "accepted",
-  "snapshotted",
-  "queued",
-  "page_leased",
-  "target_verified",
-  "attachment_processing",
-  "composer_verified",
-  "model_verified",
-  "submit_intent",
-  "user_turn_confirmed",
-  "awaiting_response",
-  "response_failed_detected",
-  "response_confirmed",
-  "completed",
-  "cancelled_pre_submit",
-  "failed_pre_submit",
-  "submission_uncertain",
-  "response_uncertain",
-  "response_failed",
-  "quarantined"
-]);
-var TERMINAL_JOB_STATES = /* @__PURE__ */ new Set([
-  "completed",
-  "cancelled_pre_submit",
-  "failed_pre_submit",
-  "submission_uncertain",
-  "response_uncertain",
-  "response_failed",
-  "quarantined"
-]);
-var STATE_INDEX = new Map(JOB_STATES.map((state, index) => [state, index]));
-var SUBMIT_INDEX = STATE_INDEX.get("submit_intent");
-var PRE_SUBMIT_JOB_STATES = new Set(JOB_STATES.slice(0, SUBMIT_INDEX));
-var MONITOR_JOB_STATES = /* @__PURE__ */ new Set([
-  "user_turn_confirmed",
-  "awaiting_response",
-  "response_failed_detected",
-  "response_confirmed"
-]);
-function isCanonicalConversationUrl(value) {
-  try {
-    const parsed = new URL(String(value));
-    return parsed.protocol === "https:" && parsed.hostname === "chatgpt.com" && !parsed.search && !parsed.hash && (/^\/c\/[a-zA-Z0-9-]+$/u.test(parsed.pathname) || /^\/g\/g-p-[^/]+\/c\/[a-zA-Z0-9-]+$/u.test(parsed.pathname));
-  } catch {
-    return false;
-  }
-}
-function hasExactUserTurnProof(job) {
-  return Boolean(
-    job?.submitIntentAt && isCanonicalConversationUrl(job?.conversationUrl) && (job?.userTurnId || job?.userTurnHash)
-  );
-}
-function json(value) {
-  return value == null ? null : JSON.stringify(value);
-}
-function parse2(value) {
-  if (value == null) return null;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
-function rowToJob(row) {
-  if (!row) return null;
-  return {
-    id: row.id,
-    authorizationId: row.authorization_id,
-    operation: row.operation,
-    state: row.state,
-    request: parse2(row.request_json),
-    requestDigest: row.request_digest,
-    conversationKey: row.conversation_key,
-    conversationUrl: row.canonical_url,
-    projectTitle: row.project_title,
-    projectUrl: row.project_url,
-    chatTitle: row.chat_title,
-    sessionPath: row.session_path,
-    userTurnId: row.user_turn_id,
-    userTurnHash: row.user_turn_hash,
-    submittedMessageHash: row.submitted_message_hash,
-    attachmentManifest: parse2(row.attachment_manifest_json) ?? [],
-    modelEvidence: parse2(row.model_evidence_json),
-    assistantDisposition: row.assistant_disposition,
-    responseDisposition: row.response_disposition,
-    responseFailure: parse2(row.response_failure_json),
-    localDataRequest: parse2(row.local_data_request_json),
-    evidenceRound: row.evidence_round,
-    maxAutomaticEvidenceReplies: row.max_evidence_replies,
-    submissionMayHaveOccurred: Boolean(row.submission_may_have_happened),
-    submitIntentAt: row.submit_intent_at,
-    result: parse2(row.result_json),
-    error: parse2(row.error_json),
-    recoveryAction: row.recovery_action,
-    parentJobId: row.parent_job_id,
-    rootJobId: row.root_job_id || row.id,
-    replacementJobId: row.replacement_job_id,
-    retryAttempt: row.retry_attempt ?? 0,
-    maxAutomaticResponseRetries: row.max_response_retries ?? 0,
-    chainId: row.chain_id || row.root_job_id || row.id,
-    attemptKind: row.attempt_kind || "initial",
-    attemptOrdinal: row.attempt_ordinal ?? 0,
-    executionEpoch: row.execution_epoch ?? 0,
-    executionOwnerInstanceId: row.execution_owner_instance_id ?? null,
-    executionLeaseGeneration: row.execution_lease_generation ?? null,
-    executionState: row.execution_state ?? "idle",
-    executionKind: row.execution_kind ?? "pre_submit",
-    executionFailureCount: row.execution_failure_count ?? 0,
-    nextExecutionNotBefore: row.next_execution_not_before ?? null,
-    monitorDeadlineAt: row.monitor_deadline_at ?? null,
-    finalReconciliationAttemptedAt: row.final_reconciliation_attempted_at ?? null,
-    assistantTurnId: row.assistant_turn_id ?? null,
-    assistantTurnHash: row.assistant_turn_hash ?? null,
-    chainState: row.chain_state ?? null,
-    inputRequestAbandonedAt: row.input_required_abandoned_at ?? null,
-    inputRequestAbandonedReason: row.input_required_abandoned_reason ?? null,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    startedAt: row.started_at,
-    completedAt: row.completed_at,
-    version: row.version,
-    lastRecoveryGeneration: row.last_recovery_generation ?? 0
-  };
-}
-function rowToChain(row) {
-  if (!row) return null;
-  return {
-    id: row.id,
-    rootJobId: row.root_job_id,
-    originSessionId: row.origin_session_id,
-    acceptedSequence: row.accepted_sequence,
-    state: row.state,
-    activeJobId: row.active_job_id,
-    targetKind: row.target_kind,
-    conversationKey: row.conversation_key,
-    conversationUrl: row.canonical_url,
-    completionMode: row.completion_mode,
-    legacyMode: row.legacy_mode,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    terminalAt: row.terminal_at,
-    inputRequestAbandonedAt: row.input_required_abandoned_at,
-    inputRequestAbandonedJobId: row.input_required_abandoned_job_id,
-    inputRequestAbandonedReason: row.input_required_abandoned_reason
-  };
-}
-function quarantineFingerprint(row) {
-  if (!row) return null;
-  return createHash8("sha256").update([
-    "oracle-firefox-quarantine-v1",
-    row.scope_key,
-    row.job_id,
-    row.created_at,
-    row.job_state,
-    row.job_updated_at
-  ].map((value) => String(value ?? "")).join("\0")).digest("hex");
-}
-function inputRequestFingerprint(row) {
-  if (!row) return null;
-  return createHash8("sha256").update([
-    "oracle-firefox-input-request-v1",
-    row.conversation_key,
-    row.id,
-    row.active_job_id,
-    row.updated_at,
-    row.job_updated_at,
-    row.local_data_request_json
-  ].map((value) => String(value ?? "")).join("\0")).digest("hex");
-}
-var WAKE_CHAIN_STATES = /* @__PURE__ */ new Set([
-  "input_required",
-  "completed",
-  "failed",
-  "cancelled",
-  "submission_uncertain",
-  "response_uncertain",
-  "quarantined"
-]);
-var TERMINAL_CHAIN_STATES = /* @__PURE__ */ new Set([
-  "completed",
-  "failed",
-  "cancelled",
-  "submission_uncertain",
-  "response_uncertain",
-  "quarantined",
-  "legacy_inconsistent"
-]);
-function requestDigest(request3) {
-  const canonicalize2 = (value) => {
-    if (Array.isArray(value)) return value.map(canonicalize2);
-    if (value && typeof value === "object") {
-      return Object.fromEntries(
-        Object.keys(value).filter((key) => value[key] !== void 0).sort().map((key) => [key, canonicalize2(value[key])])
-      );
-    }
-    return value;
-  };
-  return createHash8("sha256").update(JSON.stringify(canonicalize2(request3))).digest("hex");
-}
-var StateStore = class extends EventEmitter4 {
-  constructor(databasePath = coordinatorDatabasePath(), options = {}) {
-    super();
-    this.databasePath = databasePath;
-    this.db = null;
-    this.productionFencing = Boolean(options.brokerContext) && options.allowUnfenced !== true;
-    this.brokerContext = options.brokerContext || {
-      coordinatorId: `test:${createHash8("sha256").update(path23.resolve(databasePath)).digest("hex")}`,
-      instanceId: `test-${randomUUID8()}`,
-      leaseGeneration: 0,
-      protocolVersion: BROKER_PROTOCOL_VERSION,
-      releaseSequence: BROKER_RELEASE_SEQUENCE,
-      buildVersion: ORACLE_FIREFOX_VERSION,
-      buildId: BROKER_BUILD_ID,
-      pid: process.pid,
-      processStartId: "test-process",
-      endpoint: "test://state-store",
-      endpointKind: "test",
-      endpointDevice: null,
-      endpointInode: null
-    };
-  }
-  async open() {
-    if (this.db) return this;
-    try {
-      await mkdir13(path23.dirname(this.databasePath), { recursive: true, mode: 448 });
-      await chmod6(path23.dirname(this.databasePath), 448);
-      this.db = new DatabaseSync2(this.databasePath);
-      await chmod6(this.databasePath, 384);
-      this.registerWriterFunctions();
-      if (this.productionFencing) {
-        this.db.exec("PRAGMA busy_timeout=0; PRAGMA locking_mode=EXCLUSIVE; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; BEGIN EXCLUSIVE; COMMIT;");
-      } else {
-        this.db.exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;");
-      }
-      const existingVersion = this.schemaVersionBeforeMigration();
-      if (existingVersion >= BROKER_SCHEMA_VERSION) {
-        this.registerBrokerTakeover();
-        this.migrateSix({ existing: true });
-        this.migrateEight();
-      } else {
-        if (this.productionFencing && existingVersion > 0) await this.backupBeforeMigration();
-        const integrity = this.db.prepare("PRAGMA integrity_check").get()?.integrity_check;
-        if (integrity !== "ok" || this.db.prepare("PRAGMA foreign_key_check").all().length > 0) {
-          throw codedError("COORDINATOR_DATABASE_INVALID", "Oracle Firefox refused to migrate a coordinator database that failed integrity checks.");
-        }
-        const hasBrokerGenerationGuards = existingVersion >= 6;
-        if (hasBrokerGenerationGuards) this.registerBrokerTakeover();
-        this.migrateLegacy();
-        this.migrateSix({ existing: hasBrokerGenerationGuards });
-        if (!hasBrokerGenerationGuards) this.registerBrokerTakeover();
-        this.migrateEight();
-      }
-      this.backfillUntrackedUncertaintyQuarantines();
-      return this;
-    } catch (error) {
-      try {
-        this.db?.close();
-      } catch {
-      }
-      this.db = null;
-      throw error;
-    }
-  }
-  registerWriterFunctions() {
-    this.db.function("oracle_writer_protocol", () => Number(this.brokerContext.protocolVersion || 0));
-    this.db.function("oracle_broker_instance", () => String(this.brokerContext.instanceId || ""));
-    this.db.function("oracle_lease_generation", () => Number(this.brokerContext.leaseGeneration || 0));
-    this.db.function("oracle_canonical_conversation_url", (value) => isCanonicalConversationUrl(value) ? 1 : 0);
-  }
-  schemaVersionBeforeMigration() {
-    try {
-      return Number(this.db.prepare("SELECT COALESCE(MAX(version), 0) version FROM schema_migrations").get().version);
-    } catch {
-      return 0;
-    }
-  }
-  async backupBeforeMigration() {
-    const target = `${this.databasePath}.pre-v${BROKER_SCHEMA_VERSION}.bak`;
-    const exists = await stat6(target).then(() => true, () => false);
-    if (!exists) await backup(this.db, target);
-  }
-  migrateLegacy() {
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS schema_migrations (
-        version INTEGER PRIMARY KEY,
-        applied_at TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS jobs (
-        id TEXT PRIMARY KEY,
-        authorization_id TEXT NOT NULL UNIQUE,
-        operation TEXT NOT NULL,
-        state TEXT NOT NULL,
-        request_json TEXT NOT NULL,
-        request_digest TEXT NOT NULL,
-        conversation_key TEXT NOT NULL,
-        canonical_url TEXT,
-        project_title TEXT,
-        project_url TEXT,
-        chat_title TEXT,
-        session_path TEXT NOT NULL,
-        user_turn_id TEXT,
-        user_turn_hash TEXT,
-        submitted_message_hash TEXT,
-        attachment_manifest_json TEXT,
-        model_evidence_json TEXT,
-        assistant_disposition TEXT,
-        response_disposition TEXT,
-        response_failure_json TEXT,
-        local_data_request_json TEXT,
-        evidence_round INTEGER NOT NULL DEFAULT 0,
-        max_evidence_replies INTEGER NOT NULL DEFAULT 3,
-        submission_may_have_happened INTEGER NOT NULL DEFAULT 0,
-        submit_intent_at TEXT,
-        result_json TEXT,
-        error_json TEXT,
-        recovery_action TEXT,
-        parent_job_id TEXT,
-        root_job_id TEXT,
-        replacement_job_id TEXT,
-        retry_attempt INTEGER NOT NULL DEFAULT 0,
-        max_response_retries INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        started_at TEXT,
-        completed_at TEXT,
-        version INTEGER NOT NULL DEFAULT 0
-      );
-      CREATE INDEX IF NOT EXISTS jobs_state_created ON jobs(state, created_at);
-      CREATE INDEX IF NOT EXISTS jobs_conversation_state ON jobs(conversation_key, state, created_at);
-      CREATE TABLE IF NOT EXISTS job_events (
-        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
-        job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-        state TEXT NOT NULL,
-        details_json TEXT,
-        created_at TEXT NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS job_events_job_sequence ON job_events(job_id, sequence);
-      CREATE TABLE IF NOT EXISTS quarantines (
-        scope_key TEXT PRIMARY KEY,
-        job_id TEXT NOT NULL REFERENCES jobs(id),
-        reason TEXT NOT NULL,
-        active INTEGER NOT NULL DEFAULT 1,
-        created_at TEXT NOT NULL,
-        acknowledged_at TEXT
-      );
-      INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (1, datetime('now'));
-    `);
-    const jobColumns = new Set(this.db.prepare("PRAGMA table_info(jobs)").all().map((column) => column.name));
-    if (!jobColumns.has("submitted_message_hash")) {
-      this.db.exec("ALTER TABLE jobs ADD COLUMN submitted_message_hash TEXT");
-    }
-    this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (2, ?)").run((/* @__PURE__ */ new Date()).toISOString());
-    const durableColumns = [
-      ["response_disposition", "TEXT"],
-      ["response_failure_json", "TEXT"],
-      ["parent_job_id", "TEXT"],
-      ["root_job_id", "TEXT"],
-      ["replacement_job_id", "TEXT"],
-      ["retry_attempt", "INTEGER NOT NULL DEFAULT 0"],
-      ["max_response_retries", "INTEGER NOT NULL DEFAULT 0"]
-    ];
-    for (const [name, definition] of durableColumns) {
-      if (!jobColumns.has(name)) this.db.exec(`ALTER TABLE jobs ADD COLUMN ${name} ${definition}`);
-    }
-    this.db.exec("UPDATE jobs SET root_job_id = id WHERE root_job_id IS NULL");
-    this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (3, ?)").run((/* @__PURE__ */ new Date()).toISOString());
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS owner_sessions (
-        id TEXT PRIMARY KEY,
-        harness TEXT NOT NULL,
-        client_instance_id TEXT,
-        host_session_hint TEXT,
-        session_cap_hash TEXT,
-        isolation_strength TEXT NOT NULL DEFAULT 'chain'
-          CHECK (isolation_strength IN ('chain', 'host_session', 'legacy', 'admin')),
-        metadata_json TEXT NOT NULL DEFAULT '{}',
-        created_at TEXT NOT NULL,
-        last_seen_at TEXT NOT NULL,
-        revoked_at TEXT
-      );
-      CREATE UNIQUE INDEX IF NOT EXISTS owner_sessions_cap_hash
-        ON owner_sessions(session_cap_hash) WHERE session_cap_hash IS NOT NULL;
-
-      CREATE TABLE IF NOT EXISTS scheduler_tickets (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        created_at TEXT NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS job_chains (
-        id TEXT PRIMARY KEY,
-        root_job_id TEXT NOT NULL UNIQUE REFERENCES jobs(id) DEFERRABLE INITIALLY DEFERRED,
-        origin_session_id TEXT NOT NULL REFERENCES owner_sessions(id),
-        accepted_sequence INTEGER NOT NULL UNIQUE,
-        state TEXT NOT NULL,
-        active_job_id TEXT REFERENCES jobs(id) DEFERRABLE INITIALLY DEFERRED,
-        target_kind TEXT NOT NULL CHECK (target_kind IN ('existing', 'new_standalone', 'new_project')),
-        conversation_key TEXT NOT NULL,
-        canonical_url TEXT,
-        completion_mode TEXT NOT NULL DEFAULT 'manual',
-        read_cap_hash TEXT,
-        control_cap_hash TEXT,
-        legacy_mode TEXT NOT NULL DEFAULT 'none'
-          CHECK (legacy_mode IN ('none', 'unclaimed', 'claimed', 'inconsistent')),
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        terminal_at TEXT
-      );
-      CREATE INDEX IF NOT EXISTS job_chains_scope_sequence
-        ON job_chains(conversation_key, accepted_sequence);
-      CREATE INDEX IF NOT EXISTS job_chains_state_sequence
-        ON job_chains(state, accepted_sequence);
-
-      CREATE TABLE IF NOT EXISTS job_attempts (
-        job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE,
-        chain_id TEXT NOT NULL REFERENCES job_chains(id) ON DELETE CASCADE,
-        kind TEXT NOT NULL CHECK (kind IN ('initial', 'response_recovery', 'evidence_reply')),
-        ordinal INTEGER NOT NULL,
-        parent_job_id TEXT REFERENCES jobs(id),
-        execution_epoch INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        UNIQUE(chain_id, ordinal)
-      );
-      CREATE INDEX IF NOT EXISTS job_attempts_chain ON job_attempts(chain_id, ordinal);
-
-      CREATE TABLE IF NOT EXISTS chain_session_grants (
-        chain_id TEXT NOT NULL REFERENCES job_chains(id) ON DELETE CASCADE,
-        session_id TEXT NOT NULL REFERENCES owner_sessions(id) ON DELETE CASCADE,
-        can_read INTEGER NOT NULL DEFAULT 1 CHECK (can_read IN (0, 1)),
-        can_control INTEGER NOT NULL DEFAULT 0 CHECK (can_control IN (0, 1)),
-        can_list INTEGER NOT NULL DEFAULT 1 CHECK (can_list IN (0, 1)),
-        granted_at TEXT NOT NULL,
-        revoked_at TEXT,
-        PRIMARY KEY(chain_id, session_id)
-      );
-
-      CREATE TABLE IF NOT EXISTS chain_events (
-        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
-        chain_id TEXT NOT NULL REFERENCES job_chains(id) ON DELETE CASCADE,
-        active_job_id TEXT REFERENCES jobs(id),
-        state TEXT NOT NULL,
-        details_json TEXT,
-        created_at TEXT NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS chain_events_chain_sequence
-        ON chain_events(chain_id, sequence);
-
-      CREATE TABLE IF NOT EXISTS completion_subscriptions (
-        id TEXT PRIMARY KEY,
-        chain_id TEXT NOT NULL REFERENCES job_chains(id) ON DELETE CASCADE,
-        owner_session_id TEXT NOT NULL REFERENCES owner_sessions(id),
-        mode TEXT NOT NULL CHECK (mode IN ('manual', 'notify', 'harness')),
-        capability_hash TEXT NOT NULL,
-        state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'closed')),
-        created_at TEXT NOT NULL,
-        closed_at TEXT
-      );
-      CREATE INDEX IF NOT EXISTS completion_subscriptions_owner
-        ON completion_subscriptions(owner_session_id, state, created_at);
-
-      CREATE TABLE IF NOT EXISTS completion_deliveries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        subscription_id TEXT NOT NULL REFERENCES completion_subscriptions(id) ON DELETE CASCADE,
-        chain_event_sequence INTEGER NOT NULL REFERENCES chain_events(sequence) ON DELETE CASCADE,
-        state TEXT NOT NULL DEFAULT 'pending'
-          CHECK (state IN ('pending', 'claimed', 'delivered', 'acknowledged')),
-        claim_id TEXT,
-        claimed_at TEXT,
-        delivered_at TEXT,
-        acknowledged_at TEXT,
-        created_at TEXT NOT NULL,
-        UNIQUE(subscription_id, chain_event_sequence)
-      );
-      CREATE INDEX IF NOT EXISTS completion_deliveries_subscription_state
-        ON completion_deliveries(subscription_id, state, id);
-
-      CREATE TABLE IF NOT EXISTS account_state (
-        id INTEGER PRIMARY KEY CHECK (id = 1),
-        gate_version INTEGER NOT NULL DEFAULT 0,
-        next_submit_not_before TEXT,
-        cooldown_until TEXT,
-        cooldown_code TEXT,
-        cooldown_count INTEGER NOT NULL DEFAULT 0,
-        effective_concurrency INTEGER NOT NULL DEFAULT 5,
-        success_streak INTEGER NOT NULL DEFAULT 0,
-        probe_in_flight INTEGER NOT NULL DEFAULT 0,
-        last_success_at TEXT,
-        updated_at TEXT NOT NULL
-      );
-      INSERT OR IGNORE INTO account_state(id, updated_at) VALUES (1, datetime('now'));
-
-      CREATE TABLE IF NOT EXISTS submit_permits (
-        id TEXT PRIMARY KEY,
-        job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-        gate_version INTEGER NOT NULL,
-        issued_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        consumed_at TEXT,
-        invalidated_at TEXT
-      );
-      CREATE UNIQUE INDEX IF NOT EXISTS submit_permits_open_job
-        ON submit_permits(job_id) WHERE consumed_at IS NULL AND invalidated_at IS NULL;
-    `);
-    this.backfillLegacyChains();
-    this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (4, ?)").run((/* @__PURE__ */ new Date()).toISOString());
-    const migrationFive = this.db.prepare("SELECT 1 present FROM schema_migrations WHERE version = 5").get();
-    if (!migrationFive) {
-      const account = this.db.prepare("SELECT cooldown_until FROM account_state WHERE id = 1").get();
-      const cooldownActive = account?.cooldown_until && Date.parse(account.cooldown_until) > Date.now();
-      this.db.prepare("UPDATE account_state SET effective_concurrency = ?, updated_at = ? WHERE id = 1").run(cooldownActive ? 0 : 5, (/* @__PURE__ */ new Date()).toISOString());
-      this.db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES (5, ?)").run((/* @__PURE__ */ new Date()).toISOString());
-    }
-  }
-  migrateSix({ existing = false } = {}) {
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.transaction(() => {
-      this.db.exec(`
-        CREATE TABLE IF NOT EXISTS broker_instances (
-          instance_id TEXT PRIMARY KEY,
-          coordinator_id TEXT NOT NULL,
-          lease_generation INTEGER NOT NULL UNIQUE,
-          pid INTEGER NOT NULL,
-          process_start_id TEXT,
-          endpoint TEXT NOT NULL,
-          endpoint_kind TEXT NOT NULL,
-          endpoint_device TEXT,
-          endpoint_inode TEXT,
-          protocol_version INTEGER NOT NULL,
-          release_sequence INTEGER NOT NULL,
-          build_version TEXT NOT NULL,
-          build_id TEXT NOT NULL,
-          state TEXT NOT NULL,
-          started_at TEXT NOT NULL,
-          ready_at TEXT,
-          heartbeat_at TEXT NOT NULL,
-          draining_at TEXT,
-          released_at TEXT,
-          exit_reason TEXT
-        );
-        CREATE INDEX IF NOT EXISTS broker_instances_generation ON broker_instances(lease_generation);
-        CREATE TABLE IF NOT EXISTS broker_state (
-          id INTEGER PRIMARY KEY CHECK (id = 1),
-          coordinator_id TEXT NOT NULL,
-          current_instance_id TEXT REFERENCES broker_instances(instance_id),
-          current_lease_generation INTEGER NOT NULL DEFAULT 0,
-          last_recovery_generation INTEGER NOT NULL DEFAULT 0,
-          minimum_reader_protocol INTEGER NOT NULL,
-          minimum_writer_protocol INTEGER NOT NULL,
-          qualified_concurrency INTEGER NOT NULL DEFAULT 1,
-          updated_at TEXT NOT NULL
-        );
-      `);
-      this.db.prepare(`
-        INSERT OR IGNORE INTO broker_state(
-          id, coordinator_id, current_lease_generation, last_recovery_generation,
-          minimum_reader_protocol, minimum_writer_protocol, qualified_concurrency, updated_at
-        ) VALUES (1, ?, 0, 0, ?, ?, 1, ?)
-      `).run(this.brokerContext.coordinatorId, BROKER_PROTOCOL_VERSION, BROKER_PROTOCOL_VERSION, now);
-      const addColumns = (table, columns) => {
-        const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
-        for (const [name, definition] of columns) {
-          if (!known.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
-        }
-      };
-      addColumns("job_attempts", [
-        ["execution_owner_instance_id", "TEXT"],
-        ["execution_lease_generation", "INTEGER"],
-        ["execution_state", "TEXT NOT NULL DEFAULT 'idle'"],
-        ["execution_started_at", "TEXT"],
-        ["execution_heartbeat_at", "TEXT"],
-        ["execution_failure_count", "INTEGER NOT NULL DEFAULT 0"],
-        ["next_execution_not_before", "TEXT"],
-        ["last_executor_error_json", "TEXT"]
-      ]);
-      addColumns("jobs", [["last_recovery_generation", "INTEGER NOT NULL DEFAULT 0"]]);
-      addColumns("job_chains", [
-        ["input_required_abandoned_at", "TEXT"],
-        ["input_required_abandoned_job_id", "TEXT"],
-        ["input_required_abandoned_reason", "TEXT"]
-      ]);
-      addColumns("job_events", [
-        ["broker_instance_id", "TEXT"],
-        ["lease_generation", "INTEGER"]
-      ]);
-      addColumns("chain_events", [
-        ["broker_instance_id", "TEXT"],
-        ["lease_generation", "INTEGER"]
-      ]);
-      this.db.exec(`
-        CREATE INDEX IF NOT EXISTS job_attempts_execution_ready
-          ON job_attempts(execution_state, next_execution_not_before, execution_lease_generation);
-        CREATE INDEX IF NOT EXISTS jobs_recovery_generation
-          ON jobs(last_recovery_generation, state);
-      `);
-      if (!existing) {
-        this.db.prepare("UPDATE account_state SET effective_concurrency = CASE WHEN cooldown_until IS NULL THEN 1 ELSE 0 END, updated_at = ? WHERE id = 1").run(now);
-      }
-      this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (7, ?)").run(now);
-      this.installWriterGuards();
-    });
-    if (existing) this.assertCoordinatorIdentity();
-  }
-  migrateEight() {
-    const migration = this.db.prepare("SELECT 1 present FROM schema_migrations WHERE version = 8").get();
-    if (migration) {
-      this.installWriterGuards();
-      return;
-    }
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.transaction(() => {
-      const addColumns = (table, columns) => {
-        const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
-        for (const [name, definition] of columns) {
-          if (!known.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
-        }
-      };
-      addColumns("job_attempts", [
-        ["execution_kind", "TEXT NOT NULL DEFAULT 'pre_submit' CHECK (execution_kind IN ('pre_submit', 'monitor_only'))"],
-        ["monitor_deadline_at", "TEXT"],
-        ["final_reconciliation_attempted_at", "TEXT"]
-      ]);
-      addColumns("jobs", [
-        ["assistant_turn_id", "TEXT"],
-        ["assistant_turn_hash", "TEXT"]
-      ]);
-      const submitted = this.db.prepare(`
-        SELECT j.id, j.submit_intent_at, j.request_json, j.canonical_url,
-               j.user_turn_id, j.user_turn_hash, j.state
-        FROM jobs j JOIN job_attempts a ON a.job_id = j.id
-        WHERE j.submit_intent_at IS NOT NULL
-      `).all();
-      for (const row of submitted) {
-        const request3 = parse2(row.request_json) || {};
-        const timeoutSeconds = Math.max(30, Math.min(86400, Number(request3.responseTimeoutSeconds) || 10800));
-        const submittedAt = Number.isFinite(Date.parse(row.submit_intent_at)) ? Date.parse(row.submit_intent_at) : Date.now();
-        const deadline = new Date(submittedAt + timeoutSeconds * 1e3).toISOString();
-        const exactTurn = Boolean(isCanonicalConversationUrl(row.canonical_url) && (row.user_turn_id || row.user_turn_hash));
-        this.db.prepare(`
-          UPDATE job_attempts SET execution_kind=?, monitor_deadline_at=COALESCE(monitor_deadline_at, ?)
-          WHERE job_id=?
-        `).run(exactTurn ? "monitor_only" : "pre_submit", deadline, row.id);
-        if (exactTurn && PRE_SUBMIT_JOB_STATES.has(row.state)) {
-          this.db.prepare(`
-            UPDATE jobs SET state='awaiting_response', updated_at=?, version=version+1,
-              recovery_action='reattach submitted turn without resending'
-            WHERE id=?
-          `).run(now, row.id);
-          const attempt = this.db.prepare("SELECT chain_id FROM job_attempts WHERE job_id=?").get(row.id);
-          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=?").run(now, attempt.chain_id);
-          this.db.prepare(`
-            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
-            VALUES (?, 'awaiting_response', ?, ?, ?, ?)
-          `).run(row.id, json({ migratedMonitorOnly: true, schemaVersion: 8 }), now, this.brokerContext.instanceId, this.brokerContext.leaseGeneration);
-        }
-      }
-      this.db.exec(`
-        CREATE INDEX IF NOT EXISTS job_attempts_execution_kind_ready
-          ON job_attempts(execution_kind, execution_state, next_execution_not_before, monitor_deadline_at);
-      `);
-      this.db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES (8, ?)").run(now);
-      this.installWriterGuards();
-    });
-  }
-  installWriterGuards() {
-    const operational = [
-      "jobs",
-      "job_events",
-      "quarantines",
-      "owner_sessions",
-      "scheduler_tickets",
-      "job_chains",
-      "job_attempts",
-      "chain_session_grants",
-      "chain_events",
-      "completion_subscriptions",
-      "completion_deliveries",
-      "account_state",
-      "submit_permits"
-    ];
-    const metadata = ["schema_migrations", "broker_instances", "broker_state"];
-    for (const table of operational) {
-      for (const action of ["INSERT", "UPDATE", "DELETE"]) {
-        const name = `oracle_guard_${table}_${action.toLowerCase()}`;
-        this.db.exec(`
-          DROP TRIGGER IF EXISTS ${name};
-          CREATE TRIGGER ${name} BEFORE ${action} ON ${table}
-          BEGIN
-            SELECT CASE WHEN
-              oracle_writer_protocol() < (SELECT minimum_writer_protocol FROM broker_state WHERE id = 1)
-              OR oracle_broker_instance() IS NOT (SELECT current_instance_id FROM broker_state WHERE id = 1)
-              OR oracle_lease_generation() != (SELECT current_lease_generation FROM broker_state WHERE id = 1)
-            THEN RAISE(ABORT, 'ORACLE_BROKER_FENCE') END;
-          END;
-        `);
-      }
-    }
-    for (const table of metadata) {
-      for (const action of ["INSERT", "UPDATE", "DELETE"]) {
-        const name = `oracle_protocol_guard_${table}_${action.toLowerCase()}`;
-        this.db.exec(`
-          DROP TRIGGER IF EXISTS ${name};
-          CREATE TRIGGER ${name} BEFORE ${action} ON ${table}
-          BEGIN
-            SELECT CASE WHEN
-              oracle_writer_protocol() < (SELECT minimum_writer_protocol FROM broker_state WHERE id = 1)
-            THEN RAISE(ABORT, 'ORACLE_WRITER_PROTOCOL_TOO_OLD') END;
-          END;
-        `);
-      }
-    }
-  }
-  assertCoordinatorIdentity() {
-    const row = this.db.prepare("SELECT coordinator_id FROM broker_state WHERE id = 1").get();
-    if (row?.coordinator_id !== this.brokerContext.coordinatorId) {
-      throw codedError(
-        "COORDINATOR_ID_MISMATCH",
-        "The coordinator identity file does not match the durable database. Oracle Firefox stopped before recovery or scheduling."
-      );
-    }
-  }
-  backfillUntrackedUncertaintyQuarantines() {
-    this.assertCurrentBroker();
-    this.db.prepare(`
-      INSERT OR IGNORE INTO quarantines(scope_key, job_id, reason, active, created_at)
-      SELECT conversation_key, id,
-             'Uncertain submission imported from an older Oracle Firefox build; reconcile it before another send.',
-             1, COALESCE(completed_at, updated_at, created_at)
-      FROM jobs
-      WHERE state IN ('submission_uncertain', 'response_uncertain', 'quarantined')
-        AND conversation_key IS NOT NULL
-    `).run();
-  }
-  registerBrokerTakeover() {
-    const context2 = this.brokerContext;
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    const generation = this.transaction(() => {
-      const state = this.db.prepare("SELECT * FROM broker_state WHERE id = 1").get();
-      if (!state) throw codedError("BROKER_STATE_MISSING", "Oracle Firefox broker state is unavailable.");
-      if (state.coordinator_id !== context2.coordinatorId) {
-        throw codedError("COORDINATOR_ID_MISMATCH", "The coordinator identity does not match the durable database.");
-      }
-      if (state.current_instance_id) {
-        this.db.prepare("UPDATE broker_instances SET state='crashed', released_at=?, exit_reason=? WHERE instance_id=? AND state NOT IN ('released','failed')").run(now, "exclusive lifetime lease acquired by successor", state.current_instance_id);
-      }
-      const next = Number(state.current_lease_generation) + 1;
-      this.db.prepare(`
-        INSERT INTO broker_instances(
-          instance_id, coordinator_id, lease_generation, pid, process_start_id,
-          endpoint, endpoint_kind, endpoint_device, endpoint_inode,
-          protocol_version, release_sequence, build_version, build_id,
-          state, started_at, heartbeat_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'starting', ?, ?)
-      `).run(
-        context2.instanceId,
-        context2.coordinatorId,
-        next,
-        context2.pid || process.pid,
-        context2.processStartId || null,
-        context2.endpoint || "unknown",
-        context2.endpointKind || "unknown",
-        context2.endpointDevice || null,
-        context2.endpointInode || null,
-        context2.protocolVersion,
-        context2.releaseSequence,
-        context2.buildVersion,
-        context2.buildId,
-        now,
-        now
-      );
-      this.db.prepare(`
-        UPDATE broker_state SET current_instance_id=?, current_lease_generation=?,
-          minimum_reader_protocol=MAX(minimum_reader_protocol, ?),
-          minimum_writer_protocol=MAX(minimum_writer_protocol, ?), updated_at=? WHERE id=1
-      `).run(context2.instanceId, next, BROKER_PROTOCOL_VERSION, BROKER_PROTOCOL_VERSION, now);
-      return next;
-    });
-    context2.leaseGeneration = generation;
-    return context2;
-  }
-  markBrokerReady() {
-    this.assertCurrentBroker();
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.db.prepare("UPDATE broker_instances SET state='ready', ready_at=?, heartbeat_at=? WHERE instance_id=?").run(now, now, this.brokerContext.instanceId);
-  }
-  heartbeatBroker() {
-    this.assertCurrentBroker();
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.db.prepare("UPDATE broker_instances SET heartbeat_at=? WHERE instance_id=?").run(now, this.brokerContext.instanceId);
-    return now;
-  }
-  markBrokerReleased(reason = "graceful shutdown") {
-    if (!this.db) return;
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.transaction(() => {
-      const state = this.db.prepare("SELECT * FROM broker_state WHERE id=1").get();
-      if (state?.current_instance_id !== this.brokerContext.instanceId || Number(state.current_lease_generation) !== Number(this.brokerContext.leaseGeneration)) return;
-      this.db.prepare("UPDATE broker_instances SET state='released', released_at=?, exit_reason=? WHERE instance_id=?").run(now, reason, this.brokerContext.instanceId);
-      this.db.prepare("UPDATE broker_state SET current_instance_id=NULL, updated_at=? WHERE id=1").run(now);
-    });
-  }
-  assertCurrentBroker() {
-    const row = this.db.prepare("SELECT current_instance_id, current_lease_generation FROM broker_state WHERE id=1").get();
-    if (row?.current_instance_id !== this.brokerContext.instanceId || Number(row?.current_lease_generation) !== Number(this.brokerContext.leaseGeneration)) {
-      throw codedError("BROKER_LEASE_LOST", "This Oracle Firefox broker no longer owns the coordinator database.");
-    }
-    return true;
-  }
-  backfillLegacyChains() {
-    const unassigned = this.db.prepare(`
-      SELECT j.*, j.rowid AS _rowid FROM jobs j
-      LEFT JOIN job_attempts a ON a.job_id = j.id
-      WHERE a.job_id IS NULL
-      ORDER BY j.created_at, j.rowid
-    `).all();
-    if (!unassigned.length) return;
-    return this.transaction(() => {
-      const byId = new Map(unassigned.map((row) => [row.id, row]));
-      const parent = new Map(unassigned.map((row) => [row.id, row.id]));
-      const find = (id) => {
-        let root = id;
-        while (parent.get(root) !== root) root = parent.get(root);
-        while (parent.get(id) !== id) {
-          const next = parent.get(id);
-          parent.set(id, root);
-          id = next;
-        }
-        return root;
-      };
-      const union = (left2, right2) => {
-        if (!byId.has(left2) || !byId.has(right2)) return;
-        const a2 = find(left2);
-        const b2 = find(right2);
-        if (a2 !== b2) parent.set(b2, a2);
-      };
-      for (const row of unassigned) {
-        if (row.parent_job_id) union(row.id, row.parent_job_id);
-        if (row.replacement_job_id) union(row.id, row.replacement_job_id);
-        if (row.root_job_id) union(row.id, row.root_job_id);
-      }
-      const groups = /* @__PURE__ */ new Map();
-      for (const row of unassigned) {
-        const key = find(row.id);
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(row);
-      }
-      for (const rows of groups.values()) {
-        rows.sort((a2, b2) => a2.created_at.localeCompare(b2.created_at) || a2._rowid - b2._rowid);
-        const rowIds = new Set(rows.map((row) => row.id));
-        const roots = rows.filter((row) => !row.parent_job_id || !rowIds.has(row.parent_job_id));
-        const missingParent = rows.some((row) => row.parent_job_id && !byId.has(row.parent_job_id));
-        const canonicalUrls = new Set(rows.map((row) => row.canonical_url).filter(Boolean));
-        const nonterminalRows = rows.filter((row) => !TERMINAL_JOB_STATES.has(row.state));
-        const childCounts = /* @__PURE__ */ new Map();
-        for (const row of rows) {
-          if (row.parent_job_id && rowIds.has(row.parent_job_id)) {
-            childCounts.set(row.parent_job_id, (childCounts.get(row.parent_job_id) || 0) + 1);
-          }
-        }
-        const hasCycle = (edgeFor) => {
-          const visiting = /* @__PURE__ */ new Set();
-          const visited = /* @__PURE__ */ new Set();
-          const visit = (id) => {
-            if (visiting.has(id)) return true;
-            if (visited.has(id)) return false;
-            visiting.add(id);
-            const next = edgeFor(byId.get(id));
-            if (next && rowIds.has(next) && visit(next)) return true;
-            visiting.delete(id);
-            visited.add(id);
-            return false;
-          };
-          return rows.some((row) => visit(row.id));
-        };
-        const inconsistent = missingParent || roots.length !== 1 || canonicalUrls.size > 1 || nonterminalRows.length > 1 || [...childCounts.values()].some((count) => count > 1) || hasCycle((row) => row?.parent_job_id) || hasCycle((row) => row?.replacement_job_id);
-        const root = roots[0] || rows[0];
-        const ownerId = `legacy-${root.id}`;
-        const now = (/* @__PURE__ */ new Date()).toISOString();
-        this.db.prepare(`
-        INSERT OR IGNORE INTO owner_sessions(
-          id, harness, isolation_strength, metadata_json, created_at, last_seen_at
-        ) VALUES (?, 'legacy', 'legacy', '{}', ?, ?)
-      `).run(ownerId, root.created_at || now, now);
-        const ticket = Number(this.db.prepare("INSERT INTO scheduler_tickets(created_at) VALUES (?)").run(root.created_at || now).lastInsertRowid);
-        const active = rows.findLast((row) => !TERMINAL_JOB_STATES.has(row.state)) || rows.at(-1);
-        const targetKind = root.operation === "continue_chat" ? "existing" : root.project_url ? "new_project" : "new_standalone";
-        this.db.prepare(`
-        INSERT OR IGNORE INTO job_chains(
-          id, root_job_id, origin_session_id, accepted_sequence, state, active_job_id,
-          target_kind, conversation_key, canonical_url, completion_mode, legacy_mode,
-          created_at, updated_at, terminal_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unclaimed', ?, ?, ?)
-      `).run(
-          root.id,
-          root.id,
-          ownerId,
-          ticket,
-          inconsistent ? "legacy_inconsistent" : this.chainStateForJob(active),
-          active.id,
-          targetKind,
-          active.conversation_key,
-          active.canonical_url,
-          parse2(root.request_json)?.completionMode || "manual",
-          root.created_at || now,
-          active.updated_at || now,
-          inconsistent || TERMINAL_JOB_STATES.has(active.state) ? active.completed_at || now : null
-        );
-        if (inconsistent) {
-          this.db.prepare("UPDATE job_chains SET legacy_mode = 'inconsistent' WHERE id = ?").run(root.id);
-        }
-        rows.forEach((row, ordinal) => {
-          const kind = row.evidence_round > 0 ? "evidence_reply" : row.retry_attempt > 0 ? "response_recovery" : "initial";
-          this.db.prepare(`
-          INSERT OR IGNORE INTO job_attempts(
-            job_id, chain_id, kind, ordinal, parent_job_id, execution_epoch, created_at
-          ) VALUES (?, ?, ?, ?, ?, 0, ?)
-        `).run(row.id, root.id, kind, ordinal, row.parent_job_id, row.created_at || now);
-          if (!inconsistent) this.db.prepare("UPDATE jobs SET root_job_id = ? WHERE id = ?").run(root.id, row.id);
-        });
-      }
-    });
-  }
-  close() {
-    this.db?.close();
-    this.db = null;
-  }
-  transaction(fn) {
-    this.db.exec("BEGIN IMMEDIATE");
-    try {
-      const value = fn();
-      this.db.exec("COMMIT");
-      return value;
-    } catch (error) {
-      this.db.exec("ROLLBACK");
-      throw error;
-    }
-  }
-  chainStateForJob(job, chain = null) {
-    if (!job) return "failed";
-    if (job.state === "completed" && parse2(job.local_data_request_json) && chain?.input_required_abandoned_job_id !== job.id) return "input_required";
-    if (job.state === "completed") return "completed";
-    if (job.state === "cancelled_pre_submit") return "cancelled";
-    if (job.state === "submission_uncertain") return "submission_uncertain";
-    if (job.state === "response_uncertain") return "response_uncertain";
-    if (job.state === "quarantined") return "quarantined";
-    if (TERMINAL_JOB_STATES.has(job.state)) return "failed";
-    if (job.state === "accepted" || job.state === "snapshotted" || job.state === "queued") return "queued";
-    return "running";
-  }
-  jobSelect(where = "", suffix = "") {
-    return `
-      SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
-             a.final_reconciliation_attempted_at,
-             c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
-      FROM jobs j
-      LEFT JOIN job_attempts a ON a.job_id = j.id
-      LEFT JOIN job_chains c ON c.id = a.chain_id
-      ${where}
-      ${suffix}
-    `;
-  }
-  createOwnerSession({ harness = "unknown", clientInstanceId: clientInstanceId2 = null, hostSessionHint = null, metadata = {} } = {}) {
-    const id = randomUUID8();
-    const capability = mintCapability("session", id);
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.db.prepare(`
-      INSERT INTO owner_sessions(
-        id, harness, client_instance_id, host_session_hint, session_cap_hash,
-        isolation_strength, metadata_json, created_at, last_seen_at
-      ) VALUES (?, ?, ?, ?, ?, 'chain', ?, ?, ?)
-    `).run(id, String(harness || "unknown"), clientInstanceId2, hostSessionHint, capability.hash, json(metadata) || "{}", now, now);
-    return { sessionId: id, sessionHandle: capability.handle, harness: String(harness || "unknown") };
-  }
-  authenticateOwnerSession(client) {
-    const parsed = parseCapability(client?.sessionHandle, "session");
-    if (!parsed || parsed.subjectId !== client?.sessionId) {
-      throw codedError("CLIENT_SESSION_REQUIRED", "Open an Oracle Firefox client session before accessing jobs.");
-    }
-    const row = this.db.prepare("SELECT * FROM owner_sessions WHERE id = ? AND revoked_at IS NULL").get(parsed.subjectId);
-    if (!row || !verifyCapability(client.sessionHandle, row.session_cap_hash, { kind: "session", subjectId: row.id })) {
-      throw codedError("CLIENT_SESSION_REQUIRED", "The Oracle Firefox client session is invalid or expired.");
-    }
-    this.db.prepare("UPDATE owner_sessions SET last_seen_at = ? WHERE id = ?").run((/* @__PURE__ */ new Date()).toISOString(), row.id);
-    return {
-      id: row.id,
-      harness: row.harness,
-      clientInstanceId: row.client_instance_id,
-      hostSessionHint: row.host_session_hint,
-      isolationStrength: row.isolation_strength
-    };
-  }
-  getChain(chainId) {
-    return rowToChain(this.db.prepare("SELECT * FROM job_chains WHERE id = ?").get(chainId));
-  }
-  chainForJob(jobId) {
-    return rowToChain(this.db.prepare(`
-      SELECT c.* FROM job_chains c
-      JOIN job_attempts a ON a.chain_id = c.id
-      WHERE a.job_id = ?
-    `).get(jobId));
-  }
-  chainAccessRow(chainId) {
-    return this.db.prepare("SELECT * FROM job_chains WHERE id = ?").get(chainId);
-  }
-  sessionGrant(chainId, sessionId) {
-    return this.db.prepare(`
-      SELECT * FROM chain_session_grants
-      WHERE chain_id = ? AND session_id = ? AND revoked_at IS NULL
-    `).get(chainId, sessionId);
-  }
-  authorizeJob({ jobId, jobHandle = null, caller = null, control = false, allowLegacyRead = false } = {}) {
-    let job = null;
-    let chain = null;
-    const parsedHandle = parseCapability(jobHandle);
-    if (parsedHandle && (/* @__PURE__ */ new Set(["read", "control"])).has(parsedHandle.kind)) {
-      chain = this.getChain(parsedHandle.subjectId);
-      if (chain) {
-        const raw = this.chainAccessRow(chain.id);
-        const expectedHash = parsedHandle.kind === "control" ? raw.control_cap_hash : raw.read_cap_hash;
-        if (verifyCapability(jobHandle, expectedHash, { kind: parsedHandle.kind, subjectId: chain.id }) && (!control || parsedHandle.kind === "control")) {
-          job = jobId ? this.getJob(jobId) : this.getJob(chain.rootJobId);
-          if (!job || job.chainId !== chain.id) job = null;
-          if (job && caller) {
-            const now = (/* @__PURE__ */ new Date()).toISOString();
-            this.db.prepare(`
-              INSERT INTO chain_session_grants(
-                chain_id, session_id, can_read, can_control, can_list, granted_at, revoked_at
-              ) VALUES (?, ?, 1, ?, 1, ?, NULL)
-              ON CONFLICT(chain_id, session_id) DO UPDATE SET
-                can_read = 1,
-                can_control = MAX(can_control, excluded.can_control),
-                can_list = 1,
-                revoked_at = NULL
-            `).run(chain.id, caller.id, parsedHandle.kind === "control" ? 1 : 0, now);
-          }
-        }
-      }
-    }
-    if (!job && jobId && caller) {
-      const candidate = this.getJob(jobId);
-      const candidateChain = candidate ? this.getChain(candidate.chainId) : null;
-      const grant = candidateChain ? this.sessionGrant(candidateChain.id, caller.id) : null;
-      if (candidate && candidateChain && grant && (control ? grant.can_control : grant.can_read)) {
-        job = candidate;
-        chain = candidateChain;
-      }
-    }
-    if (!job && jobId && allowLegacyRead && !control) {
-      const candidate = this.getJob(jobId);
-      const candidateChain = candidate ? this.getChain(candidate.chainId) : null;
-      if (candidate && candidateChain?.legacyMode === "unclaimed") {
-        job = candidate;
-        chain = candidateChain;
-      }
-    }
-    if (!job || !chain) {
-      throw codedError("JOB_NOT_FOUND", "No accessible Oracle Firefox job matches that reference.");
-    }
-    return { job, chain };
-  }
-  listJobsForSession(sessionId, params = {}) {
-    const capped = Math.max(1, Math.min(200, Number(params.limit) || 50));
-    const states = (params.states || []).filter((state) => STATE_INDEX.has(state));
-    const stateClause = states.length ? `AND j.state IN (${states.map(() => "?").join(",")})` : "";
-    return this.db.prepare(`
-      SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch, a.execution_kind, a.monitor_deadline_at,
-             a.final_reconciliation_attempted_at, c.state AS chain_state,
-             c.input_required_abandoned_at, c.input_required_abandoned_job_id,
-             c.input_required_abandoned_reason
-      FROM jobs j
-      JOIN job_attempts a ON a.job_id = j.id
-      JOIN job_chains c ON c.id = a.chain_id
-      JOIN chain_session_grants g ON g.chain_id = a.chain_id
-      WHERE g.session_id = ? AND g.can_list = 1 AND g.revoked_at IS NULL ${stateClause}
-      ORDER BY j.created_at DESC, j.rowid DESC LIMIT ?
-    `).all(sessionId, ...states, capped).map(rowToJob);
-  }
-  createJob(input2) {
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    const digest2 = input2.requestDigest || requestDigest(input2.request);
-    const created = this.transaction(() => {
-      const existing = this.db.prepare("SELECT * FROM jobs WHERE authorization_id = ?").get(input2.authorizationId);
-      if (existing) {
-        const existingJob = this.getJob(existing.id);
-        const existingChain = this.getChain(existingJob.chainId);
-        if (input2.ownerSessionId && existingChain?.legacyMode === "none" && existingChain.originSessionId !== input2.ownerSessionId && !this.sessionGrant(existingChain.id, input2.ownerSessionId)) {
-          throw codedError("JOB_NOT_FOUND", "No accessible Oracle Firefox job matches that authorization.");
-        }
-        if (existing.request_digest !== digest2) {
-          throw codedError(
-            "AUTHORIZATION_REUSED",
-            "This authorizationId was already used for a different request.",
-            { safeToRetry: false }
-          );
-        }
-        return { job: existingJob, chain: existingChain, idempotent: true };
-      }
-      const activeQuarantine = this.db.prepare("SELECT * FROM quarantines WHERE scope_key = ? AND active = 1").get(input2.conversationKey);
-      if (activeQuarantine) {
-        throw codedError(
-          "CONVERSATION_QUARANTINED",
-          "This conversation or new-chat scope is quarantined until its uncertain submission is reconciled.",
-          {
-            recoveryAction: /^https:\/\/chatgpt\.com\//u.test(input2.conversationKey) ? `inspect_quarantine for ${input2.conversationKey}` : `reconcile_job ${activeQuarantine.job_id}`,
-            details: {
-              exactScopeRequired: true,
-              capabilityRecoveryAvailable: /^https:\/\/chatgpt\.com\//u.test(input2.conversationKey)
-            }
-          }
-        );
-      }
-      const id = input2.id || randomUUID8();
-      const parentAttempt = input2.parentJobId ? this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(input2.parentJobId) : null;
-      const inheritedChain = parentAttempt ? this.chainAccessRow(parentAttempt.chain_id) : null;
-      const chainId = input2.chainId || inheritedChain?.id || id;
-      const rootJobId = inheritedChain?.root_job_id || input2.rootJobId || id;
-      this.db.prepare(`
-        INSERT INTO jobs (
-          id, authorization_id, operation, state, request_json, request_digest,
-          conversation_key, canonical_url, project_title, project_url, chat_title,
-          session_path, evidence_round, max_evidence_replies, parent_job_id, root_job_id,
-          retry_attempt, max_response_retries, created_at, updated_at
-        ) VALUES (?, ?, ?, 'accepted', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        id,
-        input2.authorizationId,
-        input2.operation,
-        json(input2.request),
-        digest2,
-        input2.conversationKey,
-        input2.conversationUrl ?? null,
-        input2.projectTitle ?? null,
-        input2.projectUrl ?? null,
-        input2.chatTitle ?? null,
-        input2.sessionPath,
-        input2.evidenceRound ?? 0,
-        input2.maxAutomaticEvidenceReplies ?? 3,
-        input2.parentJobId ?? null,
-        rootJobId,
-        input2.retryAttempt ?? 0,
-        input2.maxAutomaticResponseRetries ?? 0,
-        now,
-        now
-      );
-      this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'accepted', ?, ?)").run(id, json({ operation: input2.operation }), now);
-      let chain;
-      if (inheritedChain) {
-        if (input2.ownerSessionId && inheritedChain.origin_session_id !== input2.ownerSessionId && !this.sessionGrant(inheritedChain.id, input2.ownerSessionId)?.can_control) {
-          throw codedError("JOB_NOT_FOUND", "No accessible Oracle Firefox logical chain matches the parent job.");
-        }
-        const ordinal = Number(this.db.prepare("SELECT COALESCE(MAX(ordinal), -1) + 1 value FROM job_attempts WHERE chain_id = ?").get(chainId).value);
-        const kind = input2.attemptKind || (input2.evidenceRound > 0 ? "evidence_reply" : "response_recovery");
-        this.db.prepare(`
-          INSERT INTO job_attempts(job_id, chain_id, kind, ordinal, parent_job_id, execution_epoch, created_at)
-          VALUES (?, ?, ?, ?, ?, 0, ?)
-        `).run(id, chainId, kind, ordinal, input2.parentJobId, now);
-        this.db.prepare(`
-          UPDATE job_chains
-          SET active_job_id = ?, state = 'queued', updated_at = ?, terminal_at = NULL
-          WHERE id = ?
-        `).run(id, now, chainId);
-        chain = this.getChain(chainId);
-      } else {
-        let ownerSessionId = input2.ownerSessionId;
-        let legacyMode = "none";
-        if (!ownerSessionId) {
-          ownerSessionId = `legacy-${id}`;
-          legacyMode = "unclaimed";
-          this.db.prepare(`
-            INSERT INTO owner_sessions(id, harness, isolation_strength, metadata_json, created_at, last_seen_at)
-            VALUES (?, 'legacy', 'legacy', '{}', ?, ?)
-          `).run(ownerSessionId, now, now);
-        }
-        const ticket = Number(this.db.prepare("INSERT INTO scheduler_tickets(created_at) VALUES (?)").run(now).lastInsertRowid);
-        const targetKind = input2.operation === "continue_chat" ? "existing" : input2.projectUrl ? "new_project" : "new_standalone";
-        this.db.prepare(`
-          INSERT INTO job_chains(
-            id, root_job_id, origin_session_id, accepted_sequence, state, active_job_id,
-            target_kind, conversation_key, canonical_url, completion_mode,
-            read_cap_hash, control_cap_hash, legacy_mode, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          chainId,
-          rootJobId,
-          ownerSessionId,
-          ticket,
-          id,
-          targetKind,
-          input2.conversationKey,
-          input2.conversationUrl ?? null,
-          input2.completionMode || input2.request?.completionMode || "manual",
-          input2.readCapabilityHash ?? null,
-          input2.controlCapabilityHash ?? null,
-          legacyMode,
-          now,
-          now
-        );
-        this.db.prepare(`
-          INSERT INTO job_attempts(job_id, chain_id, kind, ordinal, parent_job_id, execution_epoch, created_at)
-          VALUES (?, ?, 'initial', 0, NULL, 0, ?)
-        `).run(id, chainId, now);
-        this.db.prepare(`
-          INSERT INTO chain_session_grants(chain_id, session_id, can_read, can_control, can_list, granted_at)
-          VALUES (?, ?, 1, ?, 1, ?)
-        `).run(chainId, ownerSessionId, legacyMode === "none" ? 1 : 0, now);
-        this.db.prepare("INSERT INTO chain_events(chain_id, active_job_id, state, details_json, created_at) VALUES (?, ?, 'queued', ?, ?)").run(chainId, id, json({ operation: input2.operation }), now);
-        if (input2.subscriptionId && input2.subscriptionCapabilityHash) {
-          this.db.prepare(`
-            INSERT INTO completion_subscriptions(
-              id, chain_id, owner_session_id, mode, capability_hash, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?)
-          `).run(
-            input2.subscriptionId,
-            chainId,
-            ownerSessionId,
-            input2.completionMode || input2.request?.completionMode || "manual",
-            input2.subscriptionCapabilityHash,
-            now
-          );
-        }
-        chain = this.getChain(chainId);
-      }
-      return { job: this.getJob(id), chain, idempotent: false };
-    });
-    if (!created.idempotent) this.emit("change", created.job);
-    return created;
-  }
-  getJob(id) {
-    return rowToJob(this.db.prepare(this.jobSelect("WHERE j.id = ?")).get(id));
-  }
-  getJobByAuthorization(authorizationId) {
-    return rowToJob(this.db.prepare(this.jobSelect("WHERE j.authorization_id = ?")).get(authorizationId));
-  }
-  requireJob(id) {
-    const job = this.getJob(id);
-    if (!job) throw codedError("JOB_NOT_FOUND", `No Oracle Firefox job exists with id ${id}.`);
-    return job;
-  }
-  listJobs({ limit = 50, states = [] } = {}) {
-    const capped = Math.max(1, Math.min(200, Number(limit) || 50));
-    if (states.length) {
-      const valid = states.filter((state) => STATE_INDEX.has(state));
-      if (!valid.length) return [];
-      const placeholders = valid.map(() => "?").join(",");
-      return this.db.prepare(this.jobSelect(`WHERE j.state IN (${placeholders})`, "ORDER BY j.created_at DESC, j.rowid DESC LIMIT ?")).all(...valid, capped).map(rowToJob);
-    }
-    return this.db.prepare(this.jobSelect("", "ORDER BY j.created_at DESC, j.rowid DESC LIMIT ?")).all(capped).map(rowToJob);
-  }
-  allRootJobIds() {
-    return this.db.prepare("SELECT root_job_id FROM job_chains").all().map((row) => row.root_job_id);
-  }
-  completedJobsWithExactProof() {
-    return this.db.prepare(this.jobSelect(`
-      WHERE j.state='completed' AND j.result_json IS NOT NULL
-        AND j.submit_intent_at IS NOT NULL
-        AND oracle_canonical_conversation_url(j.canonical_url) = 1
-        AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
-        AND j.assistant_turn_hash IS NOT NULL
-    `, "ORDER BY j.completed_at, j.created_at")).all().map(rowToJob);
-  }
-  queuedJobs() {
-    return this.db.prepare(`
-      SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
-             a.final_reconciliation_attempted_at,
-             c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
-      FROM jobs j
-      JOIN job_attempts a ON a.job_id = j.id
-      JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
-      WHERE j.state = 'queued'
-      ORDER BY c.accepted_sequence ASC, a.ordinal ASC
-    `).all().map(rowToJob);
-  }
-  countOutstanding() {
-    const terminals = Array.from(TERMINAL_JOB_STATES);
-    const placeholders = terminals.map(() => "?").join(",");
-    return Number(this.db.prepare(`SELECT COUNT(*) count FROM jobs WHERE state NOT IN (${placeholders})`).get(...terminals).count);
-  }
-  transition(id, nextState, patch = {}, details = null) {
-    if (!STATE_INDEX.has(nextState)) throw new Error(`Unknown job state: ${nextState}`);
-    const transitioned = this.transaction(() => this.transitionInCurrentTransaction(id, nextState, patch, details));
-    this.emit("change", transitioned);
-    return transitioned;
-  }
-  transitionInCurrentTransaction(id, nextState, patch = {}, details = null, suppliedNow = null) {
-    if (!STATE_INDEX.has(nextState)) throw new Error(`Unknown job state: ${nextState}`);
-    const current = this.requireJob(id);
-    if (TERMINAL_JOB_STATES.has(current.state) && current.state !== nextState) {
-      throw codedError("JOB_TERMINAL", `Job ${id} is already terminal in state ${current.state}.`);
-    }
-    if (current.submitIntentAt && PRE_SUBMIT_JOB_STATES.has(nextState)) {
-      throw codedError(
-        "INVALID_JOB_TRANSITION",
-        `Cannot return submitted job ${id} to pre-submit lifecycle state ${nextState}.`
-      );
-    }
-    for (const [field, label] of [
-      ["userTurnId", "user-turn id"],
-      ["userTurnHash", "user-turn hash"],
-      ["assistantTurnId", "assistant-turn id"],
-      ["assistantTurnHash", "assistant-turn hash"]
-    ]) {
-      if (current[field] && field in patch && patch[field] !== current[field]) {
-        throw codedError(
-          "IMMUTABLE_TURN_PROOF",
-          `The durable ${label} for job ${id} cannot be replaced.`,
-          { submissionMayHaveOccurred: Boolean(current.submitIntentAt) }
-        );
-      }
-    }
-    const currentIndex = STATE_INDEX.get(current.state);
-    const nextIndex = STATE_INDEX.get(nextState);
-    if (!TERMINAL_JOB_STATES.has(nextState) && nextIndex < currentIndex) {
-      throw codedError("INVALID_JOB_TRANSITION", `Cannot move job ${id} backward from ${current.state} to ${nextState}.`);
-    }
-    const now = suppliedNow || (/* @__PURE__ */ new Date()).toISOString();
-    const submitted = nextState === "submit_intent" || Boolean(current.submitIntentAt);
-    const assignments = ["state = ?", "updated_at = ?", "version = version + 1", "submission_may_have_happened = ?"];
-    const values = [nextState, now, submitted ? 1 : 0];
-    const columns = {
-      conversationKey: "conversation_key",
-      conversationUrl: "canonical_url",
-      projectTitle: "project_title",
-      projectUrl: "project_url",
-      chatTitle: "chat_title",
-      userTurnId: "user_turn_id",
-      userTurnHash: "user_turn_hash",
-      submittedMessageHash: "submitted_message_hash",
-      attachmentManifest: "attachment_manifest_json",
-      modelEvidence: "model_evidence_json",
-      assistantDisposition: "assistant_disposition",
-      responseDisposition: "response_disposition",
-      responseFailure: "response_failure_json",
-      localDataRequest: "local_data_request_json",
-      assistantTurnId: "assistant_turn_id",
-      assistantTurnHash: "assistant_turn_hash",
-      result: "result_json",
-      error: "error_json",
-      recoveryAction: "recovery_action",
-      replacementJobId: "replacement_job_id"
-    };
-    for (const [key, column] of Object.entries(columns)) {
-      if (!(key in patch)) continue;
-      assignments.push(`${column} = ?`);
-      values.push(["attachmentManifest", "modelEvidence", "responseFailure", "localDataRequest", "result", "error"].includes(key) ? json(patch[key]) : patch[key]);
-    }
-    if (nextState === "page_leased" && !current.startedAt) {
-      assignments.push("started_at = ?");
-      values.push(now);
-    }
-    if (nextState === "submit_intent" && !current.submitIntentAt) {
-      assignments.push("submit_intent_at = ?");
-      values.push(now);
-    }
-    if (TERMINAL_JOB_STATES.has(nextState)) {
-      assignments.push("completed_at = ?");
-      values.push(now);
-    }
-    values.push(id);
-    this.db.prepare(`UPDATE jobs SET ${assignments.join(", ")} WHERE id = ?`).run(...values);
-    if (nextState === "submit_intent") {
-      const timeoutSeconds = Math.max(30, Math.min(86400, Number(current.request?.responseTimeoutSeconds) || 10800));
-      this.db.prepare(`
-        UPDATE job_attempts SET monitor_deadline_at=COALESCE(monitor_deadline_at, ?)
-        WHERE job_id=?
-      `).run(new Date(Date.parse(current.submitIntentAt || now) + timeoutSeconds * 1e3).toISOString(), id);
-    }
-    if (nextState === "user_turn_confirmed") {
-      const updated = this.requireJob(id);
-      if (!isCanonicalConversationUrl(updated.conversationUrl) || !updated.userTurnId && !updated.userTurnHash || !updated.submitIntentAt) {
-        throw codedError(
-          "EXACT_TURN_PROOF_REQUIRED",
-          "Monitor-only execution requires submit intent, a canonical conversation URL, and an exact user-turn id or unambiguous semantic hash.",
-          { submissionMayHaveOccurred: true }
-        );
-      }
-      this.db.prepare(`
-        UPDATE job_attempts SET execution_kind='monitor_only' WHERE job_id=?
-      `).run(id);
-    }
-    this.db.prepare(`
-      INSERT INTO job_events(job_id, state, details_json, created_at, broker_instance_id, lease_generation)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(
-      id,
-      nextState,
-      json(details ?? patch),
-      now,
-      this.brokerContext.instanceId,
-      this.brokerContext.leaseGeneration
-    );
-    this.syncChainForJob(id, now, details ?? patch);
-    return this.getJob(id);
-  }
-  syncChainForJob(jobId, now = (/* @__PURE__ */ new Date()).toISOString(), details = null) {
-    const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(jobId);
-    if (!attempt) return null;
-    const chain = this.db.prepare("SELECT * FROM job_chains WHERE id = ?").get(attempt.chain_id);
-    if (!chain) return null;
-    const rawJob = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(jobId);
-    const activeJobId = chain.active_job_id || jobId;
-    const active = this.db.prepare("SELECT * FROM jobs WHERE id = ?").get(activeJobId) || rawJob;
-    const nextState = this.chainStateForJob(active, chain);
-    const conversationKey = active.conversation_key || chain.conversation_key;
-    const canonicalUrl = active.canonical_url || chain.canonical_url;
-    if (canonicalUrl && canonicalUrl !== chain.canonical_url) {
-      const collision = this.db.prepare(`
-        SELECT id FROM job_chains
-        WHERE id <> ? AND canonical_url = ?
-          AND state NOT IN ('completed', 'failed', 'cancelled')
-        ORDER BY accepted_sequence LIMIT 1
-      `).get(chain.id, canonicalUrl);
-      if (collision) {
-        throw codedError("CONVERSATION_LANE_COLLISION", "The canonical conversation is already owned by another active logical chain. Oracle stopped without another send.", {
-          submissionMayHaveOccurred: true,
-          recoveryAction: "inspect both logical chains and reconcile the submitted turn"
-        });
-      }
-    }
-    const changed = chain.state !== nextState || chain.active_job_id !== active.id || chain.conversation_key !== conversationKey || chain.canonical_url !== canonicalUrl;
-    this.db.prepare(`
-      UPDATE job_chains
-      SET state = ?, active_job_id = ?, conversation_key = ?, canonical_url = ?,
-          updated_at = ?, terminal_at = ?
-      WHERE id = ?
-    `).run(
-      nextState,
-      active.id,
-      conversationKey,
-      canonicalUrl,
-      now,
-      TERMINAL_CHAIN_STATES.has(nextState) ? active.completed_at || now : null,
-      chain.id
-    );
-    if (changed) this.createChainEvent(chain.id, active.id, nextState, details, now);
-    return this.getChain(chain.id);
-  }
-  createChainEvent(chainId, activeJobId, state, details = null, now = (/* @__PURE__ */ new Date()).toISOString()) {
-    const inserted = this.db.prepare(`
-      INSERT INTO chain_events(
-        chain_id, active_job_id, state, details_json, created_at, broker_instance_id, lease_generation
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      chainId,
-      activeJobId,
-      state,
-      json(details),
-      now,
-      this.brokerContext.instanceId,
-      this.brokerContext.leaseGeneration
-    );
-    const sequence = Number(inserted.lastInsertRowid);
-    if (WAKE_CHAIN_STATES.has(state)) {
-      this.db.prepare(`
-        INSERT OR IGNORE INTO completion_deliveries(
-          subscription_id, chain_event_sequence, state, created_at
-        )
-        SELECT id, ?, 'pending', ?
-        FROM completion_subscriptions
-        WHERE chain_id = ? AND state = 'open' AND mode != 'manual'
-      `).run(sequence, now, chainId);
-    }
-    if (TERMINAL_CHAIN_STATES.has(state)) {
-      this.db.prepare(`
-        UPDATE completion_subscriptions
-        SET state = 'closed', closed_at = ?
-        WHERE chain_id = ? AND state = 'open' AND mode = 'manual'
-      `).run(now, chainId);
-    }
-    return sequence;
-  }
-  markFailure(id, error) {
-    const job = this.requireJob(id);
-    const structured = structuredError(error, { jobState: job.state });
-    if (!job.submitIntentAt) {
-      return this.transition(id, "failed_pre_submit", {
-        error: structured,
-        recoveryAction: structured.safeToRetry ? "start a new authorized job" : structured.recoveryAction
-      });
-    }
-    const state = hasExactUserTurnProof(job) ? "response_uncertain" : "submission_uncertain";
-    const recoveryAction = `reconcile_job ${id}`;
-    const result = this.transition(id, state, {
-      error: { ...structured, submissionMayHaveOccurred: true },
-      recoveryAction
-    });
-    this.quarantine(job.conversationKey, id, structured.message);
-    return result;
-  }
-  markFailureClaimed(claim, error) {
-    const job = this.requireJob(claim.jobId);
-    const structured = structuredError(error, { jobState: job.state });
-    if (!job.submitIntentAt) {
-      return this.transitionClaimed(claim, "failed_pre_submit", {
-        error: structured,
-        recoveryAction: structured.safeToRetry ? "start a new authorized job" : structured.recoveryAction
-      });
-    }
-    const state = hasExactUserTurnProof(job) ? "response_uncertain" : "submission_uncertain";
-    const recoveryAction = `reconcile_job ${job.id}`;
-    const result = this.transitionClaimed(claim, state, {
-      error: { ...structured, submissionMayHaveOccurred: true },
-      recoveryAction
-    });
-    this.quarantine(job.conversationKey, job.id, structured.message);
-    return result;
-  }
-  quarantine(scopeKey, jobId, reason) {
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.db.prepare(`
-      INSERT INTO quarantines(scope_key, job_id, reason, active, created_at)
-      VALUES (?, ?, ?, 1, ?)
-      ON CONFLICT(scope_key) DO UPDATE SET job_id=excluded.job_id, reason=excluded.reason, active=1, created_at=excluded.created_at, acknowledged_at=NULL
-    `).run(scopeKey, jobId, reason, now);
-  }
-  activeQuarantineRecord(scopeKey) {
-    return this.db.prepare(`
-      SELECT q.*, j.state AS job_state, j.updated_at AS job_updated_at,
-             j.canonical_url, j.submitted_message_hash, j.attachment_manifest_json,
-             a.chain_id, c.state AS chain_state
-      FROM quarantines q
-      JOIN jobs j ON j.id = q.job_id
-      JOIN job_attempts a ON a.job_id = j.id
-      JOIN job_chains c ON c.id = a.chain_id
-      WHERE q.scope_key = ? AND q.active = 1
-    `).get(scopeKey);
-  }
-  quarantineView(scopeKey) {
-    const row = this.activeQuarantineRecord(scopeKey);
-    if (!row) return { quarantined: false, conversationUrl: scopeKey };
-    const canReconcileReadOnly = Boolean(row.canonical_url && row.submitted_message_hash);
-    return {
-      quarantined: true,
-      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.scope_key) ? row.scope_key : null),
-      fingerprint: quarantineFingerprint(row),
-      jobState: row.job_state,
-      createdAt: row.created_at,
-      canReconcileReadOnly,
-      capabilityRecoveryRequired: true,
-      recoveryActions: canReconcileReadOnly ? ["reconcile", "acknowledge-after-manual-inspection"] : ["acknowledge-after-manual-inspection"]
-    };
-  }
-  requireMatchingQuarantine(scopeKey, fingerprint) {
-    const row = this.activeQuarantineRecord(scopeKey);
-    if (!row) {
-      throw codedError("QUARANTINE_NOT_FOUND", "No active Oracle Firefox quarantine matches that exact conversation URL.");
-    }
-    const currentFingerprint = quarantineFingerprint(row);
-    if (!fingerprint || fingerprint !== currentFingerprint) {
-      throw codedError(
-        "QUARANTINE_CHANGED",
-        "The quarantine changed after inspection. Inspect the exact conversation quarantine again before recovering it.",
-        { safeToRetry: true }
-      );
-    }
-    if (!(/* @__PURE__ */ new Set(["submission_uncertain", "response_uncertain", "quarantined"])).has(row.job_state)) {
-      throw codedError("QUARANTINE_NOT_RECOVERABLE", "The quarantined job is no longer in an uncertain terminal state.");
-    }
-    return row;
-  }
-  orphanedQuarantineJob(scopeKey, fingerprint) {
-    const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
-    return this.requireJob(row.job_id);
-  }
-  acknowledgeOrphanedQuarantine(scopeKey, fingerprint) {
-    const result = this.transaction(() => {
-      const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const changed = this.db.prepare(`
-        UPDATE quarantines SET active = 0, acknowledged_at = ?
-        WHERE scope_key = ? AND job_id = ? AND active = 1
-      `).run(now, scopeKey, row.job_id);
-      if (Number(changed.changes) !== 1) {
-        throw codedError("QUARANTINE_CHANGED", "The quarantine changed while it was being acknowledged.", { safeToRetry: true });
-      }
-      return { conversationUrl: row.canonical_url || scopeKey, fingerprint, acknowledgedAt: now };
-    });
-    return {
-      ...result,
-      acknowledged: true,
-      messageSent: false,
-      replacementAuthorized: false,
-      recoveryAction: "A fresh submission still requires its own explicit user authorization."
-    };
-  }
-  recoverOrphanedQuarantineForMonitoring({
-    scopeKey,
-    fingerprint,
-    caller,
-    userTurnId,
-    userTurnHash,
-    readCapabilityHash,
-    controlCapabilityHash,
-    subscriptionId,
-    subscriptionCapabilityHash,
-    completionMode = "manual"
-  }) {
-    const recovered = this.transaction(() => {
-      const row = this.requireMatchingQuarantine(scopeKey, fingerprint);
-      const job = this.requireJob(row.job_id);
-      const chain = this.getChain(row.chain_id);
-      if (!caller?.id || !chain || chain.activeJobId !== job.id) {
-        throw codedError("QUARANTINE_NOT_RECOVERABLE", "The uncertain logical chain cannot be safely adopted for monitoring.");
-      }
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      this.db.prepare(`
-        UPDATE job_chains SET read_cap_hash = ?, control_cap_hash = ?, updated_at = ? WHERE id = ?
-      `).run(readCapabilityHash, controlCapabilityHash, now, chain.id);
-      this.db.prepare(`
-        INSERT INTO chain_session_grants(
-          chain_id, session_id, can_read, can_control, can_list, granted_at, revoked_at
-        ) VALUES (?, ?, 1, 1, 1, ?, NULL)
-        ON CONFLICT(chain_id, session_id) DO UPDATE SET
-          can_read = 1, can_control = 1, can_list = 1,
-          granted_at = excluded.granted_at, revoked_at = NULL
-      `).run(chain.id, caller.id, now);
-      this.db.prepare(`
-        UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
-        WHERE chain_id = ? AND state = 'open'
-      `).run(now, chain.id);
-      this.db.prepare(`
-        INSERT INTO completion_subscriptions(
-          id, chain_id, owner_session_id, mode, capability_hash, state, created_at
-        ) VALUES (?, ?, ?, ?, ?, 'open', ?)
-      `).run(subscriptionId, chain.id, caller.id, completionMode, subscriptionCapabilityHash, now);
-      const reopened = this.reopenForMonitoringInCurrentTransaction(job.id, { userTurnId, userTurnHash }, now);
-      this.db.prepare(`
-        UPDATE quarantines SET active = 0, acknowledged_at = ?
-        WHERE scope_key = ? AND job_id = ? AND active = 1
-      `).run(now, scopeKey, job.id);
-      return reopened;
-    });
-    this.emit("change", recovered);
-    return recovered;
-  }
-  acknowledge(jobId) {
-    const job = this.requireJob(jobId);
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.db.prepare("UPDATE quarantines SET active = 0, acknowledged_at = ? WHERE job_id = ?").run(now, jobId);
-    return { jobId, acknowledged: true, conversationKey: job.conversationKey };
-  }
-  activeInputRequestRecord(scopeKey) {
-    const rows = this.db.prepare(`
-      SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
-             j.assistant_disposition, j.local_data_request_json
-      FROM job_chains c
-      JOIN jobs j ON j.id = c.active_job_id
-      WHERE c.conversation_key = ? AND c.state = 'input_required'
-        AND j.state = 'completed' AND j.local_data_request_json IS NOT NULL
-      ORDER BY c.accepted_sequence
-      LIMIT 2
-    `).all(scopeKey);
-    if (rows.length > 1) {
-      throw codedError("INPUT_REQUEST_AMBIGUOUS", "More than one durable input request occupies this exact conversation lane. Oracle refused to guess.");
-    }
-    return rows[0] || null;
-  }
-  inputRequestView(scopeKey) {
-    const row = this.activeInputRequestRecord(scopeKey);
-    if (!row) return { inputRequired: false, conversationUrl: scopeKey };
-    const request3 = parse2(row.local_data_request_json);
-    return {
-      inputRequired: true,
-      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.conversation_key) ? row.conversation_key : null),
-      fingerprint: inputRequestFingerprint(row),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      safeReadOnly: request3?.safeReadOnly === true,
-      templateFalsePositive: isTemplateLocalDataRequest(request3),
-      capabilityRecoveryRequired: true,
-      recoveryActions: ["reply-with-local-data", "abandon-after-user-confirmation"]
-    };
-  }
-  requireMatchingInputRequest(scopeKey, fingerprint) {
-    const row = this.activeInputRequestRecord(scopeKey);
-    if (!row) {
-      throw codedError("INPUT_REQUEST_NOT_FOUND", "No active Oracle Firefox input request matches that exact conversation URL.");
-    }
-    const currentFingerprint = inputRequestFingerprint(row);
-    if (!fingerprint || fingerprint !== currentFingerprint) {
-      throw codedError(
-        "INPUT_REQUEST_CHANGED",
-        "The input request changed after inspection. Inspect the exact conversation lane again before abandoning it.",
-        { safeToRetry: true }
-      );
-    }
-    return row;
-  }
-  abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode }, now = (/* @__PURE__ */ new Date()).toISOString()) {
-    const request3 = parse2(row.local_data_request_json);
-    if (row.state !== "input_required" || row.job_state !== "completed" || row.assistant_disposition !== "local_data_request" || !request3) {
-      throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected logical chain is not waiting for a valid local-data request.");
-    }
-    const changed = this.db.prepare(`
-      UPDATE job_chains
-      SET state = 'completed', terminal_at = ?, updated_at = ?,
-          input_required_abandoned_at = ?, input_required_abandoned_job_id = ?,
-          input_required_abandoned_reason = ?
-      WHERE id = ? AND active_job_id = ? AND state = 'input_required'
-    `).run(now, now, now, row.active_job_id, reason, row.id, row.active_job_id);
-    if (Number(changed.changes) !== 1) {
-      throw codedError("INPUT_REQUEST_CHANGED", "The input request changed while Oracle was abandoning it.", { safeToRetry: true });
-    }
-    this.createChainEvent(row.id, row.active_job_id, "completed", {
-      inputRequestAbandoned: true,
-      reason,
-      recoveryMode,
-      messageSent: false,
-      replacementAuthorized: false
-    }, now);
-    return {
-      job: this.requireJob(row.active_job_id),
-      chain: this.getChain(row.id),
-      abandonedAt: now,
-      reason,
-      templateFalsePositive: isTemplateLocalDataRequest(request3)
-    };
-  }
-  abandonInputRequest(jobId, { reason = "user-declined" } = {}) {
-    let released;
-    this.transaction(() => {
-      const job = this.requireJob(jobId);
-      const chain = this.chainAccessRow(job.chainId);
-      if (chain?.input_required_abandoned_job_id === job.id && chain.state === "completed") {
-        released = {
-          job,
-          chain: this.getChain(chain.id),
-          abandonedAt: chain.input_required_abandoned_at,
-          reason: chain.input_required_abandoned_reason,
-          templateFalsePositive: isTemplateLocalDataRequest(job.localDataRequest),
-          idempotent: true
-        };
-        return;
-      }
-      if (!chain || chain.active_job_id !== job.id) {
-        throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "Only the active input request in a logical chain can be abandoned.");
-      }
-      const row = {
-        ...chain,
-        job_state: job.state,
-        job_updated_at: job.updatedAt,
-        assistant_disposition: job.assistantDisposition,
-        local_data_request_json: json(job.localDataRequest)
-      };
-      released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "capability" });
-    });
-    this.emit("change", released.job);
-    return released;
-  }
-  abandonOrphanedInputRequest(scopeKey, fingerprint, { reason = "user-declined" } = {}) {
-    let released;
-    this.transaction(() => {
-      const row = this.requireMatchingInputRequest(scopeKey, fingerprint);
-      released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "orphaned-capability" });
-    });
-    this.emit("change", released.job);
-    return released;
-  }
-  cancel(jobId) {
-    const job = this.requireJob(jobId);
-    if (TERMINAL_JOB_STATES.has(job.state)) return { ...job, cancelled: job.state === "cancelled_pre_submit", detached: false };
-    if (job.submitIntentAt || job.submissionMayHaveOccurred) {
-      return { ...job, cancelled: false, detached: true };
-    }
-    const cancelled = this.transition(jobId, "cancelled_pre_submit", {
-      recoveryAction: "start a new job only with a new explicit authorization"
-    });
-    return { ...cancelled, cancelled: true, detached: false };
-  }
-  reopenForMonitoring(jobId, { userTurnId, userTurnHash }) {
-    const reopened = this.transaction(() => this.reopenForMonitoringInCurrentTransaction(
-      jobId,
-      { userTurnId, userTurnHash },
-      (/* @__PURE__ */ new Date()).toISOString()
-    ));
-    this.emit("change", reopened);
-    return reopened;
-  }
-  reopenForMonitoringInCurrentTransaction(jobId, { userTurnId, userTurnHash }, now) {
-    const job = this.requireJob(jobId);
-    if (!job.submitIntentAt || !isCanonicalConversationUrl(job.conversationUrl) || !userTurnId && !userTurnHash) {
-      throw codedError(
-        "EXACT_TURN_PROOF_REQUIRED",
-        "Monitor-only recovery requires immutable submit intent, a canonical conversation URL, and an exact user-turn id or unambiguous semantic hash.",
-        { submissionMayHaveOccurred: Boolean(job.submitIntentAt) }
-      );
-    }
-    if (job.userTurnId && job.userTurnId !== userTurnId || job.userTurnHash && job.userTurnHash !== userTurnHash) {
-      throw codedError(
-        "IMMUTABLE_TURN_PROOF",
-        "Monitor-only recovery cannot replace the durable exact user-turn proof.",
-        { submissionMayHaveOccurred: true }
-      );
-    }
-    this.db.prepare(`
-      UPDATE jobs
-      SET state='awaiting_response', user_turn_id=?, user_turn_hash=?, error_json=NULL,
-          recovery_action='reattach submitted turn without resending', completed_at=NULL,
-          updated_at=?, version=version+1
-      WHERE id=?
-    `).run(userTurnId ?? null, userTurnHash ?? null, now, jobId);
-    this.db.prepare(`
-      UPDATE job_attempts
-      SET execution_state='idle', execution_owner_instance_id=NULL,
-          execution_lease_generation=NULL, execution_heartbeat_at=NULL,
-          next_execution_not_before=NULL, execution_kind='monitor_only',
-          final_reconciliation_attempted_at=NULL
-      WHERE job_id=?
-    `).run(jobId);
-    this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'awaiting_response', ?, ?)").run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
-    this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
-    return this.requireJob(jobId);
-  }
-  jobChain(jobId) {
-    const requested = this.requireJob(jobId);
-    return this.db.prepare(`
-      SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_kind, a.execution_failure_count,
-             a.next_execution_not_before, a.monitor_deadline_at,
-             a.final_reconciliation_attempted_at,
-             c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
-      FROM job_attempts a
-      JOIN jobs j ON j.id = a.job_id
-      JOIN job_chains c ON c.id = a.chain_id
-      WHERE a.chain_id = ?
-      ORDER BY a.ordinal ASC
-    `).all(requested.chainId).map(rowToJob);
-  }
-  activeJob(jobId) {
-    const requested = this.requireJob(jobId);
-    const chain = this.getChain(requested.chainId);
-    return this.requireJob(chain.activeJobId);
-  }
-  isRunnable(jobId) {
-    const job = this.requireJob(jobId);
-    const chain = this.getChain(job.chainId);
-    if (!chain || chain.activeJobId !== job.id || TERMINAL_JOB_STATES.has(job.state)) return false;
-    const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(jobId);
-    if (!attempt || !(/* @__PURE__ */ new Set(["idle", "backoff"])).has(attempt.execution_state || "idle")) return false;
-    if (attempt.next_execution_not_before && Date.parse(attempt.next_execution_not_before) > Date.now()) return false;
-    const executionKind = attempt.execution_kind || "pre_submit";
-    if (executionKind === "pre_submit" && (job.state !== "queued" || chain.state !== "queued" || job.submitIntentAt)) return false;
-    if (executionKind === "monitor_only" && (!MONITOR_JOB_STATES.has(job.state) || !hasExactUserTurnProof(job))) return false;
-    if (this.db.prepare("SELECT 1 blocked FROM quarantines WHERE scope_key=? AND active=1").get(chain.conversationKey)) return false;
-    const earlier = this.db.prepare(`
-      SELECT id FROM job_chains
-      WHERE conversation_key = ?
-        AND accepted_sequence < ?
-        AND state IN ('queued', 'running', 'input_required')
-      ORDER BY accepted_sequence LIMIT 1
-    `).get(chain.conversationKey, chain.acceptedSequence);
-    if (earlier) return false;
-    const unqualifiedCreation = this.db.prepare(`
-      SELECT id FROM job_chains
-      WHERE target_kind IN ('new_standalone', 'new_project')
-        AND canonical_url IS NULL
-        AND state IN ('queued', 'running')
-      ORDER BY accepted_sequence LIMIT 1
-    `).get();
-    if (unqualifiedCreation && unqualifiedCreation.id !== chain.id) return false;
-    return true;
-  }
-  claimNextRunnable({ allowPreSubmit = true } = {}) {
-    return this.claimRunnable(null, { allowPreSubmit });
-  }
-  claimRunnable(jobId = null, { allowPreSubmit = true } = {}) {
-    return this.transaction(() => {
-      this.assertCurrentBroker();
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const candidate = this.db.prepare(`
-        SELECT j.id AS job_id, a.chain_id, a.execution_epoch, a.execution_kind, c.accepted_sequence
-        FROM jobs j
-        JOIN job_attempts a ON a.job_id = j.id
-        JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
-        WHERE j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
-          AND a.execution_state IN ('idle', 'backoff')
-          AND (a.next_execution_not_before IS NULL OR a.next_execution_not_before <= ?)
-          AND (? IS NULL OR j.id = ?)
-          AND (
-            (a.execution_kind = 'pre_submit' AND j.state = 'queued' AND c.state = 'queued'
-              AND j.submit_intent_at IS NULL AND ? = 1)
-            OR
-            (a.execution_kind = 'monitor_only' AND j.state IN ('user_turn_confirmed','awaiting_response','response_failed_detected','response_confirmed')
-              AND j.submit_intent_at IS NOT NULL AND j.canonical_url IS NOT NULL
-              AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
-              AND a.monitor_deadline_at IS NOT NULL
-              AND oracle_canonical_conversation_url(j.canonical_url) = 1)
-          )
-          AND NOT EXISTS (
-            SELECT 1 FROM quarantines q WHERE q.scope_key=c.conversation_key AND q.active=1
-          )
-          AND NOT EXISTS (
-            SELECT 1 FROM job_chains earlier
-            WHERE earlier.conversation_key = c.conversation_key
-              AND earlier.accepted_sequence < c.accepted_sequence
-              AND earlier.state IN ('queued', 'running', 'input_required')
-          )
-          AND NOT EXISTS (
-            SELECT 1 FROM job_chains creation
-            WHERE creation.target_kind IN ('new_standalone', 'new_project')
-              AND creation.canonical_url IS NULL
-              AND creation.state IN ('queued', 'running')
-              AND creation.id != c.id
-              AND creation.accepted_sequence < c.accepted_sequence
-          )
-        ORDER BY c.accepted_sequence, a.ordinal
-        LIMIT 1
-      `).get(...TERMINAL_JOB_STATES, now, jobId, jobId, allowPreSubmit ? 1 : 0);
-      if (!candidate) return null;
-      const attemptUpdate = this.db.prepare(`
-        UPDATE job_attempts
-        SET execution_epoch = execution_epoch + 1,
-            execution_owner_instance_id = ?, execution_lease_generation = ?,
-            execution_state = 'running', execution_started_at = ?, execution_heartbeat_at = ?,
-            next_execution_not_before = NULL
-        WHERE job_id = ? AND execution_epoch = ? AND execution_state IN ('idle', 'backoff')
-      `).run(
-        this.brokerContext.instanceId,
-        this.brokerContext.leaseGeneration,
-        now,
-        now,
-        candidate.job_id,
-        candidate.execution_epoch
-      );
-      if (Number(attemptUpdate.changes) !== 1) return null;
-      const chainUpdate = this.db.prepare(`
-        UPDATE job_chains SET state='running', updated_at=?
-        WHERE id=? AND active_job_id=? AND state IN ('queued','running')
-      `).run(now, candidate.chain_id, candidate.job_id);
-      if (Number(chainUpdate.changes) !== 1) throw codedError("EXECUTION_CLAIM_RACE", "The logical chain changed while Oracle Firefox was claiming it.");
-      return {
-        jobId: candidate.job_id,
-        chainId: candidate.chain_id,
-        executionEpoch: Number(candidate.execution_epoch) + 1,
-        executionKind: candidate.execution_kind,
-        brokerInstanceId: this.brokerContext.instanceId,
-        leaseGeneration: this.brokerContext.leaseGeneration
-      };
-    });
-  }
-  beginExecution(jobId) {
-    return this.claimRunnable(jobId);
-  }
-  assertExecution(claim) {
-    if (!claim?.jobId || !claim?.chainId) {
-      throw codedError("STALE_EXECUTION", "No valid Oracle Firefox execution claim was supplied.");
-    }
-    const row = this.db.prepare(`
-      SELECT a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, c.active_job_id, c.state,
-             b.current_instance_id, b.current_lease_generation
-      FROM job_attempts a
-      JOIN job_chains c ON c.id = a.chain_id
-      JOIN broker_state b ON b.id = 1
-      WHERE a.job_id = ? AND a.chain_id = ?
-    `).get(claim?.jobId, claim?.chainId);
-    if (!row || Number(row.execution_epoch) !== Number(claim?.executionEpoch) || row.execution_owner_instance_id !== claim?.brokerInstanceId || Number(row.execution_lease_generation) !== Number(claim?.leaseGeneration) || row.execution_state !== "running" || row.active_job_id !== claim?.jobId || row.state !== "running" || row.current_instance_id !== claim?.brokerInstanceId || Number(row.current_lease_generation) !== Number(claim?.leaseGeneration)) {
-      throw codedError("STALE_EXECUTION", "This browser executor no longer owns the logical job. No browser action was attempted.");
-    }
-    return true;
-  }
-  heartbeatExecution(claim) {
-    return this.transaction(() => {
-      this.assertExecution(claim);
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const changed = this.db.prepare(`
-        UPDATE job_attempts SET execution_heartbeat_at = ?
-        WHERE job_id = ? AND execution_epoch = ? AND execution_state = 'running'
-      `).run(now, claim.jobId, claim.executionEpoch);
-      if (Number(changed.changes) !== 1) {
-        throw codedError("STALE_EXECUTION", "The Oracle Firefox execution heartbeat no longer owns this job.");
-      }
-      return now;
-    });
-  }
-  transitionClaimed(claim, nextState, patch = {}, details = null) {
-    let transitioned;
-    this.transaction(() => {
-      this.assertExecution(claim);
-      transitioned = this.transitionInCurrentTransaction(claim.jobId, nextState, patch, details);
-      if (TERMINAL_JOB_STATES.has(nextState)) {
-        this.db.prepare(`
-          UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
-            execution_lease_generation=NULL, execution_heartbeat_at=? WHERE job_id=?
-        `).run((/* @__PURE__ */ new Date()).toISOString(), claim.jobId);
-      }
-    });
-    this.emit("change", transitioned);
-    return transitioned;
-  }
-  completeResponseClaimed(claim, {
-    assistantTurnId,
-    assistantTurnHash,
-    assistantTurnBound = false,
-    assistantDisposition,
-    responseDisposition = "completed",
-    localDataRequest = null,
-    result,
-    recoveryAction = null
-  }) {
-    if (!assistantTurnHash || !assistantTurnId && assistantTurnBound !== true || !result) {
-      throw codedError(
-        "ASSISTANT_PROOF_REQUIRED",
-        "A completed response requires an assistant id or unambiguous exact-turn binding, plus its content hash and complete durable result.",
-        { submissionMayHaveOccurred: true }
-      );
-    }
-    let completed;
-    this.transaction(() => {
-      this.assertExecution(claim);
-      const job = this.requireJob(claim.jobId);
-      if (!hasExactUserTurnProof(job) || job.executionKind !== "monitor_only") {
-        throw codedError(
-          "MONITOR_CLAIM_REQUIRED",
-          "Only the exact monitor-only execution claim may commit an assistant response.",
-          { submissionMayHaveOccurred: true }
-        );
-      }
-      completed = this.transitionInCurrentTransaction(claim.jobId, "completed", {
-        assistantTurnId: assistantTurnId || null,
-        assistantTurnHash,
-        assistantDisposition,
-        responseDisposition,
-        localDataRequest,
-        result,
-        error: null,
-        recoveryAction
-      }, {
-        assistantTurnId,
-        assistantTurnHash,
-        responseDisposition,
-        terminalAtomicCommit: true
-      });
-      const releasedAt = (/* @__PURE__ */ new Date()).toISOString();
-      const changed = this.db.prepare(`
-        UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
-          execution_lease_generation=NULL, execution_heartbeat_at=?, next_execution_not_before=NULL
-        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
-      `).run(releasedAt, claim.jobId, claim.executionEpoch);
-      if (Number(changed.changes) !== 1) {
-        throw codedError("STALE_EXECUTION", "The monitor claim changed before its terminal result could be committed.");
-      }
-      completed = this.requireJob(claim.jobId);
-    });
-    this.emit("change", completed);
-    return completed;
-  }
-  beginFinalMonitorReconciliation(claim) {
-    return this.transaction(() => {
-      this.assertExecution(claim);
-      const job = this.requireJob(claim.jobId);
-      if (claim.executionKind !== "monitor_only" || !hasExactUserTurnProof(job)) {
-        throw codedError("MONITOR_CLAIM_REQUIRED", "Final reconciliation requires the exact monitor-only execution claim.");
-      }
-      if (!job.monitorDeadlineAt || Date.parse(job.monitorDeadlineAt) > Date.now()) {
-        throw codedError("MONITOR_DEADLINE_ACTIVE", "The original response-monitor deadline has not expired.", { safeToRetry: true });
-      }
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const changed = this.db.prepare(`
-        UPDATE job_attempts SET final_reconciliation_attempted_at=?
-        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
-          AND final_reconciliation_attempted_at IS NULL
-      `).run(now, claim.jobId, claim.executionEpoch);
-      if (Number(changed.changes) !== 1) {
-        throw codedError(
-          "FINAL_RECONCILIATION_ALREADY_ATTEMPTED",
-          "The one final exact-turn reconciliation attempt was already consumed.",
-          { submissionMayHaveOccurred: true }
-        );
-      }
-      return now;
-    });
-  }
-  releaseExecutionWithBackoff(claim, error, { maximumFailures = 5, backoffDelays = null } = {}) {
-    let released;
-    this.transaction(() => {
-      this.assertExecution(claim);
-      const job = this.requireJob(claim.jobId);
-      const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id=?").get(claim.jobId);
-      const failures = Number(attempt.execution_failure_count || 0) + 1;
-      const structured = structuredError(error, { jobState: job.state });
-      const releaseTerminal = (state, recoveryAction) => {
-        released = this.transitionInCurrentTransaction(claim.jobId, state, {
-          error: { ...structured, submissionMayHaveOccurred: state !== "failed_pre_submit" },
-          recoveryAction
-        });
-        this.db.prepare(`
-          UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
-            execution_lease_generation=NULL, execution_failure_count=?, last_executor_error_json=?,
-            next_execution_not_before=NULL WHERE job_id=? AND execution_epoch=?
-        `).run(failures, json(structured), claim.jobId, claim.executionEpoch);
-        if (state === "submission_uncertain" || state === "response_uncertain") {
-          this.quarantine(job.conversationKey, job.id, structured.message);
-        }
-      };
-      if (!job.submitIntentAt) {
-        if (failures >= maximumFailures) {
-          releaseTerminal("failed_pre_submit", "inspect the repeated pre-submit executor failure before authorizing another job");
-          return;
-        }
-        const delays2 = backoffDelays?.length ? backoffDelays : [250, 1e3, 4e3, 15e3, 3e4];
-        const delay4 = delays2[Math.min(failures - 1, delays2.length - 1)];
-        const retryAt2 = new Date(Date.now() + delay4).toISOString();
-        this.db.prepare(`
-          UPDATE job_attempts SET execution_state='backoff', execution_kind='pre_submit',
-            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
-            execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
-          WHERE job_id=? AND execution_epoch=?
-        `).run(failures, retryAt2, json(structured), claim.jobId, claim.executionEpoch);
-        this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?").run((/* @__PURE__ */ new Date()).toISOString(), claim.chainId, claim.jobId);
-        released = this.requireJob(claim.jobId);
-        return;
-      }
-      if (!hasExactUserTurnProof(job)) {
-        releaseTerminal("submission_uncertain", `reconcile_job ${job.id}`);
-        return;
-      }
-      if (attempt.final_reconciliation_attempted_at) {
-        releaseTerminal("response_uncertain", `reconcile_job ${job.id}`);
-        return;
-      }
-      const delays = backoffDelays?.length ? backoffDelays : [250, 1e3, 4e3, 15e3, 3e4];
-      const delay3 = delays[Math.min(failures - 1, delays.length - 1)];
-      const deadlineMs = Date.parse(attempt.monitor_deadline_at || job.monitorDeadlineAt || 0);
-      const retryMs = Number.isFinite(deadlineMs) && deadlineMs > 0 ? Math.min(Date.now() + delay3, deadlineMs) : Date.now() + delay3;
-      const retryAt = new Date(Math.max(Date.now(), retryMs)).toISOString();
-      this.db.prepare(`
-        UPDATE job_attempts SET execution_state='backoff', execution_kind='monitor_only',
-          execution_owner_instance_id=NULL, execution_lease_generation=NULL,
-          execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
-        WHERE job_id=? AND execution_epoch=?
-      `).run(failures, retryAt, json(structured), claim.jobId, claim.executionEpoch);
-      this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?").run((/* @__PURE__ */ new Date()).toISOString(), claim.chainId, claim.jobId);
-      released = this.requireJob(claim.jobId);
-    });
-    this.emit("change", released);
-    return released;
-  }
-  releaseExecutionClaim(claim, error = null) {
-    try {
-      this.assertExecution(claim);
-    } catch {
-      return false;
-    }
-    const job = this.requireJob(claim.jobId);
-    if (!TERMINAL_JOB_STATES.has(job.state)) {
-      return this.releaseExecutionWithBackoff(
-        claim,
-        error || codedError(
-          "EXECUTOR_EXITED_WITHOUT_SETTLEMENT",
-          "The browser executor exited without committing a terminal result; its durable claim was recovered.",
-          { safeToRetry: true, submissionMayHaveOccurred: Boolean(job.submitIntentAt) }
-        )
-      );
-    }
-    let released = false;
-    this.transaction(() => {
-      try {
-        this.assertExecution(claim);
-      } catch {
-        return;
-      }
-      const changed = this.db.prepare(`
-        UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
-          execution_lease_generation=NULL, execution_heartbeat_at=?
-        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
-      `).run((/* @__PURE__ */ new Date()).toISOString(), claim.jobId, claim.executionEpoch);
-      released = Number(changed.changes) === 1;
-    });
-    return released;
-  }
-  sweepAbandonedExecutionClaims({
-    activeExecutorIds = [],
-    heartbeatTimeoutMs = 2e4,
-    nowMs = Date.now()
-  } = {}) {
-    const live = new Set(Array.from(activeExecutorIds, (value) => String(value)));
-    const boundedTimeout = Math.max(1, Number(heartbeatTimeoutMs) || 2e4);
-    const sweepNow = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
-    const staleBefore = new Date(sweepNow - boundedTimeout).toISOString();
-    const recovered = [];
-    const changed = [];
-    this.transaction(() => {
-      this.assertCurrentBroker();
-      const candidates = this.db.prepare(this.jobSelect(`
-        WHERE a.execution_state='running'
-          AND a.execution_owner_instance_id=?
-          AND a.execution_lease_generation=?
-          AND COALESCE(a.execution_heartbeat_at, a.execution_started_at, a.created_at) <= ?
-          AND j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
-      `, "ORDER BY a.execution_heartbeat_at, j.created_at")).all(
-        this.brokerContext.instanceId,
-        this.brokerContext.leaseGeneration,
-        staleBefore,
-        ...TERMINAL_JOB_STATES
-      ).map(rowToJob);
-      for (const job of candidates) {
-        if (live.has(job.id)) continue;
-        const monitorOnly = Boolean(job.submitIntentAt && hasExactUserTurnProof(job));
-        const terminalUncertainty = Boolean(job.submitIntentAt && !monitorOnly);
-        const nextExecutionState = terminalUncertainty ? "released" : "idle";
-        const nextExecutionKind = monitorOnly ? "monitor_only" : "pre_submit";
-        const reclaimed = this.db.prepare(`
-          UPDATE job_attempts
-          SET execution_epoch=execution_epoch+1, execution_state=?, execution_kind=?,
-              execution_owner_instance_id=NULL, execution_lease_generation=NULL,
-              execution_started_at=NULL, execution_heartbeat_at=NULL,
-              next_execution_not_before=NULL
-          WHERE job_id=? AND execution_epoch=? AND execution_state='running'
-            AND execution_owner_instance_id=? AND execution_lease_generation=?
-            AND COALESCE(execution_heartbeat_at, execution_started_at, created_at) <= ?
-        `).run(
-          nextExecutionState,
-          nextExecutionKind,
-          job.id,
-          job.executionEpoch,
-          this.brokerContext.instanceId,
-          this.brokerContext.leaseGeneration,
-          staleBefore
-        );
-        if (Number(reclaimed.changes) !== 1) continue;
-        const now = new Date(sweepNow).toISOString();
-        if (!job.submitIntentAt) {
-          this.db.prepare(`
-            UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
-              submission_may_have_happened=0,
-              user_turn_id=NULL, user_turn_hash=NULL,
-              assistant_turn_id=NULL, assistant_turn_hash=NULL,
-              version=version+1 WHERE id=?
-          `).run(now, "recovered abandoned pre-submit executor", job.id);
-          this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?").run(now, job.chainId, job.id);
-          this.db.prepare(`
-            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
-            VALUES (?, 'queued', ?, ?, ?, ?)
-          `).run(
-            job.id,
-            json({ abandonedClaim: true, recoveredFrom: job.state, executionEpoch: job.executionEpoch }),
-            now,
-            this.brokerContext.instanceId,
-            this.brokerContext.leaseGeneration
-          );
-          recovered.push({ id: job.id, action: "requeued-pre-submit" });
-        } else if (monitorOnly) {
-          const recoveredState = PRE_SUBMIT_JOB_STATES.has(job.state) || job.state === "submit_intent" ? "awaiting_response" : job.state;
-          this.db.prepare(`
-            UPDATE jobs SET state=?, updated_at=?, recovery_action=?,
-              submission_may_have_happened=1, version=version+1 WHERE id=?
-          `).run(recoveredState, now, "recovered abandoned monitor-only executor without resending", job.id);
-          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?").run(now, job.chainId, job.id);
-          this.db.prepare(`
-            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `).run(
-            job.id,
-            recoveredState,
-            json({ abandonedClaim: true, monitorOnly: true, executionEpoch: job.executionEpoch }),
-            now,
-            this.brokerContext.instanceId,
-            this.brokerContext.leaseGeneration
-          );
-          recovered.push({ id: job.id, action: "resumed-monitor-only" });
-        } else {
-          this.transitionInCurrentTransaction(job.id, "submission_uncertain", {
-            error: {
-              code: "SUBMISSION_UNCERTAIN",
-              message: "A submitted executor was abandoned without exact canonical user-turn proof.",
-              submissionMayHaveOccurred: true
-            },
-            recoveryAction: `reconcile_job ${job.id}`
-          }, { abandonedClaim: true, executionEpoch: job.executionEpoch });
-          this.quarantine(job.conversationKey, job.id, "Abandoned submitted executor without exact user-turn proof");
-          recovered.push({ id: job.id, action: "submission-uncertain" });
-        }
-        changed.push(job.id);
-      }
-    });
-    for (const id of changed) this.emit("change", this.requireJob(id));
-    return recovered;
-  }
-  earliestExecutionWake() {
-    return this.db.prepare(`
-      SELECT MIN(next_execution_not_before) wake_at FROM job_attempts
-      WHERE execution_state='backoff' AND next_execution_not_before IS NOT NULL
-    `).get()?.wake_at || null;
-  }
-  accountState() {
-    const row = this.db.prepare("SELECT * FROM account_state WHERE id = 1").get();
-    const broker = this.db.prepare("SELECT qualified_concurrency FROM broker_state WHERE id = 1").get();
-    return {
-      gateVersion: row.gate_version,
-      nextSubmitNotBefore: row.next_submit_not_before,
-      cooldownUntil: row.cooldown_until,
-      cooldownCode: row.cooldown_code,
-      cooldownCount: row.cooldown_count,
-      effectiveConcurrency: row.effective_concurrency,
-      successStreak: row.success_streak,
-      probeInFlight: Boolean(row.probe_in_flight),
-      lastSuccessAt: row.last_success_at,
-      updatedAt: row.updated_at,
-      qualifiedConcurrency: Number(broker?.qualified_concurrency || 1)
-    };
-  }
-  setQualifiedConcurrency(value) {
-    this.assertCurrentBroker();
-    const qualified = Math.max(1, Math.min(5, Number(value) || 1));
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    this.transaction(() => {
-      this.db.prepare("UPDATE broker_state SET qualified_concurrency=?, updated_at=? WHERE id=1").run(qualified, now);
-      this.db.prepare(`
-        UPDATE account_state SET effective_concurrency=?, updated_at=?
-        WHERE id=1 AND cooldown_until IS NULL
-      `).run(qualified, now);
-    });
-    return qualified;
-  }
-  databaseStatus() {
-    return {
-      sqliteVersion: this.db.prepare("SELECT sqlite_version() version").get().version,
-      journalMode: this.db.prepare("PRAGMA journal_mode").get().journal_mode,
-      synchronous: this.db.prepare("PRAGMA synchronous").get().synchronous,
-      foreignKeys: Boolean(this.db.prepare("PRAGMA foreign_keys").get().foreign_keys),
-      schemaVersion: Number(this.db.prepare("SELECT COALESCE(MAX(version), 0) version FROM schema_migrations").get().version)
-    };
-  }
-  checkInvariants() {
-    const violations = [];
-    const foreign = this.db.prepare("PRAGMA foreign_key_check").all();
-    if (foreign.length) violations.push({ invariant: "DB-FOREIGN-KEYS", count: foreign.length });
-    const missingAttempts = this.db.prepare(`
-      SELECT COUNT(*) count FROM jobs j LEFT JOIN job_attempts a ON a.job_id = j.id WHERE a.job_id IS NULL
-    `).get().count;
-    if (missingAttempts) violations.push({ invariant: "CHAIN-EVERY-JOB", count: Number(missingAttempts) });
-    const invalidActive = this.db.prepare(`
-      SELECT COUNT(*) count FROM job_chains c
-      LEFT JOIN job_attempts a ON a.job_id = c.active_job_id AND a.chain_id = c.id
-      WHERE a.job_id IS NULL
-    `).get().count;
-    if (invalidActive) violations.push({ invariant: "CHAIN-ACTIVE-ATTEMPT", count: Number(invalidActive) });
-    const ownerless = this.db.prepare(`
-      SELECT COUNT(*) count FROM job_chains
-      WHERE legacy_mode = 'none' AND (read_cap_hash IS NULL OR control_cap_hash IS NULL)
-    `).get().count;
-    if (ownerless) violations.push({ invariant: "CAP-NEW-CHAINS", count: Number(ownerless) });
-    const duplicateRunningLanes = this.db.prepare(`
-      SELECT COUNT(*) count FROM (
-        SELECT conversation_key FROM job_chains WHERE state = 'running'
-        GROUP BY conversation_key HAVING COUNT(*) > 1
-      )
-    `).get().count;
-    if (duplicateRunningLanes) violations.push({ invariant: "LANE-ONE-OWNER", count: Number(duplicateRunningLanes) });
-    return { ok: violations.length === 0, violations };
-  }
-  issueSubmitPermit(jobId, { minimumIntervalMs = 2e3, ttlMs = 3e4 } = {}) {
-    return this.transaction(() => {
-      const nowMs = Date.now();
-      const state = this.accountState();
-      const cooldownMs = state.cooldownUntil ? Date.parse(state.cooldownUntil) : 0;
-      if (cooldownMs > nowMs) {
-        throw codedError("ACCOUNT_COOLDOWN", "ChatGPT submissions are paused by the broker-wide account cooldown.", {
-          safeToRetry: true,
-          recoveryAction: `wait until ${state.cooldownUntil} before submitting again`,
-          details: { cooldownUntil: state.cooldownUntil, cooldownCode: state.cooldownCode }
-        });
-      }
-      const paceMs = state.nextSubmitNotBefore ? Date.parse(state.nextSubmitNotBefore) : 0;
-      if (paceMs > nowMs) {
-        throw codedError("SUBMIT_PACING_WAIT", "The durable account submission interval has not elapsed.", {
-          safeToRetry: true,
-          details: { retryAt: state.nextSubmitNotBefore }
-        });
-      }
-      const id = randomUUID8();
-      const now = new Date(nowMs).toISOString();
-      const expiresAt = new Date(nowMs + ttlMs).toISOString();
-      this.db.prepare(`
-        UPDATE submit_permits SET invalidated_at = ?
-        WHERE consumed_at IS NULL AND invalidated_at IS NULL AND expires_at <= ?
-      `).run(now, now);
-      const reopening = Boolean(state.cooldownUntil && cooldownMs <= nowMs);
-      if (reopening) {
-        this.db.prepare(`
-          UPDATE account_state
-          SET cooldown_until = NULL, cooldown_code = NULL, effective_concurrency = 1,
-              probe_in_flight = 1, updated_at = ?
-          WHERE id = 1
-        `).run(now);
-      }
-      this.db.prepare(`
-        INSERT INTO submit_permits(id, job_id, gate_version, issued_at, expires_at)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(id, jobId, state.gateVersion, now, expiresAt);
-      this.db.prepare("UPDATE account_state SET next_submit_not_before = ?, updated_at = ? WHERE id = 1").run(new Date(nowMs + (reopening ? Math.max(minimumIntervalMs, 3e4) : minimumIntervalMs)).toISOString(), now);
-      return { id, jobId, gateVersion: state.gateVersion, issuedAt: now, expiresAt };
-    });
-  }
-  consumeSubmitPermit(jobId, permitId, patch = {}, details = null) {
-    const transitioned = this.transaction(() => {
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const permit = this.db.prepare("SELECT * FROM submit_permits WHERE id = ? AND job_id = ?").get(permitId, jobId);
-      const account = this.db.prepare("SELECT * FROM account_state WHERE id = 1").get();
-      const job = this.requireJob(jobId);
-      if (!permit || permit.consumed_at || permit.invalidated_at || job.submitIntentAt || job.state === "cancelled_pre_submit" || Date.parse(permit.expires_at) <= Date.now() || permit.gate_version !== account.gate_version || account.cooldown_until && Date.parse(account.cooldown_until) > Date.now()) {
-        throw codedError("SUBMIT_PERMIT_INVALID", "The broker-wide submit permit expired or was invalidated. No message was sent.", { safeToRetry: true });
-      }
-      this.db.prepare("UPDATE submit_permits SET consumed_at = ? WHERE id = ?").run(now, permitId);
-      return this.transitionInCurrentTransaction(jobId, "submit_intent", patch, details, now);
-    });
-    this.emit("change", transitioned);
-    return transitioned;
-  }
-  consumeSubmitPermitClaimed(claim, permitId, patch = {}, details = null) {
-    let transitioned;
-    this.transaction(() => {
-      this.assertExecution(claim);
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const permit = this.db.prepare("SELECT * FROM submit_permits WHERE id = ? AND job_id = ?").get(permitId, claim.jobId);
-      const account = this.db.prepare("SELECT * FROM account_state WHERE id = 1").get();
-      const job = this.requireJob(claim.jobId);
-      if (!permit || permit.consumed_at || permit.invalidated_at || job.submitIntentAt || Date.parse(permit.expires_at) <= Date.now() || permit.gate_version !== account.gate_version || account.cooldown_until && Date.parse(account.cooldown_until) > Date.now() || job.state === "cancelled_pre_submit") {
-        throw codedError("SUBMIT_PERMIT_INVALID", "The broker-wide submit permit or execution claim is no longer valid. No message was sent.", { safeToRetry: true });
-      }
-      this.db.prepare("UPDATE submit_permits SET consumed_at = ? WHERE id = ?").run(now, permitId);
-      transitioned = this.transitionInCurrentTransaction(claim.jobId, "submit_intent", patch, details, now);
-    });
-    this.emit("change", transitioned);
-    return transitioned;
-  }
-  recordAccountCooldown(error, { minimumMs = 12e4, maximumMs = 30 * 6e4 } = {}) {
-    return this.transaction(() => {
-      const current = this.accountState();
-      const count = current.cooldownCount + 1;
-      const duration = Math.min(maximumMs, minimumMs * 2 ** Math.min(4, count - 1));
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const until = new Date(Date.now() + duration).toISOString();
-      this.db.prepare(`
-        UPDATE account_state
-        SET gate_version = gate_version + 1, cooldown_until = ?, cooldown_code = ?,
-            cooldown_count = ?, effective_concurrency = 0,
-            success_streak = 0, probe_in_flight = 0, updated_at = ?
-        WHERE id = 1
-      `).run(until, error?.code || "ACCOUNT_COOLDOWN", count, now);
-      this.db.prepare("UPDATE submit_permits SET invalidated_at = ? WHERE consumed_at IS NULL AND invalidated_at IS NULL").run(now);
-      return this.accountState();
-    });
-  }
-  recordSubmissionSuccess() {
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    const qualified = Number(this.db.prepare("SELECT qualified_concurrency FROM broker_state WHERE id=1").get()?.qualified_concurrency || 1);
-    this.db.prepare(`
-      UPDATE account_state
-      SET cooldown_until = NULL, cooldown_code = NULL, cooldown_count = 0,
-          success_streak = success_streak + 1, probe_in_flight = 0,
-          effective_concurrency = MIN(?, MAX(effective_concurrency, 1 + CAST((success_streak + 1) / 3 AS INTEGER))),
-          last_success_at = ?, updated_at = ?
-      WHERE id = 1
-    `).run(qualified, now, now);
-    return this.accountState();
-  }
-  subscriptionForChain(chainId, ownerSessionId) {
-    return this.db.prepare(`
-      SELECT * FROM completion_subscriptions
-      WHERE chain_id = ? AND owner_session_id = ? AND state = 'open'
-      ORDER BY created_at LIMIT 1
-    `).get(chainId, ownerSessionId);
-  }
-  authorizeSubscription({ subscriptionHandle, caller }) {
-    const parsed = parseCapability(subscriptionHandle, "subscription");
-    let row = null;
-    if (parsed) row = this.db.prepare("SELECT * FROM completion_subscriptions WHERE id = ?").get(parsed.subjectId);
-    if (!row || !verifyCapability(subscriptionHandle, row.capability_hash, { kind: "subscription", subjectId: row.id })) {
-      throw codedError("COMPLETION_NOT_FOUND", "No accessible Oracle Firefox completion subscription matches that reference.");
-    }
-    return row;
-  }
-  claimCompletion(subscriptionHandle, caller, { claimSeconds = 90 } = {}) {
-    return this.transaction(() => {
-      const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
-      if (subscription.state !== "open") return null;
-      const staleBefore = new Date(Date.now() - Math.max(10, claimSeconds) * 1e3).toISOString();
-      this.db.prepare(`
-        UPDATE completion_deliveries
-        SET state = 'pending', claim_id = NULL, claimed_at = NULL
-        WHERE subscription_id = ? AND state = 'claimed' AND claimed_at < ?
-      `).run(subscription.id, staleBefore);
-      const delivery = this.db.prepare(`
-        SELECT d.*, e.chain_id, e.active_job_id, e.state AS event_state,
-               e.created_at AS event_created_at
-        FROM completion_deliveries d
-        JOIN chain_events e ON e.sequence = d.chain_event_sequence
-        WHERE d.subscription_id = ? AND d.state IN ('pending', 'delivered')
-        ORDER BY d.id LIMIT 1
-      `).get(subscription.id);
-      if (!delivery) return null;
-      if (delivery.state === "delivered") return this.publicCompletionDelivery(delivery, subscription);
-      const claimId = randomUUID8();
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      this.db.prepare(`
-        UPDATE completion_deliveries SET state = 'claimed', claim_id = ?, claimed_at = ? WHERE id = ?
-      `).run(claimId, now, delivery.id);
-      return this.publicCompletionDelivery({ ...delivery, state: "claimed", claim_id: claimId, claimed_at: now }, subscription);
-    });
-  }
-  publicCompletionDelivery(delivery, subscription) {
-    return {
-      deliveryId: delivery.id,
-      subscriptionId: subscription.id,
-      chainId: delivery.chain_id,
-      activeJobId: delivery.active_job_id,
-      state: delivery.event_state,
-      deliveryState: delivery.state,
-      claimId: delivery.claim_id || null,
-      createdAt: delivery.event_created_at
-    };
-  }
-  markCompletionDelivered(subscriptionHandle, caller, deliveryId, claimId) {
-    return this.transaction(() => {
-      const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const changed = this.db.prepare(`
-        UPDATE completion_deliveries
-        SET state = 'delivered', delivered_at = ?
-        WHERE id = ? AND subscription_id = ? AND state = 'claimed' AND claim_id = ?
-      `).run(now, deliveryId, subscription.id, claimId);
-      if (Number(changed.changes) !== 1) throw codedError("COMPLETION_CLAIM_LOST", "The completion delivery claim is no longer active.");
-      return { deliveryId, delivered: true, acknowledged: false };
-    });
-  }
-  acknowledgeCompletion(subscriptionHandle, caller, deliveryId) {
-    return this.transaction(() => {
-      const subscription = this.authorizeSubscription({ subscriptionHandle, caller });
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const row = this.db.prepare(`
-        SELECT d.*, e.state AS event_state
-        FROM completion_deliveries d
-        JOIN chain_events e ON e.sequence = d.chain_event_sequence
-        WHERE d.id = ? AND d.subscription_id = ?
-      `).get(deliveryId, subscription.id);
-      if (!row) throw codedError("COMPLETION_NOT_FOUND", "No accessible completion delivery matches that reference.");
-      if (row.state !== "acknowledged") {
-        this.db.prepare(`
-          UPDATE completion_deliveries SET state = 'acknowledged', acknowledged_at = ? WHERE id = ?
-        `).run(now, deliveryId);
-      }
-      if (TERMINAL_CHAIN_STATES.has(row.event_state)) {
-        this.db.prepare(`
-          UPDATE completion_subscriptions SET state = 'closed', closed_at = ?
-          WHERE id = ? AND state = 'open'
-        `).run(now, subscription.id);
-      }
-      return { deliveryId, delivered: Boolean(row.delivered_at), acknowledged: true };
-    });
-  }
-  maxCompletionDeliveryId() {
-    return Number(this.db.prepare("SELECT COALESCE(MAX(id), 0) AS id FROM completion_deliveries").get()?.id || 0);
-  }
-  pendingSystemNotifications(afterId = 0) {
-    return this.db.prepare(`
-      SELECT d.id AS delivery_id, d.subscription_id, d.state AS delivery_state,
-             e.chain_id, e.active_job_id, e.state AS event_state, e.created_at AS event_created_at,
-             s.mode, o.harness
-      FROM completion_deliveries d
-      JOIN completion_subscriptions s ON s.id = d.subscription_id
-      JOIN owner_sessions o ON o.id = s.owner_session_id
-      JOIN chain_events e ON e.sequence = d.chain_event_sequence
-      WHERE d.id > ? AND d.state = 'pending' AND s.state = 'open'
-        AND (s.mode = 'notify' OR (s.mode = 'harness' AND o.harness = 'claude-desktop-mcp'))
-      ORDER BY d.id
-    `).all(Math.max(0, Number(afterId) || 0)).map((row) => ({
-      deliveryId: Number(row.delivery_id),
-      subscriptionId: row.subscription_id,
-      chainId: row.chain_id,
-      activeJobId: row.active_job_id,
-      state: row.event_state,
-      createdAt: row.event_created_at,
-      mode: row.mode,
-      harness: row.harness
-    }));
-  }
-  markSystemNotificationDelivered(deliveryId) {
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    const changed = this.db.prepare(`
-      UPDATE completion_deliveries SET state = 'delivered', delivered_at = ?
-      WHERE id = ? AND state = 'pending'
-    `).run(now, deliveryId);
-    return Number(changed.changes) === 1;
-  }
-  waitForChange(timeoutMs) {
-    const bounded = Math.max(0, Number(timeoutMs) || 0);
-    if (bounded === 0) return Promise.resolve(null);
-    return new Promise((resolve7) => {
-      let timer2;
-      const finish = (job) => {
-        clearTimeout(timer2);
-        this.off("change", finish);
-        resolve7(job ?? null);
-      };
-      this.on("change", finish);
-      timer2 = setTimeout(() => finish(null), bounded);
-      timer2.unref?.();
-    });
-  }
-  eventsAfter(jobId, sequence = 0) {
-    return this.db.prepare("SELECT sequence, state, details_json, created_at FROM job_events WHERE job_id = ? AND sequence > ? ORDER BY sequence").all(jobId, sequence).map((row) => ({ sequence: row.sequence, state: row.state, details: parse2(row.details_json), createdAt: row.created_at }));
-  }
-  recoverInterruptedJobs() {
-    const recovered = [];
-    const changed = [];
-    this.transaction(() => {
-      this.assertCurrentBroker();
-      const generation = Number(this.brokerContext.leaseGeneration);
-      const brokerState = this.db.prepare("SELECT last_recovery_generation FROM broker_state WHERE id=1").get();
-      if (Number(brokerState.last_recovery_generation) >= generation) return;
-      const jobs = this.db.prepare(`
-        SELECT j.*, a.chain_id, a.execution_state, a.execution_lease_generation
-        FROM jobs j JOIN job_attempts a ON a.job_id=j.id
-        WHERE j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
-        ORDER BY j.created_at
-      `).all(...TERMINAL_JOB_STATES).map(rowToJob);
-      for (const job of jobs) {
-        const preSubmitDebris = !job.submitIntentAt && Boolean(
-          job.submissionMayHaveOccurred || job.userTurnId || job.userTurnHash || job.assistantTurnId || job.assistantTurnHash
-        );
-        const interrupted = job.executionState === "running" || (job.submitIntentAt ? job.executionState !== "released" : job.state !== "queued" || preSubmitDebris);
-        if (!interrupted || Number(job.lastRecoveryGeneration || 0) >= generation) continue;
-        const now = (/* @__PURE__ */ new Date()).toISOString();
-        let executionKind = "pre_submit";
-        let executionState = "idle";
-        if (!job.submitIntentAt) {
-          this.db.prepare(`
-            UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
-              last_recovery_generation=?, version=version+1,
-              submission_may_have_happened=0,
-              user_turn_id=NULL, user_turn_hash=NULL,
-              assistant_turn_id=NULL, assistant_turn_hash=NULL
-            WHERE id=?
-          `).run(now, "resumed safely before submission", generation, job.id);
-          this.db.prepare(`
-            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
-            VALUES (?, 'queued', ?, ?, ?, ?)
-          `).run(job.id, json({ recoveredFrom: job.state, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
-          this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=?").run(now, job.chainId);
-          recovered.push({ id: job.id, action: "requeued" });
-        } else if (hasExactUserTurnProof(job)) {
-          executionKind = "monitor_only";
-          const recoveredState = PRE_SUBMIT_JOB_STATES.has(job.state) || job.state === "submit_intent" ? "awaiting_response" : job.state;
-          this.db.prepare(`
-            UPDATE jobs SET state=?, updated_at=?, recovery_action=?,
-              last_recovery_generation=?, version=version+1 WHERE id=?
-          `).run(recoveredState, now, "reattach submitted turn without resending", generation, job.id);
-          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=?").run(now, job.chainId);
-          this.db.prepare(`
-            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `).run(job.id, recoveredState, json({ monitorOnly: true, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
-          recovered.push({ id: job.id, action: "monitor-only" });
-        } else {
-          this.transitionInCurrentTransaction(job.id, "submission_uncertain", {
-            error: { code: "SUBMISSION_UNCERTAIN", message: "Broker restarted after submit_intent without a proven user turn.", submissionMayHaveOccurred: true },
-            recoveryAction: `reconcile_job ${job.id}`
-          }, { recoveryGeneration: generation });
-          this.db.prepare("UPDATE jobs SET last_recovery_generation=? WHERE id=?").run(generation, job.id);
-          this.quarantine(job.conversationKey, job.id, "Restart after submit_intent without a proven user turn");
-          recovered.push({ id: job.id, action: "quarantined" });
-          executionState = "released";
-        }
-        this.db.prepare(`
-          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state=?,
-            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
-            execution_started_at=NULL, execution_heartbeat_at=NULL,
-            execution_kind=? WHERE job_id=?
-        `).run(executionState, executionKind, job.id);
-        changed.push(job.id);
-      }
-      const terminalClaims = this.db.prepare(`
-        SELECT a.job_id FROM job_attempts a JOIN jobs j ON j.id=a.job_id
-        WHERE a.execution_state='running'
-          AND j.state IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
-      `).all(...TERMINAL_JOB_STATES);
-      for (const row of terminalClaims) {
-        this.db.prepare(`
-          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state='released',
-            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
-            execution_heartbeat_at=? WHERE job_id=? AND execution_state='running'
-        `).run((/* @__PURE__ */ new Date()).toISOString(), row.job_id);
-        recovered.push({ id: row.job_id, action: "released-terminal" });
-        changed.push(row.job_id);
-      }
-      this.db.prepare("UPDATE broker_state SET last_recovery_generation=?, updated_at=? WHERE id=1").run(generation, (/* @__PURE__ */ new Date()).toISOString());
-    });
-    for (const id of changed) this.emit("change", this.requireJob(id));
-    return recovered;
-  }
-};
-
 // src/workflow.mjs
 import { access as access4, readFile as readFile8 } from "node:fs/promises";
 import { randomUUID as randomUUID10 } from "node:crypto";
 import path28 from "node:path";
 
 // src/archives.mjs
-import { createHash as createHash9 } from "node:crypto";
+import { createHash as createHash10 } from "node:crypto";
 import { lstat as lstat6, readFile as readFile5 } from "node:fs/promises";
 import path25 from "node:path";
 
@@ -69516,7 +69834,7 @@ async function prepareZipAttachments({ zipFiles = [], cwd, session } = {}) {
     }
     const contents = await readFile5(sourcePath);
     const inspection = inspectZipBuffer(contents, { filename });
-    const sha256 = createHash9("sha256").update(contents).digest("hex");
+    const sha256 = createHash10("sha256").update(contents).digest("hex");
     const snapshotPath = await writeSessionFile(session, filename, contents);
     prepared.push({
       filename,
@@ -69546,7 +69864,7 @@ async function verifyPreparedZipAttachments(attachments = [], sessionPath) {
       throw archiveError("ZIP_SNAPSHOT_INVALID", `Durable ZIP snapshot is missing or is not a regular file: ${filename}`);
     }
     const contents = await readFile5(snapshotPath);
-    const sha256 = createHash9("sha256").update(contents).digest("hex");
+    const sha256 = createHash10("sha256").update(contents).digest("hex");
     if (contents.length !== attachment.sizeBytes || sha256 !== attachment.sha256) {
       throw archiveError("ZIP_SNAPSHOT_CHANGED", `Durable ZIP snapshot changed after authorization: ${filename}`);
     }
@@ -70532,10 +70850,11 @@ async function writeCompletedArtifacts(job, result) {
 async function repairTerminalArtifacts(store2) {
   const repaired = [];
   const failed = [];
-  for (const job of store2.completedJobsWithExactProof()) {
+  const exactCompleted = new Set(store2.completedJobsWithExactProof().map((job) => job.id));
+  for (const job of store2.terminalJobsForArtifactRepair()) {
     const { responsePath, metadataPath } = terminalArtifactPaths(job);
     try {
-      if (!await artifactExists(responsePath)) {
+      if (exactCompleted.has(job.id) && !await artifactExists(responsePath)) {
         await writeSessionFile(
           { id: path28.basename(job.sessionPath), directory: job.sessionPath },
           "response.md",
@@ -70545,7 +70864,24 @@ async function repairTerminalArtifacts(store2) {
         repaired.push({ jobId: job.id, artifact: "response.md" });
       }
       if (!await artifactExists(metadataPath)) {
-        await writeFinalMetadata(job, { ...job.result, responsePath });
+        const durable = job.result || {
+          jobId: job.id,
+          authorizationId: job.authorizationId,
+          state: job.state,
+          status: job.state,
+          browser: job.request?.browser || "firefox",
+          error: job.error,
+          conversationUrl: job.conversationUrl,
+          projectUrl: job.projectUrl,
+          sessionPath: job.sessionPath,
+          safeToRetry: job.error?.safeToRetry ?? false,
+          submissionMayHaveOccurred: job.submissionMayHaveOccurred,
+          recoveryAction: job.recoveryAction
+        };
+        await writeFinalMetadata(job, {
+          ...durable,
+          ...exactCompleted.has(job.id) ? { responsePath } : {}
+        });
         repaired.push({ jobId: job.id, artifact: "metadata.json" });
       }
     } catch (error) {
@@ -71063,6 +71399,14 @@ function publicJob(job, extras = {}) {
     ...extras
   };
 }
+function committedStartError(error) {
+  const value = error instanceof Error ? error : new Error(String(error));
+  value.details = {
+    ...value.details && typeof value.details === "object" ? value.details : {},
+    startReceiptCommitted: true
+  };
+  return value;
+}
 async function fileExists(candidate) {
   try {
     await access5(candidate);
@@ -71095,7 +71439,12 @@ var Coordinator = class {
     jobExecutor = executeJob,
     completionDirectory,
     legacyCompletionFiles,
-    completionNotifier = notifyMacOsCompletion
+    completionNotifier = notifyMacOsCompletion,
+    notificationConcurrency = 2,
+    notificationClaimSeconds = 30,
+    notificationRetryBaseMs = 1e3,
+    notificationRetryMaximumMs = 6e4,
+    notificationTimeoutMs = 15e3
   } = {}) {
     this.store = store2;
     this.brokerContext = brokerContext || store2.brokerContext;
@@ -71130,8 +71479,17 @@ var Coordinator = class {
     this.legacyCompletionFiles = legacyCompletionFiles ?? (process.env.ORACLE_FIREFOX_LEGACY_COMPLETION_FILES === "1" || Boolean(completionDirectory));
     this.completionWrites = /* @__PURE__ */ new Map();
     this.completionNotifier = completionNotifier;
-    this.notificationCursor = 0;
-    this.notificationPump = Promise.resolve();
+    this.notificationConcurrency = Math.max(1, Math.min(4, Number(notificationConcurrency) || 2));
+    this.notificationClaimSeconds = Math.max(1, Number(notificationClaimSeconds) || 30);
+    this.notificationRetryBaseMs = Math.max(1, Number(notificationRetryBaseMs) || 1e3);
+    this.notificationRetryMaximumMs = Math.max(this.notificationRetryBaseMs, Number(notificationRetryMaximumMs) || 6e4);
+    this.notificationTimeoutMs = Math.max(50, Number(notificationTimeoutMs) || 15e3);
+    this.notificationClaimSeconds = Math.max(
+      this.notificationClaimSeconds,
+      Math.ceil(this.notificationTimeoutMs / 1e3) + 1
+    );
+    this.notificationWorkers = /* @__PURE__ */ new Set();
+    this.notificationWakeTimer = null;
     this.accountWakeTimer = null;
     this.executionWakeTimer = null;
     this.abandonedClaimSweepTimer = null;
@@ -71143,7 +71501,6 @@ var Coordinator = class {
   }
   async open() {
     await this.store.open();
-    this.notificationCursor = this.store.maxCompletionDeliveryId();
     this.brokerContext = this.store.brokerContext;
     if (this.explicitWriteConcurrency && (!this.store.productionFencing || process.env.ORACLE_FIREFOX_ALLOW_UNQUALIFIED_CONCURRENCY === "1")) this.store.setQualifiedConcurrency(this.writeConcurrency);
     if (this.qualifiedConcurrencyOverride) {
@@ -71158,6 +71515,7 @@ var Coordinator = class {
     this.invariants = this.store.checkInvariants();
     this.safeMode = !this.invariants.ok;
     this.recovery = this.safeMode ? [] : this.store.recoverInterruptedJobs();
+    this.deliveryRepair = this.safeMode ? { chainEvents: 0, deliveries: 0 } : this.store.rebuildCompletionDeliveries();
     this.artifactRepair = this.safeMode ? { repaired: [], failed: [] } : await repairTerminalArtifacts(this.store);
     if (this.legacyCompletionFiles) {
       for (const rootJobId of this.store.allRootJobIds()) this.queueCompletionRecord(rootJobId);
@@ -71165,6 +71523,7 @@ var Coordinator = class {
     if (!this.safeMode) {
       this.startAbandonedClaimSweeper();
       this.schedule();
+      this.queueSystemNotifications();
     }
     this.scheduleAccountWake(this.store.accountState().cooldownUntil);
     return this;
@@ -71174,10 +71533,12 @@ var Coordinator = class {
     this.draining = true;
     clearInterval(this.abandonedClaimSweepTimer);
     this.abandonedClaimSweepTimer = null;
+    clearTimeout(this.notificationWakeTimer);
+    this.notificationWakeTimer = null;
     await Promise.allSettled(this.active.values());
     this.store.off("change", this.onStoreChange);
     await Promise.allSettled(this.completionWrites.values());
-    await this.notificationPump.catch(() => void 0);
+    await Promise.allSettled(this.notificationWorkers);
     clearTimeout(this.accountWakeTimer);
     clearTimeout(this.executionWakeTimer);
     await this.browserManager.close();
@@ -71231,6 +71592,8 @@ var Coordinator = class {
       harness: client.harness || "unknown",
       clientInstanceId: client.clientInstanceId || null,
       hostSessionHint: client.hostSessionHint || null,
+      stableSessionId: client.stableSessionId || null,
+      stableSessionHandle: client.stableSessionHandle || null,
       metadata: {
         pid: Number.isInteger(client.pid) ? client.pid : null,
         buildVersion: client.buildVersion || null
@@ -71278,18 +71641,37 @@ var Coordinator = class {
     if (!(/* @__PURE__ */ new Set(["consult", "continue_chat"])).has(operation)) {
       throw codedError("INVALID_OPERATION", `Unsupported job operation: ${operation}`);
     }
-    const authorizationId = input2.authorizationId || (generatedAuthorization ? randomUUID11() : null);
+    const {
+      _receiptRecoveryHandle: receiptRecoveryHandle = null,
+      ...authorizedInput
+    } = input2;
+    const authorizationId = authorizedInput.authorizationId || (generatedAuthorization ? randomUUID11() : null);
     if (!authorizationId || !UUID_PATTERN2.test(authorizationId)) {
       throw codedError("AUTHORIZATION_REQUIRED", "authorizationId must be a UUID for asynchronous start tools.");
     }
-    const digest2 = requestDigest({ operation, ...input2, authorizationId: void 0 });
+    const digest2 = requestDigest({ operation, ...authorizedInput, authorizationId: void 0 });
+    const receiptCapability = receiptRecoveryHandle ? parseCapability(receiptRecoveryHandle, "receipt") : null;
+    if (receiptRecoveryHandle && receiptCapability?.subjectId !== authorizationId) {
+      throw codedError("START_RECOVERY_CAPABILITY_INVALID", "The private start-receipt recovery capability is invalid.");
+    }
     const existing = this.store.getJobByAuthorization(authorizationId);
     if (existing) {
       if (!caller) throw codedError("CLIENT_SESSION_REQUIRED", "A client session is required to resume an idempotent job.");
-      this.store.authorizeJob({ jobId: existing.id, caller, control: false });
       if (existing.requestDigest !== digest2) {
         throw codedError("AUTHORIZATION_REUSED", "This authorizationId was already used for a different request.");
       }
+      if (receiptRecoveryHandle) {
+        try {
+          return this.recoverStartReceipt({
+            authorizationId,
+            requestDigest: digest2,
+            recoveryHandle: receiptRecoveryHandle
+          }, null, caller, { idempotent: true, authorizationGenerated: generatedAuthorization });
+        } catch (error) {
+          throw committedStartError(error);
+        }
+      }
+      this.store.authorizeJob({ jobId: existing.id, caller, control: false });
       return { ...publicJob(existing), idempotent: true, authorizationGenerated: generatedAuthorization };
     }
     if (this.store.countOutstanding() >= 100) {
@@ -71298,34 +71680,34 @@ var Coordinator = class {
     if (await fileExists(emergencyLockPath())) {
       throw codedError("EMERGENCY_LOCKED", `Oracle Firefox submissions are disabled by ${emergencyLockPath()}.`);
     }
-    let resolvedInput = { ...input2, browserBackend: this.browserManager.browserName };
-    if (operation === "consult" && input2.projectTitle && !input2.projectUrl) {
+    let resolvedInput = { ...authorizedInput, browserBackend: this.browserManager.browserName };
+    if (operation === "consult" && authorizedInput.projectTitle && !authorizedInput.projectUrl) {
       const project = await resolveProjectTarget(this.browserManager, {
-        projectTitle: input2.projectTitle,
-        headless: input2.headless
+        projectTitle: authorizedInput.projectTitle,
+        headless: authorizedInput.headless
       });
       resolvedInput = {
         ...resolvedInput,
         projectTitle: void 0,
         projectUrl: project.url,
-        resolvedProjectTitle: project.title || input2.projectTitle,
+        resolvedProjectTitle: project.title || authorizedInput.projectTitle,
         resolvedProjectUrl: project.url
       };
     }
-    if (operation === "continue_chat" && input2.chatTitle && !input2.conversationUrl) {
+    if (operation === "continue_chat" && authorizedInput.chatTitle && !authorizedInput.conversationUrl) {
       const discovered = await discoverChats(this.browserManager, {
-        query: input2.chatTitle,
-        projectTitle: input2.projectTitle,
-        projectUrl: input2.projectUrl,
+        query: authorizedInput.chatTitle,
+        projectTitle: authorizedInput.projectTitle,
+        projectUrl: authorizedInput.projectUrl,
         timeoutSeconds: 15,
-        headless: input2.headless
+        headless: authorizedInput.headless
       });
-      const expected = input2.chatTitle.replace(/\s+/gu, " ").trim().toLowerCase();
+      const expected = authorizedInput.chatTitle.replace(/\s+/gu, " ").trim().toLowerCase();
       const matches = discovered.chats.filter((chat) => chat.chatTitle.replace(/\s+/gu, " ").trim().toLowerCase() === expected);
       if (matches.length !== 1) {
         throw codedError(
           matches.length > 1 ? "TARGET_AMBIGUOUS" : "TARGET_NOT_FOUND",
-          matches.length > 1 ? `More than one ChatGPT conversation is titled ${JSON.stringify(input2.chatTitle)}. Use conversationUrl.` : `No ChatGPT conversation was found with the exact title ${JSON.stringify(input2.chatTitle)}.`,
+          matches.length > 1 ? `More than one ChatGPT conversation is titled ${JSON.stringify(authorizedInput.chatTitle)}. Use conversationUrl.` : `No ChatGPT conversation was found with the exact title ${JSON.stringify(authorizedInput.chatTitle)}.`,
           { safeToRetry: true, details: { candidates: matches } }
         );
       }
@@ -71375,24 +71757,56 @@ var Coordinator = class {
       attemptKind: prepared.evidenceReply ? "evidence_reply" : prepared.retryAttempt > 0 ? "response_recovery" : "initial",
       readCapabilityHash: finalReadCapability?.hash,
       controlCapabilityHash: finalControlCapability?.hash,
+      startReceiptCapabilityHash: receiptCapability?.hash,
       subscriptionId,
       subscriptionCapabilityHash: subscriptionCapability?.hash,
       completionMode: prepared.completionMode,
       retryAttempt: prepared.retryAttempt,
       maxAutomaticResponseRetries: prepared.maxAutomaticResponseRetries
     });
-    this.store.transition(created.job.id, "snapshotted");
-    const queued = this.store.transition(created.job.id, "queued");
-    this.schedule();
+    try {
+      if (created.idempotent) {
+        if (receiptRecoveryHandle) {
+          return this.recoverStartReceipt({
+            authorizationId,
+            requestDigest: digest2,
+            recoveryHandle: receiptRecoveryHandle
+          }, null, caller, { idempotent: true, authorizationGenerated: generatedAuthorization });
+        }
+        return { ...publicJob(created.job), idempotent: true, authorizationGenerated: generatedAuthorization };
+      }
+      this.store.transition(created.job.id, "snapshotted");
+      const queued = this.store.transition(created.job.id, "queued");
+      this.schedule();
+      return {
+        ...publicJob(queued),
+        idempotent: false,
+        authorizationGenerated: generatedAuthorization,
+        ...finalControlCapability ? {
+          jobHandle: finalControlCapability.handle,
+          readHandle: finalReadCapability.handle,
+          completionHandle: subscriptionCapability.handle
+        } : {}
+      };
+    } catch (error) {
+      throw committedStartError(error);
+    }
+  }
+  recoverStartReceipt(params, context2, authenticatedCaller = null, extras = {}) {
+    const caller = authenticatedCaller || this.callerFromContext(context2);
+    const recovered = this.store.recoverStartReceipt({
+      authorizationId: params.authorizationId,
+      digest: params.requestDigest,
+      recoveryHandle: params.recoveryHandle,
+      caller
+    });
     return {
-      ...publicJob(queued),
-      idempotent: false,
-      authorizationGenerated: generatedAuthorization,
-      ...finalControlCapability ? {
-        jobHandle: finalControlCapability.handle,
-        readHandle: finalReadCapability.handle,
-        completionHandle: subscriptionCapability.handle
-      } : {}
+      ...publicJob(recovered.job),
+      ...extras,
+      receiptRecovered: true,
+      jobHandle: recovered.jobHandle,
+      readHandle: recovered.readHandle,
+      completionHandle: recovered.completionHandle
     };
   }
   schedule() {
@@ -71567,16 +71981,58 @@ var Coordinator = class {
   }
   queueSystemNotifications() {
     if (!this.completionNotifier || this.closed) return;
-    this.notificationPump = this.notificationPump.then(() => this.deliverSystemNotifications()).catch(() => void 0);
+    clearTimeout(this.notificationWakeTimer);
+    this.notificationWakeTimer = null;
+    while (this.notificationWorkers.size < this.notificationConcurrency) {
+      let worker;
+      worker = this.deliverSystemNotifications().catch(() => void 0).finally(() => {
+        this.notificationWorkers.delete(worker);
+        if (!this.closed) this.scheduleSystemNotificationWake();
+      });
+      this.notificationWorkers.add(worker);
+    }
   }
   async deliverSystemNotifications() {
-    const deliveries = this.store.pendingSystemNotifications(this.notificationCursor);
-    for (const delivery of deliveries) {
-      this.notificationCursor = Math.max(this.notificationCursor, delivery.deliveryId);
-      if (await this.completionNotifier(delivery)) {
-        this.store.markSystemNotificationDelivered(delivery.deliveryId);
+    for (; ; ) {
+      if (this.closed) return;
+      const delivery = this.store.claimSystemNotification({ claimSeconds: this.notificationClaimSeconds });
+      if (!delivery) return;
+      let timeout2;
+      const notification = Promise.resolve().then(() => this.completionNotifier(delivery)).then((delivered) => ({ delivered: delivered === true, error: null })).catch((error) => ({ delivered: false, error }));
+      const timed = new Promise((resolve7) => {
+        timeout2 = setTimeout(() => resolve7({
+          delivered: false,
+          error: codedError("NOTIFICATION_TIMEOUT", "The completion notifier timed out.")
+        }), this.notificationTimeoutMs);
+        timeout2.unref?.();
+      });
+      const outcome = await Promise.race([notification, timed]);
+      clearTimeout(timeout2);
+      if (outcome.delivered) {
+        this.store.markSystemNotificationDelivered(delivery.deliveryId, delivery.claimId);
+      } else {
+        this.store.retrySystemNotification(
+          delivery.deliveryId,
+          delivery.claimId,
+          outcome.error || codedError("NOTIFICATION_FAILED", "The completion notifier did not accept the delivery."),
+          {
+            baseDelayMs: this.notificationRetryBaseMs,
+            maximumDelayMs: this.notificationRetryMaximumMs
+          }
+        );
       }
     }
+  }
+  scheduleSystemNotificationWake() {
+    if (this.closed || this.notificationWorkers.size > 0 || this.notificationWakeTimer) return;
+    const readyAt = this.store.nextSystemNotificationAt();
+    if (!readyAt) return;
+    const waitMs = Math.max(0, Date.parse(readyAt) - Date.now());
+    this.notificationWakeTimer = setTimeout(() => {
+      this.notificationWakeTimer = null;
+      this.queueSystemNotifications();
+    }, waitMs);
+    this.notificationWakeTimer.unref?.();
   }
   async finalizeResponseFailure(jobId, detectedResult, executionClaim = null) {
     let parent = this.store.requireJob(jobId);
@@ -72172,6 +72628,7 @@ var Coordinator = class {
       "workflow.downloadChatArtifact": (params) => this.downloadChatArtifact(params),
       "jobs.startConsult": (params, context2) => this.startJob("consult", params, { caller: this.callerFromContext(context2) }),
       "jobs.startContinue": (params, context2) => this.startJob("continue_chat", params, { caller: this.callerFromContext(context2) }),
+      "jobs.recoverStartReceipt": (params, context2) => this.recoverStartReceipt(params, context2),
       "jobs.compatConsult": async (params, context2) => this.waitCompatibility(await this.startJob("consult", params, { generatedAuthorization: !params.authorizationId, caller: this.callerFromContext(context2) }), 240),
       "jobs.compatContinue": async (params, context2) => this.waitCompatibility(await this.startJob("continue_chat", params, { generatedAuthorization: !params.authorizationId, caller: this.callerFromContext(context2) }), 240),
       "jobs.status": (params, context2) => {

@@ -1,9 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
+import { mintCapability } from "../src/capabilities.mjs";
 import { StateStore } from "../src/state-store.mjs";
+
+const execFileAsync = promisify(execFile);
 
 async function withStore(callback) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-firefox-state-"));
@@ -40,6 +45,139 @@ test("SQLite jobs are idempotent by authorization and reject changed reuse", asy
       (error) => error.code === "AUTHORIZATION_REUSED",
     );
   });
+});
+
+test("disconnect-recovery storage extends schema 8 without publishing a schema bump", async () => {
+  await withStore(async (store) => {
+    assert.equal(store.databaseStatus().schemaVersion, 8);
+    const chainColumns = new Set(store.db.prepare("PRAGMA table_info(job_chains)").all().map((column) => column.name));
+    const deliveryColumns = new Set(store.db.prepare("PRAGMA table_info(completion_deliveries)").all().map((column) => column.name));
+    assert.equal(chainColumns.has("start_receipt_cap_hash"), true);
+    assert.equal(deliveryColumns.has("claim_expires_at"), true);
+    assert.equal(deliveryColumns.has("next_attempt_at"), true);
+  });
+});
+
+test("stable owner-session identity survives client-process and broker-store restart", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-owner-continuity-"));
+  const databasePath = path.join(directory, "state.sqlite");
+  const stable = mintCapability("session", crypto.randomUUID());
+  let store = await new StateStore(databasePath).open();
+  try {
+    const session = store.createOwnerSession({
+      harness: "codex",
+      hostSessionHint: "host-task-1",
+      stableSessionId: stable.subjectId,
+      stableSessionHandle: stable.handle,
+    });
+    const caller = store.authenticateOwnerSession({
+      sessionId: session.sessionId,
+      sessionHandle: session.sessionHandle,
+      harness: "codex",
+      hostSessionHint: "host-task-1",
+    });
+    const created = store.createJob(input({ ownerSessionId: caller.id })).job;
+    store.close();
+
+    store = await new StateStore(databasePath).open();
+    const reopened = store.createOwnerSession({
+      harness: "codex",
+      hostSessionHint: "host-task-1",
+      stableSessionId: stable.subjectId,
+      stableSessionHandle: stable.handle,
+    });
+    const resumed = store.authenticateOwnerSession({
+      sessionId: reopened.sessionId,
+      sessionHandle: reopened.sessionHandle,
+      harness: "codex",
+      hostSessionHint: "host-task-1",
+    });
+    assert.equal(resumed.id, caller.id);
+    assert.deepEqual(store.listJobsForSession(resumed.id).map((job) => job.id), [created.id]);
+    assert.throws(
+      () => store.authenticateOwnerSession({
+        sessionId: reopened.sessionId,
+        sessionHandle: reopened.sessionHandle,
+        harness: "claude",
+        hostSessionHint: "host-task-1",
+      }),
+      (error) => error.code === "CLIENT_SESSION_REQUIRED",
+    );
+    assert.throws(
+      () => store.createOwnerSession({
+        harness: "codex",
+        hostSessionHint: "host-task-2",
+        stableSessionId: stable.subjectId,
+        stableSessionHandle: stable.handle,
+      }),
+      (error) => error.code === "CLIENT_SESSION_REQUIRED",
+    );
+  } finally {
+    store.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("independent client processes retain only their stable owner session across broker generations", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-owner-multiprocess-"));
+  const databasePath = path.join(directory, "state.sqlite");
+  const stable = mintCapability("session", crypto.randomUUID());
+  const foreign = mintCapability("session", crypto.randomUUID());
+  const stateStoreUrl = new URL("../src/state-store.mjs", import.meta.url).href;
+  const capabilityUrl = new URL("../src/capabilities.mjs", import.meta.url).href;
+  const script = `
+    import { StateStore } from ${JSON.stringify(stateStoreUrl)};
+    import { mintCapability } from ${JSON.stringify(capabilityUrl)};
+    const store = await new StateStore(process.env.TEST_DATABASE).open();
+    try {
+      const session = store.createOwnerSession({
+        harness: process.env.TEST_HARNESS,
+        hostSessionHint: process.env.TEST_HINT,
+        stableSessionId: process.env.TEST_SESSION_ID,
+        stableSessionHandle: process.env.TEST_SESSION_HANDLE,
+      });
+      const caller = store.authenticateOwnerSession({
+        sessionId: session.sessionId,
+        sessionHandle: session.sessionHandle,
+        harness: process.env.TEST_HARNESS,
+        hostSessionHint: process.env.TEST_HINT,
+      });
+      if (process.env.TEST_ACTION === 'create') {
+        const id = crypto.randomUUID();
+        const read = mintCapability('read', id);
+        const control = mintCapability('control', id);
+        const job = store.createJob({
+          id,
+          authorizationId: crypto.randomUUID(), operation: 'consult', request: {},
+          conversationKey: 'new-standalone', sessionPath: '/tmp/multiprocess-owner',
+          ownerSessionId: caller.id, readCapabilityHash: read.hash, controlCapabilityHash: control.hash,
+        }).job;
+        console.log(JSON.stringify({ jobId: job.id }));
+      } else {
+        console.log(JSON.stringify({ jobIds: store.listJobsForSession(caller.id).map((job) => job.id) }));
+      }
+    } finally { store.close(); }
+  `;
+  const run = (action, capability, hint) => execFileAsync(process.execPath, ["--input-type=module", "-e", script], {
+    env: {
+      ...process.env,
+      TEST_DATABASE: databasePath,
+      TEST_ACTION: action,
+      TEST_HARNESS: "codex",
+      TEST_HINT: hint,
+      TEST_SESSION_ID: capability.subjectId,
+      TEST_SESSION_HANDLE: capability.handle,
+    },
+  });
+  try {
+    const created = JSON.parse((await run("create", stable, "task-a")).stdout);
+    const resumed = JSON.parse((await run("list", stable, "task-a")).stdout);
+    const isolated = JSON.parse((await run("list", foreign, "task-b")).stdout);
+    assert.deepEqual(resumed.jobIds, [created.jobId]);
+    assert.deepEqual(isolated.jobIds, []);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("pre-submit failures stay retry-classified and never claim submission", async () => {

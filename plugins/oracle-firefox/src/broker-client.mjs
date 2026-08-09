@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { chmod, link, mkdir, open, readFile, rm } from "node:fs/promises";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   BROKER_BUILD_ID,
@@ -13,10 +14,17 @@ import { BrokerLaunchLease } from "./broker-lease.mjs";
 import { brokerLaunchLockPath, brokerNodePath, brokerTokenPath, coordinatorDirectory, coordinatorLogPath } from "./config.mjs";
 import { resolveCoordinatorIdentity } from "./coordinator-identity.mjs";
 import { codedError } from "./errors.mjs";
+import { mintCapability, parseCapability } from "./capabilities.mjs";
 import { rpcRequest } from "./protocol.mjs";
+import { requestDigest } from "./state-store.mjs";
 
 const clientInstanceId = randomUUID();
 const clientSessions = new Map();
+const processScopedClientIdentities = new Map();
+const START_OPERATIONS = new Map([
+  ["jobs.startConsult", "consult"],
+  ["jobs.startContinue", "continue_chat"],
+]);
 const KNOWN_RELEASE_SEQUENCES = new Map([
   ["1.2.1", 1201],
   ["1.3.0", 1300],
@@ -42,6 +50,22 @@ function processIsAlive(pid) {
 async function ensurePrivateDirectory(directory) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
   await chmod(directory, 0o700);
+}
+
+async function writeExclusivePrivateJson(target, value) {
+  const handle = await open(target, "wx", 0o600);
+  try {
+    await handle.writeFile(`${JSON.stringify(value, null, 2)}\n`, "utf8");
+    await handle.sync();
+  } finally {
+    await handle.close();
+  }
+  const directory = await open(path.dirname(target), "r").catch(() => null);
+  try {
+    await directory?.sync();
+  } finally {
+    await directory?.close();
+  }
 }
 
 export async function readOrCreateBrokerToken() {
@@ -92,6 +116,167 @@ function clientMetadata(harness, hostSessionHint = null, session = null) {
     sessionId: session?.sessionId,
     sessionHandle: session?.sessionHandle,
   };
+}
+
+function stableClientIdentityPath(identity, harness, hostSessionHint) {
+  if (hostSessionHint == null) {
+    throw codedError("CLIENT_IDENTITY_INVALID", "A durable Oracle Firefox client identity requires a stable host-session identity.");
+  }
+  const key = createHash("sha256").update([
+    "oracle-firefox-host-session-v1",
+    identity.coordinatorId,
+    String(harness || "unknown"),
+    String(hostSessionHint),
+  ].join("\0")).digest("hex");
+  return path.join(identity.coordinatorPath || coordinatorDirectory(), "client-sessions", `${key}.json`);
+}
+
+function processScopedClientIdentity(identity, harness) {
+  const normalizedHarness = String(harness || "unknown");
+  const key = [identity.coordinatorId, normalizedHarness].join(":");
+  let value = processScopedClientIdentities.get(key);
+  if (value) return value;
+  const sessionId = randomUUID();
+  const capability = mintCapability("session", sessionId);
+  value = {
+    version: 1,
+    coordinatorId: identity.coordinatorId,
+    harness: normalizedHarness,
+    hostSessionHint: null,
+    sessionId,
+    sessionHandle: capability.handle,
+    createdAt: new Date().toISOString(),
+    durable: false,
+  };
+  processScopedClientIdentities.set(key, value);
+  return value;
+}
+
+async function readStableClientIdentity(target, expected) {
+  const value = JSON.parse(await readFile(target, "utf8"));
+  const parsed = parseCapability(value.sessionHandle, "session");
+  if (
+    value.version !== 1 ||
+    value.coordinatorId !== expected.coordinatorId ||
+    value.harness !== expected.harness ||
+    (value.hostSessionHint ?? null) !== expected.hostSessionHint ||
+    !parsed || parsed.subjectId !== value.sessionId
+  ) {
+    throw codedError("CLIENT_IDENTITY_INVALID", "The durable Oracle Firefox host-session identity is invalid and was not replaced automatically.");
+  }
+  return value;
+}
+
+async function readOrCreateStableClientIdentity(identity, harness, hostSessionHint) {
+  const normalized = {
+    coordinatorId: identity.coordinatorId,
+    harness: String(harness || "unknown"),
+    hostSessionHint: hostSessionHint == null ? null : String(hostSessionHint),
+  };
+  const target = stableClientIdentityPath(identity, normalized.harness, normalized.hostSessionHint);
+  try {
+    return { ...(await readStableClientIdentity(target, normalized)), target };
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  await ensurePrivateDirectory(path.dirname(target));
+  const sessionId = randomUUID();
+  const capability = mintCapability("session", sessionId);
+  const candidate = {
+    version: 1,
+    ...normalized,
+    sessionId,
+    sessionHandle: capability.handle,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    await writeExclusivePrivateJson(target, candidate);
+    return { ...candidate, target };
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+    return { ...(await readStableClientIdentity(target, normalized)), target };
+  }
+}
+
+async function clientIdentity(identity, harness, hostSessionHint) {
+  if (hostSessionHint == null) return processScopedClientIdentity(identity, harness);
+  return readOrCreateStableClientIdentity(identity, harness, hostSessionHint);
+}
+
+function pendingReceiptPath(identity, stableIdentity, authorizationId) {
+  const receiptKey = createHash("sha256").update(String(authorizationId)).digest("hex");
+  return path.join(
+    identity.coordinatorPath || coordinatorDirectory(),
+    "pending-start-receipts",
+    stableIdentity.sessionId,
+    `${receiptKey}.json`,
+  );
+}
+
+async function readOrCreatePendingReceipt(identity, stableIdentity, authorizationId, digest) {
+  const target = pendingReceiptPath(identity, stableIdentity, authorizationId);
+  const readExisting = async () => {
+    const value = JSON.parse(await readFile(target, "utf8"));
+    const parsed = parseCapability(value.recoveryHandle, "receipt");
+    if (
+      value.version !== 1 ||
+      value.coordinatorId !== identity.coordinatorId ||
+      value.ownerSessionId !== stableIdentity.sessionId ||
+      value.authorizationId !== authorizationId ||
+      value.requestDigest !== digest ||
+      !parsed || parsed.subjectId !== authorizationId
+    ) {
+      throw codedError("START_RECEIPT_RECOVERY_INVALID", "The pending Oracle Firefox start receipt does not match this exact request and stable caller.");
+    }
+    return value;
+  };
+  try {
+    return { ...(await readExisting()), target, existing: true };
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  await ensurePrivateDirectory(path.dirname(target));
+  const recovery = mintCapability("receipt", authorizationId);
+  const candidate = {
+    version: 1,
+    coordinatorId: identity.coordinatorId,
+    ownerSessionId: stableIdentity.sessionId,
+    authorizationId,
+    requestDigest: digest,
+    recoveryHandle: recovery.handle,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    await writeExclusivePrivateJson(target, candidate);
+    return { ...candidate, target, existing: false };
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+    return { ...(await readExisting()), target, existing: true };
+  }
+}
+
+function transportUncertain(error) {
+  return new Set([
+    "BROKER_TIMEOUT",
+    "BROKER_DISCONNECTED",
+    "EPIPE",
+    "ECONNRESET",
+    "ECONNABORTED",
+    "ETIMEDOUT",
+  ]).has(error?.code);
+}
+
+function unresolvedReceiptError(error) {
+  return codedError(
+    "START_RECEIPT_UNCERTAIN",
+    "Oracle Firefox could not prove whether the preserved start was committed. It did not submit the start request again.",
+    {
+      cause: error,
+      safeToRetry: false,
+      submissionMayHaveOccurred: true,
+      recoveryAction: "retry this exact start with the same authorizationId and stable host-session identity to check the preserved receipt again",
+    },
+  );
 }
 
 export function normalizeLegacyBrokerStatus(status, endpoint) {
@@ -353,15 +538,21 @@ async function compatibleBroker(identity, token) {
 export async function callBroker(method, params = {}, options = {}) {
   const identity = await resolveCoordinatorIdentity();
   const token = await readOrCreateBrokerToken();
-  const { hello, endpoint } = await compatibleBroker(identity, token);
+  const { endpoint } = await compatibleBroker(identity, token);
   const harness = options.harness || "unknown";
-  const hostSessionHint = options.hostSessionHint || null;
-  const sessionKey = [identity.coordinatorId, hello.instanceId, harness, hostSessionHint || ""].join(":");
+  const normalizedHostSessionHint = options.hostSessionHint == null
+    ? null
+    : String(options.hostSessionHint).trim();
+  const hostSessionHint = normalizedHostSessionHint || null;
+  const ownerIdentity = await clientIdentity(identity, harness, hostSessionHint);
+  const sessionKey = [identity.coordinatorId, harness, ownerIdentity.sessionId].join(":");
   let session = clientSessions.get(sessionKey);
   const openSession = async () => rpcRequest(endpoint, token, "broker.openSession", {
     harness,
     clientInstanceId,
     hostSessionHint,
+    stableSessionId: ownerIdentity.sessionId,
+    stableSessionHandle: ownerIdentity.sessionHandle,
   }, {
     timeoutMs: 10_000,
     client: clientMetadata(harness, hostSessionHint),
@@ -370,17 +561,69 @@ export async function callBroker(method, params = {}, options = {}) {
     session = await openSession();
     clientSessions.set(sessionKey, session);
   }
-  const invoke = () => rpcRequest(endpoint, token, method, params, {
-    timeoutMs: options.timeoutMs ?? 60_000,
-    client: clientMetadata(harness, hostSessionHint, session),
-  });
+  const invoke = async (rpcMethod, rpcParams, timeoutMs = options.timeoutMs ?? 60_000) => {
+    const request = () => rpcRequest(endpoint, token, rpcMethod, rpcParams, {
+      timeoutMs,
+      client: clientMetadata(harness, hostSessionHint, session),
+    });
+    try {
+      return await request();
+    } catch (error) {
+      if (!new Set(["CLIENT_SESSION_REQUIRED", "OWNER_SESSION_NOT_FOUND"]).has(error?.code)) throw error;
+      clientSessions.delete(sessionKey);
+      session = await openSession();
+      clientSessions.set(sessionKey, session);
+      return request();
+    }
+  };
+
+  const operation = START_OPERATIONS.get(method);
+  if (!operation || !params.authorizationId) return invoke(method, params);
+
+  const digest = requestDigest({ operation, ...params, authorizationId: undefined });
+  const pending = await readOrCreatePendingReceipt(
+    identity,
+    ownerIdentity,
+    params.authorizationId,
+    digest,
+  );
+  const recover = () => invoke("jobs.recoverStartReceipt", {
+    authorizationId: params.authorizationId,
+    requestDigest: digest,
+    recoveryHandle: pending.recoveryHandle,
+  }, Math.max(10_000, options.timeoutMs ?? 60_000));
+
+  if (pending.existing) {
+    try {
+      const recovered = await recover();
+      await rm(pending.target, { force: true });
+      return recovered;
+    } catch (error) {
+      throw unresolvedReceiptError(error);
+    }
+  }
+
   try {
-    return await invoke();
+    const result = await invoke(method, { ...params, _receiptRecoveryHandle: pending.recoveryHandle });
+    await rm(pending.target, { force: true });
+    return result;
   } catch (error) {
-    if (!new Set(["CLIENT_SESSION_REQUIRED", "OWNER_SESSION_NOT_FOUND"]).has(error?.code)) throw error;
-    clientSessions.delete(sessionKey);
-    session = await openSession();
-    clientSessions.set(sessionKey, session);
-    return invoke();
+    if (!transportUncertain(error)) {
+      if (
+        error?.submissionMayHaveOccurred !== true &&
+        error?.details?.startReceiptCommitted !== true &&
+        error?.code !== "START_RECEIPT_NOT_FOUND"
+      ) {
+        await rm(pending.target, { force: true });
+      }
+      throw error;
+    }
+    try {
+      const recovered = await recover();
+      await rm(pending.target, { force: true });
+      return recovered;
+    } catch (recoveryError) {
+      throw unresolvedReceiptError(recoveryError);
+    }
   }
 }

@@ -30,6 +30,37 @@ function queue(store, key, operation = "continue_chat") {
   return store.transition(created.id, "queued");
 }
 
+function terminalNotification(store, suffix, { harness = "claude-desktop-mcp", mode = "notify" } = {}) {
+  const session = store.createOwnerSession({ harness });
+  const caller = store.authenticateOwnerSession({
+    sessionId: session.sessionId,
+    sessionHandle: session.sessionHandle,
+    harness,
+  });
+  const subscriptionId = crypto.randomUUID();
+  const subscription = mintCapability("subscription", subscriptionId);
+  const chainId = crypto.randomUUID();
+  const read = mintCapability("read", chainId);
+  const control = mintCapability("control", chainId);
+  const job = store.createJob({
+    id: chainId,
+    authorizationId: crypto.randomUUID(),
+    operation: "continue_chat",
+    request: { completionMode: mode },
+    conversationKey: `https://chatgpt.com/c/notification-${suffix}`,
+    conversationUrl: `https://chatgpt.com/c/notification-${suffix}`,
+    sessionPath: `/tmp/notification-${suffix}`,
+    ownerSessionId: caller.id,
+    subscriptionId,
+    subscriptionCapabilityHash: subscription.hash,
+    readCapabilityHash: read.hash,
+    controlCapabilityHash: control.hash,
+    completionMode: mode,
+  }).job;
+  store.transition(job.id, "completed", { result: { jobId: job.id, answer: `private-${suffix}` } });
+  return { job, caller, subscription, subscriptionId };
+}
+
 test("same-conversation jobs execute FIFO even with two write slots", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-scheduler-"));
   const store = new StateStore(path.join(directory, "state.sqlite"));
@@ -214,6 +245,163 @@ test("the broker delivers one best-effort Desktop notification and leaves result
     assert.equal(store.db.prepare("SELECT state FROM completion_subscriptions WHERE id=?").get(subscriptionId).state, "closed");
   } finally {
     await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("notification failure is durably retried with bounded backoff and no private result data", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-notify-retry-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  const deliveries = [];
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    legacyCompletionFiles: false,
+    notificationRetryBaseMs: 10,
+    notificationRetryMaximumMs: 20,
+    notificationTimeoutMs: 200,
+    completionNotifier: async (delivery) => {
+      deliveries.push(delivery);
+      return deliveries.length > 1;
+    },
+  });
+  try {
+    await coordinator.open();
+    const created = terminalNotification(store, "retry");
+    await waitFor(() => deliveries.length === 2);
+    const row = store.db.prepare("SELECT state, attempt_count, last_error_json FROM completion_deliveries WHERE subscription_id=?").get(created.subscriptionId);
+    assert.equal(row.state, "delivered");
+    assert.equal(Number(row.attempt_count), 2);
+    assert.equal(row.last_error_json, null);
+    assert.equal(JSON.stringify(deliveries).includes("private-retry"), false);
+  } finally {
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("broker restart replays an expired claimed notification delivery", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-notify-restart-"));
+  const databasePath = path.join(directory, "state.sqlite");
+  let store = await new StateStore(databasePath).open();
+  let coordinator = null;
+  const notifications = [];
+  try {
+    const created = terminalNotification(store, "restart-claim");
+    const abandoned = store.claimSystemNotification({ claimSeconds: 60 });
+    assert.equal(abandoned.deliveryId > 0, true);
+    store.db.prepare("UPDATE completion_deliveries SET claim_expires_at=? WHERE id=?")
+      .run(new Date(Date.now() - 1_000).toISOString(), abandoned.deliveryId);
+    store.close();
+
+    store = new StateStore(databasePath);
+    coordinator = new Coordinator({
+      store,
+      browserManager: fakeBrowser,
+      legacyCompletionFiles: false,
+      completionNotifier: async (delivery) => { notifications.push(delivery); return true; },
+    });
+    await coordinator.open();
+    await waitFor(() => store.db.prepare("SELECT state FROM completion_deliveries WHERE subscription_id=?").get(created.subscriptionId)?.state === "delivered");
+    assert.equal(notifications.length, 1);
+    const durable = store.db.prepare("SELECT state, attempt_count FROM completion_deliveries WHERE subscription_id=?").get(created.subscriptionId);
+    assert.equal(durable.state, "delivered");
+    assert.equal(Number(durable.attempt_count), 2);
+  } finally {
+    if (coordinator) await coordinator.close();
+    else store.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("an unexpired claimed retry wakes at claim expiry instead of its stale retry timestamp", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-notify-live-claim-"));
+  const databasePath = path.join(directory, "state.sqlite");
+  let store = await new StateStore(databasePath).open();
+  try {
+    terminalNotification(store, "live-retry-claim");
+    const first = store.claimSystemNotification({ claimSeconds: 60 });
+    store.retrySystemNotification(first.deliveryId, first.claimId, new Error("fixture retry"), {
+      baseDelayMs: 1,
+      maximumDelayMs: 1,
+    });
+    store.db.prepare("UPDATE completion_deliveries SET next_attempt_at=? WHERE id=?")
+      .run(new Date(Date.now() - 60_000).toISOString(), first.deliveryId);
+    const retried = store.claimSystemNotification({ claimSeconds: 60 });
+    assert.equal(retried.deliveryId, first.deliveryId);
+    store.db.prepare("UPDATE completion_deliveries SET next_attempt_at=? WHERE id=?")
+      .run(new Date(Date.now() - 60_000).toISOString(), first.deliveryId);
+    store.close();
+
+    store = await new StateStore(databasePath).open();
+    assert.equal(store.nextSystemNotificationAt(), retried.claimExpiresAt);
+    assert.ok(Date.parse(store.nextSystemNotificationAt()) > Date.now() + 50_000);
+  } finally {
+    store.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("startup rebuilds a missing terminal completion delivery from SQLite chain authority", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-notify-rebuild-"));
+  const databasePath = path.join(directory, "state.sqlite");
+  let store = await new StateStore(databasePath).open();
+  let coordinator = null;
+  const notifications = [];
+  try {
+    const created = terminalNotification(store, "rebuild");
+    store.db.prepare("DELETE FROM completion_deliveries WHERE subscription_id=?").run(created.subscriptionId);
+    assert.equal(store.maxCompletionDeliveryId(), 0);
+    store.close();
+
+    store = new StateStore(databasePath);
+    coordinator = new Coordinator({
+      store,
+      browserManager: fakeBrowser,
+      legacyCompletionFiles: false,
+      completionNotifier: async (delivery) => { notifications.push(delivery); return true; },
+    });
+    await coordinator.open();
+    await waitFor(() => store.db.prepare("SELECT state FROM completion_deliveries WHERE subscription_id=?").get(created.subscriptionId)?.state === "delivered");
+    assert.equal(notifications.length, 1);
+    assert.equal(coordinator.deliveryRepair.deliveries, 1);
+    assert.equal(store.db.prepare("SELECT state FROM completion_deliveries WHERE subscription_id=?").get(created.subscriptionId).state, "delivered");
+  } finally {
+    if (coordinator) await coordinator.close();
+    else store.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("system notifications use bounded independent workers", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-notify-workers-"));
+  const store = await new StateStore(path.join(directory, "state.sqlite")).open();
+  let active = 0;
+  let maxActive = 0;
+  let delivered = 0;
+  let coordinator = null;
+  try {
+    for (let index = 0; index < 5; index += 1) terminalNotification(store, `worker-${index}`);
+    coordinator = new Coordinator({
+      store,
+      browserManager: fakeBrowser,
+      legacyCompletionFiles: false,
+      notificationConcurrency: 2,
+      completionNotifier: async () => {
+        active += 1;
+        maxActive = Math.max(maxActive, active);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        active -= 1;
+        delivered += 1;
+        return true;
+      },
+    });
+    await coordinator.open();
+    await waitFor(() => delivered === 5);
+    assert.equal(maxActive, 2);
+  } finally {
+    if (coordinator) await coordinator.close();
+    else store.close();
     await rm(directory, { recursive: true, force: true });
   }
 });

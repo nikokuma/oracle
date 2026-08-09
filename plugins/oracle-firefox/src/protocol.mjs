@@ -52,10 +52,38 @@ export function tokensEqual(actual, expected) {
   return left.length === right.length && left.length > 0 && timingSafeEqual(left, right);
 }
 
-export function attachRpcServer(socket, { token, methods, serverInfo }) {
+export function attachRpcServer(socket, { token, methods, serverInfo, socketTimeoutMs = 5 * 60_000 }) {
   socket.setNoDelay(true);
-  const send = (value) => socket.write(encodeFrame(value));
-  const decoder = createFrameDecoder(async (request) => {
+  const boundedSocketTimeoutMs = Math.max(1_000, Number(socketTimeoutMs) || 5 * 60_000);
+  let connected = true;
+  let writeQueue = Promise.resolve();
+  const abandon = () => {
+    connected = false;
+  };
+  const send = (value) => {
+    if (!connected || socket.destroyed || !socket.writable) return Promise.resolve(false);
+    let frame;
+    try {
+      frame = encodeFrame(value);
+    } catch {
+      return Promise.resolve(false);
+    }
+    const queued = writeQueue.then(() => new Promise((resolve) => {
+      if (!connected || socket.destroyed || !socket.writable) return resolve(false);
+      try {
+        socket.write(frame, (error) => {
+          if (error) abandon();
+          resolve(!error && connected);
+        });
+      } catch {
+        abandon();
+        resolve(false);
+      }
+    }));
+    writeQueue = queued.catch(() => false);
+    return queued;
+  };
+  const handleRequest = async (request) => {
     const id = request?.id || randomUUID();
     try {
       if (!tokensEqual(request?.token, token)) {
@@ -77,15 +105,30 @@ export function attachRpcServer(socket, { token, methods, serverInfo }) {
       const handler = methods[request.method];
       if (!handler) throw codedError("METHOD_NOT_FOUND", `Unknown broker method: ${request.method}`);
       const result = await handler(request.params ?? {}, { requestId: id, client: request.client ?? null });
-      send({ id, ok: true, result, server: serverInfo });
+      await send({ id, ok: true, result, server: serverInfo });
     } catch (error) {
-      send({ id, ok: false, error: structuredError(error), server: serverInfo });
+      await send({ id, ok: false, error: structuredError(error), server: serverInfo });
     }
+  };
+  const decoder = createFrameDecoder((request) => {
+    // The handler owns its full lifecycle. A client disconnect only abandons
+    // response delivery; it never cancels an accepted or committed operation.
+    void handleRequest(request).catch(() => undefined);
   }, (error) => {
-    send({ id: null, ok: false, error: structuredError(error), server: serverInfo });
+    void send({ id: null, ok: false, error: structuredError(error), server: serverInfo })
+      .finally(() => socket.destroy());
+  });
+  socket.setTimeout(boundedSocketTimeoutMs);
+  socket.on("data", decoder);
+  socket.on("error", () => {
+    abandon();
+    if (!socket.destroyed) socket.destroy();
+  });
+  socket.on("close", abandon);
+  socket.on("timeout", () => {
+    abandon();
     socket.destroy();
   });
-  socket.on("data", decoder);
 }
 
 export function rpcRequest(endpoint, token, method, params = {}, options = {}) {
@@ -104,6 +147,7 @@ export function rpcRequest(endpoint, token, method, params = {}, options = {}) {
     const timer = setTimeout(() => {
       finish(reject, codedError("BROKER_TIMEOUT", `Broker request ${method} timed out after ${timeoutMs}ms.`));
     }, timeoutMs);
+    timer.unref?.();
     const decoder = createFrameDecoder((response) => {
       if (response?.id !== id) return;
       if (response.ok) return finish(resolve, response.result);
@@ -111,14 +155,20 @@ export function rpcRequest(endpoint, token, method, params = {}, options = {}) {
       finish(reject, codedError(value.code || "BROKER_ERROR", value.message || "Broker request failed.", value));
     }, (error) => finish(reject, error));
     socket.once("connect", () => {
-      socket.write(encodeFrame({
-        id,
-        token,
-        protocolVersion: BROKER_PROTOCOL_VERSION,
-        method,
-        params,
-        client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION },
-      }));
+      try {
+        socket.write(encodeFrame({
+          id,
+          token,
+          protocolVersion: BROKER_PROTOCOL_VERSION,
+          method,
+          params,
+          client: options.client ?? { pid: process.pid, buildVersion: BROKER_BUILD_VERSION },
+        }), (error) => {
+          if (error) finish(reject, error);
+        });
+      } catch (error) {
+        finish(reject, error);
+      }
     });
     socket.on("data", decoder);
     socket.once("error", (error) => finish(reject, error));
