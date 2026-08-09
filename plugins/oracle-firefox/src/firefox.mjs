@@ -38,6 +38,13 @@ export function semanticTextHash(value) {
   return createHash("sha256").update(normalizeSemanticText(value)).digest("hex");
 }
 
+function remoteThrottleEvidence(kind, identity, text) {
+  const fingerprint = createHash("sha256")
+    .update(["oracle-remote-throttle-v1", kind, identity || "", semanticTextHash(text)].join("\0"))
+    .digest("hex");
+  return { kind, fingerprint };
+}
+
 export function semanticMismatchDetails(expected, observed) {
   const expectedNormalized = normalizeSemanticText(expected);
   const observedNormalized = normalizeSemanticText(observed);
@@ -1411,6 +1418,9 @@ export async function waitForUserMessage(
       throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submission attempt because the account is temporarily rate-limited. Oracle did not retry.", {
         submissionMayHaveOccurred: false,
         recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+        details: {
+          remoteThrottleEvidence: remoteThrottleEvidence("visible_notice", cooldownNotice.id, cooldownNotice.text),
+        },
       });
     }
     const users = latest.turns.filter((turn) => turn.role === "user");
@@ -1581,6 +1591,204 @@ function assistantBoundToUserTurn(turns, userIndex) {
   return assistants.length === 1 ? assistants[0] : null;
 }
 
+export async function probeAssistantAfterTurn(page, userTurn, { includeContent = false } = {}) {
+  const startedAt = performance.now();
+  const probe = await page.evaluate(async ({ expected, include, finishedSelector, stopSelectors }) => {
+    const visible = (node) => {
+      if (!(node instanceof HTMLElement)) return false;
+      const rect = node.getBoundingClientRect();
+      const style = window.getComputedStyle(node);
+      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+    };
+    const normalize = (value) => String(value || "")
+      .replace(/\r\n?/gu, "\n")
+      .replace(/\u00a0/gu, " ")
+      .replace(/\t/gu, "    ")
+      .normalize("NFC")
+      .replace(/[ \t]+\n/gu, "\n")
+      .replace(/\n[ \t]+/gu, "\n")
+      .trim();
+    const hash = (value) => {
+      const bytes = new TextEncoder().encode(normalize(value));
+      const words = [];
+      const hashWords = [];
+      const constants = [];
+      const composite = {};
+      let primeCount = 0;
+      for (let candidate = 2; primeCount < 64; candidate += 1) {
+        if (composite[candidate]) continue;
+        for (let multiple = candidate * candidate; multiple < 313; multiple += candidate) composite[multiple] = true;
+        hashWords[primeCount] = (Math.sqrt(candidate) * 0x100000000) | 0;
+        constants[primeCount] = (Math.cbrt(candidate) * 0x100000000) | 0;
+        primeCount += 1;
+      }
+      const bitLength = bytes.length * 8;
+      const paddedLength = (((bytes.length + 9 + 63) >> 6) << 6);
+      const padded = new Uint8Array(paddedLength);
+      padded.set(bytes);
+      padded[bytes.length] = 0x80;
+      const view = new DataView(padded.buffer);
+      view.setUint32(paddedLength - 4, bitLength >>> 0, false);
+      view.setUint32(paddedLength - 8, Math.floor(bitLength / 0x100000000), false);
+      const rotate = (word, amount) => (word >>> amount) | (word << (32 - amount));
+      for (let offset = 0; offset < paddedLength; offset += 64) {
+        for (let index = 0; index < 16; index += 1) words[index] = view.getInt32(offset + index * 4, false);
+        for (let index = 16; index < 64; index += 1) {
+          const left = words[index - 15];
+          const right = words[index - 2];
+          const sigma0 = rotate(left, 7) ^ rotate(left, 18) ^ (left >>> 3);
+          const sigma1 = rotate(right, 17) ^ rotate(right, 19) ^ (right >>> 10);
+          words[index] = (words[index - 16] + sigma0 + words[index - 7] + sigma1) | 0;
+        }
+        let [a, b, c, d, e, f, g, h] = hashWords;
+        for (let index = 0; index < 64; index += 1) {
+          const sum1 = rotate(e, 6) ^ rotate(e, 11) ^ rotate(e, 25);
+          const choice = (e & f) ^ (~e & g);
+          const temp1 = (h + sum1 + choice + constants[index] + words[index]) | 0;
+          const sum0 = rotate(a, 2) ^ rotate(a, 13) ^ rotate(a, 22);
+          const majority = (a & b) ^ (a & c) ^ (b & c);
+          const temp2 = (sum0 + majority) | 0;
+          h = g; g = f; f = e; e = (d + temp1) | 0;
+          d = c; c = b; b = a; a = (temp1 + temp2) | 0;
+        }
+        const next = [a, b, c, d, e, f, g, h];
+        for (let index = 0; index < 8; index += 1) hashWords[index] = (hashWords[index] + next[index]) | 0;
+      }
+      return hashWords.map((word) => (word >>> 0).toString(16).padStart(8, "0")).join("");
+    };
+    const serializeUserSource = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) return node.textContent || "";
+      if (!(node instanceof HTMLElement)) return "";
+      if (node instanceof HTMLBRElement) return "\n";
+      if (node instanceof HTMLPreElement) {
+        const code = node.querySelector(":scope > code");
+        const source = String(code?.textContent || node.textContent || "").replace(/\n+$/u, "");
+        return `\`\`\`${source}\n\`\`\``;
+      }
+      if (node.tagName === "CODE") {
+        const source = node.textContent || "";
+        const longestRun = Math.max(0, ...Array.from(source.matchAll(/`+/gu), (match) => match[0].length));
+        const delimiter = "`".repeat(longestRun + 1);
+        return `${delimiter}${source}${delimiter}`;
+      }
+      return Array.from(node.childNodes, serializeUserSource).join("");
+    };
+    const roleNodes = Array.from(document.querySelectorAll('[data-message-author-role], [data-turn="assistant"], [data-turn="user"]'));
+    const turns = [];
+    const seen = new Set();
+    for (const roleNode of roleNodes) {
+      const turn = roleNode.closest('[data-testid^="conversation-turn"]') || roleNode.closest("article") || roleNode;
+      if (seen.has(turn)) continue;
+      seen.add(turn);
+      const role = roleNode.getAttribute("data-message-author-role") || roleNode.getAttribute("data-turn");
+      if (role !== "assistant" && role !== "user") continue;
+      turns.push({ role, roleNode, turn });
+    }
+    const attachmentNames = (turn) => Array.from(turn.querySelectorAll('[data-testid*="attachment"], [data-testid*="file"], a[download], [role="group"][aria-label]'))
+      .map((node) => (node.getAttribute("download") || node.getAttribute("aria-label") || node.getAttribute("title") || node.textContent || "").trim())
+      .flatMap((value) => {
+        const match = value.match(/([^/\\\n]+\.[a-z0-9]{1,12})/iu);
+        return match ? [match[1].trim()] : [];
+      })
+      .sort();
+    const expectedAttachments = Array.isArray(expected.attachments) ? [...expected.attachments].sort() : null;
+    const matches = [];
+    if (expected.id) {
+      for (let index = 0; index < turns.length; index += 1) {
+        const item = turns[index];
+        if (item.role !== "user") continue;
+        const id = item.turn.getAttribute("data-message-id") || item.roleNode.getAttribute("data-message-id") ||
+          item.turn.getAttribute("data-testid") || item.turn.id || null;
+        if (id === expected.id) matches.push(index);
+      }
+    }
+    if (matches.length === 0 && expected.hash) {
+      for (let index = 0; index < turns.length; index += 1) {
+        const item = turns[index];
+        if (item.role !== "user") continue;
+        const content = item.turn.querySelector('[data-testid="collapsible-user-message-content"], .whitespace-pre-wrap, [data-message-content], [data-testid*="user-message-content"]') || item.roleNode;
+        if (await hash(serializeUserSource(content)) !== expected.hash) continue;
+        const attachments = attachmentNames(item.turn);
+        if (expectedAttachments && attachments.join("\0") !== expectedAttachments.join("\0")) continue;
+        matches.push(index);
+      }
+    }
+    if (matches.length !== 1) {
+      return { userMatchCount: matches.length, assistantCount: 0, assistant: null, stopVisible: false };
+    }
+    const following = turns.slice(matches[0] + 1);
+    const nextUser = following.findIndex((item) => item.role === "user");
+    const segment = nextUser >= 0 ? following.slice(0, nextUser) : following;
+    const assistants = segment.filter((item) => item.role === "assistant");
+    const stopVisible = stopSelectors.some((selector) =>
+      Array.from(document.querySelectorAll(selector)).some((node) => visible(node)),
+    );
+    if (assistants.length !== 1) {
+      return { userMatchCount: 1, assistantCount: assistants.length, assistant: null, stopVisible };
+    }
+    const item = assistants[0];
+    const content = item.turn.querySelector(".markdown, [data-message-content]") || item.roleNode;
+    const text = (content.innerText || content.textContent || "").trim();
+    const id = item.turn.getAttribute("data-message-id") || item.roleNode.getAttribute("data-message-id") ||
+      item.turn.getAttribute("data-testid") || item.turn.id || null;
+    const errorIndicators = Array.from(item.turn.querySelectorAll('[role="alert"], [data-testid*="error"], button'))
+      .filter((node) => {
+        if (!visible(node)) return false;
+        if (node.matches('[role="alert"], [data-testid*="error"]')) return true;
+        const label = String(node.getAttribute("aria-label") || node.textContent || "").replace(/\s+/gu, " ").trim();
+        return /^(?:retry|try again|regenerate|report)$/iu.test(label);
+      })
+      .map((node) => String(node.getAttribute("aria-label") || node.textContent || "").replace(/\s+/gu, " ").trim())
+      .filter(Boolean)
+      .slice(0, 8);
+    const textHash = await hash(text);
+    return {
+      userMatchCount: 1,
+      assistantCount: 1,
+      stopVisible,
+      assistant: {
+        id,
+        hash: textHash,
+        textLength: text.length,
+        completionVisible: Boolean(item.turn.querySelector(finishedSelector)),
+        errorIndicators,
+        ...(include ? { text, html: item.turn.innerHTML || "" } : {}),
+      },
+    };
+  }, {
+    expected: userTurn,
+    include: includeContent,
+    finishedSelector: FINISHED_ACTIONS_SELECTOR,
+    stopSelectors: STOP_BUTTON_SELECTORS,
+  });
+  const payloadBytes = Buffer.byteLength(JSON.stringify(probe), "utf8");
+  return { ...probe, latencyMs: performance.now() - startedAt, payloadBytes };
+}
+
+async function boundedAssistantTurnProbe(page, userTurn, options, probeTimeoutMs) {
+  let timer;
+  try {
+    return await Promise.race([
+      probeAssistantAfterTurn(page, userTurn, options),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(codedError(
+          "RESPONSE_MONITOR_STALLED",
+          `The exact-turn browser probe exceeded ${probeTimeoutMs}ms. Oracle released only the monitor execution and did not resend.`,
+          {
+            submissionMayHaveOccurred: true,
+            safeToRetry: false,
+            recoveryAction: "resume monitor-only execution for the exact submitted turn",
+            details: { probeTimeoutMs, monitorOnly: true },
+          },
+        )), Math.max(1, probeTimeoutMs));
+        timer.unref?.();
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function waitForAssistantAfterTurn(
   page,
   userTurn,
@@ -1590,18 +1798,42 @@ export async function waitForAssistantAfterTurn(
   let lastKey = "";
   let stableSince = Date.now();
   let terminalCycles = 0;
+  let cachedAssistant = null;
+  let terminalContentKey = "";
+  const monitorMetrics = { probeCount: 0, contentFetchCount: 0, maxProbeLatencyMs: 0, maxProbePayloadBytes: 0 };
   while (Date.now() < deadline) {
-    const snapshot = await boundedAssistantSnapshot(page, Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now())));
-    const userIndex = correlatedUserTurnIndex(snapshot.turns, userTurn);
-    const assistant = assistantBoundToUserTurn(snapshot.turns, userIndex);
-    const responseFailure = classifyAssistantResponseFailure(assistant);
-    const key = assistant ? `${assistant.id || ""}:${semanticTextHash(assistant.text)}` : "";
+    const boundedTimeout = Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now()));
+    const probe = await boundedAssistantTurnProbe(page, userTurn, { includeContent: false }, boundedTimeout);
+    monitorMetrics.probeCount += 1;
+    monitorMetrics.maxProbeLatencyMs = Math.max(monitorMetrics.maxProbeLatencyMs, probe.latencyMs);
+    monitorMetrics.maxProbePayloadBytes = Math.max(monitorMetrics.maxProbePayloadBytes, probe.payloadBytes);
+    const key = probe.assistant ? `${probe.assistant.id || ""}:${probe.assistant.hash}` : "";
+    const terminalHint = Boolean(probe.assistant &&
+      (probe.assistant.completionVisible || probe.assistant.errorIndicators.length) && !probe.stopVisible);
     if (key !== lastKey) {
       lastKey = key;
       stableSince = Date.now();
       terminalCycles = 0;
     }
-    const terminal = assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure) && !snapshot.stopVisible;
+    if (probe.assistant && (
+      key !== `${cachedAssistant?.id || ""}:${cachedAssistant?.hash || ""}` ||
+      (terminalHint && terminalContentKey !== key)
+    )) {
+      const content = await boundedAssistantTurnProbe(page, userTurn, { includeContent: true }, boundedTimeout);
+      monitorMetrics.contentFetchCount += 1;
+      monitorMetrics.maxProbeLatencyMs = Math.max(monitorMetrics.maxProbeLatencyMs, content.latencyMs);
+      monitorMetrics.maxProbePayloadBytes = Math.max(monitorMetrics.maxProbePayloadBytes, content.payloadBytes);
+      cachedAssistant = content.assistant;
+      if (terminalHint && content.assistant) terminalContentKey = key;
+    }
+    const assistant = cachedAssistant ? {
+      ...cachedAssistant,
+      text: cachedAssistant.text || "",
+      html: cachedAssistant.html || "",
+    } : null;
+    const responseFailure = classifyAssistantResponseFailure(assistant);
+    const terminal = terminalHint && assistant && !isPlaceholder(assistant.text) &&
+      (assistant.completionVisible || responseFailure);
     if (terminal) {
       terminalCycles += 1;
       if (terminalCycles >= 3 && Date.now() - stableSince >= stableMs) {
@@ -1609,15 +1841,18 @@ export async function waitForAssistantAfterTurn(
           throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
             submissionMayHaveOccurred: true,
             recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+            details: {
+              remoteThrottleEvidence: remoteThrottleEvidence("assistant_turn", assistant.id || userTurn.id, assistant.text),
+            },
           });
         }
         return {
-          ...snapshot,
           assistantTurn: assistant,
           text: assistant.text,
           html: assistant.html,
           responseFailure,
           exactTurnBinding: true,
+          monitorMetrics,
         };
       }
     } else {
@@ -1640,27 +1875,35 @@ export async function reconcileAssistantAfterTurn(page, userTurn) {
       { submissionMayHaveOccurred: true },
     );
   }
-  const snapshot = await boundedAssistantSnapshot(page);
-  const userIndex = correlatedUserTurnIndex(snapshot.turns, userTurn);
-  if (userIndex < 0) return null;
-  const assistant = assistantBoundToUserTurn(snapshot.turns, userIndex);
+  const probe = await boundedAssistantTurnProbe(page, userTurn, { includeContent: false }, 30_000);
+  if (probe.userMatchCount !== 1 || probe.assistantCount !== 1 || !probe.assistant) return null;
+  const content = await boundedAssistantTurnProbe(page, userTurn, { includeContent: true }, 30_000);
+  const assistant = content.assistant;
   const responseFailure = classifyAssistantResponseFailure(assistant);
   const terminal = assistant && !isPlaceholder(assistant.text) &&
-    (assistant.completionVisible || responseFailure) && !snapshot.stopVisible;
+    (assistant.completionVisible || responseFailure) && !probe.stopVisible;
   if (!terminal) return null;
   if (isChatGptCooldownText(assistant.text)) {
     throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
       submissionMayHaveOccurred: true,
       recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+      details: {
+        remoteThrottleEvidence: remoteThrottleEvidence("assistant_turn", assistant.id || userTurn.id, assistant.text),
+      },
     });
   }
   return {
-    ...snapshot,
     assistantTurn: assistant,
     text: assistant.text,
     html: assistant.html,
     responseFailure,
     exactTurnBinding: true,
+    monitorMetrics: {
+      probeCount: 2,
+      contentFetchCount: 1,
+      maxProbeLatencyMs: Math.max(probe.latencyMs, content.latencyMs),
+      maxProbePayloadBytes: Math.max(probe.payloadBytes, content.payloadBytes),
+    },
   };
 }
 
@@ -1678,8 +1921,12 @@ async function readChatGptCooldownNotice(page) {
     const notices = Array.from(
       document.querySelectorAll('[role="alert"], [data-sonner-toast], [data-testid*="toast"], [data-testid*="error"]'),
     ).filter(visible);
-    return notices
-      .map((node) => (node.innerText || node.textContent || "").replace(/\s+/gu, " ").trim())
-      .find((text) => /too many requests(?: too quickly)?|temporarily rate[- ]limited|try again later/iu.test(text)) || null;
+    const matched = notices
+      .map((node) => ({
+        id: node.getAttribute("data-testid") || node.getAttribute("data-sonner-toast") || node.id || null,
+        text: (node.innerText || node.textContent || "").replace(/\s+/gu, " ").trim(),
+      }))
+      .find((notice) => /too many requests(?: too quickly)?|temporarily rate[- ]limited|try again later/iu.test(notice.text));
+    return matched || null;
   });
 }

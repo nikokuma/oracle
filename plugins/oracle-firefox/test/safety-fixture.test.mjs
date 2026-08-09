@@ -11,6 +11,7 @@ import {
   insertComposerText,
   launchFirefox,
   normalizeSemanticText,
+  probeAssistantAfterTurn,
   readComposerText,
   reconcileAssistantAfterTurn,
   semanticTextHash,
@@ -247,6 +248,10 @@ test("binds completion to the exact new user turn and ignores Pro-thinking place
     const response = await waitForAssistantAfterTurn(page, confirmed.userTurn, { timeoutMs: 4_000, stableMs: 300 });
     assert.equal(response.text, "final exact answer");
     assert.equal(response.assistantTurn.id, "new-assistant");
+    assert.ok(response.monitorMetrics.probeCount >= 1);
+    assert.ok(response.monitorMetrics.contentFetchCount >= 1);
+    assert.ok(response.monitorMetrics.maxProbeLatencyMs >= 0);
+    assert.ok(response.monitorMetrics.maxProbePayloadBytes > 0);
   });
 });
 
@@ -264,6 +269,25 @@ test("accepts an exact user-turn ID without a hash and captures an ID-less assis
     assert.equal(response.exactTurnBinding, true);
     assert.equal(response.assistantTurn.id, null);
     assert.equal(semanticTextHash(response.assistantTurn.text), semanticTextHash("ID-less exact answer"));
+  });
+});
+
+test("a 10,000-turn exact probe returns bounded metadata without serializing conversation HTML", { timeout: 30_000 }, async () => {
+  const historical = Array.from({ length: 9_998 }, (_, index) =>
+    `<article data-message-author-role="${index % 2 ? "assistant" : "user"}" data-message-id="old-${index}"><div data-message-content>historical ${index}</div></article>`,
+  ).join("");
+  await withPage(`<main>${historical}
+    <article data-message-author-role="user" data-message-id="expected-user"><div data-message-content>exact prompt</div></article>
+    <article data-message-author-role="assistant" data-message-id="expected-assistant"><div class="markdown">bounded answer</div><button data-testid="copy-turn-action-button">Copy</button></article>
+  </main>`, async (page) => {
+    const probe = await probeAssistantAfterTurn(page, { id: "expected-user" });
+    assert.equal(probe.userMatchCount, 1);
+    assert.equal(probe.assistantCount, 1);
+    assert.equal(probe.assistant.id, "expected-assistant");
+    assert.equal("text" in probe.assistant, false);
+    assert.equal("html" in probe.assistant, false);
+    assert.ok(probe.payloadBytes < 2_048, `probe payload was ${probe.payloadBytes} bytes`);
+    assert.ok(probe.latencyMs >= 0);
   });
 });
 

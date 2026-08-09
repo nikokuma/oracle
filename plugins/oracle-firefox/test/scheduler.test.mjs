@@ -539,6 +539,53 @@ test("same-generation abandoned monitor claims resume monitoring without lifecyc
   }
 });
 
+test("a slow exact-turn probe releases and resumes only monitor-only execution", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-slow-monitor-probe-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  const executionKinds = [];
+  let attempts = 0;
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    legacyCompletionFiles: false,
+    jobExecutor: async ({ jobId, store: state, executionClaim }) => {
+      executionKinds.push(executionClaim.executionKind);
+      attempts += 1;
+      if (attempts === 1) {
+        throw Object.assign(new Error("exact probe timed out"), {
+          code: "RESPONSE_MONITOR_STALLED",
+          submissionMayHaveOccurred: true,
+        });
+      }
+      state.transitionClaimed(executionClaim, "completed", { result: { jobId } });
+    },
+  });
+  try {
+    await coordinator.open();
+    coordinator.draining = true;
+    const scope = "https://chatgpt.com/c/slow-monitor-probe";
+    const job = queue(store, scope);
+    for (const state of ["page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified", "submit_intent"]) {
+      store.transition(job.id, state, state === "submit_intent" ? { submittedMessageHash: "slow-hash" } : {});
+    }
+    store.transition(job.id, "user_turn_confirmed", {
+      conversationUrl: scope,
+      userTurnId: "slow-user",
+      userTurnHash: "slow-hash",
+    });
+    store.transition(job.id, "awaiting_response");
+    coordinator.draining = false;
+    coordinator.schedule();
+    await waitFor(() => store.requireJob(job.id).state === "completed");
+    assert.deepEqual(executionKinds, ["monitor_only", "monitor_only"]);
+    assert.equal(store.requireJob(job.id).executionFailureCount, 1);
+    assert.equal(store.db.prepare("SELECT COUNT(*) count FROM submit_permits WHERE job_id=?").get(job.id).count, 0);
+  } finally {
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("new-chat qualification is exclusive, then other response lanes may overlap", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-creation-barrier-"));
   const store = new StateStore(path.join(directory, "state.sqlite"));

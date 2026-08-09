@@ -14,6 +14,45 @@ const KEY_VALUES = {
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+function safariChildExited(child) {
+  return !child || child.exitCode !== null || child.signalCode != null;
+}
+
+async function waitForSafariChildExit(child, timeoutMs) {
+  if (safariChildExited(child)) return true;
+  let timer;
+  let onExit;
+  try {
+    return await Promise.race([
+      new Promise((resolve) => {
+        onExit = () => resolve(true);
+        child.once("exit", onExit);
+      }),
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve(false), Math.max(1, timeoutMs));
+        timer.unref?.();
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    if (onExit && !safariChildExited(child)) child.off?.("exit", onExit);
+  }
+}
+
+export async function shutdownSafariProcess(child, { termTimeoutMs = 2_000, killTimeoutMs = 1_000 } = {}) {
+  if (!child || safariChildExited(child)) return { exited: true, escalated: false, pid: child?.pid ?? null };
+  const ownedPid = child.pid;
+  child.kill("SIGTERM");
+  if (await waitForSafariChildExit(child, termTimeoutMs)) {
+    return { exited: true, escalated: false, pid: ownedPid };
+  }
+  // child.kill targets only this exact spawned safaridriver child. Never use a
+  // process-name lookup or a broad Safari kill at this ownership boundary.
+  child.kill("SIGKILL");
+  const exited = await waitForSafariChildExit(child, killTimeoutMs);
+  return { exited, escalated: true, pid: ownedPid };
+}
+
 async function freePort() {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -395,9 +434,15 @@ class SafariBrowser {
   }
 
   async close() {
-    if (!this.connected) return;
-    await this.transport.request("DELETE", `/session/${encodeURIComponent(this.sessionId)}`).catch(() => undefined);
-    this.child.kill("SIGTERM");
+    if (this.connected) {
+      await this.transport.request(
+        "DELETE",
+        `/session/${encodeURIComponent(this.sessionId)}`,
+        undefined,
+        { timeoutMs: 2_000 },
+      ).catch(() => undefined);
+    }
+    await shutdownSafariProcess(this.child);
     this._disconnected();
   }
 }
@@ -474,7 +519,7 @@ export async function launchSafari({
     }
     return browser;
   } catch (error) {
-    child.kill("SIGTERM");
+    await shutdownSafariProcess(child);
     throw error;
   }
 }

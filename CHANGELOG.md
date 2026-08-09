@@ -26,6 +26,7 @@
 
 ### Fixed
 
+- Oracle Firefox 1.7.0: expose mutually exclusive logical queue and attention counts, hold malformed or overdue local-data requests for explicit capability-owned resolution, deduplicate broker-wide cooldown incidents, move pacing waits outside the trusted Send lock with exact pre-click revalidation, bound exact-turn monitoring payloads, isolate each browser download attempt by browser generation, and terminate only Oracle's exact owned Safari driver process.
 - Oracle Firefox 1.6.9: recover once from a degraded idle browser before leasing a job page, close every failed new page, accept Firefox BiDi navigation timeouts only when the exact target DOM is independently usable, and persist one terminal pre-submit result instead of repeating a page-open failure five times; allow a newer broker to drain safely while durable queued jobs remain.
 - Oracle Firefox 1.6.8: reconstruct inline-code delimiters from ChatGPT's rendered user-turn DOM so exact post-Send correlation and read-only reconciliation retain authorized backticks without weakening any other semantic comparison.
 - Oracle Firefox 1.6.7: report sanitized semantic mismatch diagnostics for an unconfirmed post-Send user turn and for capability-owned read-only reconciliation, allowing rendered-message correlation bugs to be isolated without exposing prompt or conversation contents.

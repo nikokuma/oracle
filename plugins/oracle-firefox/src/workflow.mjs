@@ -460,6 +460,19 @@ function transitionExecution(store, executionClaim, jobId, state, patch = {}, de
     : store.transition(jobId, state, patch, details);
 }
 
+export function exactPreSubmitTargetMatches(currentUrl, expectedUrl) {
+  try {
+    const current = new URL(String(currentUrl));
+    const expected = new URL(String(expectedUrl));
+    const normalizedPath = (value) => value.pathname.replace(/\/+$/u, "") || "/";
+    return current.origin === "https://chatgpt.com" && expected.origin === "https://chatgpt.com" &&
+      normalizedPath(current) === normalizedPath(expected) &&
+      current.search === expected.search && current.hash === expected.hash;
+  } catch {
+    return false;
+  }
+}
+
 async function monitorSubmittedJob({ job, page, store, executionClaim, dependencies = {}, finalAttempt = false }) {
   if (!job.submitIntentAt ||
       !job.conversationUrl ||
@@ -585,6 +598,7 @@ const TERMINAL_JOB_STATES_FOR_WORKFLOW = new Set([
   "submission_uncertain",
   "response_uncertain",
   "response_failed",
+  "input_invalid",
   "quarantined",
 ]);
 
@@ -654,17 +668,25 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
     triggerFailpoint("after_response_persistence");
     return detected;
   }
-  const localDataRequest = parseLocalDataRequest(answer, {
-    expectedNonce: job.request.localDataNonce || null,
-  });
-  const disposition = localDataRequest ? "local_data_request" : "final";
+  let localDataRequest = null;
+  let inputInvalidError = null;
+  try {
+    localDataRequest = parseLocalDataRequest(answer, {
+      expectedNonce: job.request.localDataNonce || null,
+    });
+  } catch (error) {
+    if (error?.code !== "LOCAL_DATA_REQUEST_INVALID") throw error;
+    inputInvalidError = structuredError(error, { jobState: "input_invalid" });
+  }
+  const disposition = inputInvalidError ? "input_invalid" : (localDataRequest ? "local_data_request" : "final");
+  const terminalState = inputInvalidError ? "input_invalid" : "completed";
   const completedAt = new Date().toISOString();
   const result = {
     jobId: job.id,
     rootJobId: job.rootJobId,
     authorizationId: job.authorizationId,
-    state: "completed",
-    status: "completed",
+    state: terminalState,
+    status: terminalState,
     mode: job.operation === "consult" ? "new-chat" : "continue-chat",
     browser: job.request.browser || "firefox",
     projectTitle: job.projectTitle,
@@ -674,7 +696,7 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
     modelEvidence: job.modelEvidence,
     zipAttachments: publicZipAttachments(job.request),
     assistantDisposition: disposition,
-    responseDisposition: "completed",
+    responseDisposition: inputInvalidError ? "input_invalid" : "completed",
     localDataRequest,
     evidenceRound: job.evidenceRound,
     maxAutomaticEvidenceReplies: job.maxAutomaticEvidenceReplies,
@@ -685,7 +707,10 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
     safeToRetry: false,
     submissionMayHaveOccurred: true,
     submissionCount: job.retryAttempt + 1,
-    recoveryAction: localDataRequest ? "perform approved read-only checks, then call reply_with_local_data" : null,
+    ...(inputInvalidError ? { error: inputInvalidError } : {}),
+    recoveryAction: inputInvalidError
+      ? "use the owning control capability to explicitly abandon this malformed input request; no automated reply is permitted"
+      : localDataRequest ? "perform approved read-only checks, then call reply_with_local_data" : null,
   };
   if (executionClaim) {
     store.completeResponseClaimed(executionClaim, {
@@ -693,20 +718,22 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
       assistantTurnHash,
       assistantTurnBound: response.exactTurnBinding,
       assistantDisposition: disposition,
-      responseDisposition: "completed",
+      responseDisposition: inputInvalidError ? "input_invalid" : "completed",
       localDataRequest,
       result,
       recoveryAction: result.recoveryAction,
+      terminalState,
     });
   } else {
-    transitionExecution(store, null, job.id, "response_confirmed", {
+    transitionExecution(store, null, job.id, inputInvalidError ? "input_invalid" : "response_confirmed", {
       assistantTurnId,
       assistantTurnHash,
       assistantDisposition: disposition,
-      responseDisposition: "completed",
+      responseDisposition: inputInvalidError ? "input_invalid" : "completed",
       localDataRequest,
+      ...(inputInvalidError ? { result, error: inputInvalidError, recoveryAction: result.recoveryAction } : {}),
     });
-    transitionExecution(store, null, job.id, "completed", { result, recoveryAction: result.recoveryAction });
+    if (!inputInvalidError) transitionExecution(store, null, job.id, "completed", { result, recoveryAction: result.recoveryAction });
   }
   triggerFailpoint("after_terminal_commit");
   await writeCompletedArtifacts(store.requireJob(job.id), result);
@@ -803,46 +830,56 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
       throw codedError("ATTACHMENT_MISMATCH", "The composer attachment set changed before submission.", { safeToRetry: true });
     }
     transitionExecution(store, executionClaim, job.id, "composer_verified", { attachmentManifest });
-    await beforeSubmit?.(job.id, { waitOnly: true });
-    await browserManager.withTrustedAction(lease, async () => {
-      if (executionClaim) store.assertExecution(executionClaim);
-      const selectedModel = await ensureModelRequirement(lease.page, job.request.modelRequirement);
-      transitionExecution(store, executionClaim, job.id, "model_verified", { modelEvidence: selectedModel });
-      let finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
-      triggerFailpoint("after_model_verification");
-      const finalComposer = await inspectComposerState(lease.page);
-      if (semanticTextHash(finalComposer.text) !== semanticTextHash(composerPrompt)) {
-        throw codedError("COMPOSER_MISMATCH", "The composer changed after model selection; no message was sent.", { safeToRetry: true });
+    const expectedPreSubmitUrl = target?.url || project?.url || "https://chatgpt.com/";
+    let submitted = false;
+    while (!submitted) {
+      await beforeSubmit?.(job.id, { waitOnly: true });
+      try {
+        await browserManager.withTrustedAction(lease, async () => {
+          if (executionClaim) store.assertExecution(executionClaim);
+          const selectedModel = await ensureModelRequirement(lease.page, job.request.modelRequirement);
+          transitionExecution(store, executionClaim, job.id, "model_verified", { modelEvidence: selectedModel });
+          const submitPermit = await beforeSubmit?.(job.id, { waitOnly: false });
+          if (store.requireJob(job.id).state === "cancelled_pre_submit") {
+            throw codedError("JOB_CANCELLED", "The job was cancelled before submission; no message was sent.", { safeToRetry: false });
+          }
+          if (executionClaim) store.assertExecution(executionClaim);
+          if (!exactPreSubmitTargetMatches(lease.page.url(), expectedPreSubmitUrl)) {
+            throw codedError("TARGET_CHANGED", "The exact ChatGPT target changed before submission; no message was sent.", { safeToRetry: true });
+          }
+          const preClickComposer = await inspectComposerState(lease.page);
+          if (
+            semanticTextHash(preClickComposer.text) !== semanticTextHash(composerPrompt) ||
+            preClickComposer.uploading ||
+            attachmentManifestKey(preClickComposer.attachments) !== attachmentManifestKey(attachmentManifest)
+          ) {
+            throw codedError("COMPOSER_MISMATCH", "The exact composer or attachment state changed before submission; no message was sent.", { safeToRetry: true });
+          }
+          const finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
+          triggerFailpoint("after_model_verification");
+          (executionClaim ? store.consumeSubmitPermitClaimed.bind(store, executionClaim) : store.consumeSubmitPermit.bind(store, job.id))(
+            submitPermit.id,
+            { modelEvidence: finalModelEvidence, submittedMessageHash: semanticTextHash(composerPrompt) },
+            {
+              authorizedMessageHash: semanticTextHash(composerPrompt),
+              executionEpoch: executionClaim?.executionEpoch ?? null,
+              cooldownEpoch: submitPermit.gateVersion,
+              exactTarget: expectedPreSubmitUrl,
+            },
+          );
+          triggerFailpoint("after_submit_intent");
+          await submitComposer(lease.page);
+          submitted = true;
+          triggerFailpoint("after_click");
+        }, { owner: `submit:${job.id}` });
+      } catch (error) {
+        if (
+          new Set(["SUBMIT_PACING_WAIT", "SUBMIT_PERMIT_INVALID"]).has(error?.code) &&
+          !store.requireJob(job.id).submitIntentAt
+        ) continue;
+        throw error;
       }
-      if (
-        finalComposer.uploading ||
-        attachmentManifestKey(finalComposer.attachments) !== attachmentManifestKey(attachmentManifest)
-      ) {
-        throw codedError("ATTACHMENT_MISMATCH", "The attachment set changed after model selection; no message was sent.", { safeToRetry: true });
-      }
-      const submitPermit = await beforeSubmit?.(job.id, { waitOnly: false });
-      if (store.requireJob(job.id).state === "cancelled_pre_submit") {
-        throw codedError("JOB_CANCELLED", "The job was cancelled before submission; no message was sent.", { safeToRetry: false });
-      }
-      if (executionClaim) store.assertExecution(executionClaim);
-      const preClickComposer = await inspectComposerState(lease.page);
-      if (
-        semanticTextHash(preClickComposer.text) !== semanticTextHash(composerPrompt) ||
-        preClickComposer.uploading ||
-        attachmentManifestKey(preClickComposer.attachments) !== attachmentManifestKey(attachmentManifest)
-      ) {
-        throw codedError("COMPOSER_MISMATCH", "The exact composer state changed while waiting for the submit permit; no message was sent.", { safeToRetry: true });
-      }
-      finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
-      (executionClaim ? store.consumeSubmitPermitClaimed.bind(store, executionClaim) : store.consumeSubmitPermit.bind(store, job.id))(
-        submitPermit.id,
-        { modelEvidence: finalModelEvidence, submittedMessageHash: semanticTextHash(composerPrompt) },
-        { authorizedMessageHash: semanticTextHash(composerPrompt), executionEpoch: executionClaim?.executionEpoch ?? null },
-      );
-      triggerFailpoint("after_submit_intent");
-      await submitComposer(lease.page);
-      triggerFailpoint("after_click");
-    }, { owner: `submit:${job.id}` });
+    }
     const confirmed = await waitForUserMessage(lease.page, baseline.userCount, composerPrompt, {
       timeoutMs: 30_000,
       expectedAttachments: attachmentManifest,

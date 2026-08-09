@@ -89,6 +89,24 @@ test("serializes browser download controls across agents and releases after fail
   assert.deepEqual(events, ["first:start", "first:end", "second:start", "second:end"]);
 });
 
+test("a timed-out browser download fences only its exact browser generation", async () => {
+  const manager = new BrowserManager();
+  manager.browserGeneration = 17;
+  const timedOut = Object.assign(new Error("late download may still arrive"), {
+    code: "DOWNLOAD_TIMEOUT",
+    details: { downloadAttemptQuarantined: true, browserGeneration: 17 },
+  });
+  await assert.rejects(() => manager.withDownload(async () => { throw timedOut; }), timedOut);
+  let attempted = false;
+  await assert.rejects(
+    () => manager.withDownload(async () => { attempted = true; }),
+    (error) => error.code === "BROWSER_DOWNLOAD_GENERATION_QUARANTINED",
+  );
+  assert.equal(attempted, false);
+  manager.browserGeneration = 18;
+  assert.equal(await manager.withDownload(async () => "new generation"), "new generation");
+});
+
 function fakeBrowserHarness() {
   let launches = 0;
   let pages = 0;

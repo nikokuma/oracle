@@ -35,6 +35,7 @@ export const JOB_STATES = Object.freeze([
   "submission_uncertain",
   "response_uncertain",
   "response_failed",
+  "input_invalid",
   "quarantined",
 ]);
 
@@ -45,6 +46,7 @@ export const TERMINAL_JOB_STATES = new Set([
   "submission_uncertain",
   "response_uncertain",
   "response_failed",
+  "input_invalid",
   "quarantined",
 ]);
 
@@ -144,6 +146,7 @@ function rowToJob(row) {
     chainState: row.chain_state ?? null,
     inputRequestAbandonedAt: row.input_required_abandoned_at ?? null,
     inputRequestAbandonedReason: row.input_required_abandoned_reason ?? null,
+    attentionRequiredAt: row.attention_required_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     startedAt: row.started_at,
@@ -173,6 +176,7 @@ function rowToChain(row) {
     inputRequestAbandonedAt: row.input_required_abandoned_at,
     inputRequestAbandonedJobId: row.input_required_abandoned_job_id,
     inputRequestAbandonedReason: row.input_required_abandoned_reason,
+    attentionRequiredAt: row.attention_required_at,
   };
 }
 
@@ -183,8 +187,6 @@ function quarantineFingerprint(row) {
     row.scope_key,
     row.job_id,
     row.created_at,
-    row.job_state,
-    row.job_updated_at,
   ].map((value) => String(value ?? "")).join("\0")).digest("hex");
 }
 
@@ -195,14 +197,40 @@ function inputRequestFingerprint(row) {
     row.conversation_key,
     row.id,
     row.active_job_id,
-    row.updated_at,
-    row.job_updated_at,
-    row.local_data_request_json,
+    row.created_at,
   ].map((value) => String(value ?? "")).join("\0")).digest("hex");
+}
+
+function blockerAgeSeconds(row, nowMs = Date.now()) {
+  const createdMs = Date.parse(row.created_at || row.updated_at || 0);
+  return Number.isFinite(createdMs) ? Math.max(0, Math.floor((nowMs - createdMs) / 1_000)) : null;
+}
+
+function sanitizedInputBlocker(row, nowMs = Date.now()) {
+  const invalid = row.job_state === "input_invalid" || row.assistant_disposition === "input_invalid";
+  return {
+    fingerprint: inputRequestFingerprint(row),
+    type: invalid ? "input_invalid" : "local_data",
+    ageSeconds: blockerAgeSeconds({
+      created_at: row.updated_at || row.created_at,
+    }, nowMs),
+    state: row.attention_required_at ? "attention_required" : "waiting_for_owner",
+  };
+}
+
+function sanitizedQuarantineBlocker(row, nowMs = Date.now()) {
+  return {
+    fingerprint: quarantineFingerprint(row),
+    type: "uncertainty",
+    ageSeconds: blockerAgeSeconds(row, nowMs),
+    state: "reconciliation_required",
+  };
 }
 
 const WAKE_CHAIN_STATES = new Set([
   "input_required",
+  "input_invalid",
+  "attention_required",
   "completed",
   "failed",
   "cancelled",
@@ -731,6 +759,7 @@ export class StateStore extends EventEmitter {
         ["start_receipt_cap_hash", "TEXT"],
         ["start_receipt_recovered_at", "TEXT"],
         ["start_receipt_recovery_count", "INTEGER NOT NULL DEFAULT 0"],
+        ["attention_required_at", "TEXT"],
       ]);
       addColumns("completion_deliveries", [
         ["claim_kind", "TEXT"],
@@ -742,6 +771,15 @@ export class StateStore extends EventEmitter {
       this.db.exec(`
         CREATE INDEX IF NOT EXISTS completion_deliveries_system_ready
           ON completion_deliveries(state, next_attempt_at, claim_expires_at, id);
+        CREATE TABLE IF NOT EXISTS cooldown_incidents (
+          evidence_fingerprint TEXT PRIMARY KEY,
+          evidence_kind TEXT NOT NULL,
+          code TEXT NOT NULL,
+          first_seen_at TEXT NOT NULL,
+          last_seen_at TEXT NOT NULL,
+          observer_count INTEGER NOT NULL DEFAULT 1,
+          cooldown_until TEXT NOT NULL
+        );
       `);
       this.db.exec(`
         UPDATE completion_deliveries
@@ -762,9 +800,11 @@ export class StateStore extends EventEmitter {
       "jobs", "job_events", "quarantines", "owner_sessions", "scheduler_tickets",
       "job_chains", "job_attempts", "chain_session_grants", "chain_events",
       "completion_subscriptions", "completion_deliveries", "account_state", "submit_permits",
+      "cooldown_incidents",
     ];
     const metadata = ["schema_migrations", "broker_instances", "broker_state"];
-    for (const table of operational) {
+    const existingTables = new Set(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((row) => row.name));
+    for (const table of operational.filter((name) => existingTables.has(name))) {
       for (const action of ["INSERT", "UPDATE", "DELETE"]) {
         const name = `oracle_guard_${table}_${action.toLowerCase()}`;
         this.db.exec(`
@@ -1042,6 +1082,10 @@ export class StateStore extends EventEmitter {
   chainStateForJob(job, chain = null) {
     if (!job) return "failed";
     if (
+      job.state === "input_invalid" &&
+      chain?.input_required_abandoned_job_id !== job.id
+    ) return "input_invalid";
+    if (
       job.state === "completed" &&
       parse(job.local_data_request_json) &&
       chain?.input_required_abandoned_job_id !== job.id
@@ -1064,7 +1108,8 @@ export class StateStore extends EventEmitter {
              a.next_execution_not_before, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
+             c.attention_required_at
       FROM jobs j
       LEFT JOIN job_attempts a ON a.job_id = j.id
       LEFT JOIN job_chains c ON c.id = a.chain_id
@@ -1241,7 +1286,7 @@ export class StateStore extends EventEmitter {
              a.execution_epoch, a.execution_kind, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at, c.state AS chain_state,
              c.input_required_abandoned_at, c.input_required_abandoned_job_id,
-             c.input_required_abandoned_reason
+             c.input_required_abandoned_reason, c.attention_required_at
       FROM jobs j
       JOIN job_attempts a ON a.job_id = j.id
       JOIN job_chains c ON c.id = a.chain_id
@@ -1276,29 +1321,41 @@ export class StateStore extends EventEmitter {
         }
         return { job: existingJob, chain: existingChain, idempotent: true };
       }
-      const activeQuarantine = this.db
-        .prepare("SELECT * FROM quarantines WHERE scope_key = ? AND active = 1")
-        .get(input.conversationKey);
-      if (activeQuarantine) {
-        throw codedError(
-          "CONVERSATION_QUARANTINED",
-          "This conversation or new-chat scope is quarantined until its uncertain submission is reconciled.",
-          {
-            recoveryAction: /^https:\/\/chatgpt\.com\//u.test(input.conversationKey)
-              ? `inspect_quarantine for ${input.conversationKey}`
-              : `reconcile_job ${activeQuarantine.job_id}`,
-            details: {
-              exactScopeRequired: true,
-              capabilityRecoveryAvailable: /^https:\/\/chatgpt\.com\//u.test(input.conversationKey),
-            },
-          },
-        );
-      }
       const id = input.id || randomUUID();
       const parentAttempt = input.parentJobId
         ? this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(input.parentJobId)
         : null;
       const inheritedChain = parentAttempt ? this.chainAccessRow(parentAttempt.chain_id) : null;
+      if (!inheritedChain) {
+        const inputBlockers = this.activeInputRequestRecords(input.conversationKey);
+        if (inputBlockers.length) {
+          throw codedError(
+            "INPUT_REQUIRED_BLOCKING",
+            "This exact conversation lane is waiting for explicit owner input and cannot accept another start.",
+            {
+              safeToRetry: false,
+              recoveryAction: "The owning session must resolve or explicitly abandon the outstanding input request.",
+              details: { blockers: inputBlockers.map((row) => sanitizedInputBlocker(row)) },
+            },
+          );
+        }
+        const activeQuarantine = this.db
+          .prepare("SELECT * FROM quarantines WHERE scope_key = ? AND active = 1")
+          .get(input.conversationKey);
+        if (activeQuarantine) {
+          throw codedError(
+            "CONVERSATION_QUARANTINED",
+            "This conversation or new-chat scope is quarantined until its uncertain submission is reconciled.",
+            {
+              recoveryAction: "Inspect the exact conversation blocker and reconcile or explicitly acknowledge it.",
+              details: {
+                exactScopeRequired: true,
+                blockers: this.activeQuarantineRecords(input.conversationKey).map((row) => sanitizedQuarantineBlocker(row)),
+              },
+            },
+          );
+        }
+      }
       const chainId = input.chainId || inheritedChain?.id || id;
       const rootJobId = inheritedChain?.root_job_id || input.rootJobId || id;
       this.db.prepare(`
@@ -1344,7 +1401,8 @@ export class StateStore extends EventEmitter {
         `).run(id, chainId, kind, ordinal, input.parentJobId, now);
         this.db.prepare(`
           UPDATE job_chains
-          SET active_job_id = ?, state = 'queued', updated_at = ?, terminal_at = NULL
+          SET active_job_id = ?, state = 'queued', updated_at = ?, terminal_at = NULL,
+              attention_required_at = NULL
           WHERE id = ?
         `).run(id, now, chainId);
         chain = this.getChain(chainId);
@@ -1455,7 +1513,7 @@ export class StateStore extends EventEmitter {
 
   completedJobsWithExactProof() {
     return this.db.prepare(this.jobSelect(`
-      WHERE j.state='completed' AND j.result_json IS NOT NULL
+      WHERE j.state IN ('completed', 'input_invalid') AND j.result_json IS NOT NULL
         AND j.submit_intent_at IS NOT NULL
         AND oracle_canonical_conversation_url(j.canonical_url) = 1
         AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
@@ -1536,7 +1594,8 @@ export class StateStore extends EventEmitter {
              a.next_execution_not_before, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
+             c.attention_required_at
       FROM jobs j
       JOIN job_attempts a ON a.job_id = j.id
       JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
@@ -1545,10 +1604,84 @@ export class StateStore extends EventEmitter {
     `).all().map(rowToJob);
   }
 
+  logicalQueueRows(sessionId = null) {
+    const sessionJoin = sessionId ? `
+      JOIN chain_session_grants g ON g.chain_id=c.id
+        AND g.session_id=? AND g.can_list=1 AND g.revoked_at IS NULL
+    ` : "";
+    return this.db.prepare(`
+      SELECT c.*, j.state AS job_state, j.assistant_disposition,
+             a.execution_state, a.execution_kind,
+             EXISTS(SELECT 1 FROM quarantines q WHERE q.scope_key=c.conversation_key AND q.active=1) AS quarantined_lane
+      FROM job_chains c
+      JOIN jobs j ON j.id=c.active_job_id
+      JOIN job_attempts a ON a.job_id=j.id
+      ${sessionJoin}
+      ORDER BY c.accepted_sequence
+    `).all(...(sessionId ? [sessionId] : []));
+  }
+
+  logicalQueueSnapshot(sessionId = null) {
+    const rows = this.logicalQueueRows(sessionId);
+    const outstandingStates = new Set([
+      "queued", "running", "input_required", "input_invalid",
+      "submission_uncertain", "response_uncertain", "quarantined",
+    ]);
+    const attentionByLane = new Set();
+    const uncertaintyByLane = new Set();
+    const byChainId = new Map();
+    const counts = {
+      executing: 0,
+      monitoring: 0,
+      runnableQueued: 0,
+      blockedAttention: 0,
+      blockedUncertainty: 0,
+      logicalOutstanding: 0,
+    };
+    for (const row of rows) {
+      if (!outstandingStates.has(row.state)) continue;
+      let logicalState;
+      if (
+        row.state === "input_required" || row.state === "input_invalid" ||
+        attentionByLane.has(row.conversation_key)
+      ) {
+        logicalState = "blocked_attention";
+      } else if (
+        new Set(["submission_uncertain", "response_uncertain", "quarantined"]).has(row.state) ||
+        row.quarantined_lane || uncertaintyByLane.has(row.conversation_key)
+      ) {
+        logicalState = "blocked_uncertainty";
+      } else if (row.execution_state === "running" || row.state === "running") {
+        logicalState = row.execution_kind === "monitor_only" ? "monitoring" : "executing";
+      } else {
+        logicalState = "runnable_queued";
+      }
+      byChainId.set(row.id, logicalState);
+      counts.logicalOutstanding += 1;
+      if (logicalState === "blocked_attention") counts.blockedAttention += 1;
+      else if (logicalState === "blocked_uncertainty") counts.blockedUncertainty += 1;
+      else if (logicalState === "monitoring") counts.monitoring += 1;
+      else if (logicalState === "executing") counts.executing += 1;
+      else counts.runnableQueued += 1;
+      if (row.state === "input_required" || row.state === "input_invalid") attentionByLane.add(row.conversation_key);
+      if (new Set(["submission_uncertain", "response_uncertain", "quarantined"]).has(row.state) || row.quarantined_lane) {
+        uncertaintyByLane.add(row.conversation_key);
+      }
+    }
+    return { counts, byChainId };
+  }
+
+  logicalStateForJob(jobId) {
+    const job = this.requireJob(jobId);
+    return this.logicalQueueSnapshot().byChainId.get(job.chainId) || null;
+  }
+
+  logicalQueueCounts(sessionId = null) {
+    return this.logicalQueueSnapshot(sessionId).counts;
+  }
+
   countOutstanding() {
-    const terminals = Array.from(TERMINAL_JOB_STATES);
-    const placeholders = terminals.map(() => "?").join(",");
-    return Number(this.db.prepare(`SELECT COUNT(*) count FROM jobs WHERE state NOT IN (${placeholders})`).get(...terminals).count);
+    return this.logicalQueueCounts().logicalOutstanding;
   }
 
   transition(id, nextState, patch = {}, details = null) {
@@ -1684,12 +1817,16 @@ export class StateStore extends EventEmitter {
     const canonicalUrl = active.canonical_url || chain.canonical_url;
     if (canonicalUrl && canonicalUrl !== chain.canonical_url) {
       const collision = this.db.prepare(`
-        SELECT id FROM job_chains
-        WHERE id <> ? AND canonical_url = ?
-          AND state NOT IN ('completed', 'failed', 'cancelled')
-        ORDER BY accepted_sequence LIMIT 1
-      `).get(chain.id, canonicalUrl);
-      if (collision) {
+        SELECT c.id, c.accepted_sequence, c.state, j.submit_intent_at
+        FROM job_chains c JOIN jobs j ON j.id=c.active_job_id
+        WHERE c.id <> ? AND (c.canonical_url = ? OR c.conversation_key = ?)
+          AND c.state NOT IN ('completed', 'failed', 'cancelled')
+        ORDER BY c.accepted_sequence LIMIT 1
+      `).get(chain.id, canonicalUrl, canonicalUrl);
+      const laterUnsentSuccessor = collision &&
+        Number(collision.accepted_sequence) > Number(chain.accepted_sequence) &&
+        collision.state === "queued" && !collision.submit_intent_at;
+      if (collision && !laterUnsentSuccessor) {
         throw codedError("CONVERSATION_LANE_COLLISION", "The canonical conversation is already owned by another active logical chain. Oracle stopped without another send.", {
           submissionMayHaveOccurred: true,
           recoveryAction: "inspect both logical chains and reconcile the submitted turn",
@@ -1741,8 +1878,8 @@ export class StateStore extends EventEmitter {
         )
         SELECT id, ?, 'pending', ?
         FROM completion_subscriptions
-        WHERE chain_id = ? AND state = 'open' AND mode != 'manual'
-      `).run(sequence, now, chainId);
+        WHERE chain_id = ? AND state = 'open' AND (? = 'attention_required' OR mode != 'manual')
+      `).run(sequence, now, chainId, state);
     }
     if (TERMINAL_CHAIN_STATES.has(state)) {
       this.db.prepare(`
@@ -1801,7 +1938,7 @@ export class StateStore extends EventEmitter {
     `).run(scopeKey, jobId, reason, now);
   }
 
-  activeQuarantineRecord(scopeKey) {
+  activeQuarantineRecords(scopeKey) {
     return this.db.prepare(`
       SELECT q.*, j.state AS job_state, j.updated_at AS job_updated_at,
              j.canonical_url, j.submitted_message_hash, j.attachment_manifest_json,
@@ -1811,40 +1948,44 @@ export class StateStore extends EventEmitter {
       JOIN job_attempts a ON a.job_id = j.id
       JOIN job_chains c ON c.id = a.chain_id
       WHERE q.scope_key = ? AND q.active = 1
-    `).get(scopeKey);
+      ORDER BY q.created_at, q.job_id
+    `).all(scopeKey);
+  }
+
+  activeQuarantineRecord(scopeKey) {
+    const rows = this.activeQuarantineRecords(scopeKey);
+    return rows.length === 1 ? rows[0] : null;
   }
 
   quarantineView(scopeKey) {
-    const row = this.activeQuarantineRecord(scopeKey);
-    if (!row) return { quarantined: false, conversationUrl: scopeKey };
-    const canReconcileReadOnly = Boolean(row.canonical_url && row.submitted_message_hash);
+    const rows = this.activeQuarantineRecords(scopeKey);
+    if (!rows.length) return { quarantined: false, blockers: [] };
+    const blockers = rows.map((row) => sanitizedQuarantineBlocker(row));
     return {
       quarantined: true,
-      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.scope_key) ? row.scope_key : null),
-      fingerprint: quarantineFingerprint(row),
-      jobState: row.job_state,
-      createdAt: row.created_at,
-      canReconcileReadOnly,
       capabilityRecoveryRequired: true,
-      recoveryActions: canReconcileReadOnly
-        ? ["reconcile", "acknowledge-after-manual-inspection"]
-        : ["acknowledge-after-manual-inspection"],
+      blockers,
+      ...(blockers.length === 1 ? blockers[0] : {}),
     };
   }
 
   requireMatchingQuarantine(scopeKey, fingerprint) {
-    const row = this.activeQuarantineRecord(scopeKey);
-    if (!row) {
+    const rows = this.activeQuarantineRecords(scopeKey);
+    if (!rows.length) {
       throw codedError("QUARANTINE_NOT_FOUND", "No active Oracle Firefox quarantine matches that exact conversation URL.");
     }
-    const currentFingerprint = quarantineFingerprint(row);
-    if (!fingerprint || fingerprint !== currentFingerprint) {
+    const matches = rows.filter((row) => quarantineFingerprint(row) === fingerprint);
+    if (matches.length === 0) {
       throw codedError(
         "QUARANTINE_CHANGED",
         "The quarantine changed after inspection. Inspect the exact conversation quarantine again before recovering it.",
         { safeToRetry: true },
       );
     }
+    if (matches.length > 1) {
+      throw codedError("QUARANTINE_AMBIGUOUS", "More than one durable quarantine matched the supplied fingerprint. Oracle refused to guess.");
+    }
+    const [row] = matches;
     if (!new Set(["submission_uncertain", "response_uncertain", "quarantined"]).has(row.job_state)) {
       throw codedError("QUARANTINE_NOT_RECOVERABLE", "The quarantined job is no longer in an uncertain terminal state.");
     }
@@ -1867,7 +2008,7 @@ export class StateStore extends EventEmitter {
       if (Number(changed.changes) !== 1) {
         throw codedError("QUARANTINE_CHANGED", "The quarantine changed while it was being acknowledged.", { safeToRetry: true });
       }
-      return { conversationUrl: row.canonical_url || scopeKey, fingerprint, acknowledgedAt: now };
+      return { fingerprint, acknowledgedAt: now };
     });
     return {
       ...result,
@@ -1936,64 +2077,144 @@ export class StateStore extends EventEmitter {
     return { jobId, acknowledged: true, conversationKey: job.conversationKey };
   }
 
-  activeInputRequestRecord(scopeKey) {
-    const rows = this.db.prepare(`
+  activeInputRequestRecords(scopeKey) {
+    return this.db.prepare(`
       SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
              j.assistant_disposition, j.local_data_request_json
       FROM job_chains c
       JOIN jobs j ON j.id = c.active_job_id
-      WHERE c.conversation_key = ? AND c.state = 'input_required'
-        AND j.state = 'completed' AND j.local_data_request_json IS NOT NULL
+      WHERE (c.conversation_key = ? OR c.canonical_url = ?)
+        AND c.state IN ('input_required', 'input_invalid')
+        AND (
+          (j.state = 'completed' AND j.assistant_disposition = 'local_data_request' AND j.local_data_request_json IS NOT NULL)
+          OR (j.state = 'input_invalid' AND j.assistant_disposition = 'input_invalid')
+        )
       ORDER BY c.accepted_sequence
-      LIMIT 2
-    `).all(scopeKey);
-    if (rows.length > 1) {
-      throw codedError("INPUT_REQUEST_AMBIGUOUS", "More than one durable input request occupies this exact conversation lane. Oracle refused to guess.");
-    }
-    return rows[0] || null;
+    `).all(scopeKey, scopeKey);
+  }
+
+  activeInputRequestRecord(scopeKey) {
+    const rows = this.activeInputRequestRecords(scopeKey);
+    return rows.length === 1 ? rows[0] : null;
+  }
+
+  inputBlockers(scopeKey) {
+    return this.activeInputRequestRecords(scopeKey).map((row) => sanitizedInputBlocker(row));
   }
 
   inputRequestView(scopeKey) {
-    const row = this.activeInputRequestRecord(scopeKey);
-    if (!row) return { inputRequired: false, conversationUrl: scopeKey };
-    const request = parse(row.local_data_request_json);
+    const rows = this.activeInputRequestRecords(scopeKey);
+    if (!rows.length) return { inputRequired: false, blockers: [] };
+    const blockers = rows.map((row) => sanitizedInputBlocker(row));
     return {
       inputRequired: true,
-      conversationUrl: row.canonical_url || (/^https:\/\/chatgpt\.com\//u.test(row.conversation_key) ? row.conversation_key : null),
-      fingerprint: inputRequestFingerprint(row),
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      safeReadOnly: request?.safeReadOnly === true,
-      templateFalsePositive: isTemplateLocalDataRequest(request),
       capabilityRecoveryRequired: true,
-      recoveryActions: ["reply-with-local-data", "abandon-after-user-confirmation"],
+      blockers,
+      ...(blockers.length === 1 ? blockers[0] : {}),
     };
   }
 
   requireMatchingInputRequest(scopeKey, fingerprint) {
-    const row = this.activeInputRequestRecord(scopeKey);
-    if (!row) {
+    const rows = this.activeInputRequestRecords(scopeKey);
+    if (!rows.length) {
       throw codedError("INPUT_REQUEST_NOT_FOUND", "No active Oracle Firefox input request matches that exact conversation URL.");
     }
-    const currentFingerprint = inputRequestFingerprint(row);
-    if (!fingerprint || fingerprint !== currentFingerprint) {
+    const matches = rows.filter((row) => inputRequestFingerprint(row) === fingerprint);
+    if (matches.length === 0) {
       throw codedError(
         "INPUT_REQUEST_CHANGED",
         "The input request changed after inspection. Inspect the exact conversation lane again before abandoning it.",
         { safeToRetry: true },
       );
     }
-    return row;
+    if (matches.length > 1) {
+      throw codedError("INPUT_REQUEST_AMBIGUOUS", "More than one durable input request matched the supplied fingerprint. Oracle refused to guess.");
+    }
+    return matches[0];
+  }
+
+  attentionForSession(sessionId) {
+    const inputRows = this.db.prepare(`
+      SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.assistant_disposition, j.local_data_request_json
+      FROM job_chains c
+      JOIN jobs j ON j.id=c.active_job_id
+      JOIN chain_session_grants g ON g.chain_id=c.id
+      WHERE g.session_id=? AND g.can_list=1 AND g.revoked_at IS NULL
+        AND c.state IN ('input_required', 'input_invalid')
+      ORDER BY c.accepted_sequence
+    `).all(sessionId);
+    const uncertaintyRows = this.db.prepare(`
+      SELECT q.*, j.state AS job_state, j.updated_at AS job_updated_at,
+             j.canonical_url, j.submitted_message_hash, j.attachment_manifest_json,
+             a.chain_id, c.state AS chain_state
+      FROM quarantines q
+      JOIN jobs j ON j.id=q.job_id
+      JOIN job_attempts a ON a.job_id=j.id
+      JOIN job_chains c ON c.id=a.chain_id
+      JOIN chain_session_grants g ON g.chain_id=c.id
+      WHERE g.session_id=? AND g.can_list=1 AND g.revoked_at IS NULL AND q.active=1
+      ORDER BY q.created_at, q.job_id
+    `).all(sessionId);
+    return [
+      ...inputRows.map((row) => sanitizedInputBlocker(row)),
+      ...uncertaintyRows.map((row) => sanitizedQuarantineBlocker(row)),
+    ];
+  }
+
+  sweepAttentionRequired({ nowMs = Date.now(), afterMs = 30 * 60_000 } = {}) {
+    const cutoff = new Date(nowMs - Math.max(1, Number(afterMs) || 30 * 60_000)).toISOString();
+    const marked = this.transaction(() => {
+      const candidates = this.db.prepare(`
+        SELECT c.id, c.active_job_id
+        FROM job_chains c
+        WHERE c.state IN ('input_required', 'input_invalid')
+          AND c.attention_required_at IS NULL AND c.updated_at <= ?
+        ORDER BY c.accepted_sequence
+      `).all(cutoff);
+      const attentionAt = new Date(nowMs).toISOString();
+      const changed = [];
+      for (const candidate of candidates) {
+        const update = this.db.prepare(`
+          UPDATE job_chains SET attention_required_at=?
+          WHERE id=? AND active_job_id=? AND state IN ('input_required', 'input_invalid')
+            AND attention_required_at IS NULL
+        `).run(attentionAt, candidate.id, candidate.active_job_id);
+        if (Number(update.changes) !== 1) continue;
+        this.createChainEvent(candidate.id, candidate.active_job_id, "attention_required", {
+          ownerActionRequired: true,
+          laneReleased: false,
+        }, attentionAt);
+        changed.push(candidate.active_job_id);
+      }
+      return changed;
+    });
+    for (const jobId of marked) this.emit("change", this.requireJob(jobId));
+    return marked.map((jobId) => ({ fingerprint: inputRequestFingerprint(
+      this.db.prepare(`
+        SELECT c.*, j.state AS job_state, j.updated_at AS job_updated_at,
+               j.assistant_disposition, j.local_data_request_json
+        FROM job_chains c JOIN jobs j ON j.id=c.active_job_id WHERE j.id=?
+      `).get(jobId),
+    ), state: "attention_required" }));
+  }
+
+  earliestAttentionWake({ afterMs = 30 * 60_000 } = {}) {
+    const row = this.db.prepare(`
+      SELECT MIN(updated_at) AS created_at FROM job_chains
+      WHERE state IN ('input_required', 'input_invalid') AND attention_required_at IS NULL
+    `).get();
+    if (!row?.created_at) return null;
+    return new Date(Date.parse(row.created_at) + Math.max(1, Number(afterMs) || 30 * 60_000)).toISOString();
   }
 
   abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode }, now = new Date().toISOString()) {
     const request = parse(row.local_data_request_json);
-    if (
-      row.state !== "input_required" ||
-      row.job_state !== "completed" ||
-      row.assistant_disposition !== "local_data_request" ||
-      !request
-    ) {
+    const validRequest = row.state === "input_required" && row.job_state === "completed" &&
+      row.assistant_disposition === "local_data_request" && request;
+    const malformedRequest = row.state === "input_invalid" && row.job_state === "input_invalid" &&
+      row.assistant_disposition === "input_invalid";
+    if (!validRequest && !malformedRequest) {
       throw codedError("LOCAL_DATA_REQUEST_REQUIRED", "The selected logical chain is not waiting for a valid local-data request.");
     }
     const changed = this.db.prepare(`
@@ -2001,7 +2222,7 @@ export class StateStore extends EventEmitter {
       SET state = 'completed', terminal_at = ?, updated_at = ?,
           input_required_abandoned_at = ?, input_required_abandoned_job_id = ?,
           input_required_abandoned_reason = ?
-      WHERE id = ? AND active_job_id = ? AND state = 'input_required'
+      WHERE id = ? AND active_job_id = ? AND state IN ('input_required', 'input_invalid')
     `).run(now, now, now, row.active_job_id, reason, row.id, row.active_job_id);
     if (Number(changed.changes) !== 1) {
       throw codedError("INPUT_REQUEST_CHANGED", "The input request changed while Oracle was abandoning it.", { safeToRetry: true });
@@ -2018,7 +2239,8 @@ export class StateStore extends EventEmitter {
       chain: this.getChain(row.id),
       abandonedAt: now,
       reason,
-      templateFalsePositive: isTemplateLocalDataRequest(request),
+      templateFalsePositive: request ? isTemplateLocalDataRequest(request) : false,
+      inputInvalid: malformedRequest,
     };
   }
 
@@ -2034,6 +2256,7 @@ export class StateStore extends EventEmitter {
           abandonedAt: chain.input_required_abandoned_at,
           reason: chain.input_required_abandoned_reason,
           templateFalsePositive: isTemplateLocalDataRequest(job.localDataRequest),
+          inputInvalid: job.state === "input_invalid",
           idempotent: true,
         };
         return;
@@ -2058,6 +2281,12 @@ export class StateStore extends EventEmitter {
     let released;
     this.transaction(() => {
       const row = this.requireMatchingInputRequest(scopeKey, fingerprint);
+      if (row.state === "input_invalid" || row.job_state === "input_invalid") {
+        throw codedError(
+          "INPUT_INVALID_CAPABILITY_REQUIRED",
+          "Malformed local-data input may be resolved only with the logical chain's existing control capability.",
+        );
+      }
       released = this.abandonInputRequestInCurrentTransaction(row, { reason, recoveryMode: "orphaned-capability" });
     });
     this.emit("change", released.job);
@@ -2134,7 +2363,8 @@ export class StateStore extends EventEmitter {
              a.next_execution_not_before, a.monitor_deadline_at,
              a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
-             c.input_required_abandoned_job_id, c.input_required_abandoned_reason
+             c.input_required_abandoned_job_id, c.input_required_abandoned_reason,
+             c.attention_required_at
       FROM job_attempts a
       JOIN jobs j ON j.id = a.job_id
       JOIN job_chains c ON c.id = a.chain_id
@@ -2164,7 +2394,7 @@ export class StateStore extends EventEmitter {
       SELECT id FROM job_chains
       WHERE conversation_key = ?
         AND accepted_sequence < ?
-        AND state IN ('queued', 'running', 'input_required')
+        AND state IN ('queued', 'running', 'input_required', 'input_invalid')
       ORDER BY accepted_sequence LIMIT 1
     `).get(chain.conversationKey, chain.acceptedSequence);
     if (earlier) return false;
@@ -2213,7 +2443,7 @@ export class StateStore extends EventEmitter {
             SELECT 1 FROM job_chains earlier
             WHERE earlier.conversation_key = c.conversation_key
               AND earlier.accepted_sequence < c.accepted_sequence
-              AND earlier.state IN ('queued', 'running', 'input_required')
+              AND earlier.state IN ('queued', 'running', 'input_required', 'input_invalid')
           )
           AND NOT EXISTS (
             SELECT 1 FROM job_chains creation
@@ -2329,6 +2559,7 @@ export class StateStore extends EventEmitter {
     localDataRequest = null,
     result,
     recoveryAction = null,
+    terminalState = "completed",
   }) {
     if (!assistantTurnHash || (!assistantTurnId && assistantTurnBound !== true) || !result) {
       throw codedError(
@@ -2338,6 +2569,9 @@ export class StateStore extends EventEmitter {
       );
     }
     let completed;
+    if (!new Set(["completed", "input_invalid"]).has(terminalState)) {
+      throw codedError("INVALID_JOB_TRANSITION", "Assistant response commits may terminate only as completed or input_invalid.");
+    }
     this.transaction(() => {
       this.assertExecution(claim);
       const job = this.requireJob(claim.jobId);
@@ -2348,7 +2582,7 @@ export class StateStore extends EventEmitter {
           { submissionMayHaveOccurred: true },
         );
       }
-      completed = this.transitionInCurrentTransaction(claim.jobId, "completed", {
+      completed = this.transitionInCurrentTransaction(claim.jobId, terminalState, {
         assistantTurnId: assistantTurnId || null,
         assistantTurnHash,
         assistantDisposition,
@@ -2638,6 +2872,7 @@ export class StateStore extends EventEmitter {
       cooldownUntil: row.cooldown_until,
       cooldownCode: row.cooldown_code,
       cooldownCount: row.cooldown_count,
+      cooldownIncidentCount: Number(this.db.prepare("SELECT COUNT(*) count FROM cooldown_incidents").get()?.count || 0),
       effectiveConcurrency: row.effective_concurrency,
       successStreak: row.success_streak,
       probeInFlight: Boolean(row.probe_in_flight),
@@ -2709,7 +2944,12 @@ export class StateStore extends EventEmitter {
         throw codedError("ACCOUNT_COOLDOWN", "ChatGPT submissions are paused by the broker-wide account cooldown.", {
           safeToRetry: true,
           recoveryAction: `wait until ${state.cooldownUntil} before submitting again`,
-          details: { cooldownUntil: state.cooldownUntil, cooldownCode: state.cooldownCode },
+          details: {
+            cooldownUntil: state.cooldownUntil,
+            cooldownCode: state.cooldownCode,
+            cooldownEpoch: state.gateVersion,
+            existingLocalGate: true,
+          },
         });
       }
       const paceMs = state.nextSubmitNotBefore ? Date.parse(state.nextSubmitNotBefore) : 0;
@@ -2790,13 +3030,45 @@ export class StateStore extends EventEmitter {
     return transitioned;
   }
 
-  recordAccountCooldown(error, { minimumMs = 120_000, maximumMs = 30 * 60_000 } = {}) {
+  recordAccountCooldown(error, { minimumMs = 120_000, maximumMs = 30 * 60_000, nowMs = Date.now() } = {}) {
     return this.transaction(() => {
+      const evidence = error?.details?.remoteThrottleEvidence || error?.remoteThrottleEvidence || null;
+      if (!evidence || typeof evidence !== "object") {
+        return { ...this.accountState(), incidentRecorded: false, existingLocalGate: true };
+      }
+      const evidenceFingerprint = /^[a-f0-9]{64}$/u.test(String(evidence.fingerprint || ""))
+        ? String(evidence.fingerprint)
+        : createHash("sha256").update(`oracle-remote-throttle-v1\0${JSON.stringify(evidence)}`).digest("hex");
       const current = this.accountState();
       const count = current.cooldownCount + 1;
       const duration = Math.min(maximumMs, minimumMs * (2 ** Math.min(4, count - 1)));
-      const now = new Date().toISOString();
-      const until = new Date(Date.now() + duration).toISOString();
+      const now = new Date(nowMs).toISOString();
+      const until = new Date(nowMs + duration).toISOString();
+      const inserted = this.db.prepare(`
+        INSERT OR IGNORE INTO cooldown_incidents(
+          evidence_fingerprint, evidence_kind, code, first_seen_at, last_seen_at,
+          observer_count, cooldown_until
+        ) VALUES (?, ?, ?, ?, ?, 1, ?)
+      `).run(
+        evidenceFingerprint,
+        String(evidence.kind || "remote_throttle"),
+        error?.code || "ACCOUNT_COOLDOWN",
+        now,
+        now,
+        until,
+      );
+      if (Number(inserted.changes) === 0) {
+        this.db.prepare(`
+          UPDATE cooldown_incidents SET observer_count=observer_count+1, last_seen_at=?
+          WHERE evidence_fingerprint=?
+        `).run(now, evidenceFingerprint);
+        return {
+          ...this.accountState(),
+          incidentRecorded: false,
+          evidenceFingerprint,
+          existingLocalGate: false,
+        };
+      }
       this.db.prepare(`
         UPDATE account_state
         SET gate_version = gate_version + 1, cooldown_until = ?, cooldown_code = ?,
@@ -2805,7 +3077,7 @@ export class StateStore extends EventEmitter {
         WHERE id = 1
       `).run(until, error?.code || "ACCOUNT_COOLDOWN", count, now);
       this.db.prepare("UPDATE submit_permits SET invalidated_at = ? WHERE consumed_at IS NULL AND invalidated_at IS NULL").run(now);
-      return this.accountState();
+      return { ...this.accountState(), incidentRecorded: true, evidenceFingerprint, existingLocalGate: false };
     });
   }
 

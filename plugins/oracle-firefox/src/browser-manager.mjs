@@ -172,6 +172,7 @@ export class BrowserManager {
     this.maintenance = false;
     this.ownerChecked = false;
     this.browserGeneration = 0;
+    this.quarantinedDownloadGenerations = new Set();
     this.resourceGate = new AsyncMutex("browser-resource", { timeoutMs: lockTimeoutMs });
     this.trustedActionGate = new AsyncMutex("trusted-browser-action", { timeoutMs: lockTimeoutMs });
     this.downloadGate = new AsyncMutex("browser-download", { timeoutMs: lockTimeoutMs });
@@ -350,7 +351,24 @@ export class BrowserManager {
   }
 
   async withDownload(callback) {
-    return this.downloadGate.run(callback, { owner: "download" });
+    return this.downloadGate.run(async () => {
+      const generation = this.browserGeneration;
+      if (this.quarantinedDownloadGenerations.has(generation)) {
+        throw codedError(
+          "BROWSER_DOWNLOAD_GENERATION_QUARANTINED",
+          "A previous download timed out on this browser generation. Oracle will not route another browser-managed download until the browser generation changes.",
+          { safeToRetry: true, recoveryAction: "wait for or explicitly perform an idle browser recycle before retrying the download" },
+        );
+      }
+      try {
+        return await callback();
+      } catch (error) {
+        if (error?.details?.downloadAttemptQuarantined === true) {
+          this.quarantinedDownloadGenerations.add(Number(error.details.browserGeneration));
+        }
+        throw error;
+      }
+    }, { owner: "download" });
   }
 
   async withMaintenance(callback) {

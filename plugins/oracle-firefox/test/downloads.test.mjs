@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -149,6 +149,74 @@ test("captures one behavior-only Firefox download into a private unique director
     assert.equal((await stat(result.path)).mode & 0o777, 0o600);
   } finally {
     await browser.close().catch(() => undefined);
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("late download A remains quarantined in its attempt while download B uses a new generation-bound directory", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-late-download-"));
+  const staging = path.join(directory, "staging");
+  const output = path.join(directory, "output");
+  let attemptA = null;
+  const controlFor = async () => ({ click: async () => {}, dispose: async () => {} });
+  try {
+    await withPage(`<!doctype html><main>
+      <article data-testid="conversation-turn-1" data-message-author-role="assistant" data-message-id="assistant">
+        <button>Download isolated artifact</button>
+      </article>
+    </main>`, async (page) => {
+      await assert.rejects(
+        () => downloadAssistantArtifact(page, {
+          linkText: "Download isolated artifact",
+          stagingDirectory: staging,
+          rootDirectory: output,
+          browserGeneration: 41,
+          browserDownloadHooks: {
+            controlFor,
+            async configureAttempt(_page, attemptDirectory) {
+              attemptA = attemptDirectory;
+              await mkdir(attemptDirectory, { recursive: true });
+            },
+            async waitForDownload() {
+              throw Object.assign(new Error("attempt A timed out"), { code: "DOWNLOAD_TIMEOUT" });
+            },
+          },
+        }),
+        (error) => error.code === "DOWNLOAD_TIMEOUT",
+      );
+      assert.ok(attemptA);
+      assert.equal(JSON.parse(await readFile(path.join(attemptA, ".quarantined.json"), "utf8")).browserGeneration, 41);
+
+      let attemptB = null;
+      const zipB = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x42]);
+      const result = await downloadAssistantArtifact(page, {
+        linkText: "Download isolated artifact",
+        stagingDirectory: staging,
+        rootDirectory: output,
+        browserGeneration: 42,
+        browserDownloadHooks: {
+          controlFor,
+          async configureAttempt(_page, attemptDirectory) {
+            attemptB = attemptDirectory;
+            await mkdir(attemptDirectory, { recursive: true });
+          },
+          async waitForDownload(attemptDirectory) {
+            await writeFile(path.join(attemptA, "late-A.zip"), Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x41]));
+            const filePath = path.join(attemptDirectory, "B.zip");
+            await writeFile(filePath, zipB);
+            const info = await stat(filePath);
+            return { filePath, name: "B.zip", size: info.size, mtimeMs: info.mtimeMs };
+          },
+        },
+      });
+      assert.notEqual(attemptA, attemptB);
+      assert.match(attemptA, /generation-41/u);
+      assert.match(attemptB, /generation-42/u);
+      assert.equal(result.browserGeneration, 42);
+      assert.deepEqual(await readFile(result.path), zipB);
+      assert.equal((await stat(path.join(attemptA, "late-A.zip"))).isFile(), true);
+    });
+  } finally {
     await rm(directory, { recursive: true, force: true });
   }
 });

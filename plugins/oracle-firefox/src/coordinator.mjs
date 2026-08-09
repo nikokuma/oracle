@@ -203,10 +203,12 @@ export class Coordinator {
     this.notificationWakeTimer = null;
     this.accountWakeTimer = null;
     this.executionWakeTimer = null;
+    this.attentionWakeTimer = null;
     this.abandonedClaimSweepTimer = null;
     this.onStoreChange = (job) => {
       if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
       this.queueSystemNotifications();
+      this.scheduleAttentionWake();
       this.schedule();
     };
   }
@@ -236,9 +238,11 @@ export class Coordinator {
       for (const rootJobId of this.store.allRootJobIds()) this.queueCompletionRecord(rootJobId);
     }
     if (!this.safeMode) {
+      this.store.sweepAttentionRequired();
       this.startAbandonedClaimSweeper();
       this.schedule();
       this.queueSystemNotifications();
+      this.scheduleAttentionWake();
     }
     this.scheduleAccountWake(this.store.accountState().cooldownUntil);
     return this;
@@ -257,6 +261,7 @@ export class Coordinator {
     await Promise.allSettled(this.notificationWorkers);
     clearTimeout(this.accountWakeTimer);
     clearTimeout(this.executionWakeTimer);
+    clearTimeout(this.attentionWakeTimer);
     await this.browserManager.close();
     this.store.markBrokerReleased?.("coordinator closed cleanly");
     this.store.close();
@@ -268,6 +273,7 @@ export class Coordinator {
   }
 
   status() {
+    const logicalQueue = this.store.logicalQueueCounts();
     return {
       ready: true,
       protocolVersion: BROKER_PROTOCOL_VERSION,
@@ -278,8 +284,14 @@ export class Coordinator {
       leaseGeneration: this.brokerContext?.leaseGeneration || null,
       startedAt: this.startedAt,
       activeJobCount: this.active.size,
-      queuedJobs: this.store.queuedJobs().length,
-      outstandingJobs: this.store.countOutstanding(),
+      executing: logicalQueue.executing,
+      monitoring: logicalQueue.monitoring,
+      runnableQueued: logicalQueue.runnableQueued,
+      blockedAttention: logicalQueue.blockedAttention,
+      blockedUncertainty: logicalQueue.blockedUncertainty,
+      logicalOutstanding: logicalQueue.logicalOutstanding,
+      queuedJobs: logicalQueue.runnableQueued,
+      outstandingJobs: logicalQueue.logicalOutstanding,
       writeConcurrency: this.writeConcurrency,
       minimumSubmissionIntervalMs: this.minimumSubmissionIntervalMs,
       account: this.store.accountState(),
@@ -451,6 +463,21 @@ export class Coordinator {
         resolvedProjectTitle: discovered.projectTitle,
         resolvedProjectUrl: match.projectUrl || discovered.projectUrl,
       };
+    }
+    if (operation === "continue_chat" && resolvedInput.conversationUrl && !internalChain) {
+      const canonicalScope = normalizeConversationUrl(resolvedInput.conversationUrl);
+      const blockers = this.store.inputBlockers(canonicalScope);
+      if (blockers.length) {
+        throw codedError(
+          "INPUT_REQUIRED_BLOCKING",
+          "This exact conversation lane is waiting for explicit owner input and cannot accept another start.",
+          {
+            safeToRetry: false,
+            recoveryAction: "The owning session must resolve or explicitly abandon the outstanding input request.",
+            details: { blockers },
+          },
+        );
+      }
     }
     const rootAuthorizationId = internalChain
       ? this.store.requireJob(internalChain.rootJobId).authorizationId
@@ -627,6 +654,21 @@ export class Coordinator {
     this.executionWakeTimer.unref?.();
   }
 
+  scheduleAttentionWake() {
+    clearTimeout(this.attentionWakeTimer);
+    this.attentionWakeTimer = null;
+    if (this.closed || this.safeMode) return;
+    const when = this.store.earliestAttentionWake();
+    if (!when) return;
+    this.attentionWakeTimer = setTimeout(() => {
+      this.attentionWakeTimer = null;
+      const marked = this.store.sweepAttentionRequired();
+      if (marked.length) this.queueSystemNotifications();
+      this.scheduleAttentionWake();
+    }, Math.max(1, Date.parse(when) - Date.now()));
+    this.attentionWakeTimer.unref?.();
+  }
+
   sweepAbandonedExecutions({ nowMs = Date.now() } = {}) {
     return this.store.sweepAbandonedExecutionClaims({
       activeExecutorIds: this.active.keys(),
@@ -678,15 +720,7 @@ export class Coordinator {
       if (await fileExists(emergencyLockPath())) {
         throw codedError("EMERGENCY_LOCKED", "The user-wide emergency lock was enabled before submission.", { safeToRetry: true });
       }
-      for (;;) {
-        try {
-          return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: this.minimumSubmissionIntervalMs });
-        } catch (error) {
-          if (error?.code !== "SUBMIT_PACING_WAIT") throw error;
-          const retryAt = Date.parse(error.details?.retryAt || 0);
-          await new Promise((resolve) => setTimeout(resolve, Math.max(1, retryAt - Date.now())));
-        }
-      }
+      return this.store.issueSubmitPermit(jobId, { minimumIntervalMs: this.minimumSubmissionIntervalMs });
     } finally {
       release();
     }
@@ -911,6 +945,7 @@ export class Coordinator {
     const chain = this.store.jobChain(requested.rootJobId);
     const active = followRetries ? chain.at(-1) : requested;
     return publicJob(active, {
+      logicalState: this.store.logicalStateForJob(active.id),
       requestedJobId: requested.id,
       activeJobId: active.id,
       recoveryChain: chain.map((job) => job.id),
@@ -925,7 +960,14 @@ export class Coordinator {
   }
 
   listJobs(params, caller) {
-    return { jobs: this.store.listJobsForSession(caller.id, params).map(publicJob) };
+    const logical = this.store.logicalQueueSnapshot(caller.id);
+    return {
+      jobs: this.store.listJobsForSession(caller.id, params).map((job) => publicJob(job, {
+        logicalState: logical.byChainId.get(job.chainId) || null,
+      })),
+      attention: this.store.attentionForSession(caller.id),
+      logicalCounts: logical.counts,
+    };
   }
 
   async waitForJob(jobId, timeoutSeconds = 55, followRetries = true) {
@@ -945,7 +987,7 @@ export class Coordinator {
     const requested = this.store.requireJob(jobId);
     const chain = this.store.jobChain(requested.rootJobId);
     const job = followRetries ? chain.at(-1) : requested;
-    if (job.state === "completed") {
+    if (job.state === "completed" || job.state === "input_invalid") {
       return {
         ...job.result,
         ...(job.inputRequestAbandonedAt ? {
@@ -1120,7 +1162,6 @@ export class Coordinator {
     });
     this.schedule();
     return {
-      conversationUrl: canonicalUrl,
       abandoned: true,
       laneReleased: true,
       templateFalsePositive: released.templateFalsePositive,
@@ -1166,12 +1207,14 @@ export class Coordinator {
         messageSent: false,
       };
     }
-    const matches = await this.findSubmittedTurnMatches(job);
+    const reconciliation = await this.findSubmittedTurnMatches(job);
+    const matches = Array.isArray(reconciliation?.matches) ? reconciliation.matches : [];
     if (matches.length !== 1) {
       return {
         ...view,
         reconciled: false,
         observedMatches: matches.length,
+        candidateCount: Number(reconciliation?.candidateCount || 0),
         reason: matches.length
           ? "More than one exact user turn matched; attribution remains ambiguous."
           : "No exact submitted user turn was found.",
@@ -1262,6 +1305,12 @@ export class Coordinator {
   async replyWithLocalData(input, context) {
     this.requireWritable();
     const { job: parent, chain } = this.accessibleJob(input, context, { control: true });
+    if (chain.state === "input_invalid" || parent.assistantDisposition === "input_invalid") {
+      throw codedError(
+        "INPUT_INVALID_AUTOMATED_REPLY_PROHIBITED",
+        "The assistant emitted a malformed local-data request. Oracle preserved it but will not construct or send an automated reply.",
+      );
+    }
     if (chain.state !== "input_required" || chain.inputRequestAbandonedAt) {
       throw codedError("LOCAL_DATA_REQUEST_ABANDONED", "This local-data request was abandoned or is no longer the active input request for its conversation lane.");
     }
@@ -1392,6 +1441,7 @@ export class Coordinator {
           scope: input.scope,
           maxBytes: input.maxBytes,
           allowBrowserDownload: this.browserManager.browserName !== "safari",
+          browserGeneration: this.browserManager.browserGeneration,
         })),
       })),
     );

@@ -8,7 +8,7 @@ import {
   semanticTextHash,
 } from "../src/firefox.mjs";
 import { createSession, writeSessionFile } from "../src/sessions.mjs";
-import { executeJob } from "../src/workflow.mjs";
+import { exactPreSubmitTargetMatches, executeJob } from "../src/workflow.mjs";
 import { StateStore } from "../src/state-store.mjs";
 import { Coordinator } from "../src/coordinator.mjs";
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
@@ -60,6 +60,14 @@ test("Pro label verification rejects Thinking and legacy variants", () => {
   assert.equal(modelLabelIsProForTest("GPT-5.5 Pro Extended"), true);
   assert.equal(modelLabelIsProForTest("Thinking Pro"), false);
   assert.equal(modelLabelIsProForTest("GPT-5.4 Pro"), false);
+});
+
+test("pre-submit target revalidation is exact across chats, projects, and query state", () => {
+  assert.equal(exactPreSubmitTargetMatches("https://chatgpt.com/c/exact", "https://chatgpt.com/c/exact"), true);
+  assert.equal(exactPreSubmitTargetMatches("https://chatgpt.com/c/foreign", "https://chatgpt.com/c/exact"), false);
+  assert.equal(exactPreSubmitTargetMatches("https://chatgpt.com/g/g-p-project", "https://chatgpt.com/g/g-p-project"), true);
+  assert.equal(exactPreSubmitTargetMatches("https://chatgpt.com/?temporary-chat=true", "https://chatgpt.com/"), false);
+  assert.equal(exactPreSubmitTargetMatches("https://chatgpt.com/c/exact#foreign", "https://chatgpt.com/c/exact"), false);
 });
 
 test("session identifiers are opaque UUIDs and files are atomically private", async () => {
@@ -209,6 +217,101 @@ test("monitor-only execution is isolated from every write path and performs zero
     assert.equal(submitPermits, 0);
     assert.equal(releases, 1);
     assert.equal(await readFile(path.join(sessionPath, "response.md"), "utf8"), "Recovered exact answer.\n");
+  } finally {
+    store.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("malformed local-data JSON is preserved as input_invalid and requires capability-owned release", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "oracle-input-invalid-"));
+  const sessionPath = path.join(root, "session");
+  await mkdir(sessionPath, { recursive: true });
+  const store = await new StateStore(path.join(root, "state.sqlite")).open();
+  try {
+    const conversationUrl = "https://chatgpt.com/c/input-invalid";
+    const job = await createMonitorJob(store, { sessionPath, conversationUrl });
+    const claim = store.claimRunnable(job.id);
+    const malformed = "I need a fact.\nORACLE_LOCAL_DATA_REQUEST_V1\n```json\n{ not valid json }\n```";
+    const result = await executeJob({
+      jobId: job.id,
+      store,
+      executionClaim: claim,
+      browserManager: {
+        async leasePage() { return { page: {} }; },
+        async releasePage() {},
+      },
+      monitorDependencies: {
+        authenticate: async () => {},
+        openConversation: async () => ({ url: conversationUrl }),
+        waitForResponse: async () => ({
+          assistantTurn: { id: "invalid-assistant", text: malformed },
+          text: malformed,
+          responseFailure: null,
+          exactTurnBinding: true,
+        }),
+      },
+    });
+    assert.equal(result.state, "input_invalid");
+    assert.equal(result.answer, malformed);
+    assert.equal(store.requireJob(job.id).state, "input_invalid");
+    assert.equal(store.requireJob(job.id).assistantDisposition, "input_invalid");
+    assert.equal(store.getChain(job.chainId).state, "input_invalid");
+    assert.equal(store.quarantineView(conversationUrl).quarantined, false);
+    assert.equal(await readFile(path.join(sessionPath, "response.md"), "utf8"), `${malformed}\n`);
+    const view = store.inputRequestView(conversationUrl);
+    assert.equal(view.type, "input_invalid");
+    assert.throws(
+      () => store.abandonOrphanedInputRequest(conversationUrl, view.fingerprint),
+      (error) => error.code === "INPUT_INVALID_CAPABILITY_REQUIRED",
+    );
+    const released = store.abandonInputRequest(job.id, { reason: "false-positive" });
+    assert.equal(released.inputInvalid, true);
+    assert.equal(released.chain.state, "completed");
+    assert.equal(store.requireJob(job.id).result.answer, malformed);
+  } finally {
+    store.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("input_invalid remains terminal when artifact writing fails after the atomic commit", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "oracle-input-invalid-artifact-"));
+  const invalidSessionPath = path.join(root, "not-a-directory");
+  await writeFile(invalidSessionPath, "fixture");
+  const store = await new StateStore(path.join(root, "state.sqlite")).open();
+  try {
+    const conversationUrl = "https://chatgpt.com/c/input-invalid-artifact";
+    const job = await createMonitorJob(store, { sessionPath: invalidSessionPath, conversationUrl });
+    const claim = store.claimRunnable(job.id);
+    const malformed = "ORACLE_LOCAL_DATA_REQUEST_V1\n```json\n{ not valid json }\n```";
+    await assert.rejects(
+      () => executeJob({
+        jobId: job.id,
+        store,
+        executionClaim: claim,
+        browserManager: {
+          async leasePage() { return { page: {} }; },
+          async releasePage() {},
+        },
+        monitorDependencies: {
+          authenticate: async () => {},
+          openConversation: async () => ({ url: conversationUrl }),
+          waitForResponse: async () => ({
+            assistantTurn: { id: "invalid-artifact-assistant", text: malformed },
+            text: malformed,
+            responseFailure: null,
+            exactTurnBinding: true,
+          }),
+        },
+      }),
+      (error) => error.code === "ENOTDIR",
+    );
+    const terminal = store.requireJob(job.id);
+    assert.equal(terminal.state, "input_invalid");
+    assert.equal(terminal.executionState, "released");
+    assert.equal(terminal.result.answer, malformed);
+    assert.equal(store.getChain(job.chainId).state, "input_invalid");
   } finally {
     store.close();
     await rm(root, { recursive: true, force: true });

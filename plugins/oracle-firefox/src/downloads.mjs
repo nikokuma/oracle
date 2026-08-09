@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { chmod, mkdir, open, readdir, rename, rm, stat } from "node:fs/promises";
+import { chmod, mkdir, open, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { browserDownloadStagingDirectory, downloadsDirectory } from "./config.mjs";
 import { codedError } from "./errors.mjs";
@@ -320,6 +320,41 @@ async function waitForBrowserDownload(directory, before, timeoutMs = 60_000) {
   throw codedError("DOWNLOAD_TIMEOUT", `The exact download control was clicked once, but Firefox did not finish one file within ${timeoutMs / 1_000} seconds. It was not clicked again.`);
 }
 
+export async function configureBrowserDownloadAttempt(page, attemptDirectory) {
+  await mkdir(attemptDirectory, { recursive: true, mode: 0o700 });
+  await chmod(attemptDirectory, 0o700);
+  let cdpError = null;
+  try {
+    const session = await page.createCDPSession();
+    try {
+      await session.send("Browser.setDownloadBehavior", {
+        behavior: "allow",
+        downloadPath: attemptDirectory,
+        eventsEnabled: true,
+      });
+      return "cdp";
+    } finally {
+      await session.detach().catch(() => undefined);
+    }
+  } catch (error) {
+    cdpError = error;
+  }
+  const userContext = page.browserContext?.()?.userContext;
+  const bidiSession = userContext?.browser?.session;
+  if (userContext?.id && bidiSession?.send) {
+    await bidiSession.send("browser.setDownloadBehavior", {
+      downloadBehavior: { type: "allowed", destinationFolder: attemptDirectory },
+      userContexts: [userContext.id],
+    });
+    return "webdriver-bidi";
+  }
+  throw codedError(
+    "BROWSER_DOWNLOAD_ISOLATION_UNAVAILABLE",
+    "The selected browser cannot bind this download click to a private attempt directory. No download was attempted.",
+    { cause: cdpError },
+  );
+}
+
 async function hashFile(filePath) {
   const hash = createHash("sha256");
   const prefix = [];
@@ -335,16 +370,49 @@ async function hashFile(filePath) {
   return { sha256: hash.digest("hex"), prefix: Buffer.concat(prefix) };
 }
 
-async function downloadWithBrowserControl(page, selected, { maxBytes, rootDirectory, stagingDirectory }) {
-  const staging = stagingDirectory;
+async function downloadWithBrowserControl(page, selected, {
+  maxBytes,
+  rootDirectory,
+  stagingDirectory,
+  browserGeneration,
+  timeoutMs,
+  hooks = {},
+}) {
+  const attemptId = randomUUID();
+  const generation = Math.max(0, Number(browserGeneration) || 0);
+  const staging = path.join(path.resolve(stagingDirectory), `generation-${generation}`, `attempt-${attemptId}`);
+  const configureAttempt = hooks.configureAttempt || configureBrowserDownloadAttempt;
+  const controlFor = hooks.controlFor || browserControlFor;
+  const waitForDownload = hooks.waitForDownload || waitForBrowserDownload;
+  await configureAttempt(page, staging);
   const before = await stagingSnapshot(staging);
-  const element = await browserControlFor(page, selected);
+  const element = await controlFor(page, selected);
+  let downloaded;
+  let clickAttempted = false;
   try {
+    clickAttempted = true;
     await element.click();
+    downloaded = await waitForDownload(staging, before, timeoutMs);
+  } catch (error) {
+    if (clickAttempted) {
+      await writeFile(path.join(staging, ".quarantined.json"), `${JSON.stringify({
+        version: 1,
+        attemptId,
+        browserGeneration: generation,
+        quarantinedAt: new Date().toISOString(),
+        reason: error?.code || "DOWNLOAD_FAILED",
+      }, null, 2)}\n`, { mode: 0o600 }).catch(() => undefined);
+      error.details = {
+        ...(error?.details && typeof error.details === "object" ? error.details : {}),
+        downloadAttemptQuarantined: true,
+        browserGeneration: generation,
+        attemptId,
+      };
+    }
+    throw error;
   } finally {
-    await element.dispose();
+    await element.dispose().catch(() => undefined);
   }
-  const downloaded = await waitForBrowserDownload(staging, before);
   if (downloaded.size > maxBytes) {
     throw codedError("DOWNLOAD_TOO_LARGE", `The browser-downloaded ChatGPT file is larger than the ${maxBytes}-byte limit. It was left in private staging for manual inspection.`);
   }
@@ -360,6 +428,8 @@ async function downloadWithBrowserControl(page, selected, { maxBytes, rootDirect
   await chmod(target, 0o600);
   return {
     downloadId,
+    attemptId,
+    browserGeneration: generation,
     path: target,
     filename,
     sizeBytes: downloaded.size,
@@ -428,7 +498,18 @@ function assertArtifactSignature(filename, prefix) {
 
 export async function downloadAssistantArtifact(
   page,
-  { linkText, scope = "last-assistant", maxBytes = DEFAULT_DOWNLOAD_MAX_BYTES, rootDirectory = downloadsDirectory(), stagingDirectory = browserDownloadStagingDirectory(), fetchImpl = fetch, allowBrowserDownload = true } = {},
+  {
+    linkText,
+    scope = "last-assistant",
+    maxBytes = DEFAULT_DOWNLOAD_MAX_BYTES,
+    rootDirectory = downloadsDirectory(),
+    stagingDirectory = browserDownloadStagingDirectory(),
+    fetchImpl = fetch,
+    allowBrowserDownload = true,
+    browserGeneration = 0,
+    browserDownloadTimeoutMs = 60_000,
+    browserDownloadHooks = {},
+  } = {},
 ) {
   if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > ABSOLUTE_DOWNLOAD_MAX_BYTES) {
     throw codedError("INVALID_DOWNLOAD_LIMIT", `maxBytes must be an integer from 1 to ${ABSOLUTE_DOWNLOAD_MAX_BYTES}.`);
@@ -442,7 +523,17 @@ export async function downloadAssistantArtifact(
         "This Safari file control requires a browser-managed download, which cannot be routed into Oracle's private staging directory. Use Firefox or Chrome for this download.",
       );
     }
-    return { ...(await downloadWithBrowserControl(page, selected, { maxBytes, rootDirectory, stagingDirectory })), scope };
+    return {
+      ...(await downloadWithBrowserControl(page, selected, {
+        maxBytes,
+        rootDirectory,
+        stagingDirectory,
+        browserGeneration,
+        timeoutMs: browserDownloadTimeoutMs,
+        hooks: browserDownloadHooks,
+      })),
+      scope,
+    };
   }
   const response = await fetchDownload(page, selected.source.downloadUrl, fetchImpl);
   const contentType = response.headers.get("content-type") || "application/octet-stream";
@@ -494,6 +585,8 @@ export async function downloadAssistantArtifact(
   await chmod(target, 0o600);
   return {
     downloadId,
+    attemptId: downloadId,
+    browserGeneration: Math.max(0, Number(browserGeneration) || 0),
     path: target,
     filename,
     sizeBytes,
