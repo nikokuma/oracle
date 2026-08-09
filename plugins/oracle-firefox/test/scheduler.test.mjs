@@ -145,7 +145,11 @@ test("default scheduling admits a second chat after the first crosses submit-int
         state.transition(jobId, next);
       }
       preSubmit -= 1;
-      state.transition(jobId, "user_turn_confirmed", { userTurnId: `turn-${jobId}`, userTurnHash: `hash-${jobId}` });
+      state.transition(jobId, "user_turn_confirmed", {
+        conversationUrl: state.requireJob(jobId).conversationKey,
+        userTurnId: `turn-${jobId}`,
+        userTurnHash: `hash-${jobId}`,
+      });
       state.transition(jobId, "awaiting_response");
       if (starts.length === 1) await firstReleased;
       state.transition(jobId, "completed", { result: { jobId } });
@@ -235,8 +239,112 @@ test("a broker-global profile conflict stops scheduling instead of hot-looping t
     const durable = store.requireJob(job.id);
     assert.equal(executions, 1);
     assert.equal(durable.executionEpoch, 1);
+    assert.equal(durable.executionState, "backoff");
     assert.equal(coordinator.status().draining, true);
     assert.equal(coordinator.status().brokerFatalError.code, "PROFILE_IN_USE_EXTERNALLY");
+  } finally {
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("a same-generation executor that settles without a result is CAS-requeued and leaves no running claim", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-scheduler-settlement-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  let executions = 0;
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    legacyCompletionFiles: false,
+    jobExecutor: async () => { executions += 1; },
+  });
+  try {
+    await coordinator.open();
+    const job = queue(store, "https://chatgpt.com/c/unsettled-executor");
+    coordinator.schedule();
+    await waitFor(() => store.requireJob(job.id).executionState === "backoff");
+    const durable = store.requireJob(job.id);
+    assert.equal(executions, 1);
+    assert.equal(durable.state, "queued");
+    assert.equal(durable.executionState, "backoff");
+    assert.equal(durable.executionOwnerInstanceId, null);
+    assert.equal(durable.executionLeaseGeneration, null);
+  } finally {
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("same-generation abandoned-claim sweeping never reclaims a live executor and requeues stale pre-submit work", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-scheduler-stale-pre-submit-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    legacyCompletionFiles: false,
+    jobExecutor: async () => { throw new Error("swept fixture must not execute"); },
+  });
+  try {
+    await coordinator.open();
+    const job = queue(store, "https://chatgpt.com/c/stale-pre-submit");
+    const claim = store.claimRunnable(job.id);
+    coordinator.draining = true;
+    const staleHeartbeat = new Date(Date.now() - 60_000).toISOString();
+    store.db.prepare("UPDATE job_attempts SET execution_heartbeat_at=? WHERE job_id=?").run(staleHeartbeat, job.id);
+    coordinator.active.set(job.id, Promise.resolve());
+    assert.deepEqual(coordinator.sweepAbandonedExecutions(), []);
+    assert.equal(store.assertExecution(claim), true, "the in-memory live executor set must win over a stale heartbeat");
+
+    coordinator.active.delete(job.id);
+    assert.deepEqual(coordinator.sweepAbandonedExecutions(), [{ id: job.id, action: "requeued-pre-submit" }]);
+    const recovered = store.requireJob(job.id);
+    assert.equal(recovered.state, "queued");
+    assert.equal(recovered.executionState, "idle");
+    assert.equal(recovered.executionKind, "pre_submit");
+    assert.equal(recovered.executionEpoch, claim.executionEpoch + 1);
+    assert.equal(recovered.submissionMayHaveOccurred, false);
+  } finally {
+    await coordinator.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("same-generation abandoned monitor claims resume monitoring without lifecycle regression", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-scheduler-stale-monitor-"));
+  const store = new StateStore(path.join(directory, "state.sqlite"));
+  const coordinator = new Coordinator({
+    store,
+    browserManager: fakeBrowser,
+    legacyCompletionFiles: false,
+    jobExecutor: async () => { throw new Error("swept fixture must not execute"); },
+  });
+  try {
+    await coordinator.open();
+    const conversationUrl = "https://chatgpt.com/c/stale-monitor";
+    const job = queue(store, conversationUrl);
+    for (const state of ["page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified", "submit_intent"]) {
+      store.transition(job.id, state);
+    }
+    store.transition(job.id, "user_turn_confirmed", {
+      conversationUrl,
+      userTurnId: "stale-monitor-user",
+    });
+    store.transition(job.id, "awaiting_response");
+    const claim = store.claimRunnable(job.id);
+    assert.equal(claim.executionKind, "monitor_only");
+    coordinator.draining = true;
+    store.db.prepare("UPDATE job_attempts SET execution_heartbeat_at=? WHERE job_id=?")
+      .run(new Date(Date.now() - 60_000).toISOString(), job.id);
+
+    assert.deepEqual(coordinator.sweepAbandonedExecutions(), [{ id: job.id, action: "resumed-monitor-only" }]);
+    const recovered = store.requireJob(job.id);
+    assert.equal(recovered.state, "awaiting_response");
+    assert.notEqual(recovered.state, "queued");
+    assert.equal(recovered.executionState, "idle");
+    assert.equal(recovered.executionKind, "monitor_only");
+    assert.equal(recovered.userTurnHash, null);
+    assert.equal(store.getChain(job.chainId).state, "running");
+    assert.equal(store.isRunnable(job.id), true);
   } finally {
     await coordinator.close();
     await rm(directory, { recursive: true, force: true });
@@ -377,14 +485,20 @@ test("browser selection cannot race ahead of accepting a standalone job", async 
 
 test("retry-once creates one durable child continuation and one root completion record", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "oracle-recovery-"));
+  const previousHome = process.env.ORACLE_FIREFOX_HOME;
+  process.env.ORACLE_FIREFOX_HOME = path.join(directory, "home");
   const store = new StateStore(path.join(directory, "state.sqlite"));
   const sessionPath = path.join(directory, "session");
   await mkdir(sessionPath, { recursive: true });
+  let rootJobId = null;
+  let releaseRoot;
+  const rootReleased = new Promise((resolve) => { releaseRoot = resolve; });
   const coordinator = new Coordinator({
     store,
     browserManager: fakeBrowser,
     legacyCompletionFiles: true,
     jobExecutor: async ({ jobId, store: state }) => {
+      if (jobId === rootJobId) await rootReleased;
       state.transition(jobId, "completed", { result: { jobId, state: "completed", status: "completed" } });
       return state.requireJob(jobId).result;
     },
@@ -409,6 +523,7 @@ test("retry-once creates one durable child continuation and one root completion 
       maxAutomaticEvidenceReplies: 3,
       maxAutomaticResponseRetries: 1,
     }).job;
+    rootJobId = root.id;
     for (const state of [
       "snapshotted", "queued", "page_leased", "target_verified", "attachment_processing",
       "composer_verified", "model_verified", "submit_intent", "user_turn_confirmed", "awaiting_response",
@@ -443,6 +558,7 @@ test("retry-once creates one durable child continuation and one root completion 
       sessionPath,
       submissionCount: 1,
     });
+    releaseRoot();
     const failedRoot = store.requireJob(root.id);
     assert.equal(failedRoot.state, "response_failed");
     assert.ok(failedRoot.replacementJobId);
@@ -462,7 +578,10 @@ test("retry-once creates one durable child continuation and one root completion 
     assert.equal(completion.activeJobId, recovery.id);
     assert.equal(completion.state, "completed");
   } finally {
+    releaseRoot?.();
     await coordinator.close();
+    if (previousHome === undefined) delete process.env.ORACLE_FIREFOX_HOME;
+    else process.env.ORACLE_FIREFOX_HOME = previousHome;
     await rm(directory, { recursive: true, force: true });
   }
 });

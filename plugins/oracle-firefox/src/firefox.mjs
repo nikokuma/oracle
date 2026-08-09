@@ -1417,13 +1417,16 @@ export async function waitForUserMessage(
     // ChatGPT virtualizes long conversations and can render fewer turns after
     // submission than were present in the baseline. Prefer durable turn IDs;
     // count slicing is only a fallback for fixtures/legacy DOMs without IDs.
-    const newUsers = knownTurnIds.size
+    const unseenById = knownTurnIds.size
       ? users.filter((turn) => turn.id && !knownTurnIds.has(turn.id))
-      : users.slice(baselineCount);
-    const match = newUsers.find((turn) =>
-      semanticTextHash(turn.text) === expectedHash &&
-      attachmentManifestKey(turn.attachments) === attachmentManifestKey(expectedManifest),
-    );
+      : [];
+    const countTail = users.slice(baselineCount);
+    const newUsers = knownTurnIds.size ? Array.from(new Set([...unseenById, ...countTail])) : countTail;
+    const matchIndex = correlatedUserTurnIndex(newUsers, {
+      hash: expectedHash,
+      attachments: expectedManifest,
+    });
+    const match = matchIndex >= 0 ? newUsers[matchIndex] : null;
     if (match) {
       if (!requireCanonicalUrl) return { ...latest, userTurn: { ...match, hash: expectedHash } };
       try {
@@ -1444,9 +1447,11 @@ export async function waitForUserMessage(
     // A canonical URL may not exist yet for a failed new-chat submission.
   }
   const users = latest?.turns?.filter((turn) => turn.role === "user") || [];
-  const newUsers = knownTurnIds.size
+  const unseenById = knownTurnIds.size
     ? users.filter((turn) => turn.id && !knownTurnIds.has(turn.id))
-    : users.slice(baselineCount);
+    : [];
+  const countTail = users.slice(baselineCount);
+  const newUsers = knownTurnIds.size ? Array.from(new Set([...unseenById, ...countTail])) : countTail;
   const closest = newUsers.find((turn) =>
     attachmentManifestKey(turn.attachments) === attachmentManifestKey(expectedManifest)
   ) || newUsers.at(-1) || null;
@@ -1544,6 +1549,38 @@ async function boundedAssistantSnapshot(page, probeTimeoutMs = 30_000) {
   }
 }
 
+export function correlatedUserTurnIndex(turns, userTurn) {
+  if (!Array.isArray(turns) || (!userTurn?.id && !userTurn?.hash)) return -1;
+  if (userTurn.id) {
+    const exactIdIndex = turns.findIndex((turn) => turn.role === "user" && turn.id === userTurn.id);
+    if (exactIdIndex >= 0) return exactIdIndex;
+  }
+  if (!userTurn.hash) return -1;
+  const hashMatches = [];
+  for (let index = 0; index < turns.length; index += 1) {
+    const turn = turns[index];
+    if (turn.role === "user" && semanticTextHash(turn.text) === userTurn.hash) hashMatches.push(index);
+  }
+  if (hashMatches.length !== 1) return -1;
+  const [matchIndex] = hashMatches;
+  const match = turns[matchIndex];
+  if (
+    Array.isArray(userTurn.attachments) &&
+    Array.isArray(match.attachments) &&
+    attachmentManifestKey(match.attachments) !== attachmentManifestKey(userTurn.attachments)
+  ) return -1;
+  return matchIndex;
+}
+
+function assistantBoundToUserTurn(turns, userIndex) {
+  if (userIndex < 0) return null;
+  const following = turns.slice(userIndex + 1);
+  const nextUserIndex = following.findIndex((turn) => turn.role === "user");
+  const responseSegment = nextUserIndex >= 0 ? following.slice(0, nextUserIndex) : following;
+  const assistants = responseSegment.filter((turn) => turn.role === "assistant");
+  return assistants.length === 1 ? assistants[0] : null;
+}
+
 export async function waitForAssistantAfterTurn(
   page,
   userTurn,
@@ -1555,14 +1592,8 @@ export async function waitForAssistantAfterTurn(
   let terminalCycles = 0;
   while (Date.now() < deadline) {
     const snapshot = await boundedAssistantSnapshot(page, Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now())));
-    let userIndex = -1;
-    if (userTurn.id) userIndex = snapshot.turns.findIndex((turn) => turn.role === "user" && turn.id === userTurn.id);
-    if (userIndex < 0) {
-      userIndex = snapshot.turns.findIndex((turn) => turn.role === "user" && semanticTextHash(turn.text) === userTurn.hash);
-    }
-    const assistant = userIndex >= 0
-      ? snapshot.turns.slice(userIndex + 1).find((turn) => turn.role === "assistant")
-      : null;
+    const userIndex = correlatedUserTurnIndex(snapshot.turns, userTurn);
+    const assistant = assistantBoundToUserTurn(snapshot.turns, userIndex);
     const responseFailure = classifyAssistantResponseFailure(assistant);
     const key = assistant ? `${assistant.id || ""}:${semanticTextHash(assistant.text)}` : "";
     if (key !== lastKey) {
@@ -1580,7 +1611,14 @@ export async function waitForAssistantAfterTurn(
             recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
           });
         }
-        return { ...snapshot, assistantTurn: assistant, text: assistant.text, html: assistant.html, responseFailure };
+        return {
+          ...snapshot,
+          assistantTurn: assistant,
+          text: assistant.text,
+          html: assistant.html,
+          responseFailure,
+          exactTurnBinding: true,
+        };
       }
     } else {
       terminalCycles = 0;
@@ -1592,6 +1630,38 @@ export async function waitForAssistantAfterTurn(
     "The assistant response bound to the submitted user turn could not be confirmed complete before timeout.",
     { submissionMayHaveOccurred: true, recoveryAction: "inspect the exact conversation and reconcile this job without resending" },
   );
+}
+
+export async function reconcileAssistantAfterTurn(page, userTurn) {
+  if (!userTurn?.id && !userTurn?.hash) {
+    throw codedError(
+      "EXACT_TURN_PROOF_REQUIRED",
+      "Final response reconciliation requires an exact user-turn id or unambiguous semantic hash.",
+      { submissionMayHaveOccurred: true },
+    );
+  }
+  const snapshot = await boundedAssistantSnapshot(page);
+  const userIndex = correlatedUserTurnIndex(snapshot.turns, userTurn);
+  if (userIndex < 0) return null;
+  const assistant = assistantBoundToUserTurn(snapshot.turns, userIndex);
+  const responseFailure = classifyAssistantResponseFailure(assistant);
+  const terminal = assistant && !isPlaceholder(assistant.text) &&
+    (assistant.completionVisible || responseFailure) && !snapshot.stopVisible;
+  if (!terminal) return null;
+  if (isChatGptCooldownText(assistant.text)) {
+    throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
+      submissionMayHaveOccurred: true,
+      recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job",
+    });
+  }
+  return {
+    ...snapshot,
+    assistantTurn: assistant,
+    text: assistant.text,
+    html: assistant.html,
+    responseFailure,
+    exactTurnBinding: true,
+  };
 }
 
 function isChatGptCooldownText(value) {

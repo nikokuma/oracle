@@ -12,6 +12,8 @@ import {
   launchFirefox,
   normalizeSemanticText,
   readComposerText,
+  reconcileAssistantAfterTurn,
+  semanticTextHash,
   submitComposer,
   uploadAttachmentFiles,
   uploadContextFile,
@@ -245,6 +247,39 @@ test("binds completion to the exact new user turn and ignores Pro-thinking place
     const response = await waitForAssistantAfterTurn(page, confirmed.userTurn, { timeoutMs: 4_000, stableMs: 300 });
     assert.equal(response.text, "final exact answer");
     assert.equal(response.assistantTurn.id, "new-assistant");
+  });
+});
+
+test("accepts an exact user-turn ID without a hash and captures an ID-less assistant by stable hash", async () => {
+  await withPage(`
+    <main>
+      <article data-message-author-role="user" data-message-id="id-only-user"><div data-message-content>exact prompt</div></article>
+      <article data-message-author-role="assistant"><div class="markdown">ID-less exact answer</div><button data-testid="copy-turn-action-button">Copy</button></article>
+    </main>
+  `, async (page) => {
+    const response = await waitForAssistantAfterTurn(page, { id: "id-only-user" }, {
+      timeoutMs: 3_000,
+      stableMs: 100,
+    });
+    assert.equal(response.exactTurnBinding, true);
+    assert.equal(response.assistantTurn.id, null);
+    assert.equal(semanticTextHash(response.assistantTurn.text), semanticTextHash("ID-less exact answer"));
+  });
+});
+
+test("refuses to choose among duplicate user-turn hash matches during final reconciliation", async () => {
+  await withPage(`
+    <main>
+      <article data-message-author-role="user" data-message-id="duplicate-1"><div data-message-content>duplicate prompt</div></article>
+      <article data-message-author-role="assistant" data-message-id="answer-1"><div class="markdown">first answer</div><button data-testid="copy-turn-action-button">Copy</button></article>
+      <article data-message-author-role="user" data-message-id="duplicate-2"><div data-message-content>duplicate prompt</div></article>
+      <article data-message-author-role="assistant" data-message-id="answer-2"><div class="markdown">second answer</div><button data-testid="copy-turn-action-button">Copy</button></article>
+    </main>
+  `, async (page) => {
+    const response = await reconcileAssistantAfterTurn(page, {
+      hash: semanticTextHash("duplicate prompt"),
+    });
+    assert.equal(response, null);
   });
 });
 

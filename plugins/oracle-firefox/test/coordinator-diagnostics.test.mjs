@@ -16,7 +16,7 @@ test("offline coordinator inspection is read-only and reports schema fencing", a
   try {
     const inspected = await inspectCoordinatorDatabase(databasePath);
     assert.equal(inspected.readable, true);
-    assert.equal(inspected.schemaVersion, 7);
+    assert.equal(inspected.schemaVersion, 8);
     assert.equal(inspected.integrity, "ok");
     assert.equal(inspected.foreignKeyViolations, 0);
     assert.equal(inspected.broker.minimumWriterProtocol, 8);

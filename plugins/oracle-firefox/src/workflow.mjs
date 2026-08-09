@@ -22,6 +22,7 @@ import {
   openProject,
   probeLogin,
   projectUrlFromConversationUrl,
+  reconcileAssistantAfterTurn,
   semanticTextHash,
   submitComposer,
   uploadAttachmentFiles,
@@ -382,33 +383,205 @@ export async function writeFinalMetadata(job, result) {
   );
 }
 
+function terminalArtifactPaths(job) {
+  return {
+    responsePath: path.join(job.sessionPath, "response.md"),
+    metadataPath: path.join(job.sessionPath, "metadata.json"),
+  };
+}
+
+async function artifactExists(candidate) {
+  try {
+    await access(candidate);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function writeCompletedArtifacts(job, result) {
+  const answer = String(result?.answer ?? "");
+  const responsePath = await writeSessionFile(
+    { id: path.basename(job.sessionPath), directory: job.sessionPath },
+    "response.md",
+    `${answer}\n`,
+  );
+  triggerFailpoint("after_response_persistence");
+  await writeFinalMetadata(job, { ...result, responsePath });
+  return responsePath;
+}
+
+export async function repairTerminalArtifacts(store) {
+  const repaired = [];
+  const failed = [];
+  for (const job of store.completedJobsWithExactProof()) {
+    const { responsePath, metadataPath } = terminalArtifactPaths(job);
+    try {
+      if (!(await artifactExists(responsePath))) {
+        await writeSessionFile(
+          { id: path.basename(job.sessionPath), directory: job.sessionPath },
+          "response.md",
+          `${String(job.result?.answer ?? "")}\n`,
+        );
+        repaired.push({ jobId: job.id, artifact: "response.md" });
+      }
+      if (!(await artifactExists(metadataPath))) {
+        await writeFinalMetadata(job, { ...job.result, responsePath });
+        repaired.push({ jobId: job.id, artifact: "metadata.json" });
+      }
+    } catch (error) {
+      failed.push({ jobId: job.id, error: structuredError(error) });
+    }
+  }
+  return { repaired, failed };
+}
+
 function transitionExecution(store, executionClaim, jobId, state, patch = {}, details = null) {
   return executionClaim
     ? store.transitionClaimed(executionClaim, state, patch, details)
     : store.transition(jobId, state, patch, details);
 }
 
-async function monitorSubmittedJob({ job, page, store, executionClaim }) {
-  if (!job.conversationUrl || (!job.userTurnId && !job.userTurnHash)) {
+async function monitorSubmittedJob({ job, page, store, executionClaim, dependencies = {}, finalAttempt = false }) {
+  if (!job.submitIntentAt ||
+      !job.conversationUrl ||
+      (!job.userTurnId && !job.userTurnHash) ||
+      !job.monitorDeadlineAt) {
     throw codedError("SUBMISSION_UNCERTAIN", "A submitted job lacks enough durable evidence for monitor-only recovery.", {
       submissionMayHaveOccurred: true,
       recoveryAction: `reconcile_job ${job.id}`,
     });
   }
-  await openExistingConversation(page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
-  transitionExecution(store, executionClaim, job.id, "awaiting_response", { recoveryAction: "monitoring proven submitted turn" });
-  const response = await waitForAssistantAfterTurn(
-    page,
-    { id: job.userTurnId, hash: job.userTurnHash },
-    { timeoutMs: job.request.responseTimeoutSeconds * 1_000 },
-  );
+  const openConversation = dependencies.openConversation || openExistingConversation;
+  const waitForResponse = dependencies.waitForResponse || waitForAssistantAfterTurn;
+  const reconcileResponse = dependencies.reconcileResponse || reconcileAssistantAfterTurn;
+  const deadlineMs = Date.parse(job.monitorDeadlineAt || 0);
+  await openConversation(page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
+  if (!new Set(["awaiting_response", "response_failed_detected", "response_confirmed"]).has(job.state)) {
+    transitionExecution(store, executionClaim, job.id, "awaiting_response", { recoveryAction: "monitoring proven submitted turn" });
+  }
+  const userTurn = {
+    id: job.userTurnId,
+    hash: job.userTurnHash,
+    attachments: job.attachmentManifest,
+  };
+  if (finalAttempt) store.beginFinalMonitorReconciliation(executionClaim);
+  const response = finalAttempt
+    ? await reconcileResponse(page, userTurn)
+    : await waitForResponse(
+        page,
+        userTurn,
+        { timeoutMs: Math.max(1, deadlineMs - Date.now()) },
+      );
+  if (!response) {
+    throw codedError(
+      "MONITOR_DEADLINE_EXPIRED",
+      "The final exact-turn reconciliation found no complete assistant response.",
+      { submissionMayHaveOccurred: true, recoveryAction: `reconcile_job ${job.id}` },
+    );
+  }
   return finalizeResponse({ job: store.requireJob(job.id), response, store, executionClaim });
 }
 
+export async function executeMonitorOnlyJob({
+  jobId,
+  store,
+  browserManager,
+  executionClaim,
+  monitorDependencies = {},
+}) {
+  const job = store.requireJob(jobId);
+  if (!executionClaim || executionClaim.executionKind !== "monitor_only" || job.executionKind !== "monitor_only") {
+    throw codedError(
+      "MONITOR_CLAIM_REQUIRED",
+      "Submitted response recovery requires a dedicated monitor-only execution claim.",
+      { submissionMayHaveOccurred: Boolean(job.submitIntentAt) },
+    );
+  }
+  if (!job.submitIntentAt ||
+      !job.conversationUrl ||
+      (!job.userTurnId && !job.userTurnHash) ||
+      !job.monitorDeadlineAt) {
+    const error = codedError(
+      "SUBMISSION_UNCERTAIN",
+      "The monitor-only claim is missing immutable exact-turn proof.",
+      { submissionMayHaveOccurred: true, recoveryAction: `reconcile_job ${job.id}` },
+    );
+    store.markFailureClaimed(executionClaim, error);
+    throw error;
+  }
+  store.assertExecution(executionClaim);
+  const finalAttempt = Date.parse(job.monitorDeadlineAt) <= Date.now();
+  let lease = null;
+  try {
+    lease = await browserManager.leasePage(job.id);
+    store.assertExecution(executionClaim);
+    const authenticate = monitorDependencies.authenticate || requireAuthenticatedPage;
+    await authenticate(lease.page);
+    return await monitorSubmittedJob({
+      job: store.requireJob(job.id),
+      page: lease.page,
+      store,
+      executionClaim,
+      dependencies: monitorDependencies,
+      finalAttempt,
+    });
+  } catch (error) {
+    if (new Set([
+      "STALE_EXECUTION",
+      "BROKER_LEASE_LOST",
+      "BROKER_INSTANCE_REPLACED",
+      "PROFILE_IN_USE_EXTERNALLY",
+      "BROKER_DATABASE_OWNED",
+      "BROKER_ENDPOINT_CONFLICT",
+    ]).has(error?.code)) throw error;
+    const current = store.requireJob(job.id);
+    if (TERMINAL_JOB_STATES_FOR_WORKFLOW.has(current.state)) throw error;
+    if (store.requireJob(job.id).finalReconciliationAttemptedAt) {
+      const failed = store.markFailureClaimed(executionClaim, error);
+      await writeFinalMetadata(failed, {
+        jobId: failed.id,
+        authorizationId: failed.authorizationId,
+        state: failed.state,
+        status: failed.state,
+        browser: failed.request?.browser || "firefox",
+        error: failed.error || structuredError(error),
+        conversationUrl: failed.conversationUrl,
+        projectUrl: failed.projectUrl,
+        sessionPath: failed.sessionPath,
+        safeToRetry: false,
+        submissionMayHaveOccurred: true,
+        recoveryAction: failed.recoveryAction,
+      }).catch(() => undefined);
+    }
+    throw error;
+  } finally {
+    if (lease) await browserManager.releasePage(job.id);
+  }
+}
+
+const TERMINAL_JOB_STATES_FOR_WORKFLOW = new Set([
+  "completed",
+  "cancelled_pre_submit",
+  "failed_pre_submit",
+  "submission_uncertain",
+  "response_uncertain",
+  "response_failed",
+  "quarantined",
+]);
+
 async function finalizeResponse({ job, response, store, executionClaim }) {
+  if (response?.exactTurnBinding !== true) {
+    throw codedError(
+      "EXACT_RESPONSE_BINDING_REQUIRED",
+      "Oracle refused to persist an assistant response without unambiguous binding to the exact submitted user turn.",
+      { submissionMayHaveOccurred: true, recoveryAction: `reconcile_job ${job.id}` },
+    );
+  }
   const answer = cleanAssistantText(response.text);
-  const responsePath = await writeSessionFile({ id: path.basename(job.sessionPath), directory: job.sessionPath }, "response.md", `${answer}\n`);
-  triggerFailpoint("after_response_persistence");
+  const responsePath = terminalArtifactPaths(job).responsePath;
+  const assistantTurnId = response.assistantTurn?.id || null;
+  const assistantTurnHash = semanticTextHash(response.assistantTurn?.text ?? response.text);
   if (response.responseFailure) {
     const failure = response.responseFailure;
     const error = {
@@ -426,10 +599,12 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
       assistantDisposition: "response_failed",
       responseDisposition: failure.disposition,
       responseFailure: failure,
+      assistantTurnId,
+      assistantTurnHash,
       error,
       recoveryAction: error.recoveryAction,
     });
-    return {
+    const detected = {
       jobId: job.id,
       rootJobId: job.rootJobId,
       authorizationId: job.authorizationId,
@@ -453,16 +628,18 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
       recoveryAction: error.recoveryAction,
       error,
     };
+    await writeSessionFile(
+      { id: path.basename(job.sessionPath), directory: job.sessionPath },
+      "response.md",
+      `${answer}\n`,
+    );
+    triggerFailpoint("after_response_persistence");
+    return detected;
   }
   const localDataRequest = parseLocalDataRequest(answer, {
     expectedNonce: job.request.localDataNonce || null,
   });
   const disposition = localDataRequest ? "local_data_request" : "final";
-  transitionExecution(store, executionClaim, job.id, "response_confirmed", {
-    assistantDisposition: disposition,
-    responseDisposition: "completed",
-    localDataRequest,
-  });
   const completedAt = new Date().toISOString();
   const result = {
     jobId: job.id,
@@ -492,13 +669,44 @@ async function finalizeResponse({ job, response, store, executionClaim }) {
     submissionCount: job.retryAttempt + 1,
     recoveryAction: localDataRequest ? "perform approved read-only checks, then call reply_with_local_data" : null,
   };
-  transitionExecution(store, executionClaim, job.id, "completed", { result, recoveryAction: result.recoveryAction });
-  await writeFinalMetadata(store.requireJob(job.id), result);
+  if (executionClaim) {
+    store.completeResponseClaimed(executionClaim, {
+      assistantTurnId,
+      assistantTurnHash,
+      assistantTurnBound: response.exactTurnBinding,
+      assistantDisposition: disposition,
+      responseDisposition: "completed",
+      localDataRequest,
+      result,
+      recoveryAction: result.recoveryAction,
+    });
+  } else {
+    transitionExecution(store, null, job.id, "response_confirmed", {
+      assistantTurnId,
+      assistantTurnHash,
+      assistantDisposition: disposition,
+      responseDisposition: "completed",
+      localDataRequest,
+    });
+    transitionExecution(store, null, job.id, "completed", { result, recoveryAction: result.recoveryAction });
+  }
+  triggerFailpoint("after_terminal_commit");
+  await writeCompletedArtifacts(store.requireJob(job.id), result);
   return result;
 }
 
-export async function executeJob({ jobId, store, browserManager, beforeSubmit, executionClaim }) {
+export async function executeJob({ jobId, store, browserManager, beforeSubmit, executionClaim, monitorDependencies }) {
   let job = store.requireJob(jobId);
+  if (executionClaim?.executionKind === "monitor_only") {
+    return executeMonitorOnlyJob({ jobId, store, browserManager, executionClaim, monitorDependencies });
+  }
+  if (job.submitIntentAt || job.executionKind === "monitor_only") {
+    throw codedError(
+      "MONITOR_CLAIM_REQUIRED",
+      "A submitted job cannot enter the pre-submit workflow; it requires a dedicated monitor-only claim.",
+      { submissionMayHaveOccurred: true, recoveryAction: `reconcile_job ${job.id}` },
+    );
+  }
   let lease = null;
   if (executionClaim) store.assertExecution(executionClaim);
   try {
@@ -507,10 +715,6 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
     transitionExecution(store, executionClaim, job.id, "page_leased");
     job = store.requireJob(job.id);
     await requireAuthenticatedPage(lease.page);
-    if (job.submitIntentAt && (job.userTurnId || job.userTurnHash)) {
-      return await monitorSubmittedJob({ job, page: lease.page, store, executionClaim });
-    }
-
     let target = null;
     let project = null;
     if (job.operation === "continue_chat") {
@@ -650,7 +854,7 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
     job = store.requireJob(job.id);
     const response = await waitForAssistantAfterTurn(
       lease.page,
-      { id: job.userTurnId, hash: job.userTurnHash },
+      { id: job.userTurnId, hash: job.userTurnHash, attachments: job.attachmentManifest },
       { timeoutMs: job.request.responseTimeoutSeconds * 1_000 },
     );
     triggerFailpoint("after_assistant_completion");
@@ -671,6 +875,7 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
       "LOCK_TIMEOUT",
     ]).has(error?.code)) throw error;
     let current = store.requireJob(job.id);
+    if (TERMINAL_JOB_STATES_FOR_WORKFLOW.has(current.state)) throw error;
     if (current.submitIntentAt && !current.conversationUrl && error?.details?.conversationUrl) {
       try {
         const observedUrl = normalizeConversationUrl(error.details.conversationUrl);
@@ -683,6 +888,7 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
       }
     }
     if (current.state === "cancelled_pre_submit") throw error;
+    if (executionClaim && current.executionKind === "monitor_only") throw error;
     const failed = executionClaim ? store.markFailureClaimed(executionClaim, error) : store.markFailure(job.id, error);
     await writeFinalMetadata(failed, {
       jobId: failed.id,

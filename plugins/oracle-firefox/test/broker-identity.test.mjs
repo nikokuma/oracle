@@ -15,6 +15,7 @@ import {
   ORACLE_FIREFOX_VERSION,
 } from "../src/build-info.mjs";
 import { StateStore } from "../src/state-store.mjs";
+import { mintCapability } from "../src/capabilities.mjs";
 
 const ENV_KEYS = [
   "ORACLE_FIREFOX_HOME",
@@ -185,7 +186,7 @@ test("production migration backs up the untouched legacy schema before upgrading
     legacy.close();
     const store = await new StateStore(databasePath, { brokerContext: brokerContext("migration-backup") }).open();
     store.close();
-    const backupPath = `${databasePath}.pre-v7.bak`;
+    const backupPath = `${databasePath}.pre-v8.bak`;
     assert.ok((await stat(backupPath)).size > 0);
     const backup = new DatabaseSync(backupPath, { readOnly: true });
     try {
@@ -211,13 +212,108 @@ test("a schema-six successor takes ownership before touching fenced migration ro
     const successorContext = brokerContext(coordinatorId);
     const successor = await new StateStore(databasePath, { brokerContext: successorContext }).open();
     try {
-      assert.equal(successor.db.prepare("SELECT MAX(version) version FROM schema_migrations").get().version, 7);
+      assert.equal(successor.db.prepare("SELECT MAX(version) version FROM schema_migrations").get().version, 8);
       assert.equal(successor.requireJob(job.id).state, "queued");
       assert.equal(successorContext.leaseGeneration, 2);
       assert.equal(
         successor.db.prepare("SELECT current_instance_id FROM broker_state WHERE id = 1").get().current_instance_id,
         successorContext.instanceId,
       );
+    } finally {
+      successor.close();
+    }
+  });
+});
+
+test("schema seven migrates transactionally to monotonic monitor execution without trusting response.md", async () => {
+  await withEnvironment(async (root) => {
+    const databasePath = path.join(root, "schema-seven.sqlite");
+    const sessionPath = path.join(root, "legacy-session");
+    const coordinatorId = "schema-seven-coordinator";
+    await mkdir(sessionPath, { recursive: true });
+    await writeFile(path.join(sessionPath, "response.md"), "unbound legacy response hint\n", { mode: 0o600 });
+    const firstContext = brokerContext(coordinatorId);
+    const first = await new StateStore(databasePath, { brokerContext: firstContext }).open();
+    const owner = first.createOwnerSession({ harness: "legacy-codex", clientInstanceId: "legacy-client" });
+    const caller = first.authenticateOwnerSession({ sessionId: owner.sessionId, sessionHandle: owner.sessionHandle });
+    const id = randomUUID();
+    const read = mintCapability("read", id);
+    const control = mintCapability("control", id);
+    const subscriptionId = randomUUID();
+    const subscription = mintCapability("subscription", subscriptionId);
+    const conversationUrl = "https://chatgpt.com/c/schema-seven-monitor";
+    const job = first.createJob({
+      id,
+      authorizationId: randomUUID(),
+      operation: "continue_chat",
+      request: { responseTimeoutSeconds: 300, completionMode: "notify" },
+      conversationKey: conversationUrl,
+      conversationUrl,
+      sessionPath,
+      ownerSessionId: caller.id,
+      readCapabilityHash: read.hash,
+      controlCapabilityHash: control.hash,
+      subscriptionId,
+      subscriptionCapabilityHash: subscription.hash,
+      completionMode: "notify",
+    }).job;
+    for (const state of ["snapshotted", "queued", "page_leased", "target_verified", "attachment_processing", "composer_verified", "model_verified"]) {
+      first.transition(job.id, state);
+    }
+    const permit = first.issueSubmitPermit(job.id, { minimumIntervalMs: 1 });
+    first.consumeSubmitPermit(job.id, permit.id, { submittedMessageHash: "schema-seven-user-hash" });
+    first.transition(job.id, "user_turn_confirmed", {
+      userTurnId: "schema-seven-user-turn",
+      userTurnHash: "schema-seven-user-hash",
+    });
+    first.transition(job.id, "awaiting_response");
+    const chainBefore = first.chainAccessRow(job.chainId);
+    first.close();
+
+    const legacy = new DatabaseSync(databasePath);
+    legacy.function("oracle_writer_protocol", () => 8);
+    legacy.function("oracle_broker_instance", () => firstContext.instanceId);
+    legacy.function("oracle_lease_generation", () => firstContext.leaseGeneration);
+    const triggers = legacy.prepare("SELECT name FROM sqlite_schema WHERE type='trigger' AND name LIKE 'oracle_%'").all();
+    for (const trigger of triggers) legacy.exec(`DROP TRIGGER ${trigger.name}`);
+    legacy.exec(`
+      DROP INDEX IF EXISTS job_attempts_execution_kind_ready;
+      ALTER TABLE job_attempts DROP COLUMN final_reconciliation_attempted_at;
+      ALTER TABLE job_attempts DROP COLUMN monitor_deadline_at;
+      ALTER TABLE job_attempts DROP COLUMN execution_kind;
+      ALTER TABLE jobs DROP COLUMN assistant_turn_hash;
+      ALTER TABLE jobs DROP COLUMN assistant_turn_id;
+      UPDATE jobs SET state='queued', recovery_action='legacy restart queue' WHERE id='${job.id}';
+      UPDATE job_chains SET state='queued' WHERE id='${job.chainId}';
+      UPDATE job_attempts SET execution_state='idle', execution_owner_instance_id=NULL,
+        execution_lease_generation=NULL WHERE job_id='${job.id}';
+      DELETE FROM schema_migrations WHERE version=8;
+    `);
+    legacy.close();
+
+    const successorContext = brokerContext(coordinatorId);
+    const migrationStartedAt = Date.now();
+    const successor = await new StateStore(databasePath, {
+      brokerContext: successorContext,
+      allowUnfenced: true,
+    }).open();
+    const migrationElapsedMs = Date.now() - migrationStartedAt;
+    try {
+      assert.ok(migrationElapsedMs < 5_000, `correctness migration should not wait for the production backup path (${migrationElapsedMs}ms)`);
+      const migrated = successor.requireJob(job.id);
+      assert.equal(successor.databaseStatus().schemaVersion, 8);
+      assert.equal(migrated.state, "awaiting_response");
+      assert.equal(migrated.executionKind, "monitor_only");
+      assert.ok(migrated.monitorDeadlineAt);
+      assert.equal(migrated.result, null, "an unbound legacy response.md must not become authoritative result proof");
+      assert.equal(migrated.assistantTurnId, null);
+      assert.equal(successor.getChain(job.chainId).id, job.chainId);
+      const chainAfter = successor.chainAccessRow(job.chainId);
+      assert.equal(chainAfter.read_cap_hash, chainBefore.read_cap_hash);
+      assert.equal(chainAfter.control_cap_hash, chainBefore.control_cap_hash);
+      assert.equal(successor.authenticateOwnerSession({ sessionId: owner.sessionId, sessionHandle: owner.sessionHandle }).id, owner.sessionId);
+      assert.equal(successor.db.prepare("SELECT COUNT(*) count FROM submit_permits WHERE job_id=? AND consumed_at IS NOT NULL").get(job.id).count, 1);
+      assert.equal(successor.db.prepare("SELECT COUNT(*) count FROM completion_subscriptions WHERE id=?").get(subscriptionId).count, 1);
     } finally {
       successor.close();
     }

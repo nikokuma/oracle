@@ -32,6 +32,7 @@ import {
   importSessionIntoManagedBrowser,
   listFirefoxProfiles,
   prepareJobRequest,
+  repairTerminalArtifacts,
   resolveProjectTarget,
   setupLogin,
   doctor,
@@ -125,7 +126,20 @@ function notifyMacOsCompletion(delivery) {
 }
 
 export class Coordinator {
-  constructor({ store = new StateStore(), browserManager = null, brokerContext = null, writeConcurrency, minimumSubmissionIntervalMs, jobExecutor = executeJob, completionDirectory, legacyCompletionFiles, completionNotifier = notifyMacOsCompletion } = {}) {
+  constructor({
+    store = new StateStore(),
+    browserManager = null,
+    brokerContext = null,
+    writeConcurrency,
+    minimumSubmissionIntervalMs,
+    executionHeartbeatIntervalMs,
+    abandonedClaimTimeoutMs,
+    abandonedClaimSweepIntervalMs,
+    jobExecutor = executeJob,
+    completionDirectory,
+    legacyCompletionFiles,
+    completionNotifier = notifyMacOsCompletion,
+  } = {}) {
     this.store = store;
     this.brokerContext = brokerContext || store.brokerContext;
     this.browserManager = browserManager || new BrowserManager({ brokerContext: this.brokerContext });
@@ -139,6 +153,15 @@ export class Coordinator {
     this.minimumSubmissionIntervalMs = Math.max(2_000, Math.min(300_000, Number(
       minimumSubmissionIntervalMs ?? process.env.ORACLE_FIREFOX_MINIMUM_SUBMISSION_INTERVAL_MS ?? 10_000,
     ) || 10_000));
+    this.executionHeartbeatIntervalMs = Math.max(100, Number(executionHeartbeatIntervalMs) || 5_000);
+    this.abandonedClaimTimeoutMs = Math.max(
+      this.executionHeartbeatIntervalMs * 2,
+      Number(abandonedClaimTimeoutMs) || 20_000,
+    );
+    this.abandonedClaimSweepIntervalMs = Math.max(
+      100,
+      Number(abandonedClaimSweepIntervalMs) || Math.min(5_000, this.abandonedClaimTimeoutMs / 2),
+    );
     this.active = new Map();
     this.submitGate = Promise.resolve();
     this.startedAt = new Date().toISOString();
@@ -157,6 +180,7 @@ export class Coordinator {
     this.notificationPump = Promise.resolve();
     this.accountWakeTimer = null;
     this.executionWakeTimer = null;
+    this.abandonedClaimSweepTimer = null;
     this.onStoreChange = (job) => {
       if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
       this.queueSystemNotifications();
@@ -184,10 +208,14 @@ export class Coordinator {
     this.invariants = this.store.checkInvariants();
     this.safeMode = !this.invariants.ok;
     this.recovery = this.safeMode ? [] : this.store.recoverInterruptedJobs();
+    this.artifactRepair = this.safeMode ? { repaired: [], failed: [] } : await repairTerminalArtifacts(this.store);
     if (this.legacyCompletionFiles) {
       for (const rootJobId of this.store.allRootJobIds()) this.queueCompletionRecord(rootJobId);
     }
-    if (!this.safeMode) this.schedule();
+    if (!this.safeMode) {
+      this.startAbandonedClaimSweeper();
+      this.schedule();
+    }
     this.scheduleAccountWake(this.store.accountState().cooldownUntil);
     return this;
   }
@@ -195,6 +223,8 @@ export class Coordinator {
   async close() {
     this.closed = true;
     this.draining = true;
+    clearInterval(this.abandonedClaimSweepTimer);
+    this.abandonedClaimSweepTimer = null;
     await Promise.allSettled(this.active.values());
     this.store.off("change", this.onStoreChange);
     await Promise.allSettled(this.completionWrites.values());
@@ -450,6 +480,14 @@ export class Coordinator {
 
   drain() {
     if (this.closed || this.safeMode || this.draining) return;
+    try {
+      this.sweepAbandonedExecutions();
+    } catch (error) {
+      this.safeMode = true;
+      this.draining = true;
+      this.brokerFatalError = structuredError(error);
+      return;
+    }
     const account = this.store.accountState();
     const cooldownActive = account.cooldownUntil && Date.parse(account.cooldownUntil) > Date.now();
     const preSubmitLimit = cooldownActive
@@ -466,8 +504,8 @@ export class Coordinator {
       const running = this.runJob(job, executionClaim)
         .catch((error) => this.handleExecutorError(job, executionClaim, error))
         .finally(() => {
-          this.active.delete(job.id);
           this.store.releaseExecutionClaim(executionClaim);
+          this.active.delete(job.id);
           this.scheduleExecutionWake();
           this.schedule();
         });
@@ -488,12 +526,10 @@ export class Coordinator {
       this.safeMode = true;
       this.draining = true;
       this.brokerFatalError = structuredError(error);
+      this.store.releaseExecutionClaim(claim, error);
       return;
     }
-    const current = this.store.requireJob(job.id);
-    if (current.state === "queued" && current.executionState === "running") {
-      this.store.releaseExecutionWithBackoff(claim, error);
-    }
+    this.store.releaseExecutionClaim(claim, error);
   }
 
   scheduleExecutionWake() {
@@ -507,6 +543,30 @@ export class Coordinator {
       this.schedule();
     }, Math.max(1, Date.parse(when) - Date.now()));
     this.executionWakeTimer.unref?.();
+  }
+
+  sweepAbandonedExecutions({ nowMs = Date.now() } = {}) {
+    return this.store.sweepAbandonedExecutionClaims({
+      activeExecutorIds: this.active.keys(),
+      heartbeatTimeoutMs: this.abandonedClaimTimeoutMs,
+      nowMs,
+    });
+  }
+
+  startAbandonedClaimSweeper() {
+    clearInterval(this.abandonedClaimSweepTimer);
+    this.abandonedClaimSweepTimer = setInterval(() => {
+      if (this.closed || this.safeMode) return;
+      try {
+        const recovered = this.sweepAbandonedExecutions();
+        if (recovered.length && !this.draining) this.schedule();
+      } catch (error) {
+        this.safeMode = true;
+        this.draining = true;
+        this.brokerFatalError = structuredError(error);
+      }
+    }, this.abandonedClaimSweepIntervalMs);
+    this.abandonedClaimSweepTimer.unref?.();
   }
 
   async beforeSubmit(jobId, { waitOnly = false } = {}) {
@@ -559,7 +619,7 @@ export class Coordinator {
       } catch (error) {
         heartbeatError = error;
       }
-    }, 5_000);
+    }, this.executionHeartbeatIntervalMs);
     executionHeartbeat.unref?.();
     try {
       const result = await this.jobExecutor({

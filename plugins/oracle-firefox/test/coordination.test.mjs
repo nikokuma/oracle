@@ -188,7 +188,7 @@ test("proven orphaned reconciliation rotates handles and grants only the recover
       scopeKey: conversationUrl,
       fingerprint: inspected.fingerprint,
       caller: recovery,
-      userTurnId: "proven-user-turn",
+      userTurnId: "legacy-user-turn",
       userTurnHash: "submitted-hash",
       readCapabilityHash: read.hash,
       controlCapabilityHash: control.hash,
@@ -196,7 +196,8 @@ test("proven orphaned reconciliation rotates handles and grants only the recover
       subscriptionCapabilityHash: subscription.hash,
       completionMode: "harness",
     });
-    assert.equal(reopened.state, "queued");
+    assert.equal(reopened.state, "awaiting_response");
+    assert.equal(reopened.executionKind, "monitor_only");
     assert.equal(store.quarantineView(conversationUrl).quarantined, false);
     assert.equal(store.authorizeJob({ jobId: owned.job.id, caller: recovery, control: true }).job.id, owned.job.id);
     assert.throws(

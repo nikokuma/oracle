@@ -48,10 +48,10 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// node_modules/puppeteer-core/lib/puppeteer/environment.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/environment.js
 var isNode, environment;
 var init_environment = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/environment.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/environment.js"() {
     isNode = !!(typeof process !== "undefined" && process.version);
     environment = {
       value: {
@@ -68,7 +68,7 @@ var init_environment = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/third_party/rxjs/rxjs.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/rxjs/rxjs.js
 function __extends(d, b2) {
   if (typeof b2 !== "function" && b2 !== null)
     throw new TypeError("Class extends value " + String(b2) + " is not a constructor or null");
@@ -1519,7 +1519,7 @@ function tap(observerOrNext, error, complete) {
 }
 var extendStatics, UnsubscriptionError, Subscription, EMPTY_SUBSCRIPTION, config, timeoutProvider, COMPLETE_NOTIFICATION, context, Subscriber, _bind, ConsumerObserver, SafeSubscriber, EMPTY_OBSERVER, observable, Observable, OperatorSubscriber, ObjectUnsubscribedError, Subject, AnonymousSubject, dateTimestampProvider, ReplaySubject, Action, intervalProvider, AsyncAction, Scheduler, AsyncScheduler, asyncScheduler, async, EMPTY, isArrayLike, iterator, EmptyError, isArray, isArray2, getPrototypeOf, objectProto, getKeys, nodeEventEmitterMethods, eventTargetMethods, jqueryMethods, NEVER, isArray3;
 var init_rxjs = __esm({
-  "node_modules/puppeteer-core/lib/third_party/rxjs/rxjs.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/rxjs/rxjs.js"() {
     extendStatics = function(d, b2) {
       extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b22) {
         d2.__proto__ = b22;
@@ -2382,7 +2382,7 @@ var init_rxjs = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/third_party/mitt/mitt.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/mitt/mitt.js
 function mitt_default(n) {
   return { all: n = n || /* @__PURE__ */ new Map(), on: function(t, e) {
     var i = n.get(t);
@@ -2400,14 +2400,14 @@ function mitt_default(n) {
   } };
 }
 var init_mitt = __esm({
-  "node_modules/puppeteer-core/lib/third_party/mitt/mitt.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/mitt/mitt.js"() {
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/disposable.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/disposable.js
 var disposeSymbol, asyncDisposeSymbol, DisposableStackPolyfill, DisposableStack, AsyncDisposableStackPolyfill, AsyncDisposableStack, SuppressedErrorPolyfill, SuppressedError2;
 var init_disposable = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/disposable.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/disposable.js"() {
     Symbol.dispose ??= /* @__PURE__ */ Symbol("dispose");
     Symbol.asyncDispose ??= /* @__PURE__ */ Symbol("asyncDispose");
     disposeSymbol = Symbol.dispose;
@@ -2713,10 +2713,10 @@ var init_disposable = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/assert.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/assert.js
 var assert;
 var init_assert = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/assert.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/assert.js"() {
     assert = (value, message) => {
       if (!value) {
         throw new Error(message);
@@ -2725,7 +2725,7 @@ var init_assert = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/encoding.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/encoding.js
 function stringToTypedArray(string, base64Encoded = false) {
   if (base64Encoded) {
     if ("fromBase64" in Uint8Array) {
@@ -2767,22 +2767,22 @@ function mergeUint8Arrays(items) {
   return result;
 }
 var init_encoding = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/encoding.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/encoding.js"() {
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/version.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/version.js
 var packageVersion;
 var init_version = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/version.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/version.js"() {
     packageVersion = "25.3.0";
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/Debug.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Debug.js
 var debug, capturedLogs, captureLogs;
 var init_Debug = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/Debug.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Debug.js"() {
     init_environment();
     debug = (prefix) => {
       if (isNode) {
@@ -2820,10 +2820,10 @@ var init_Debug = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/Errors.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Errors.js
 var PuppeteerError, TimeoutError, TouchError, ProtocolError, UnsupportedOperation, TargetCloseError, ConnectionClosedError;
 var init_Errors = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/Errors.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Errors.js"() {
     PuppeteerError = class extends Error {
       /**
        * @internal
@@ -2876,10 +2876,10 @@ var init_Errors = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/PDFOptions.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PDFOptions.js
 var paperFormats;
 var init_PDFOptions = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/PDFOptions.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PDFOptions.js"() {
     paperFormats = {
       letter: {
         cm: { width: 21.59, height: 27.94 },
@@ -2929,7 +2929,7 @@ var init_PDFOptions = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/util.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/util.js
 function evaluationString(fun, ...args) {
   if (isString(fun)) {
     assert(args.length === 0, "Cannot evaluate a string with arguments");
@@ -3109,7 +3109,7 @@ function filterAsync(predicate) {
 }
 var debugError, debugCatchError, DEFAULT_VIEWPORT, SOURCE_URL, PuppeteerURL, withSourcePuppeteerURLIfNone, getSourcePuppeteerURLIfAvailable, isString, isNumber, isPlainObject, isRegExp, isDate, VALID_DIALOG_TYPES, UTILITY_WORLD_NAME, SOURCE_URL_REGEX, NETWORK_IDLE_TIME, unitToPixels;
 var init_util = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/util.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/util.js"() {
     init_rxjs();
     init_environment();
     init_assert();
@@ -3210,10 +3210,10 @@ var init_util = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js
 var EventEmitter;
 var init_EventEmitter = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js"() {
     init_mitt();
     init_disposable();
     init_util();
@@ -3333,10 +3333,10 @@ var init_EventEmitter = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/Browser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Browser.js
 var WEB_PERMISSION_TO_PROTOCOL_PERMISSION, Browser;
 var init_Browser = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/Browser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Browser.js"() {
     init_rxjs();
     init_EventEmitter();
     init_util();
@@ -3499,10 +3499,10 @@ var init_Browser = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/Deferred.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Deferred.js
 var Deferred;
 var init_Deferred = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/Deferred.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Deferred.js"() {
     init_Errors();
     Deferred = class _Deferred {
       static create(opts) {
@@ -3591,10 +3591,10 @@ var init_Deferred = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/Mutex.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Mutex.js
 var MutexGuard, Mutex;
 var init_Mutex = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/Mutex.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Mutex.js"() {
     init_Deferred();
     init_disposable();
     MutexGuard = class {
@@ -3636,10 +3636,10 @@ var init_Mutex = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/BrowserContext.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/BrowserContext.js
 var BrowserContext;
 var init_BrowserContext = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/BrowserContext.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/BrowserContext.js"() {
     init_rxjs();
     init_EventEmitter();
     init_util();
@@ -3785,10 +3785,10 @@ var init_BrowserContext = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/CDPSession.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/CDPSession.js
 var CDPSessionEvent, CDPSession;
 var init_CDPSession = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/CDPSession.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/CDPSession.js"() {
     init_EventEmitter();
     (function(CDPSessionEvent2) {
       CDPSessionEvent2.Disconnected = /* @__PURE__ */ Symbol("CDPSession.Disconnected");
@@ -3816,10 +3816,10 @@ var init_CDPSession = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/DeviceRequestPrompt.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/DeviceRequestPrompt.js
 var DeviceRequestPrompt;
 var init_DeviceRequestPrompt = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/DeviceRequestPrompt.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/DeviceRequestPrompt.js"() {
     DeviceRequestPrompt = class {
       /**
        * Current list of selectable devices.
@@ -3829,10 +3829,10 @@ var init_DeviceRequestPrompt = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/Dialog.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Dialog.js
 var Dialog;
 var init_Dialog = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/Dialog.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Dialog.js"() {
     init_assert();
     Dialog = class {
       #type;
@@ -3898,10 +3898,10 @@ var init_Dialog = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/AsyncIterableUtil.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/AsyncIterableUtil.js
 var AsyncIterableUtil;
 var init_AsyncIterableUtil = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/AsyncIterableUtil.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/AsyncIterableUtil.js"() {
     AsyncIterableUtil = class {
       static async *map(iterable, map2) {
         for await (const value of iterable) {
@@ -3930,15 +3930,15 @@ var init_AsyncIterableUtil = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/ElementHandleSymbol.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/ElementHandleSymbol.js
 var _isElementHandle;
 var init_ElementHandleSymbol = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/ElementHandleSymbol.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/ElementHandleSymbol.js"() {
     _isElementHandle = /* @__PURE__ */ Symbol("_isElementHandle");
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/ErrorLike.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/ErrorLike.js
 function isErrorLike(obj) {
   return typeof obj === "object" && obj !== null && "name" in obj && "message" in obj;
 }
@@ -3955,11 +3955,11 @@ function createProtocolErrorMessage(object) {
   return message;
 }
 var init_ErrorLike = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/ErrorLike.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/ErrorLike.js"() {
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/Function.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Function.js
 function stringifyFunction(fn) {
   let value = fn.toString();
   if (value.match(/^(async )*function(\(|\s)/) || value.match(/^(async )*function\s*\*\s*/)) {
@@ -3978,7 +3978,7 @@ function stringifyFunction(fn) {
 }
 var createdFunctions, createFunction, interpolateFunction;
 var init_Function = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/Function.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Function.js"() {
     createdFunctions = /* @__PURE__ */ new Map();
     createFunction = (functionValue) => {
       let fn = createdFunctions.get(functionValue);
@@ -4005,7 +4005,7 @@ var init_Function = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/HandleIterator.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/HandleIterator.js
 async function* fastTransposeIteratorHandle(iterator2, size) {
   const env_1 = { stack: [], error: void 0, hasError: false };
   try {
@@ -4070,7 +4070,7 @@ async function* transposeIterableHandle(handle) {
 }
 var __addDisposableResource, __disposeResources, DEFAULT_BATCH_SIZE;
 var init_HandleIterator = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/HandleIterator.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/HandleIterator.js"() {
     init_disposable();
     __addDisposableResource = function(env2, value, async2) {
       if (value !== null && value !== void 0) {
@@ -4134,10 +4134,10 @@ var init_HandleIterator = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/LazyArg.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/LazyArg.js
 var LazyArg;
 var init_LazyArg = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/LazyArg.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/LazyArg.js"() {
     LazyArg = class _LazyArg {
       static create = (get) => {
         return new _LazyArg(get);
@@ -4153,10 +4153,10 @@ var init_LazyArg = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js
 var __addDisposableResource2, __disposeResources2, QueryHandler;
 var init_QueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js"() {
     init_ElementHandleSymbol();
     init_ErrorLike();
     init_Function();
@@ -4373,10 +4373,10 @@ var init_QueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/AriaQueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/AriaQueryHandler.js
 var isKnownAttribute, ATTRIBUTE_REGEXP, parseARIASelector, ARIAQueryHandler;
 var init_AriaQueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/AriaQueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/AriaQueryHandler.js"() {
     init_assert();
     init_AsyncIterableUtil();
     init_QueryHandler();
@@ -4414,10 +4414,10 @@ var init_AriaQueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/CSSQueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CSSQueryHandler.js
 var CSSQueryHandler;
 var init_CSSQueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/CSSQueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CSSQueryHandler.js"() {
     init_QueryHandler();
     CSSQueryHandler = class extends QueryHandler {
       static querySelector = (element, selector, { cssQuerySelector }) => {
@@ -4430,18 +4430,18 @@ var init_CSSQueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/generated/injected.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/generated/injected.js
 var source;
 var init_injected = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/generated/injected.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/generated/injected.js"() {
     source = '"use strict";var N=Object.defineProperty;var B=Object.getOwnPropertyDescriptor;var Y=Object.getOwnPropertyNames;var G=Object.prototype.hasOwnProperty;var l=(t,e)=>{for(var r in e)N(t,r,{get:e[r],enumerable:!0})},J=(t,e,r,o)=>{if(e&&typeof e=="object"||typeof e=="function")for(let n of Y(e))!G.call(t,n)&&n!==r&&N(t,n,{get:()=>e[n],enumerable:!(o=B(e,n))||o.enumerable});return t};var z=t=>J(N({},"__esModule",{value:!0}),t);var ye={};l(ye,{default:()=>pe});module.exports=z(ye);var b=class extends Error{constructor(e,r){super(e,r),this.name=this.constructor.name}get[Symbol.toStringTag](){return this.constructor.name}},p=class extends b{};var c=class t{static create(e){return new t(e)}static async race(e){let r=new Set;try{let o=e.map(n=>n instanceof t?(n.#n&&r.add(n),n.valueOrThrow()):n);return await Promise.race(o)}finally{for(let o of r)o.reject(new Error("Timeout cleared"))}}#e=!1;#r=!1;#o;#t;#a=new Promise(e=>{this.#t=e});#n;#i;constructor(e){e&&e.timeout>0&&(this.#i=new p(e.message),this.#n=setTimeout(()=>{this.reject(this.#i)},e.timeout))}#l(e){clearTimeout(this.#n),this.#o=e,this.#t()}resolve(e){this.#r||this.#e||(this.#e=!0,this.#l(e))}reject(e){this.#r||this.#e||(this.#r=!0,this.#l(e))}resolved(){return this.#e}finished(){return this.#e||this.#r}value(){return this.#o}#s;valueOrThrow(){return this.#s||(this.#s=(async()=>{if(await this.#a,this.#r)throw this.#o;return this.#o})()),this.#s}};var W=new Map,j=t=>{let e=W.get(t);return e||(e=new Function(`return ${t}`)(),W.set(t,e),e)};var v={};l(v,{ariaQuerySelector:()=>K,ariaQuerySelectorAll:()=>x});var K=(t,e)=>globalThis.__ariaQuerySelector(t,e),x=async function*(t,e){yield*await globalThis.__ariaQuerySelectorAll(t,e)};var E={};l(E,{cssQuerySelector:()=>Z,cssQuerySelectorAll:()=>ee});var Z=(t,e)=>t.querySelector(e),ee=function(t,e){return t.querySelectorAll(e)};var A={};l(A,{CustomQuerySelectorRegistry:()=>y,customQuerySelectors:()=>P});var y=class{#e=new Map;register(e,r){if(!r.queryOne&&r.queryAll){let o=r.queryAll;r.queryOne=(n,i)=>{for(let s of o(n,i))return s;return null}}else if(r.queryOne&&!r.queryAll){let o=r.queryOne;r.queryAll=(n,i)=>{let s=o(n,i);return s?[s]:[]}}else if(!r.queryOne||!r.queryAll)throw new Error("At least one query method must be defined.");this.#e.set(e,{querySelector:r.queryOne,querySelectorAll:r.queryAll})}unregister(e){this.#e.delete(e)}get(e){return this.#e.get(e)}clear(){this.#e.clear()}},P=new y;var R={};l(R,{pierceQuerySelector:()=>te,pierceQuerySelectorAll:()=>re});var te=(t,e)=>{let r=null,o=n=>{let i=document.createTreeWalker(n,NodeFilter.SHOW_ELEMENT);do{let s=i.currentNode;s.shadowRoot&&o(s.shadowRoot),!(s instanceof ShadowRoot)&&s!==n&&!r&&s.matches(e)&&(r=s)}while(!r&&i.nextNode())};return t instanceof Document&&(t=t.documentElement),o(t),r},re=(t,e)=>{let r=[],o=n=>{let i=document.createTreeWalker(n,NodeFilter.SHOW_ELEMENT);do{let s=i.currentNode;s.shadowRoot&&o(s.shadowRoot),!(s instanceof ShadowRoot)&&s!==n&&s.matches(e)&&r.push(s)}while(i.nextNode())};return t instanceof Document&&(t=t.documentElement),o(t),r};var u=(t,e)=>{if(!t)throw new Error(e)};var w=class{#e;#r;#o;#t;constructor(e,r){this.#e=e,this.#r=r}async start(){let e=this.#t=c.create(),r=await this.#e();if(r){e.resolve(r);return}this.#o=new MutationObserver(async()=>{let o=await this.#e();o&&(e.resolve(o),await this.stop())}),this.#o.observe(this.#r,{childList:!0,subtree:!0,attributes:!0})}async stop(){u(this.#t,"Polling never started."),this.#t.finished()||this.#t.reject(new Error("Polling stopped")),this.#o&&(this.#o.disconnect(),this.#o=void 0)}result(){return u(this.#t,"Polling never started."),this.#t.valueOrThrow()}},T=class{#e;#r;constructor(e){this.#e=e}async start(){let e=this.#r=c.create(),r=await this.#e();if(r){e.resolve(r);return}let o=async()=>{if(e.finished())return;let n=await this.#e();if(!n){window.requestAnimationFrame(o);return}e.resolve(n),await this.stop()};window.requestAnimationFrame(o)}async stop(){u(this.#r,"Polling never started."),this.#r.finished()||this.#r.reject(new Error("Polling stopped"))}result(){return u(this.#r,"Polling never started."),this.#r.valueOrThrow()}},S=class{#e;#r;#o;#t;constructor(e,r){this.#e=e,this.#r=r}async start(){let e=this.#t=c.create(),r=await this.#e();if(r){e.resolve(r);return}this.#o=setInterval(async()=>{let o=await this.#e();o&&(e.resolve(o),await this.stop())},this.#r)}async stop(){u(this.#t,"Polling never started."),this.#t.finished()||this.#t.reject(new Error("Polling stopped")),this.#o&&(clearInterval(this.#o),this.#o=void 0)}result(){return u(this.#t,"Polling never started."),this.#t.valueOrThrow()}};var L={};l(L,{PCombinator:()=>U,pQuerySelector:()=>me,pQuerySelectorAll:()=>X});var a=class{static async*map(e,r){for await(let o of e)yield await r(o)}static async*flatMap(e,r){for await(let o of e)yield*r(o)}static async collect(e){let r=[];for await(let o of e)r.push(o);return r}static async first(e){for await(let r of e)return r}};var O={};l(O,{textQuerySelectorAll:()=>m});var oe=new Set(["checkbox","image","radio"]),ne=t=>t instanceof HTMLSelectElement||t instanceof HTMLTextAreaElement||t instanceof HTMLInputElement&&!oe.has(t.type),se=new Set(["SCRIPT","STYLE"]),f=t=>!se.has(t.nodeName)&&!document.head?.contains(t),C=new WeakMap,V=t=>{for(;t;)C.delete(t),t instanceof ShadowRoot?t=t.host:t=t.parentNode},F=new WeakSet,I,ie=()=>{let t=globalThis.MutationObserver;if(!t)throw new Error("MutationObserver is not available in this environment.");return I||(I=new t(e=>{for(let r of e)V(r.target)})),I},d=t=>{let e=C.get(t);if(e||(e={full:"",immediate:[]},!f(t)))return e;let r="";if(ne(t))e.full=t.value,e.immediate.push(t.value),t.addEventListener("input",o=>{V(o.target)},{once:!0,capture:!0});else{for(let o=t.firstChild;o;o=o.nextSibling){if(o.nodeType===Node.TEXT_NODE){e.full+=o.nodeValue??"",r+=o.nodeValue??"";continue}r&&e.immediate.push(r),r="",o.nodeType===Node.ELEMENT_NODE&&(e.full+=d(o).full)}r&&e.immediate.push(r),t instanceof Element&&t.shadowRoot&&(e.full+=d(t.shadowRoot).full),F.has(t)||(ie().observe(t,{childList:!0,characterData:!0,subtree:!0}),F.add(t))}return C.set(t,e),e};var m=function*(t,e){let r=!1;for(let o of t.childNodes)if(o instanceof Element&&f(o)){let n;o.shadowRoot?n=m(o.shadowRoot,e):n=m(o,e);for(let i of n)yield i,r=!0}r||t instanceof Element&&f(t)&&d(t).full.includes(e)&&(yield t)};var M={};l(M,{checkVisibility:()=>ae,pierce:()=>g,pierceAll:()=>k});var le=["hidden","collapse"],ae=(t,e)=>{if(!t)return e===!1;if(e===void 0)return t;let r=t.nodeType===Node.TEXT_NODE?t.parentElement:t,o=window.getComputedStyle(r),n=o&&!le.includes(o.visibility)&&!ce(r);return e===n?t:!1};function ce(t){let e=t.getBoundingClientRect();return e.width===0||e.height===0}var ue=t=>"shadowRoot"in t&&t.shadowRoot instanceof ShadowRoot;function*g(t){ue(t)?yield t.shadowRoot:yield t}function*k(t){t=g(t).next().value,yield t;let e=[document.createTreeWalker(t,NodeFilter.SHOW_ELEMENT)];for(let r of e){let o;for(;o=r.nextNode();)o.shadowRoot&&(yield o.shadowRoot,e.push(document.createTreeWalker(o.shadowRoot,NodeFilter.SHOW_ELEMENT)))}}var D={};l(D,{xpathQuerySelectorAll:()=>q});var q=function*(t,e,r=-1){let n=(t.ownerDocument||document).evaluate(e,t,null,XPathResult.ORDERED_NODE_ITERATOR_TYPE),i=[],s;for(;(s=n.iterateNext())&&(i.push(s),!(r&&i.length===r)););for(let h=0;h<i.length;h++)s=i[h],yield s,i[h]=null};var de=/[-\\w\\P{ASCII}*]/u,U=(r=>(r.Descendent=">>>",r.Child=">>>>",r))(U||{}),H=t=>"querySelectorAll"in t,Q=class{#e;#r=[];#o=void 0;elements;constructor(e,r){this.elements=[e],this.#e=r,this.#t()}async run(){for(typeof this.#o=="string"&&this.#o.trimStart()===":scope"&&this.#t();this.#o!==void 0;this.#t()){let e=this.#o;typeof e=="string"?e[0]&&de.test(e[0])?this.elements=a.flatMap(this.elements,async function*(r){H(r)&&(yield*r.querySelectorAll(e))}):this.elements=a.flatMap(this.elements,async function*(r){if(!r.parentElement){if(!H(r))return;yield*r.querySelectorAll(e);return}let o=0;for(let n of r.parentElement.children)if(++o,n===r)break;yield*r.parentElement.querySelectorAll(`:scope>:nth-child(${o})${e}`)}):this.elements=a.flatMap(this.elements,async function*(r){switch(e.name){case"text":yield*m(r,e.value);break;case"xpath":yield*q(r,e.value);break;case"aria":yield*x(r,e.value);break;default:let o=P.get(e.name);if(!o)throw new Error(`Unknown selector type: ${e.name}`);yield*o.querySelectorAll(r,e.value)}})}}#t(){if(this.#r.length!==0){this.#o=this.#r.shift();return}if(this.#e.length===0){this.#o=void 0;return}let e=this.#e.shift();switch(e){case">>>>":{this.elements=a.flatMap(this.elements,g),this.#t();break}case">>>":{this.elements=a.flatMap(this.elements,k),this.#t();break}default:this.#r=e,this.#t();break}}},_=class{#e=new WeakMap;calculate(e,r=[]){if(e===null)return r;e instanceof ShadowRoot&&(e=e.host);let o=this.#e.get(e);if(o)return[...o,...r];let n=0;for(let s=e.previousSibling;s;s=s.previousSibling)++n;let i=this.calculate(e.parentNode,[n]);return this.#e.set(e,i),[...i,...r]}},$=(t,e)=>{if(t.length+e.length===0)return 0;let[r=-1,...o]=t,[n=-1,...i]=e;return r===n?$(o,i):r<n?-1:1},fe=async function*(t){let e=new Set;for await(let o of t)e.add(o);let r=new _;yield*[...e.values()].map(o=>[o,r.calculate(o)]).sort(([,o],[,n])=>$(o,n)).map(([o])=>o)},X=function(t,e){let r=JSON.parse(e);if(r.some(o=>{let n=0;return o.some(i=>(typeof i=="string"?++n:n=0,n>1))}))throw new Error("Multiple deep combinators found in sequence.");return fe(a.flatMap(r,o=>{let n=new Q(t,o);return n.run(),n.elements}))},me=async function(t,e){for await(let r of X(t,e))return r;return null};var he=Object.freeze({...v,...A,...R,...L,...O,...M,...D,...E,Deferred:c,createFunction:j,createTextContent:d,IntervalPoller:S,isSuitableNodeForTextMatching:f,MutationPoller:w,RAFPoller:T}),pe=he;\n';
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/ScriptInjector.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/ScriptInjector.js
 var ScriptInjector, scriptInjector;
 var init_ScriptInjector = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/ScriptInjector.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/ScriptInjector.js"() {
     init_injected();
     ScriptInjector = class {
       #updated = false;
@@ -4482,10 +4482,10 @@ var init_ScriptInjector = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/CustomQueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CustomQueryHandler.js
 var CustomQueryHandlerRegistry, customQueryHandlers;
 var init_CustomQueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/CustomQueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CustomQueryHandler.js"() {
     init_assert();
     init_Function();
     init_QueryHandler();
@@ -4574,10 +4574,10 @@ var init_CustomQueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/PierceQueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PierceQueryHandler.js
 var PierceQueryHandler;
 var init_PierceQueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/PierceQueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PierceQueryHandler.js"() {
     init_QueryHandler();
     PierceQueryHandler = class extends QueryHandler {
       static querySelector = (element, selector, { pierceQuerySelector }) => {
@@ -4590,10 +4590,10 @@ var init_PierceQueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/PQueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PQueryHandler.js
 var PQueryHandler;
 var init_PQueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/PQueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PQueryHandler.js"() {
     init_QueryHandler();
     PQueryHandler = class extends QueryHandler {
       static querySelectorAll = (element, selector, { pQuerySelectorAll }) => {
@@ -4606,7 +4606,7 @@ var init_PQueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/third_party/parsel-js/parsel-js.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/parsel-js/parsel-js.js
 function gobbleParens(text, offset) {
   let nesting = 0;
   let result = "";
@@ -4751,7 +4751,7 @@ function stringify(listOrNode) {
 }
 var TOKENS, TRIM_TOKENS, getArgumentPatternByType, STRING_PATTERN, ESCAPE_PATTERN;
 var init_parsel_js = __esm({
-  "node_modules/puppeteer-core/lib/third_party/parsel-js/parsel-js.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/parsel-js/parsel-js.js"() {
     TOKENS = {
       attribute: /\[\s*(?:(?<namespace>\*|[-\w\P{ASCII}]*)\|)?(?<name>[-\w\P{ASCII}]+)\s*(?:(?<operator>\W?=)\s*(?<value>.+?)\s*(\s(?<caseSensitive>[iIsS]))?\s*)?\]/gu,
       id: /#(?<name>[-\w\P{ASCII}]+)/gu,
@@ -4779,7 +4779,7 @@ var init_parsel_js = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/PSelectorParser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PSelectorParser.js
 function parsePSelectors(selector) {
   let isPureCSS = true;
   let hasAria = false;
@@ -4864,7 +4864,7 @@ function parsePSelectors(selector) {
 }
 var ESCAPE_REGEXP, unquote;
 var init_PSelectorParser = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/PSelectorParser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PSelectorParser.js"() {
     init_parsel_js();
     TOKENS["nesting"] = /&/g;
     TOKENS["combinator"] = /\s*(>>>>?|[\s>+~])\s*/g;
@@ -4883,10 +4883,10 @@ var init_PSelectorParser = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/TextQueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TextQueryHandler.js
 var TextQueryHandler;
 var init_TextQueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/TextQueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TextQueryHandler.js"() {
     init_QueryHandler();
     TextQueryHandler = class extends QueryHandler {
       static querySelectorAll = (element, selector, { textQuerySelectorAll }) => {
@@ -4896,10 +4896,10 @@ var init_TextQueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/XPathQueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/XPathQueryHandler.js
 var XPathQueryHandler;
 var init_XPathQueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/XPathQueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/XPathQueryHandler.js"() {
     init_QueryHandler();
     XPathQueryHandler = class extends QueryHandler {
       static querySelectorAll = (element, selector, { xpathQuerySelectorAll }) => {
@@ -4915,7 +4915,7 @@ var init_XPathQueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/GetQueryHandler.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/GetQueryHandler.js
 function getQueryHandlerAndSelector(selector) {
   for (const handlerMap of [
     customQueryHandlers.names().map((name) => {
@@ -4961,7 +4961,7 @@ function getQueryHandlerAndSelector(selector) {
 }
 var BUILTIN_QUERY_HANDLERS, QUERY_SEPARATORS;
 var init_GetQueryHandler = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/GetQueryHandler.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/GetQueryHandler.js"() {
     init_AriaQueryHandler();
     init_CSSQueryHandler();
     init_CustomQueryHandler();
@@ -4980,7 +4980,7 @@ var init_GetQueryHandler = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/decorators.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/decorators.js
 function moveable(Class, _2) {
   let hasDispose = false;
   if (Class.prototype[disposeSymbol]) {
@@ -5119,7 +5119,7 @@ function bubble(events) {
 }
 var __addDisposableResource3, __disposeResources3, instances, bubbleHandlers, bubbleInitializer;
 var init_decorators = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/decorators.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/decorators.js"() {
     init_disposable();
     init_Mutex();
     __addDisposableResource3 = function(env2, value, async2) {
@@ -5200,10 +5200,10 @@ var init_decorators = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/JSHandle.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/JSHandle.js
 var __runInitializers, __esDecorate, __addDisposableResource4, __disposeResources4, JSHandle;
 var init_JSHandle = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/JSHandle.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/JSHandle.js"() {
     init_util();
     init_decorators();
     init_disposable();
@@ -5410,7 +5410,7 @@ var init_JSHandle = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/locators/locators.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/locators/locators.js
 function checkLocatorArray(locators) {
   for (const locator of locators) {
     if (!(locator instanceof Locator)) {
@@ -5421,7 +5421,7 @@ function checkLocatorArray(locators) {
 }
 var __addDisposableResource5, __disposeResources5, LocatorEvent, Locator, FunctionLocator, DelegatedLocator, FilteredLocator, MappedLocator, NodeLocator, RaceLocator, RETRY_DELAY;
 var init_locators = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/locators/locators.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/locators/locators.js"() {
     init_rxjs();
     init_EventEmitter();
     init_util();
@@ -6145,7 +6145,7 @@ var init_locators = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js
 function bindIsolatedHandle(target, _2) {
   return async function(...args) {
     if (this.realm === this.frame.isolatedRealm()) {
@@ -6189,7 +6189,7 @@ function intersectBoundingBox(box, width, height) {
 }
 var __runInitializers2, __esDecorate2, __addDisposableResource6, __disposeResources6, __setFunctionName, ElementHandle;
 var init_ElementHandle = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js"() {
     init_GetQueryHandler();
     init_LazyArg();
     init_util();
@@ -7472,10 +7472,10 @@ var init_ElementHandle = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/Extension.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Extension.js
 var Extension;
 var init_Extension = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/Extension.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Extension.js"() {
     Extension = class {
       #id;
       #version;
@@ -7539,10 +7539,10 @@ var init_Extension = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/Frame.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js
 var __runInitializers3, __esDecorate3, __addDisposableResource7, __disposeResources7, FrameEvent, throwIfDetached, Frame;
 var init_Frame = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/Frame.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js"() {
     init_EventEmitter();
     init_GetQueryHandler();
     init_HandleIterator();
@@ -8351,7 +8351,7 @@ var init_Frame = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js
 function headersArray(headers) {
   const result = [];
   for (const name of Object.keys(headers)) {
@@ -8377,7 +8377,7 @@ function handleError(error) {
 }
 var HTTPRequest, InterceptResolutionAction, STATUS_TEXTS, errorReasons;
 var init_HTTPRequest = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js"() {
     init_util();
     init_assert();
     init_encoding();
@@ -8750,10 +8750,10 @@ var init_HTTPRequest = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/HTTPResponse.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/HTTPResponse.js
 var HTTPResponse;
 var init_HTTPResponse = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/HTTPResponse.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/HTTPResponse.js"() {
     HTTPResponse = class {
       /**
        * @internal
@@ -8801,7 +8801,7 @@ var init_HTTPResponse = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/incremental-id-generator.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/incremental-id-generator.js
 function createIncrementalIdGenerator() {
   let id = 0;
   return () => {
@@ -8812,14 +8812,14 @@ function createIncrementalIdGenerator() {
   };
 }
 var init_incremental_id_generator = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/incremental-id-generator.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/incremental-id-generator.js"() {
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/Input.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Input.js
 var Keyboard, MouseButton, Mouse, Touchscreen;
 var init_Input = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/Input.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Input.js"() {
     init_Errors();
     init_incremental_id_generator();
     Keyboard = class {
@@ -8909,10 +8909,10 @@ var init_Input = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/TimeoutSettings.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TimeoutSettings.js
 var DEFAULT_TIMEOUT, TimeoutSettings;
 var init_TimeoutSettings = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/TimeoutSettings.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TimeoutSettings.js"() {
     DEFAULT_TIMEOUT = 3e4;
     TimeoutSettings = class {
       #defaultTimeout;
@@ -8946,7 +8946,7 @@ var init_TimeoutSettings = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/Page.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Page.js
 function setDefaultScreenshotOptions(options) {
   options.optimizeForSpeed ??= false;
   options.type ??= "png";
@@ -8984,7 +8984,7 @@ function roundRectangle(clip) {
 }
 var __runInitializers4, __esDecorate4, __addDisposableResource8, __disposeResources8, Page;
 var init_Page = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/Page.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Page.js"() {
     init_rxjs();
     init_Errors();
     init_EventEmitter();
@@ -10420,10 +10420,10 @@ var init_Page = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js
 var WaitTask, TaskManager;
 var init_WaitTask = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js"() {
     init_Deferred();
     init_ErrorLike();
     init_Function();
@@ -10600,10 +10600,10 @@ var init_WaitTask = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/Realm.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Realm.js
 var Realm;
 var init_Realm = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/Realm.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Realm.js"() {
     init_WaitTask();
     init_disposable();
     Realm = class {
@@ -10670,10 +10670,10 @@ var init_Realm = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/Target.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Target.js
 var TargetType, Target;
 var init_Target = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/Target.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Target.js"() {
     (function(TargetType2) {
       TargetType2["PAGE"] = "page";
       TargetType2["BACKGROUND_PAGE"] = "background_page";
@@ -10707,10 +10707,10 @@ var init_Target = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/WebWorker.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/WebWorker.js
 var WebWorkerEvent, WebWorker;
 var init_WebWorker = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/WebWorker.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/WebWorker.js"() {
     init_Errors();
     init_EventEmitter();
     init_TimeoutSettings();
@@ -10806,9 +10806,9 @@ var init_WebWorker = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/api/api.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/api.js
 var init_api = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/api/api.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/api.js"() {
     init_Browser();
     init_BrowserContext();
     init_CDPSession();
@@ -10829,10 +10829,10 @@ var init_api = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Accessibility.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Accessibility.js
 var __addDisposableResource9, __disposeResources9, Accessibility, AXNode;
 var init_Accessibility = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Accessibility.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Accessibility.js"() {
     init_util();
     __addDisposableResource9 = function(env2, value, async2) {
       if (value !== null && value !== void 0) {
@@ -11371,10 +11371,10 @@ var init_Accessibility = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Binding.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Binding.js
 var __addDisposableResource10, __disposeResources10, Binding;
 var init_Binding = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Binding.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Binding.js"() {
     init_JSHandle();
     init_util();
     init_disposable();
@@ -11521,10 +11521,10 @@ var init_Binding = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/BluetoothEmulation.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BluetoothEmulation.js
 var CdpBluetoothEmulation;
 var init_BluetoothEmulation = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/BluetoothEmulation.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BluetoothEmulation.js"() {
     CdpBluetoothEmulation = class {
       #connection;
       constructor(connection) {
@@ -11547,10 +11547,10 @@ var init_BluetoothEmulation = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/ConsoleMessage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/ConsoleMessage.js
 var ConsoleMessage;
 var init_ConsoleMessage = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/ConsoleMessage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/ConsoleMessage.js"() {
     ConsoleMessage = class {
       #type;
       #text;
@@ -11621,10 +11621,10 @@ var init_ConsoleMessage = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/FileChooser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/FileChooser.js
 var FileChooser;
 var init_FileChooser = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/FileChooser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/FileChooser.js"() {
     init_assert();
     FileChooser = class {
       #element;
@@ -11673,10 +11673,10 @@ var init_FileChooser = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/NetworkManagerEvents.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/NetworkManagerEvents.js
 var NetworkManagerEvent;
 var init_NetworkManagerEvents = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/NetworkManagerEvents.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/NetworkManagerEvents.js"() {
     (function(NetworkManagerEvent2) {
       NetworkManagerEvent2.Request = /* @__PURE__ */ Symbol("NetworkManager.Request");
       NetworkManagerEvent2.RequestServedFromCache = /* @__PURE__ */ Symbol("NetworkManager.RequestServedFromCache");
@@ -11687,10 +11687,10 @@ var init_NetworkManagerEvents = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js
 var CallbackRegistry, Callback;
 var init_CallbackRegistry = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js"() {
     init_Deferred();
     init_ErrorLike();
     init_Errors();
@@ -11810,10 +11810,10 @@ var init_CallbackRegistry = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js
 var CdpCDPSession;
 var init_CdpSession = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js"() {
     init_CDPSession();
     init_CallbackRegistry();
     init_Errors();
@@ -11944,13 +11944,13 @@ var init_CdpSession = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js
 function isTargetClosedError(error) {
   return error instanceof TargetCloseError;
 }
 var debugProtocolSend, debugProtocolReceive, Connection;
 var init_Connection = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js"() {
     init_CDPSession();
     init_CallbackRegistry();
     init_Debug();
@@ -12194,7 +12194,7 @@ var init_Connection = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Coverage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Coverage.js
 function convertToDisjointRanges(nestedRanges) {
   const points = [];
   for (const range of nestedRanges) {
@@ -12240,7 +12240,7 @@ function convertToDisjointRanges(nestedRanges) {
 }
 var Coverage, JSCoverage, CSSCoverage;
 var init_Coverage = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Coverage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Coverage.js"() {
     init_EventEmitter();
     init_util();
     init_assert();
@@ -12504,10 +12504,10 @@ var init_Coverage = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Dialog.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Dialog.js
 var CdpDialog;
 var init_Dialog2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Dialog.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Dialog.js"() {
     init_Dialog();
     CdpDialog = class extends Dialog {
       #client;
@@ -12525,10 +12525,10 @@ var init_Dialog2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/EmulationManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/EmulationManager.js
 var __runInitializers5, __esDecorate5, __setFunctionName2, EmulatedState, EmulationManager;
 var init_EmulationManager = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/EmulationManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/EmulationManager.js"() {
     init_CDPSession();
     init_util();
     init_assert();
@@ -13018,10 +13018,10 @@ var init_EmulationManager = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/CdpIssue.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpIssue.js
 var CdpIssue;
 var init_CdpIssue = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/CdpIssue.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpIssue.js"() {
     CdpIssue = class {
       #code;
       #details;
@@ -13039,10 +13039,10 @@ var init_CdpIssue = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/CdpPreloadScript.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpPreloadScript.js
 var CdpPreloadScript;
 var init_CdpPreloadScript = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/CdpPreloadScript.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpPreloadScript.js"() {
     CdpPreloadScript = class {
       /**
        * This is the ID of the preload script returned by
@@ -13076,10 +13076,10 @@ var init_CdpPreloadScript = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/DeviceRequestPrompt.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/DeviceRequestPrompt.js
 var CdpDeviceRequestPrompt, CdpDeviceRequestPromptManager;
 var init_DeviceRequestPrompt2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/DeviceRequestPrompt.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/DeviceRequestPrompt.js"() {
     init_DeviceRequestPrompt();
     init_assert();
     init_Deferred();
@@ -13220,7 +13220,7 @@ var init_DeviceRequestPrompt2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/utils.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/utils.js
 function createConsoleMessage(event, values, targetId) {
   const textTokens = [];
   for (const arg of values) {
@@ -13393,7 +13393,7 @@ function convertConsoleMessageLevel(method) {
 }
 var getErrorDetails, CDP_BINDING_PREFIX;
 var init_utils = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/utils.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/utils.js"() {
     init_ConsoleMessage();
     init_util();
     init_assert();
@@ -13416,7 +13416,7 @@ var init_utils = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/JSHandle.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/JSHandle.js
 async function releaseObject(client, remoteObject) {
   if (!remoteObject.objectId) {
     return;
@@ -13427,7 +13427,7 @@ async function releaseObject(client, remoteObject) {
 }
 var CdpJSHandle;
 var init_JSHandle2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/JSHandle.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/JSHandle.js"() {
     init_JSHandle();
     init_util();
     init_utils();
@@ -13506,10 +13506,10 @@ var init_JSHandle2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/ElementHandle.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ElementHandle.js
 var __runInitializers6, __esDecorate6, NON_ELEMENT_NODE_ROLES, CdpElementHandle;
 var init_ElementHandle2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/ElementHandle.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ElementHandle.js"() {
     init_ElementHandle();
     init_util();
     init_environment();
@@ -13698,10 +13698,10 @@ var init_ElementHandle2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js
 var __addDisposableResource11, __disposeResources11, ariaQuerySelectorBinding, ariaQuerySelectorAllBinding, ExecutionContext, rewriteError2;
 var init_ExecutionContext = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js"() {
     init_CDPSession();
     init_AriaQueryHandler();
     init_EventEmitter();
@@ -14133,10 +14133,10 @@ ${sourceUrlComment}
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManagerEvents.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManagerEvents.js
 var FrameManagerEvent;
 var init_FrameManagerEvents = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManagerEvents.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManagerEvents.js"() {
     (function(FrameManagerEvent2) {
       FrameManagerEvent2.FrameAttached = /* @__PURE__ */ Symbol("FrameManager.FrameAttached");
       FrameManagerEvent2.FrameNavigated = /* @__PURE__ */ Symbol("FrameManager.FrameNavigated");
@@ -14150,19 +14150,19 @@ var init_FrameManagerEvents = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorlds.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorlds.js
 var MAIN_WORLD, PUPPETEER_WORLD;
 var init_IsolatedWorlds = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorlds.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorlds.js"() {
     MAIN_WORLD = /* @__PURE__ */ Symbol("mainWorld");
     PUPPETEER_WORLD = /* @__PURE__ */ Symbol("puppeteerWorld");
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/WebWorker.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/WebWorker.js
 var CdpWebWorker;
 var init_WebWorker2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/WebWorker.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/WebWorker.js"() {
     init_CDPSession();
     init_Target();
     init_WebWorker();
@@ -14269,10 +14269,10 @@ var init_WebWorker2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js
 var IsolatedWorld;
 var init_IsolatedWorld = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js"() {
     init_rxjs();
     init_Realm();
     init_EventEmitter();
@@ -14438,10 +14438,10 @@ var init_IsolatedWorld = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/LifecycleWatcher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/LifecycleWatcher.js
 var puppeteerToProtocolLifecycle, LifecycleWatcher;
 var init_LifecycleWatcher = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/LifecycleWatcher.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/LifecycleWatcher.js"() {
     init_Frame();
     init_EventEmitter();
     init_NetworkManagerEvents();
@@ -14603,7 +14603,7 @@ var init_LifecycleWatcher = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Frame.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Frame.js
 function referrerPolicyToProtocol(referrerPolicy) {
   return referrerPolicy.replaceAll(/-./g, (match) => {
     return match[1].toUpperCase();
@@ -14611,7 +14611,7 @@ function referrerPolicyToProtocol(referrerPolicy) {
 }
 var __runInitializers7, __esDecorate7, CdpFrame;
 var init_Frame2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Frame.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Frame.js"() {
     init_Frame();
     init_Errors();
     init_util();
@@ -14952,10 +14952,10 @@ var init_Frame2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/FrameTree.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameTree.js
 var FrameTree;
 var init_FrameTree = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/FrameTree.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameTree.js"() {
     init_Deferred();
     FrameTree = class {
       #frames = /* @__PURE__ */ new Map();
@@ -15033,10 +15033,10 @@ var init_FrameTree = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPRequest.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPRequest.js
 var CdpHTTPRequest;
 var init_HTTPRequest2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPRequest.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPRequest.js"() {
     init_HTTPRequest();
     init_util();
     init_encoding();
@@ -15214,10 +15214,10 @@ var init_HTTPRequest2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/SecurityDetails.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/SecurityDetails.js
 var SecurityDetails;
 var init_SecurityDetails = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/SecurityDetails.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/SecurityDetails.js"() {
     SecurityDetails = class {
       #subjectName;
       #issuer;
@@ -15278,7 +15278,7 @@ var init_SecurityDetails = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/httpUtils.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/httpUtils.js
 function normalizeHeaderValue(name, value) {
   if (!value.includes("\n")) {
     return value;
@@ -15288,14 +15288,14 @@ function normalizeHeaderValue(name, value) {
   }).filter(Boolean).join(name === "set-cookie" ? "\n " : ", ");
 }
 var init_httpUtils = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/httpUtils.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/httpUtils.js"() {
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPResponse.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPResponse.js
 var CdpHTTPResponse;
 var init_HTTPResponse2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPResponse.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPResponse.js"() {
     init_HTTPResponse();
     init_Errors();
     init_SecurityDetails();
@@ -15412,10 +15412,10 @@ var init_HTTPResponse2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkEventManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkEventManager.js
 var NetworkEventManager;
 var init_NetworkEventManager = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkEventManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkEventManager.js"() {
     init_HTTPRequest2();
     NetworkEventManager = class {
       /**
@@ -15570,10 +15570,10 @@ var init_NetworkEventManager = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkManager.js
 var NetworkManager;
 var init_NetworkManager = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkManager.js"() {
     init_CDPSession();
     init_EventEmitter();
     init_NetworkManagerEvents();
@@ -16087,10 +16087,10 @@ var init_NetworkManager = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManager.js
 var CHROME_EXTENSION_PREFIX, FrameManager;
 var init_FrameManager = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManager.js"() {
     init_CDPSession();
     init_Frame();
     init_EventEmitter();
@@ -16539,10 +16539,10 @@ var init_FrameManager = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/USKeyboardLayout.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/USKeyboardLayout.js
 var _keyDefinitions;
 var init_USKeyboardLayout = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/USKeyboardLayout.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/USKeyboardLayout.js"() {
     _keyDefinitions = {
       "0": { keyCode: 48, key: "0", code: "Digit0" },
       "1": { keyCode: 49, key: "1", code: "Digit1" },
@@ -16931,10 +16931,10 @@ var init_USKeyboardLayout = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Input.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Input.js
 var CdpKeyboard, getFlag, getButtonFromPressedButtons, CdpMouse, CdpTouchHandle, CdpTouchscreen;
 var init_Input2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Input.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Input.js"() {
     init_Input();
     init_Errors();
     init_USKeyboardLayout();
@@ -17406,10 +17406,10 @@ var init_Input2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Tracing.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Tracing.js
 var Tracing;
 var init_Tracing = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Tracing.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Tracing.js"() {
     init_util();
     init_assert();
     init_Deferred();
@@ -17502,10 +17502,10 @@ var init_Tracing = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/WebMCP.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/WebMCP.js
 var WebMCPTool, WebMCPToolCall, WebMCP;
 var init_WebMCP = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/WebMCP.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/WebMCP.js"() {
     init_EventEmitter();
     init_util();
     init_IsolatedWorlds();
@@ -17750,7 +17750,7 @@ var init_WebMCP = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Page.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Page.js
 function convertSameSiteFromPuppeteerToCdp(sameSite) {
   switch (sameSite) {
     case "Strict":
@@ -17788,7 +17788,7 @@ function convertCookiesPartitionKeyFromPuppeteerToCdp(partitionKey) {
 }
 var __addDisposableResource12, __disposeResources12, CdpPage, supportedMetrics;
 var init_Page2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Page.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Page.js"() {
     init_rxjs();
     init_CDPSession();
     init_Page();
@@ -18741,10 +18741,10 @@ var init_Page2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserContext.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserContext.js
 var __addDisposableResource13, __disposeResources13, CdpBrowserContext;
 var init_BrowserContext2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserContext.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserContext.js"() {
     init_Browser();
     init_BrowserContext();
     init_assert();
@@ -18927,10 +18927,10 @@ var init_BrowserContext2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Extension.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Extension.js
 var CdpExtension;
 var init_Extension2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Extension.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Extension.js"() {
     init_api();
     init_util();
     init_ErrorLike();
@@ -19000,10 +19000,10 @@ var init_Extension2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Target.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Target.js
 var InitializationStatus, CdpTarget, PageTarget, DevToolsTarget, WorkerTarget, OtherTarget;
 var init_Target2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Target.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Target.js"() {
     init_Target();
     init_util();
     init_Deferred();
@@ -19244,7 +19244,7 @@ var init_Target2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/third_party/urlpattern-polyfill/urlpattern-polyfill.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/urlpattern-polyfill/urlpattern-polyfill.js
 function Oe(e, t) {
   return (t ? /^[\x00-\xFF]*$/ : /^[\x00-\x7F]*$/).test(e);
 }
@@ -19632,7 +19632,7 @@ function Ae(e, t) {
 }
 var Pe, a, P, Re, Ee, v, b, J, Q, re, C, V, O, Y;
 var init_urlpattern_polyfill = __esm({
-  "node_modules/puppeteer-core/lib/third_party/urlpattern-polyfill/urlpattern-polyfill.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/urlpattern-polyfill/urlpattern-polyfill.js"() {
     Pe = Object.defineProperty;
     a = (e, t) => Pe(e, "name", { value: t, configurable: true });
     P = class {
@@ -20029,13 +20029,13 @@ var init_urlpattern_polyfill = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js
 function isPageTargetBecomingPrimary(target, newTargetInfo) {
   return Boolean(target._subtype()) && !newTargetInfo.subtype;
 }
 var TargetManager;
 var init_TargetManager = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js"() {
     init_urlpattern_polyfill();
     init_CDPSession();
     init_EventEmitter();
@@ -20414,13 +20414,13 @@ var init_TargetManager = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/Browser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Browser.js
 function isDevToolsPageTarget(url) {
   return url.startsWith("devtools://devtools/bundled/devtools_app.html");
 }
 var CdpBrowser;
 var init_Browser2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/Browser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Browser.js"() {
     init_Browser();
     init_CDPSession();
     init_Deferred();
@@ -20786,7 +20786,7 @@ var init_Browser2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserConnector.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserConnector.js
 async function _connectToCdpBrowser(connectionTransport, url, options) {
   const { acceptInsecureCerts = false, networkEnabled = true, issuesEnabled = true, defaultViewport = DEFAULT_VIEWPORT, downloadBehavior, targetFilter, _isPageTarget: isPageTarget, slowMo = 0, protocolTimeout, handleDevToolsAsPage, idGenerator = createIncrementalIdGenerator(), blocklist, allowlist } = options;
   const connection = new Connection(
@@ -20805,7 +20805,7 @@ async function _connectToCdpBrowser(connectionTransport, url, options) {
   return browser;
 }
 var init_BrowserConnector = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserConnector.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserConnector.js"() {
     init_util();
     init_incremental_id_generator();
     init_Browser2();
@@ -20813,16 +20813,16 @@ var init_BrowserConnector = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/ExtensionTransport.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ExtensionTransport.js
 var init_ExtensionTransport = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/ExtensionTransport.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ExtensionTransport.js"() {
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/PredefinedNetworkConditions.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/PredefinedNetworkConditions.js
 var PredefinedNetworkConditions;
 var init_PredefinedNetworkConditions = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/PredefinedNetworkConditions.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/PredefinedNetworkConditions.js"() {
     PredefinedNetworkConditions = Object.freeze({
       // Generally aligned with DevTools
       // https://source.chromium.org/chromium/chromium/src/+/main:third_party/devtools-frontend/src/front_end/core/sdk/NetworkManager.ts;l=398;drc=225e1240f522ca684473f541ae6dae6cd766dd33.
@@ -20864,15 +20864,15 @@ var init_PredefinedNetworkConditions = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManageEvents.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManageEvents.js
 var init_TargetManageEvents = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManageEvents.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManageEvents.js"() {
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/cdp/cdp.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/cdp.js
 var init_cdp = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/cdp/cdp.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/cdp.js"() {
     init_Accessibility();
     init_Binding();
     init_BluetoothEmulation();
@@ -20914,14 +20914,14 @@ var init_cdp = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/BrowserWebSocketTransport.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/BrowserWebSocketTransport.js
 var BrowserWebSocketTransport_exports = {};
 __export(BrowserWebSocketTransport_exports, {
   BrowserWebSocketTransport: () => BrowserWebSocketTransport
 });
 var BrowserWebSocketTransport;
 var init_BrowserWebSocketTransport = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/BrowserWebSocketTransport.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/BrowserWebSocketTransport.js"() {
     init_util();
     BrowserWebSocketTransport = class _BrowserWebSocketTransport {
       static create(url) {
@@ -20960,10 +20960,10 @@ var init_BrowserWebSocketTransport = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/Device.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Device.js
 var knownDevices, knownDevicesByName, KnownDevices;
 var init_Device = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/Device.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Device.js"() {
     knownDevices = [
       {
         name: "Blackberry PlayBook",
@@ -22546,7 +22546,7 @@ var init_Device = __esm({
   }
 });
 
-// node_modules/mitt/dist/mitt.mjs
+// ../../../oracle/plugins/oracle-firefox/node_modules/mitt/dist/mitt.mjs
 function mitt_default2(n) {
   return { all: n = n || /* @__PURE__ */ new Map(), on: function(t, e) {
     var i = n.get(t);
@@ -22564,14 +22564,14 @@ function mitt_default2(n) {
   } };
 }
 var init_mitt2 = __esm({
-  "node_modules/mitt/dist/mitt.mjs"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/mitt/dist/mitt.mjs"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/EventEmitter.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/EventEmitter.js
 var EventEmitter2;
 var init_EventEmitter2 = __esm({
-  "node_modules/chromium-bidi/lib/utils/EventEmitter.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/EventEmitter.js"() {
     init_mitt2();
     EventEmitter2 = class {
       #emitter = mitt_default2();
@@ -22624,10 +22624,10 @@ var init_EventEmitter2 = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/log.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/log.js
 var LogType;
 var init_log = __esm({
-  "node_modules/chromium-bidi/lib/utils/log.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/log.js"() {
     (function(LogType2) {
       LogType2["bidi"] = "bidi";
       LogType2["cdp"] = "cdp";
@@ -22639,10 +22639,10 @@ var init_log = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/ProcessingQueue.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/ProcessingQueue.js
 var _a, ProcessingQueue;
 var init_ProcessingQueue = __esm({
-  "node_modules/chromium-bidi/lib/utils/ProcessingQueue.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/ProcessingQueue.js"() {
     init_log();
     ProcessingQueue = class {
       static LOGGER_PREFIX = `${LogType.debug}:queue`;
@@ -22688,13 +22688,13 @@ var init_ProcessingQueue = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/cdp.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/cdp.js
 var init_cdp2 = __esm({
-  "node_modules/chromium-bidi/lib/protocol/cdp.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/cdp.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/chromium-bidi.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/chromium-bidi.js
 var chromium_bidi_exports = {};
 __export(chromium_bidi_exports, {
   BiDiModule: () => BiDiModule,
@@ -22709,7 +22709,7 @@ __export(chromium_bidi_exports, {
 });
 var BiDiModule, Script, Log, BrowsingContext, Input, Network, Bluetooth, Speculation, EVENT_NAMES;
 var init_chromium_bidi = __esm({
-  "node_modules/chromium-bidi/lib/protocol/chromium-bidi.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/chromium-bidi.js"() {
     (function(BiDiModule2) {
       BiDiModule2["Bluetooth"] = "bluetooth";
       BiDiModule2["Browser"] = "browser";
@@ -22801,16 +22801,16 @@ var init_chromium_bidi = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi.js
 var init_webdriver_bidi = __esm({
-  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/ErrorResponse.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/ErrorResponse.js
 var Exception, InvalidArgumentException, InvalidSelectorException, MoveTargetOutOfBoundsException, NoSuchAlertException, NoSuchElementException, NoSuchFrameException, NoSuchHandleException, NoSuchHistoryEntryException, NoSuchInterceptException, NoSuchNodeException, NoSuchRequestException, NoSuchScriptException, NoSuchUserContextException, UnknownCommandException, UnknownErrorException, UnableToCaptureScreenException, UnsupportedOperationException, UnableToSetCookieException, UnableToSetFileInputException, InvalidWebExtensionException, NoSuchWebExtensionException, NoSuchNetworkCollectorException, NoSuchNetworkDataException;
 var init_ErrorResponse = __esm({
-  "node_modules/chromium-bidi/lib/protocol/ErrorResponse.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/ErrorResponse.js"() {
     Exception = class extends Error {
       error;
       message;
@@ -22949,33 +22949,33 @@ var init_ErrorResponse = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-permissions.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-permissions.js
 var init_webdriver_bidi_permissions = __esm({
-  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-permissions.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-permissions.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-bluetooth.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-bluetooth.js
 var init_webdriver_bidi_bluetooth = __esm({
-  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-bluetooth.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-bluetooth.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-nav-speculation.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-nav-speculation.js
 var init_webdriver_bidi_nav_speculation = __esm({
-  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-nav-speculation.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-nav-speculation.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-ua-client-hints.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-ua-client-hints.js
 var init_webdriver_bidi_ua_client_hints = __esm({
-  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-ua-client-hints.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-ua-client-hints.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/protocol/protocol.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/protocol.js
 var init_protocol = __esm({
-  "node_modules/chromium-bidi/lib/protocol/protocol.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/protocol.js"() {
     init_cdp2();
     init_chromium_bidi();
     init_webdriver_bidi();
@@ -22987,10 +22987,10 @@ var init_protocol = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/BidiNoOpParser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiNoOpParser.js
 var BidiNoOpParser;
 var init_BidiNoOpParser = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/BidiNoOpParser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiNoOpParser.js"() {
     BidiNoOpParser = class {
       // Bluetooth module
       // keep-sorted start block=yes
@@ -23253,7 +23253,7 @@ var init_BidiNoOpParser = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/browser/BrowserProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/BrowserProcessor.js
 function getProxyStr(proxyConfig) {
   if (proxyConfig.proxyType === "direct" || proxyConfig.proxyType === "system") {
     return void 0;
@@ -23290,7 +23290,7 @@ function getProxyStr(proxyConfig) {
 }
 var BrowserProcessor;
 var init_BrowserProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/browser/BrowserProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/BrowserProcessor.js"() {
     init_protocol();
     BrowserProcessor = class {
       #browserCdpClient;
@@ -23482,10 +23482,10 @@ var init_BrowserProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpProcessor.js
 var CdpProcessor;
 var init_CdpProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpProcessor.js"() {
     init_protocol();
     CdpProcessor = class {
       #browsingContextStorage;
@@ -23526,10 +23526,10 @@ var init_CdpProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextProcessor.js
 var BrowsingContextProcessor;
 var init_BrowsingContextProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextProcessor.js"() {
     init_protocol();
     BrowsingContextProcessor = class {
       #browserCdpClient;
@@ -23764,7 +23764,7 @@ var init_BrowsingContextProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/emulation/EmulationProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/emulation/EmulationProcessor.js
 function isValidLocale(locale) {
   try {
     new Intl.Locale(locale);
@@ -23792,7 +23792,7 @@ function isTimeZoneOffsetString(timezone) {
 }
 var EmulationProcessor;
 var init_EmulationProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/emulation/EmulationProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/emulation/EmulationProcessor.js"() {
     init_protocol();
     EmulationProcessor = class {
       #userContextStorage;
@@ -24103,18 +24103,18 @@ var init_EmulationProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/assert.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/assert.js
 function assert2(predicate, message) {
   if (!predicate) {
     throw new Error(message ?? "Internal assertion failed.");
   }
 }
 var init_assert2 = __esm({
-  "node_modules/chromium-bidi/lib/utils/assert.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/assert.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/graphemeTools.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/graphemeTools.js
 function isSingleComplexGrapheme(value) {
   return isSingleGrapheme(value) && value.length > 1;
 }
@@ -24123,14 +24123,14 @@ function isSingleGrapheme(value) {
   return [...segmenter2.segment(value)].length === 1;
 }
 var init_graphemeTools = __esm({
-  "node_modules/chromium-bidi/lib/utils/graphemeTools.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/graphemeTools.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputSource.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputSource.js
 var _a2, NoneSource, KeySource, PointerSource, WheelSource;
 var init_InputSource = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputSource.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputSource.js"() {
     NoneSource = class {
       type = "none";
     };
@@ -24267,7 +24267,7 @@ var init_InputSource = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/input/keyUtils.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/keyUtils.js
 function getNormalizedKey(value) {
   switch (value) {
     case "\uE000":
@@ -24732,14 +24732,14 @@ function getKeyLocation(key) {
   }
 }
 var init_keyUtils = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/keyUtils.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/keyUtils.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/input/USKeyboardLayout.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/USKeyboardLayout.js
 var KeyToKeyCode;
 var init_USKeyboardLayout2 = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/USKeyboardLayout.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/USKeyboardLayout.js"() {
     KeyToKeyCode = {
       "0": 48,
       "1": 49,
@@ -24995,7 +24995,7 @@ var init_USKeyboardLayout2 = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/input/ActionDispatcher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/ActionDispatcher.js
 async function getElementCenter(context2, element) {
   const hiddenSandboxRealm = await context2.getOrCreateHiddenSandbox();
   const result = await hiddenSandboxRealm.callFunction(CALCULATE_IN_VIEW_CENTER_PT_DECL, false, { type: "undefined" }, [element]);
@@ -25078,7 +25078,7 @@ function getRadii(width, height) {
 }
 var CALCULATE_IN_VIEW_CENTER_PT_DECL, IS_MAC_DECL, ActionDispatcher, getKeyEventUnmodifiedText, getKeyEventText;
 var init_ActionDispatcher = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/ActionDispatcher.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/ActionDispatcher.js"() {
     init_protocol();
     init_assert2();
     init_graphemeTools();
@@ -25653,10 +25653,10 @@ var init_ActionDispatcher = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/Mutex.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Mutex.js
 var Mutex2;
 var init_Mutex2 = __esm({
-  "node_modules/chromium-bidi/lib/utils/Mutex.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Mutex.js"() {
     Mutex2 = class {
       #locked = false;
       #acquirers = [];
@@ -25696,10 +25696,10 @@ var init_Mutex2 = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputState.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputState.js
 var InputState;
 var init_InputState = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputState.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputState.js"() {
     init_protocol();
     init_Mutex2();
     init_InputSource();
@@ -25775,10 +25775,10 @@ var init_InputState = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputStateManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputStateManager.js
 var InputStateManager;
 var init_InputStateManager = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputStateManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputStateManager.js"() {
     init_assert2();
     init_InputState();
     InputStateManager = class extends WeakMap {
@@ -25793,10 +25793,10 @@ var init_InputStateManager = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputProcessor.js
 var InputProcessor;
 var init_InputProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputProcessor.js"() {
     init_protocol();
     init_assert2();
     init_ActionDispatcher();
@@ -25965,7 +25965,7 @@ var init_InputProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/base64.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/base64.js
 function base64ToString(base64Str) {
   if ("atob" in globalThis) {
     return globalThis.atob(base64Str);
@@ -25973,11 +25973,11 @@ function base64ToString(base64Str) {
   return Buffer.from(base64Str, "base64").toString("ascii");
 }
 var init_base64 = __esm({
-  "node_modules/chromium-bidi/lib/utils/base64.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/base64.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkUtils.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkUtils.js
 function computeHeadersSize(headers) {
   const requestHeaders = headers.reduce((acc, header) => {
     return `${acc}${header.name}: ${header.value.value}\r
@@ -26184,13 +26184,13 @@ function getTiming(timing, offset = 0) {
   return timing + offset;
 }
 var init_NetworkUtils = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkUtils.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkUtils.js"() {
     init_ErrorResponse();
     init_base64();
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkProcessor.js
 function unescapeURLPattern(pattern) {
   const forbidden = /* @__PURE__ */ new Set(["(", ")", "*", "{", "}"]);
   let result = "";
@@ -26245,7 +26245,7 @@ function parseBiDiHeaders(headers) {
 }
 var NetworkProcessor, FORBIDDEN_HEADER_NAME_SYMBOLS, FORBIDDEN_HEADER_VALUE_SYMBOLS;
 var init_NetworkProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkProcessor.js"() {
     init_protocol();
     init_NetworkUtils();
     NetworkProcessor = class _NetworkProcessor {
@@ -26676,10 +26676,10 @@ var init_NetworkProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/permissions/PermissionsProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/permissions/PermissionsProcessor.js
 var PermissionsProcessor;
 var init_PermissionsProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/permissions/PermissionsProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/permissions/PermissionsProcessor.js"() {
     init_protocol();
     PermissionsProcessor = class {
       #browserCdpClient;
@@ -26710,7 +26710,7 @@ var init_PermissionsProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/uuid.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/uuid.js
 function bytesToHex(bytes) {
   return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
 }
@@ -26735,14 +26735,14 @@ function uuidv4() {
   ].join("-");
 }
 var init_uuid = __esm({
-  "node_modules/chromium-bidi/lib/utils/uuid.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/uuid.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/ChannelProxy.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/ChannelProxy.js
 var ChannelProxy;
 var init_ChannelProxy = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/ChannelProxy.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/ChannelProxy.js"() {
     init_protocol();
     init_log();
     init_uuid();
@@ -26939,10 +26939,10 @@ var init_ChannelProxy = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScript.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScript.js
 var PreloadScript;
 var init_PreloadScript = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScript.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScript.js"() {
     init_uuid();
     init_ChannelProxy();
     PreloadScript = class {
@@ -27044,10 +27044,10 @@ var init_PreloadScript = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/ScriptProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/ScriptProcessor.js
 var ScriptProcessor;
 var init_ScriptProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/ScriptProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/ScriptProcessor.js"() {
     init_protocol();
     init_PreloadScript();
     ScriptProcessor = class {
@@ -27159,10 +27159,10 @@ var init_ScriptProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/session/SessionProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/SessionProcessor.js
 var SessionProcessor;
 var init_SessionProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/session/SessionProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/SessionProcessor.js"() {
     init_protocol();
     SessionProcessor = class {
       #eventManager;
@@ -27271,10 +27271,10 @@ var init_SessionProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/storage/StorageProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/storage/StorageProcessor.js
 var StorageProcessor;
 var init_StorageProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/storage/StorageProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/storage/StorageProcessor.js"() {
     init_protocol();
     init_assert2();
     init_log();
@@ -27425,10 +27425,10 @@ var init_StorageProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/webExtension/WebExtensionProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/webExtension/WebExtensionProcessor.js
 var WebExtensionProcessor;
 var init_WebExtensionProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/webExtension/WebExtensionProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/webExtension/WebExtensionProcessor.js"() {
     init_protocol();
     WebExtensionProcessor = class {
       #browserCdpClient;
@@ -27474,10 +27474,10 @@ var init_WebExtensionProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/OutgoingMessage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/OutgoingMessage.js
 var OutgoingMessage;
 var init_OutgoingMessage = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/OutgoingMessage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/OutgoingMessage.js"() {
     OutgoingMessage = class _OutgoingMessage {
       #message;
       #googChannel;
@@ -27512,10 +27512,10 @@ var init_OutgoingMessage = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/CommandProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/CommandProcessor.js
 var CommandProcessor;
 var init_CommandProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/CommandProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/CommandProcessor.js"() {
     init_protocol();
     init_EventEmitter2();
     init_log();
@@ -27811,10 +27811,10 @@ var init_CommandProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/bluetooth/BluetoothProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/bluetooth/BluetoothProcessor.js
 var BluetoothGattItem, BluetoothDescriptor, BluetoothCharacteristic, BluetoothService, BluetoothDevice, BluetoothProcessor;
 var init_BluetoothProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/bluetooth/BluetoothProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/bluetooth/BluetoothProcessor.js"() {
     init_protocol();
     BluetoothGattItem = class {
       id;
@@ -28183,10 +28183,10 @@ var init_BluetoothProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfig.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfig.js
 var ContextConfig;
 var init_ContextConfig = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfig.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfig.js"() {
     ContextConfig = class _ContextConfig {
       // keep-sorted start block=yes
       acceptInsecureCerts;
@@ -28238,10 +28238,10 @@ var init_ContextConfig = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfigStorage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfigStorage.js
 var ContextConfigStorage;
 var init_ContextConfigStorage = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfigStorage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfigStorage.js"() {
     init_ContextConfig();
     ContextConfigStorage = class {
       #global = new ContextConfig();
@@ -28301,10 +28301,10 @@ var init_ContextConfigStorage = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/browser/UserContextStorage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/UserContextStorage.js
 var UserContextStorage;
 var init_UserContextStorage = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/browser/UserContextStorage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/UserContextStorage.js"() {
     init_protocol();
     UserContextStorage = class {
       #browserClient;
@@ -28343,10 +28343,10 @@ var init_UserContextStorage = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/Deferred.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Deferred.js
 var Deferred2;
 var init_Deferred2 = __esm({
-  "node_modules/chromium-bidi/lib/utils/Deferred.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Deferred.js"() {
     Deferred2 = class {
       #isFinished = false;
       #promise;
@@ -28397,25 +28397,25 @@ var init_Deferred2 = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/time.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/time.js
 function getTimestamp() {
   return (/* @__PURE__ */ new Date()).getTime();
 }
 var init_time = __esm({
-  "node_modules/chromium-bidi/lib/utils/time.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/time.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/unitConversions.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/unitConversions.js
 function inchesFromCm(cm) {
   return cm / 2.54;
 }
 var init_unitConversions = __esm({
-  "node_modules/chromium-bidi/lib/utils/unitConversions.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/unitConversions.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/SharedId.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/SharedId.js
 function getSharedId(frameId, documentId, backendNodeId) {
   return `f.${frameId}.d.${documentId}.e.${backendNodeId}`;
 }
@@ -28465,15 +28465,15 @@ function parseSharedId(sharedId) {
 }
 var SHARED_ID_DIVIDER;
 var init_SharedId = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/SharedId.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/SharedId.js"() {
     SHARED_ID_DIVIDER = "_element_";
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/Realm.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/Realm.js
 var Realm2;
 var init_Realm2 = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/Realm.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/Realm.js"() {
     init_protocol();
     init_log();
     init_uuid();
@@ -28901,10 +28901,10 @@ var init_Realm2 = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/WindowRealm.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/WindowRealm.js
 var WindowRealm;
 var init_WindowRealm = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/WindowRealm.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/WindowRealm.js"() {
     init_protocol();
     init_Realm2();
     init_SharedId();
@@ -29015,7 +29015,7 @@ var init_WindowRealm = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/urlHelpers.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/urlHelpers.js
 function urlMatchesAboutBlank(url) {
   if (url === "") {
     return true;
@@ -29032,14 +29032,14 @@ function urlMatchesAboutBlank(url) {
   }
 }
 var init_urlHelpers = __esm({
-  "node_modules/chromium-bidi/lib/utils/urlHelpers.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/urlHelpers.js"() {
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/context/NavigationTracker.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/NavigationTracker.js
 var NavigationResult, NavigationState, NavigationTracker;
 var init_NavigationTracker = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/context/NavigationTracker.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/NavigationTracker.js"() {
     init_protocol();
     init_Deferred2();
     init_log();
@@ -29313,7 +29313,7 @@ var init_NavigationTracker = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextImpl.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextImpl.js
 function serializeOrigin(origin) {
   if (["://", ""].includes(origin)) {
     origin = "null";
@@ -29408,7 +29408,7 @@ function parseInteger(value) {
 }
 var _a3, BrowsingContextImpl;
 var init_BrowsingContextImpl = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextImpl.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextImpl.js"() {
     init_protocol();
     init_assert2();
     init_Deferred2();
@@ -30598,10 +30598,10 @@ var init_BrowsingContextImpl = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/WorkerRealm.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/WorkerRealm.js
 var WorkerRealm;
 var init_WorkerRealm = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/WorkerRealm.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/WorkerRealm.js"() {
     init_Realm2();
     WorkerRealm = class extends Realm2 {
       #realmType;
@@ -30654,7 +30654,7 @@ var init_WorkerRealm = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/log/logHelper.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/log/logHelper.js
 function isFormatSpecifier(str) {
   return specifiers.some((spec) => str.includes(spec));
 }
@@ -30759,13 +30759,13 @@ function getRemoteValuesText(args, formatText) {
 }
 var specifiers;
 var init_logHelper = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/log/logHelper.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/log/logHelper.js"() {
     init_assert2();
     specifiers = ["%s", "%d", "%i", "%f", "%o", "%O", "%c"];
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/log/LogManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/log/LogManager.js
 function getBidiStackTrace(cdpStackTrace) {
   const stackFrames = cdpStackTrace?.callFrames.map((callFrame) => {
     return {
@@ -30804,7 +30804,7 @@ function getLogMethod(consoleApiType) {
 }
 var _a4, LogManager;
 var init_LogManager = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/log/LogManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/log/LogManager.js"() {
     init_protocol();
     init_log();
     init_logHelper();
@@ -30944,10 +30944,10 @@ var init_LogManager = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/network/CollectorsStorage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/CollectorsStorage.js
 var CollectorsStorage;
 var init_CollectorsStorage = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/CollectorsStorage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/CollectorsStorage.js"() {
     init_ErrorResponse();
     init_log();
     init_uuid();
@@ -31068,10 +31068,10 @@ var init_CollectorsStorage = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/DefaultMap.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/DefaultMap.js
 var DefaultMap;
 var init_DefaultMap = __esm({
-  "node_modules/chromium-bidi/lib/utils/DefaultMap.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/DefaultMap.js"() {
     DefaultMap = class extends Map {
       /** The default value to return whenever a key is not present in the map. */
       #getDefaultValue;
@@ -31089,7 +31089,7 @@ var init_DefaultMap = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkRequest.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkRequest.js
 function getCdpBodyFromBiDiBytesValue(body) {
   let parsedBody;
   if (body?.type === "string") {
@@ -31109,7 +31109,7 @@ function getSizeFromBiDiBytesValue(body) {
 }
 var _a5, REALM_REGEX, NetworkRequest;
 var init_NetworkRequest = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkRequest.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkRequest.js"() {
     init_protocol();
     init_assert2();
     init_DefaultMap();
@@ -31876,10 +31876,10 @@ var init_NetworkRequest = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkStorage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkStorage.js
 var MAX_TOTAL_COLLECTED_SIZE, NetworkStorage;
 var init_NetworkStorage = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkStorage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkStorage.js"() {
     init_protocol();
     init_uuid();
     init_CollectorsStorage();
@@ -32222,10 +32222,10 @@ var init_NetworkStorage = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTarget.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTarget.js
 var CdpTarget2;
 var init_CdpTarget = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTarget.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTarget.js"() {
     init_chromium_bidi();
     init_protocol();
     init_Deferred2();
@@ -32839,10 +32839,10 @@ var init_CdpTarget = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTargetManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTargetManager.js
 var cdpToBidiTargetTypes, CdpTargetManager;
 var init_CdpTargetManager = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTargetManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTargetManager.js"() {
     init_log();
     init_BrowsingContextImpl();
     init_WorkerRealm();
@@ -33094,10 +33094,10 @@ var init_CdpTargetManager = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextStorage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextStorage.js
 var BrowsingContextStorage;
 var init_BrowsingContextStorage = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextStorage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextStorage.js"() {
     init_protocol();
     init_EventEmitter2();
     BrowsingContextStorage = class {
@@ -33212,10 +33212,10 @@ var init_BrowsingContextStorage = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScriptStorage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScriptStorage.js
 var PreloadScriptStorage;
 var init_PreloadScriptStorage = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScriptStorage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScriptStorage.js"() {
     init_ErrorResponse();
     PreloadScriptStorage = class {
       /** Tracks all BiDi preload scripts.  */
@@ -33271,10 +33271,10 @@ var init_PreloadScriptStorage = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/script/RealmStorage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/RealmStorage.js
 var RealmStorage;
 var init_RealmStorage = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/RealmStorage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/RealmStorage.js"() {
     init_protocol();
     init_WindowRealm();
     RealmStorage = class {
@@ -33344,10 +33344,10 @@ var init_RealmStorage = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/Buffer.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Buffer.js
 var Buffer2;
 var init_Buffer = __esm({
-  "node_modules/chromium-bidi/lib/utils/Buffer.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Buffer.js"() {
     Buffer2 = class {
       #capacity;
       #entries = [];
@@ -33376,10 +33376,10 @@ var init_Buffer = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/utils/IdWrapper.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/IdWrapper.js
 var IdWrapper;
 var init_IdWrapper = __esm({
-  "node_modules/chromium-bidi/lib/utils/IdWrapper.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/IdWrapper.js"() {
     IdWrapper = class _IdWrapper {
       static #counter = 0;
       #id;
@@ -33393,7 +33393,7 @@ var init_IdWrapper = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/session/events.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/events.js
 function isCdpEvent(name) {
   return name.split(".").at(0)?.startsWith(chromium_bidi_exports.BiDiModule.Cdp) ?? false;
 }
@@ -33403,12 +33403,12 @@ function assertSupportedEvent(name) {
   }
 }
 var init_events = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/session/events.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/events.js"() {
     init_protocol();
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/session/SubscriptionManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/SubscriptionManager.js
 function unrollEvents(events) {
   const allEvents = /* @__PURE__ */ new Set();
   function addEvents(events2) {
@@ -33476,7 +33476,7 @@ function equal(setA, setB) {
 }
 var SubscriptionManager;
 var init_SubscriptionManager = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/session/SubscriptionManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/SubscriptionManager.js"() {
     init_protocol();
     init_uuid();
     SubscriptionManager = class {
@@ -33635,10 +33635,10 @@ var init_SubscriptionManager = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/session/EventManager.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/EventManager.js
 var _a6, EventWrapper, eventBufferLength, EventManager;
 var init_EventManager = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/session/EventManager.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/EventManager.js"() {
     init_protocol();
     init_Buffer();
     init_DefaultMap();
@@ -33863,10 +33863,10 @@ var init_EventManager = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/modules/speculation/SpeculationProcessor.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/speculation/SpeculationProcessor.js
 var SpeculationProcessor;
 var init_SpeculationProcessor = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/modules/speculation/SpeculationProcessor.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/speculation/SpeculationProcessor.js"() {
     init_log();
     SpeculationProcessor = class {
       #eventManager;
@@ -33910,10 +33910,10 @@ var init_SpeculationProcessor = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/BidiServer.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiServer.js
 var BidiServer;
 var init_BidiServer = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/BidiServer.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiServer.js"() {
     init_EventEmitter2();
     init_log();
     init_ProcessingQueue();
@@ -34049,7 +34049,7 @@ var init_BidiServer = __esm({
   }
 });
 
-// node_modules/chromium-bidi/lib/bidiMapper/BidiMapper.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiMapper.js
 var BidiMapper_exports = {};
 __export(BidiMapper_exports, {
   BidiServer: () => BidiServer,
@@ -34057,25 +34057,25 @@ __export(BidiMapper_exports, {
   OutgoingMessage: () => OutgoingMessage
 });
 var init_BidiMapper = __esm({
-  "node_modules/chromium-bidi/lib/bidiMapper/BidiMapper.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiMapper.js"() {
     init_BidiServer();
     init_EventEmitter2();
     init_OutgoingMessage();
   }
 });
 
-// node_modules/chromium-bidi/lib/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/index.js
 var init_lib = __esm({
-  "node_modules/chromium-bidi/lib/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/index.js"() {
     init_BidiMapper();
     init_protocol();
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js
 var BidiCdpSession;
 var init_CDPSession2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js"() {
     init_CDPSession();
     init_Errors();
     init_Deferred();
@@ -34159,7 +34159,7 @@ var init_CDPSession2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Connection.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Connection.js
 function createProtocolError(object) {
   let message = `${object.error} ${object.message}`;
   if (object.stacktrace) {
@@ -34172,7 +34172,7 @@ function isCdpEvent2(event) {
 }
 var debugProtocolSend2, debugProtocolReceive2, BidiConnection;
 var init_Connection2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Connection.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Connection.js"() {
     init_CallbackRegistry();
     init_Debug();
     init_Errors();
@@ -34308,7 +34308,7 @@ var init_Connection2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js
 async function connectBidiOverCdp(cdp) {
   const transportBiDi = new NoOpTransport();
   const cdpConnectionAdapter = new CdpConnectionAdapter(cdp);
@@ -34341,7 +34341,7 @@ async function connectBidiOverCdp(cdp) {
 }
 var bidiServerLogger, CdpConnectionAdapter, CDPClientAdapter, NoOpTransport;
 var init_BidiOverCdp = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js"() {
     init_lib();
     init_Debug();
     init_Errors();
@@ -34440,10 +34440,10 @@ var init_BidiOverCdp = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/BluetoothEmulation.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BluetoothEmulation.js
 var BidiBluetoothEmulation;
 var init_BluetoothEmulation2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/BluetoothEmulation.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BluetoothEmulation.js"() {
     BidiBluetoothEmulation = class {
       #session;
       #contextId;
@@ -34476,10 +34476,10 @@ var init_BluetoothEmulation2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/DeviceRequestPrompt.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/DeviceRequestPrompt.js
 var BidiDeviceRequestPromptManager, BidiDeviceRequestPrompt;
 var init_DeviceRequestPrompt3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/DeviceRequestPrompt.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/DeviceRequestPrompt.js"() {
     init_DeviceRequestPrompt();
     init_Errors();
     init_Deferred();
@@ -34556,10 +34556,10 @@ var init_DeviceRequestPrompt3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Navigation.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Navigation.js
 var __runInitializers8, __esDecorate8, Navigation;
 var init_Navigation = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Navigation.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Navigation.js"() {
     init_EventEmitter();
     init_decorators();
     init_disposable();
@@ -34721,10 +34721,10 @@ var init_Navigation = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js
 var __runInitializers9, __esDecorate9, _a7, Realm3, WindowRealm2, DedicatedWorkerRealm, SharedWorkerRealm;
 var init_Realm3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js"() {
     init_EventEmitter();
     init_decorators();
     init_disposable();
@@ -35007,10 +35007,10 @@ var init_Realm3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Request.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Request.js
 var __runInitializers10, __esDecorate10, Request;
 var init_Request = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Request.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Request.js"() {
     init_Errors();
     init_EventEmitter();
     init_decorators();
@@ -35298,10 +35298,10 @@ var init_Request = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserPrompt.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserPrompt.js
 var __runInitializers11, __esDecorate11, UserPrompt;
 var init_UserPrompt = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserPrompt.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserPrompt.js"() {
     init_EventEmitter();
     init_decorators();
     init_disposable();
@@ -35428,10 +35428,10 @@ var init_UserPrompt = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js
 var __runInitializers12, __esDecorate12, BrowsingContext2;
 var init_BrowsingContext = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js"() {
     init_EventEmitter();
     init_util();
     init_assert();
@@ -36020,10 +36020,10 @@ var init_BrowsingContext = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserContext.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserContext.js
 var __runInitializers13, __esDecorate13, UserContext;
 var init_UserContext = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserContext.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserContext.js"() {
     init_EventEmitter();
     init_assert();
     init_decorators();
@@ -36221,10 +36221,10 @@ var init_UserContext = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Deserializer.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Deserializer.js
 var BidiDeserializer;
 var init_Deserializer = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Deserializer.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Deserializer.js"() {
     init_util();
     BidiDeserializer = class {
       static deserialize(result) {
@@ -36297,10 +36297,10 @@ var init_Deserializer = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/JSHandle.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/JSHandle.js
 var BidiJSHandle;
 var init_JSHandle3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/JSHandle.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/JSHandle.js"() {
     init_JSHandle();
     init_Errors();
     init_Deserializer();
@@ -36366,10 +36366,10 @@ var init_JSHandle3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/ElementHandle.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/ElementHandle.js
 var __runInitializers14, __esDecorate14, __addDisposableResource14, __disposeResources14, BidiElementHandle;
 var init_ElementHandle3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/ElementHandle.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/ElementHandle.js"() {
     init_ElementHandle();
     init_Errors();
     init_environment();
@@ -36583,10 +36583,10 @@ var init_ElementHandle3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Dialog.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Dialog.js
 var BidiDialog;
 var init_Dialog3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Dialog.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Dialog.js"() {
     init_Dialog();
     BidiDialog = class _BidiDialog extends Dialog {
       static from(prompt) {
@@ -36608,10 +36608,10 @@ var init_Dialog3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/ExposedFunction.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/ExposedFunction.js
 var __addDisposableResource15, __disposeResources15, ExposableFunction;
 var init_ExposedFunction = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/ExposedFunction.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/ExposedFunction.js"() {
     init_EventEmitter();
     init_util();
     init_disposable();
@@ -36857,10 +36857,10 @@ var init_ExposedFunction = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPResponse.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPResponse.js
 var __runInitializers15, __esDecorate15, BidiHTTPResponse;
 var init_HTTPResponse3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPResponse.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPResponse.js"() {
     init_HTTPResponse();
     init_Errors();
     init_SecurityDetails();
@@ -37027,7 +37027,7 @@ var init_HTTPResponse3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js
 function getBidiHeaders(rawHeaders) {
   const headers = [];
   for (const [name, value] of Object.entries(rawHeaders ?? [])) {
@@ -37048,7 +37048,7 @@ function getBidiHeaders(rawHeaders) {
 }
 var _a8, requests, BidiHTTPRequest;
 var init_HTTPRequest3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js"() {
     init_HTTPRequest();
     init_Errors();
     init_encoding();
@@ -37262,10 +37262,10 @@ var init_HTTPRequest3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Serializer.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Serializer.js
 var UnserializableError, BidiSerializer;
 var init_Serializer = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Serializer.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Serializer.js"() {
     init_util();
     UnserializableError = class extends Error {
     };
@@ -37368,7 +37368,7 @@ var init_Serializer = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/util.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/util.js
 function convertConsoleMessageLevel2(method) {
   switch (method) {
     case "group":
@@ -37454,7 +37454,7 @@ function rewriteEvaluationError(error) {
   throw error;
 }
 var init_util2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/util.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/util.js"() {
     init_ConsoleMessage();
     init_Errors();
     init_util();
@@ -37463,10 +37463,10 @@ var init_util2 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js
 var __addDisposableResource16, __disposeResources16, BidiRealm, BidiFrameRealm, BidiWorkerRealm;
 var init_Realm4 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js"() {
     init_Realm();
     init_WebWorker();
     init_AriaQueryHandler();
@@ -37791,10 +37791,10 @@ ${sourceUrlComment}
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js
 var BidiWebWorker;
 var init_WebWorker3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js"() {
     init_WebWorker();
     init_Errors();
     init_Realm4();
@@ -37823,10 +37823,10 @@ var init_WebWorker3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Frame.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Frame.js
 var __runInitializers16, __esDecorate16, __setFunctionName3, BidiFrame;
 var init_Frame3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Frame.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Frame.js"() {
     init_rxjs();
     init_Frame();
     init_Accessibility();
@@ -38304,10 +38304,10 @@ var init_Frame3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Input.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Input.js
 var SourceActionsType, ActionType, getBidiKeyValue, BidiKeyboard, getBidiButton, BidiMouse, BidiTouchHandle, BidiTouchscreen;
 var init_Input3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Input.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Input.js"() {
     init_Input();
     init_Errors();
     init_Errors();
@@ -38915,7 +38915,7 @@ var init_Input3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Page.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Page.js
 function evaluationExpression(fun, ...args) {
   return `() => {${evaluationString(fun, ...args)}}`;
 }
@@ -39047,7 +39047,7 @@ function convertCookiesPartitionKeyFromPuppeteerToBiDi(partitionKey) {
 }
 var __esDecorate17, __runInitializers17, __addDisposableResource17, __disposeResources17, BidiPage, CDP_SPECIFIC_PREFIX;
 var init_Page3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Page.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Page.js"() {
     init_rxjs();
     init_Page();
     init_Coverage();
@@ -39812,10 +39812,10 @@ var init_Page3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Target.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Target.js
 var BidiBrowserTarget, BidiPageTarget, BidiFrameTarget, BidiWorkerTarget;
 var init_Target3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Target.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Target.js"() {
     init_Target();
     init_Errors();
     init_Page3();
@@ -39947,10 +39947,10 @@ var init_Target3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserContext.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserContext.js
 var __esDecorate18, __runInitializers18, __addDisposableResource18, __disposeResources18, BidiBrowserContext;
 var init_BrowserContext3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserContext.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserContext.js"() {
     init_Browser();
     init_BrowserContext();
     init_Errors();
@@ -40327,10 +40327,10 @@ var init_BrowserContext3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Browser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Browser.js
 var __runInitializers19, __esDecorate19, __addDisposableResource19, __disposeResources19, Browser2;
 var init_Browser3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Browser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Browser.js"() {
     init_Errors();
     init_EventEmitter();
     init_decorators();
@@ -40669,10 +40669,10 @@ var init_Browser3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Session.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Session.js
 var __runInitializers20, __esDecorate20, Session;
 var init_Session = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Session.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Session.js"() {
     init_EventEmitter();
     init_decorators();
     init_disposable();
@@ -40845,10 +40845,10 @@ var init_Session = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/Browser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Browser.js
 var __esDecorate21, __runInitializers21, __setFunctionName4, BidiBrowser;
 var init_Browser4 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/Browser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Browser.js"() {
     init_Browser();
     init_Errors();
     init_EventEmitter();
@@ -41188,7 +41188,7 @@ var init_Browser4 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/bidi.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/bidi.js
 var bidi_exports = {};
 __export(bidi_exports, {
   BidiBrowser: () => BidiBrowser,
@@ -41215,7 +41215,7 @@ __export(bidi_exports, {
   requests: () => requests
 });
 var init_bidi = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/bidi.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/bidi.js"() {
     init_BidiOverCdp();
     init_Browser4();
     init_BrowserContext3();
@@ -41231,7 +41231,7 @@ var init_bidi = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserConnector.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserConnector.js
 async function _connectToBiDiBrowser(connectionTransport, url, options) {
   const { acceptInsecureCerts = false, networkEnabled = true, issuesEnabled = true, defaultViewport = DEFAULT_VIEWPORT } = options;
   const { bidiConnection, cdpConnection, closeCallback } = await getBiDiConnection(connectionTransport, url, options);
@@ -41292,7 +41292,7 @@ async function getBiDiConnection(connectionTransport, url, options) {
   };
 }
 var init_BrowserConnector2 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserConnector.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserConnector.js"() {
     init_Connection();
     init_Errors();
     init_util();
@@ -41300,9 +41300,9 @@ var init_BrowserConnector2 = __esm({
   }
 });
 
-// node_modules/ws/lib/constants.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/constants.js
 var require_constants = __commonJS({
-  "node_modules/ws/lib/constants.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/constants.js"(exports, module) {
     "use strict";
     var BINARY_TYPES = ["nodebuffer", "arraybuffer", "fragments"];
     var hasBlob = typeof Blob !== "undefined";
@@ -41323,9 +41323,9 @@ var require_constants = __commonJS({
   }
 });
 
-// node_modules/ws/lib/buffer-util.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/buffer-util.js
 var require_buffer_util = __commonJS({
-  "node_modules/ws/lib/buffer-util.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/buffer-util.js"(exports, module) {
     "use strict";
     var { EMPTY_BUFFER } = require_constants();
     var FastBuffer = Buffer[Symbol.species];
@@ -41398,9 +41398,9 @@ var require_buffer_util = __commonJS({
   }
 });
 
-// node_modules/ws/lib/limiter.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/limiter.js
 var require_limiter = __commonJS({
-  "node_modules/ws/lib/limiter.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/limiter.js"(exports, module) {
     "use strict";
     var kDone = /* @__PURE__ */ Symbol("kDone");
     var kRun = /* @__PURE__ */ Symbol("kRun");
@@ -41448,9 +41448,9 @@ var require_limiter = __commonJS({
   }
 });
 
-// node_modules/ws/lib/permessage-deflate.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/permessage-deflate.js
 var require_permessage_deflate = __commonJS({
-  "node_modules/ws/lib/permessage-deflate.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/permessage-deflate.js"(exports, module) {
     "use strict";
     var zlib = __require("zlib");
     var bufferUtil = require_buffer_util();
@@ -41831,9 +41831,9 @@ var require_permessage_deflate = __commonJS({
   }
 });
 
-// node_modules/ws/lib/validation.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/validation.js
 var require_validation = __commonJS({
-  "node_modules/ws/lib/validation.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/validation.js"(exports, module) {
     "use strict";
     var { isUtf8 } = __require("buffer");
     var { hasBlob } = require_constants();
@@ -42032,9 +42032,9 @@ var require_validation = __commonJS({
   }
 });
 
-// node_modules/ws/lib/receiver.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/receiver.js
 var require_receiver = __commonJS({
-  "node_modules/ws/lib/receiver.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/receiver.js"(exports, module) {
     "use strict";
     var { Writable: Writable3 } = __require("stream");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -42655,9 +42655,9 @@ var require_receiver = __commonJS({
   }
 });
 
-// node_modules/ws/lib/sender.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/sender.js
 var require_sender = __commonJS({
-  "node_modules/ws/lib/sender.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/sender.js"(exports, module) {
     "use strict";
     var { Duplex } = __require("stream");
     var { randomFillSync } = __require("crypto");
@@ -43148,9 +43148,9 @@ var require_sender = __commonJS({
   }
 });
 
-// node_modules/ws/lib/event-target.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/event-target.js
 var require_event_target = __commonJS({
-  "node_modules/ws/lib/event-target.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/event-target.js"(exports, module) {
     "use strict";
     var { kForOnEventAttribute, kListener } = require_constants();
     var kCode = /* @__PURE__ */ Symbol("kCode");
@@ -43377,9 +43377,9 @@ var require_event_target = __commonJS({
   }
 });
 
-// node_modules/ws/lib/extension.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/extension.js
 var require_extension = __commonJS({
-  "node_modules/ws/lib/extension.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/extension.js"(exports, module) {
     "use strict";
     var { tokenChars } = require_validation();
     function push(dest, name, elem) {
@@ -43530,9 +43530,9 @@ var require_extension = __commonJS({
   }
 });
 
-// node_modules/ws/lib/websocket.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/websocket.js
 var require_websocket = __commonJS({
-  "node_modules/ws/lib/websocket.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/websocket.js"(exports, module) {
     "use strict";
     var EventEmitter5 = __require("events");
     var https2 = __require("https");
@@ -44426,9 +44426,9 @@ var require_websocket = __commonJS({
   }
 });
 
-// node_modules/ws/lib/stream.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/stream.js
 var require_stream = __commonJS({
-  "node_modules/ws/lib/stream.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/stream.js"(exports, module) {
     "use strict";
     var WebSocket3 = require_websocket();
     var { Duplex } = __require("stream");
@@ -44524,9 +44524,9 @@ var require_stream = __commonJS({
   }
 });
 
-// node_modules/ws/lib/subprotocol.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/subprotocol.js
 var require_subprotocol = __commonJS({
-  "node_modules/ws/lib/subprotocol.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/subprotocol.js"(exports, module) {
     "use strict";
     var { tokenChars } = require_validation();
     function parse3(header) {
@@ -44569,9 +44569,9 @@ var require_subprotocol = __commonJS({
   }
 });
 
-// node_modules/ws/lib/websocket-server.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/websocket-server.js
 var require_websocket_server = __commonJS({
-  "node_modules/ws/lib/websocket-server.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/websocket-server.js"(exports, module) {
     "use strict";
     var EventEmitter5 = __require("events");
     var http2 = __require("http");
@@ -44970,10 +44970,10 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// node_modules/ws/wrapper.mjs
+// ../../../oracle/plugins/oracle-firefox/node_modules/ws/wrapper.mjs
 var import_stream, import_extension, import_permessage_deflate, import_receiver, import_sender, import_subprotocol, import_websocket, import_websocket_server, wrapper_default;
 var init_wrapper = __esm({
-  "node_modules/ws/wrapper.mjs"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ws/wrapper.mjs"() {
     import_stream = __toESM(require_stream(), 1);
     import_extension = __toESM(require_extension(), 1);
     import_permessage_deflate = __toESM(require_permessage_deflate(), 1);
@@ -44986,14 +44986,14 @@ var init_wrapper = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js
 var NodeWebSocketTransport_exports = {};
 __export(NodeWebSocketTransport_exports, {
   NodeWebSocketTransport: () => NodeWebSocketTransport
 });
 var NodeWebSocketTransport;
 var init_NodeWebSocketTransport = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js"() {
     init_wrapper();
     init_util();
     init_version();
@@ -45044,7 +45044,7 @@ var init_NodeWebSocketTransport = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/browser-data/types.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/types.js
 function verifyChromeReleaseChannel(value) {
   if (Object.values(ChromeReleaseChannel).includes(value)) {
     return value;
@@ -45053,7 +45053,7 @@ function verifyChromeReleaseChannel(value) {
 }
 var Browser3, BrowserPlatform, BrowserTag, ChromeReleaseChannel;
 var init_types = __esm({
-  "node_modules/@puppeteer/browsers/lib/browser-data/types.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/types.js"() {
     (function(Browser4) {
       Browser4["CHROME"] = "chrome";
       Browser4["CHROMEHEADLESSSHELL"] = "chrome-headless-shell";
@@ -45088,7 +45088,7 @@ var init_types = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/httpUtil.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/httpUtil.js
 import { createHash as createHash3 } from "node:crypto";
 import { createWriteStream, unlinkSync } from "node:fs";
 import * as http from "node:http";
@@ -45220,7 +45220,7 @@ function getText(url) {
 }
 var HashVerifier;
 var init_httpUtil = __esm({
-  "node_modules/@puppeteer/browsers/lib/httpUtil.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/httpUtil.js"() {
     HashVerifier = class {
       #hash = createHash3("sha256");
       update(chunk) {
@@ -45243,7 +45243,7 @@ var init_httpUtil = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/browser-data/chrome.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome.js
 import { execSync } from "node:child_process";
 import os3 from "node:os";
 import path6 from "node:path";
@@ -45506,7 +45506,7 @@ function compareVersions(a2, b2) {
 }
 var baseVersionUrl, WINDOWS_ENV_PARAM_NAMES;
 var init_chrome = __esm({
-  "node_modules/@puppeteer/browsers/lib/browser-data/chrome.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome.js"() {
     init_httpUtil();
     init_types();
     baseVersionUrl = "https://googlechromelabs.github.io/chrome-for-testing";
@@ -45520,7 +45520,7 @@ var init_chrome = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js
 import path7 from "node:path";
 function folder2(platform) {
   switch (platform) {
@@ -45561,13 +45561,13 @@ function relativeExecutablePath2(platform, _buildId) {
   }
 }
 var init_chrome_headless_shell = __esm({
-  "node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js"() {
     init_types();
     init_chrome();
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js
 import path8 from "node:path";
 function folder3(platform) {
   switch (platform) {
@@ -45604,13 +45604,13 @@ function relativeExecutablePath3(platform, _buildId) {
   }
 }
 var init_chromedriver = __esm({
-  "node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js"() {
     init_types();
     init_chrome();
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/browser-data/chromium.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromium.js
 import path9 from "node:path";
 function archive(platform, buildId) {
   switch (platform) {
@@ -45666,13 +45666,13 @@ function compareVersions2(a2, b2) {
   return Number(a2) - Number(b2);
 }
 var init_chromium = __esm({
-  "node_modules/@puppeteer/browsers/lib/browser-data/chromium.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromium.js"() {
     init_httpUtil();
     init_types();
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/browser-data/firefox.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/firefox.js
 import fs2 from "node:fs";
 import path10 from "node:path";
 function getFormat(buildId) {
@@ -46015,7 +46015,7 @@ function compareVersions3(a2, b2) {
 }
 var FirefoxChannel, baseVersionUrl2;
 var init_firefox = __esm({
-  "node_modules/@puppeteer/browsers/lib/browser-data/firefox.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/firefox.js"() {
     init_httpUtil();
     init_types();
     (function(FirefoxChannel2) {
@@ -46029,7 +46029,7 @@ var init_firefox = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/browser-data/browser-data.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/browser-data.js
 async function resolveBuildIdForBrowserTag(browser, platform, tag) {
   switch (browser) {
     case Browser3.FIREFOX:
@@ -46183,7 +46183,7 @@ function getVersionComparator(browser) {
 }
 var downloadUrls, downloadPaths, executablePathByBrowser, versionComparators;
 var init_browser_data = __esm({
-  "node_modules/@puppeteer/browsers/lib/browser-data/browser-data.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/browser-data.js"() {
     init_chrome_headless_shell();
     init_chrome();
     init_chromedriver();
@@ -46221,11 +46221,11 @@ var init_browser_data = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/debug.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/debug.js
 import { debuglog as debuglog2 } from "node:util";
 var debug2;
 var init_debug = __esm({
-  "node_modules/@puppeteer/browsers/lib/debug.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/debug.js"() {
     debug2 = (prefix) => {
       const log = debuglog2(prefix);
       return log.enabled ? log : void 0;
@@ -46233,7 +46233,7 @@ var init_debug = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/detectPlatform.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/detectPlatform.js
 import os4 from "node:os";
 function detectBrowserPlatform() {
   const platform = os4.platform();
@@ -46261,12 +46261,12 @@ function isWindows11(version) {
   return false;
 }
 var init_detectPlatform = __esm({
-  "node_modules/@puppeteer/browsers/lib/detectPlatform.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/detectPlatform.js"() {
     init_browser_data();
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/Cache.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/Cache.js
 import fs3 from "node:fs";
 import os5 from "node:os";
 import path11 from "node:path";
@@ -46284,7 +46284,7 @@ function parseFolderPath(folderPath) {
 }
 var debugCache, InstalledBrowser, Cache;
 var init_Cache = __esm({
-  "node_modules/@puppeteer/browsers/lib/Cache.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/Cache.js"() {
     init_browser_data();
     init_debug();
     init_detectPlatform();
@@ -46449,7 +46449,7 @@ var init_Cache = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/launch.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/launch.js
 import childProcess from "node:child_process";
 import { EventEmitter as EventEmitter3 } from "node:events";
 import { accessSync } from "node:fs";
@@ -46526,7 +46526,7 @@ function isErrnoException(obj) {
 }
 var debugLaunch, CDP_WEBSOCKET_ENDPOINT_REGEX, WEBDRIVER_BIDI_WEBSOCKET_ENDPOINT_REGEX, processListeners, dispatchers, Process, PROCESS_ERROR_EXPLANATION, TimeoutError2;
 var init_launch = __esm({
-  "node_modules/@puppeteer/browsers/lib/launch.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/launch.js"() {
     init_browser_data();
     init_Cache();
     init_debug();
@@ -46814,10 +46814,10 @@ If you think this is a bug, please report it on the Puppeteer issue tracker.`;
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/DefaultProvider.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/DefaultProvider.js
 var DefaultProvider;
 var init_DefaultProvider = __esm({
-  "node_modules/@puppeteer/browsers/lib/DefaultProvider.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/DefaultProvider.js"() {
     init_browser_data();
     DefaultProvider = class {
       #baseUrl;
@@ -46843,7 +46843,7 @@ var init_DefaultProvider = __esm({
   }
 });
 
-// node_modules/modern-tar/dist/packer-BtsuoKCV.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/modern-tar/dist/packer-BtsuoKCV.js
 function writeString(view, offset, size, value) {
   if (value) encoder.encodeInto(value, view.subarray(offset, offset + size));
 }
@@ -47423,7 +47423,7 @@ function createTarPacker(onData, onError, onFinalize) {
 }
 var FILE, LINK, SYMLINK, DIRECTORY, TYPEFLAG, FLAGTYPE, ZERO_BLOCK, EMPTY2, encoder, decoder, isBodyless, stripPath, INITIAL_CAPACITY, CHECKSUM_SPACE, ASCII_ZERO, USTAR_SPLIT_MAX_SIZE, PAX_MAPPING, STATE_HEADER, STATE_BODY, MAX_META_SIZE, truncateErr, EOF_BUFFER;
 var init_packer_BtsuoKCV = __esm({
-  "node_modules/modern-tar/dist/packer-BtsuoKCV.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/modern-tar/dist/packer-BtsuoKCV.js"() {
     FILE = "file";
     LINK = "link";
     SYMLINK = "symlink";
@@ -47485,7 +47485,7 @@ var init_packer_BtsuoKCV = __esm({
   }
 });
 
-// node_modules/modern-tar/dist/fs/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/modern-tar/dist/fs/index.js
 var fs_exports = {};
 __export(fs_exports, {
   packTar: () => packTar,
@@ -48027,7 +48027,7 @@ function unpackTar(directoryPath, options = {}) {
 }
 var win32Reserved, normalizeHeaderName, BIGINT_STAT, WITH_FILE_TYPES, packTarSources, createOperationQueue, BATCH_BYTES, CREATE_FLAGS, STATE_OPENING, STATE_OPEN, STATE_CLOSED, STATE_FAILED, DRAINED_PROMISE, createCache, ENOENT, MAX_SYMLINKS, linkSep, linkParts, createPathCache;
 var init_fs = __esm({
-  "node_modules/modern-tar/dist/fs/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/modern-tar/dist/fs/index.js"() {
     init_packer_BtsuoKCV();
     win32Reserved = {
       ":": "\uF03A",
@@ -48369,7 +48369,7 @@ var init_fs = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/fileUtil.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/fileUtil.js
 import { spawnSync, spawn, execFile as execFile2 } from "node:child_process";
 import { constants as constants2, createReadStream, createWriteStream as createWriteStream2 } from "node:fs";
 import { mkdir as mkdir6, readdir as readdir2, symlink as symlink2 } from "node:fs/promises";
@@ -48605,7 +48605,7 @@ async function extractZipEntry(zipFile, entry, folderPath) {
 }
 var execFileAsync2, debugFileUtil, internalConstantsForTesting, ArchiverUnavailableError;
 var init_fileUtil = __esm({
-  "node_modules/@puppeteer/browsers/lib/fileUtil.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/fileUtil.js"() {
     init_debug();
     execFileAsync2 = promisify2(execFile2);
     debugFileUtil = debug2("puppeteer:browsers:fileUtil");
@@ -48618,10 +48618,10 @@ var init_fileUtil = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/ProgressBar.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/ProgressBar.js
 var activeBar, ProgressBar;
 var init_ProgressBar = __esm({
-  "node_modules/@puppeteer/browsers/lib/ProgressBar.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/ProgressBar.js"() {
     activeBar = null;
     ProgressBar = class _ProgressBar {
       #stream;
@@ -48745,7 +48745,7 @@ var init_ProgressBar = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/install.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/install.js
 import assert3 from "node:assert";
 import { spawnSync as spawnSync2 } from "node:child_process";
 import { existsSync, readFileSync as readFileSync2 } from "node:fs";
@@ -49019,7 +49019,7 @@ function toMegabytes(bytes) {
 }
 var debugInstall, times;
 var init_install = __esm({
-  "node_modules/@puppeteer/browsers/lib/install.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/install.js"() {
     init_browser_data();
     init_Cache();
     init_debug();
@@ -49033,7 +49033,7 @@ var init_install = __esm({
   }
 });
 
-// node_modules/cliui/build/lib/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/cliui/build/lib/index.js
 function addBorder(col, ts, style) {
   if (col.border) {
     if (/[.']-+[.']/.test(ts)) {
@@ -49085,7 +49085,7 @@ function cliui(opts, _mixin) {
 }
 var align, top, right, bottom, left, UI, mixin;
 var init_lib2 = __esm({
-  "node_modules/cliui/build/lib/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/cliui/build/lib/index.js"() {
     "use strict";
     align = {
       right: alignRight,
@@ -49294,7 +49294,7 @@ var init_lib2 = __esm({
   }
 });
 
-// node_modules/ansi-regex/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ansi-regex/index.js
 function ansiRegex({ onlyFirst = false } = {}) {
   const ST = "(?:\\u0007|\\u001B\\u005C|\\u009C)";
   const osc = `(?:\\u001B\\][\\s\\S]*?${ST})`;
@@ -49303,11 +49303,11 @@ function ansiRegex({ onlyFirst = false } = {}) {
   return new RegExp(pattern, onlyFirst ? void 0 : "g");
 }
 var init_ansi_regex = __esm({
-  "node_modules/ansi-regex/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ansi-regex/index.js"() {
   }
 });
 
-// node_modules/strip-ansi/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/strip-ansi/index.js
 function stripAnsi(string) {
   if (typeof string !== "string") {
     throw new TypeError(`Expected a \`string\`, got \`${typeof string}\``);
@@ -49319,16 +49319,16 @@ function stripAnsi(string) {
 }
 var regex;
 var init_strip_ansi = __esm({
-  "node_modules/strip-ansi/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/strip-ansi/index.js"() {
     init_ansi_regex();
     regex = ansiRegex();
   }
 });
 
-// node_modules/get-east-asian-width/lookup-data.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/lookup-data.js
 var ambiguousMinimalCodePoint, ambiguousMaximumCodePoint, ambiguousRanges, fullwidthMinimalCodePoint, fullwidthMaximumCodePoint, fullwidthRanges, wideMinimalCodePoint, wideMaximumCodePoint, wideRanges;
 var init_lookup_data = __esm({
-  "node_modules/get-east-asian-width/lookup-data.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/lookup-data.js"() {
     ambiguousMinimalCodePoint = 161;
     ambiguousMaximumCodePoint = 1114109;
     ambiguousRanges = [161, 161, 164, 164, 167, 168, 170, 170, 173, 174, 176, 180, 182, 186, 188, 191, 198, 198, 208, 208, 215, 216, 222, 225, 230, 230, 232, 234, 236, 237, 240, 240, 242, 243, 247, 250, 252, 252, 254, 254, 257, 257, 273, 273, 275, 275, 283, 283, 294, 295, 299, 299, 305, 307, 312, 312, 319, 322, 324, 324, 328, 331, 333, 333, 338, 339, 358, 359, 363, 363, 462, 462, 464, 464, 466, 466, 468, 468, 470, 470, 472, 472, 474, 474, 476, 476, 593, 593, 609, 609, 708, 708, 711, 711, 713, 715, 717, 717, 720, 720, 728, 731, 733, 733, 735, 735, 768, 879, 913, 929, 931, 937, 945, 961, 963, 969, 1025, 1025, 1040, 1103, 1105, 1105, 8208, 8208, 8211, 8214, 8216, 8217, 8220, 8221, 8224, 8226, 8228, 8231, 8240, 8240, 8242, 8243, 8245, 8245, 8251, 8251, 8254, 8254, 8308, 8308, 8319, 8319, 8321, 8324, 8364, 8364, 8451, 8451, 8453, 8453, 8457, 8457, 8467, 8467, 8470, 8470, 8481, 8482, 8486, 8486, 8491, 8491, 8531, 8532, 8539, 8542, 8544, 8555, 8560, 8569, 8585, 8585, 8592, 8601, 8632, 8633, 8658, 8658, 8660, 8660, 8679, 8679, 8704, 8704, 8706, 8707, 8711, 8712, 8715, 8715, 8719, 8719, 8721, 8721, 8725, 8725, 8730, 8730, 8733, 8736, 8739, 8739, 8741, 8741, 8743, 8748, 8750, 8750, 8756, 8759, 8764, 8765, 8776, 8776, 8780, 8780, 8786, 8786, 8800, 8801, 8804, 8807, 8810, 8811, 8814, 8815, 8834, 8835, 8838, 8839, 8853, 8853, 8857, 8857, 8869, 8869, 8895, 8895, 8978, 8978, 9312, 9449, 9451, 9547, 9552, 9587, 9600, 9615, 9618, 9621, 9632, 9633, 9635, 9641, 9650, 9651, 9654, 9655, 9660, 9661, 9664, 9665, 9670, 9672, 9675, 9675, 9678, 9681, 9698, 9701, 9711, 9711, 9733, 9734, 9737, 9737, 9742, 9743, 9756, 9756, 9758, 9758, 9792, 9792, 9794, 9794, 9824, 9825, 9827, 9829, 9831, 9834, 9836, 9837, 9839, 9839, 9886, 9887, 9919, 9919, 9926, 9933, 9935, 9939, 9941, 9953, 9955, 9955, 9960, 9961, 9963, 9969, 9972, 9972, 9974, 9977, 9979, 9980, 9982, 9983, 10045, 10045, 10102, 10111, 11094, 11097, 12872, 12879, 57344, 63743, 65024, 65039, 65533, 65533, 127232, 127242, 127248, 127277, 127280, 127337, 127344, 127373, 127375, 127376, 127387, 127404, 917760, 917999, 983040, 1048573, 1048576, 1114109];
@@ -49341,10 +49341,10 @@ var init_lookup_data = __esm({
   }
 });
 
-// node_modules/get-east-asian-width/utilities.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/utilities.js
 var isInRange;
 var init_utilities = __esm({
-  "node_modules/get-east-asian-width/utilities.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/utilities.js"() {
     isInRange = (ranges, codePoint) => {
       let low = 0;
       let high = Math.floor(ranges.length / 2) - 1;
@@ -49364,7 +49364,7 @@ var init_utilities = __esm({
   }
 });
 
-// node_modules/get-east-asian-width/lookup.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/lookup.js
 function findWideFastPathRange(ranges) {
   let fastPathStart = ranges[0];
   let fastPathEnd = ranges[1];
@@ -49383,7 +49383,7 @@ function findWideFastPathRange(ranges) {
 }
 var commonCjkCodePoint, wideFastPathStart, wideFastPathEnd, isAmbiguous, isFullWidth, isWide;
 var init_lookup = __esm({
-  "node_modules/get-east-asian-width/lookup.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/lookup.js"() {
     init_lookup_data();
     init_utilities();
     commonCjkCodePoint = 19968;
@@ -49412,7 +49412,7 @@ var init_lookup = __esm({
   }
 });
 
-// node_modules/get-east-asian-width/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/index.js
 function validate(codePoint) {
   if (!Number.isSafeInteger(codePoint)) {
     throw new TypeError(`Expected a code point, got \`${typeof codePoint}\`.`);
@@ -49426,21 +49426,21 @@ function eastAsianWidth(codePoint, { ambiguousAsWide = false } = {}) {
   return 1;
 }
 var init_get_east_asian_width = __esm({
-  "node_modules/get-east-asian-width/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/index.js"() {
     init_lookup();
   }
 });
 
-// node_modules/emoji-regex/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/emoji-regex/index.js
 var require_emoji_regex = __commonJS({
-  "node_modules/emoji-regex/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/emoji-regex/index.js"(exports, module) {
     module.exports = () => {
       return /[#*0-9]\uFE0F?\u20E3|[\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23ED-\u23EF\u23F1\u23F2\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB\u25FC\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692\u2694-\u2697\u2699\u269B\u269C\u26A0\u26A7\u26AA\u26B0\u26B1\u26BD\u26BE\u26C4\u26C8\u26CF\u26D1\u26E9\u26F0-\u26F5\u26F7\u26F8\u26FA\u2702\u2708\u2709\u270F\u2712\u2714\u2716\u271D\u2721\u2733\u2734\u2744\u2747\u2757\u2763\u27A1\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B55\u3030\u303D\u3297\u3299]\uFE0F?|[\u261D\u270C\u270D](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?|[\u270A\u270B](?:\uD83C[\uDFFB-\uDFFF])?|[\u23E9-\u23EC\u23F0\u23F3\u25FD\u2693\u26A1\u26AB\u26C5\u26CE\u26D4\u26EA\u26FD\u2705\u2728\u274C\u274E\u2753-\u2755\u2795-\u2797\u27B0\u27BF\u2B50]|\u26D3\uFE0F?(?:\u200D\uD83D\uDCA5)?|\u26F9(?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|\u2764\uFE0F?(?:\u200D(?:\uD83D\uDD25|\uD83E\uDE79))?|\uD83C(?:[\uDC04\uDD70\uDD71\uDD7E\uDD7F\uDE02\uDE37\uDF21\uDF24-\uDF2C\uDF36\uDF7D\uDF96\uDF97\uDF99-\uDF9B\uDF9E\uDF9F\uDFCD\uDFCE\uDFD4-\uDFDF\uDFF5\uDFF7]\uFE0F?|[\uDF85\uDFC2\uDFC7](?:\uD83C[\uDFFB-\uDFFF])?|[\uDFC4\uDFCA](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDFCB\uDFCC](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDCCF\uDD8E\uDD91-\uDD9A\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF43\uDF45-\uDF4A\uDF4C-\uDF7C\uDF7E-\uDF84\uDF86-\uDF93\uDFA0-\uDFC1\uDFC5\uDFC6\uDFC8\uDFC9\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF8-\uDFFF]|\uDDE6\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF]|\uDDE7\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF]|\uDDE8\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF7\uDDFA-\uDDFF]|\uDDE9\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF]|\uDDEA\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA]|\uDDEB\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7]|\uDDEC\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE]|\uDDED\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA]|\uDDEE\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9]|\uDDEF\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5]|\uDDF0\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF]|\uDDF1\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE]|\uDDF2\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF]|\uDDF3\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF]|\uDDF4\uD83C\uDDF2|\uDDF5\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE]|\uDDF6\uD83C\uDDE6|\uDDF7\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC]|\uDDF8\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF]|\uDDF9\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF]|\uDDFA\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF]|\uDDFB\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA]|\uDDFC\uD83C[\uDDEB\uDDF8]|\uDDFD\uD83C\uDDF0|\uDDFE\uD83C[\uDDEA\uDDF9]|\uDDFF\uD83C[\uDDE6\uDDF2\uDDFC]|\uDF44(?:\u200D\uD83D\uDFEB)?|\uDF4B(?:\u200D\uD83D\uDFE9)?|\uDFC3(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?|\uDFF3\uFE0F?(?:\u200D(?:\u26A7\uFE0F?|\uD83C\uDF08))?|\uDFF4(?:\u200D\u2620\uFE0F?|\uDB40\uDC67\uDB40\uDC62\uDB40(?:\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDC73\uDB40\uDC63\uDB40\uDC74|\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F)?)|\uD83D(?:[\uDC3F\uDCFD\uDD49\uDD4A\uDD6F\uDD70\uDD73\uDD76-\uDD79\uDD87\uDD8A-\uDD8D\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA\uDECB\uDECD-\uDECF\uDEE0-\uDEE5\uDEE9\uDEF0\uDEF3]\uFE0F?|[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDC8F\uDC91\uDCAA\uDD7A\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC](?:\uD83C[\uDFFB-\uDFFF])?|[\uDC6E-\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4\uDEB5](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD74\uDD90](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?|[\uDC00-\uDC07\uDC09-\uDC14\uDC16-\uDC25\uDC27-\uDC3A\uDC3C-\uDC3E\uDC40\uDC44\uDC45\uDC51-\uDC65\uDC6A\uDC79-\uDC7B\uDC7D-\uDC80\uDC84\uDC88-\uDC8E\uDC90\uDC92-\uDCA9\uDCAB-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDDA4\uDDFB-\uDE2D\uDE2F-\uDE34\uDE37-\uDE41\uDE43\uDE44\uDE48-\uDE4A\uDE80-\uDEA2\uDEA4-\uDEB3\uDEB7-\uDEBF\uDEC1-\uDEC5\uDED0-\uDED2\uDED5-\uDED8\uDEDC-\uDEDF\uDEEB\uDEEC\uDEF4-\uDEFC\uDFE0-\uDFEB\uDFF0]|\uDC08(?:\u200D\u2B1B)?|\uDC15(?:\u200D\uD83E\uDDBA)?|\uDC26(?:\u200D(?:\u2B1B|\uD83D\uDD25))?|\uDC3B(?:\u200D\u2744\uFE0F?)?|\uDC41\uFE0F?(?:\u200D\uD83D\uDDE8\uFE0F?)?|\uDC68(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDC68\uDC69]\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFC-\uDFFF])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFC-\uDFFF]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFD-\uDFFF]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFD\uDFFF]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFE])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFE]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?))?|\uDC69(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?[\uDC68\uDC69]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?|\uDC69\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?))|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFC-\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFC-\uDFFF]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFD-\uDFFF]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFD\uDFFF]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFB-\uDFFE])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFE]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFB-\uDFFE])))?))?|\uDD75(?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|\uDE2E(?:\u200D\uD83D\uDCA8)?|\uDE35(?:\u200D\uD83D\uDCAB)?|\uDE36(?:\u200D\uD83C\uDF2B\uFE0F?)?|\uDE42(?:\u200D[\u2194\u2195]\uFE0F?)?|\uDEB6(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?)|\uD83E(?:[\uDD0C\uDD0F\uDD18-\uDD1F\uDD30-\uDD34\uDD36\uDD77\uDDB5\uDDB6\uDDBB\uDDD2\uDDD3\uDDD5\uDEC3-\uDEC5\uDEF0\uDEF2-\uDEF8](?:\uD83C[\uDFFB-\uDFFF])?|[\uDD26\uDD35\uDD37-\uDD39\uDD3C-\uDD3E\uDDB8\uDDB9\uDDCD\uDDCF\uDDD4\uDDD6-\uDDDD](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDDDE\uDDDF](?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD0D\uDD0E\uDD10-\uDD17\uDD20-\uDD25\uDD27-\uDD2F\uDD3A\uDD3F-\uDD45\uDD47-\uDD76\uDD78-\uDDB4\uDDB7\uDDBA\uDDBC-\uDDCC\uDDD0\uDDE0-\uDDFF\uDE70-\uDE7C\uDE80-\uDE8A\uDE8E-\uDEC2\uDEC6\uDEC8\uDECD-\uDEDC\uDEDF-\uDEEA\uDEEF]|\uDDCE(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?|\uDDD1(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1|\uDDD1\u200D\uD83E\uDDD2(?:\u200D\uD83E\uDDD2)?|\uDDD2(?:\u200D\uD83E\uDDD2)?))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE])))?))?|\uDEF1(?:\uD83C(?:\uDFFB(?:\u200D\uD83E\uDEF2\uD83C[\uDFFC-\uDFFF])?|\uDFFC(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFD-\uDFFF])?|\uDFFD(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])?|\uDFFE(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFD\uDFFF])?|\uDFFF(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFE])?))?)/g;
     };
   }
 });
 
-// node_modules/string-width/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/string-width/index.js
 function stringWidth(string, options = {}) {
   if (typeof string !== "string" || string.length === 0) {
     return 0;
@@ -49487,7 +49487,7 @@ function stringWidth(string, options = {}) {
 }
 var import_emoji_regex, segmenter, defaultIgnorableCodePointRegex;
 var init_string_width = __esm({
-  "node_modules/string-width/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/string-width/index.js"() {
     init_strip_ansi();
     init_get_east_asian_width();
     import_emoji_regex = __toESM(require_emoji_regex(), 1);
@@ -49496,7 +49496,7 @@ var init_string_width = __esm({
   }
 });
 
-// node_modules/ansi-styles/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/ansi-styles/index.js
 function assembleStyles() {
   const codes = /* @__PURE__ */ new Map();
   for (const [groupName, group] of Object.entries(styles)) {
@@ -49613,7 +49613,7 @@ function assembleStyles() {
 }
 var ANSI_BACKGROUND_OFFSET, wrapAnsi16, wrapAnsi256, wrapAnsi16m, styles, modifierNames, foregroundColorNames, backgroundColorNames, colorNames, ansiStyles, ansi_styles_default;
 var init_ansi_styles = __esm({
-  "node_modules/ansi-styles/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/ansi-styles/index.js"() {
     ANSI_BACKGROUND_OFFSET = 10;
     wrapAnsi16 = (offset = 0) => (code) => `\x1B[${code + offset}m`;
     wrapAnsi256 = (offset = 0) => (code) => `\x1B[${38 + offset};5;${code}m`;
@@ -49687,13 +49687,13 @@ var init_ansi_styles = __esm({
   }
 });
 
-// node_modules/wrap-ansi/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/wrap-ansi/index.js
 function wrapAnsi(string, columns, options) {
   return String(string).normalize().replaceAll("\r\n", "\n").split("\n").map((line) => exec(line, columns, options)).join("\n");
 }
 var ESCAPES, END_CODE, ANSI_ESCAPE_BELL, ANSI_CSI, ANSI_OSC, ANSI_SGR_TERMINATOR, ANSI_ESCAPE_LINK, wrapAnsiCode, wrapAnsiHyperlink, wordLengths, wrapWord, stringVisibleTrimSpacesRight, exec;
 var init_wrap_ansi = __esm({
-  "node_modules/wrap-ansi/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/wrap-ansi/index.js"() {
     init_string_width();
     init_strip_ansi();
     init_ansi_styles();
@@ -49850,7 +49850,7 @@ var init_wrap_ansi = __esm({
   }
 });
 
-// node_modules/cliui/index.mjs
+// ../../../oracle/plugins/oracle-firefox/node_modules/cliui/index.mjs
 function ui(opts) {
   return cliui(opts, {
     stringWidth,
@@ -49859,7 +49859,7 @@ function ui(opts) {
   });
 }
 var init_cliui = __esm({
-  "node_modules/cliui/index.mjs"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/cliui/index.mjs"() {
     init_lib2();
     init_string_width();
     init_strip_ansi();
@@ -49867,7 +49867,7 @@ var init_cliui = __esm({
   }
 });
 
-// node_modules/escalade/sync/index.mjs
+// ../../../oracle/plugins/oracle-firefox/node_modules/escalade/sync/index.mjs
 import { dirname as dirname3, resolve as resolve3 } from "path";
 import { readdirSync, statSync } from "fs";
 function sync_default(start, callback) {
@@ -49884,11 +49884,11 @@ function sync_default(start, callback) {
   }
 }
 var init_sync = __esm({
-  "node_modules/escalade/sync/index.mjs"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/escalade/sync/index.mjs"() {
   }
 });
 
-// node_modules/yargs-parser/build/lib/string-utils.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/string-utils.js
 function camelCase(str) {
   const isCamelCase = str !== str.toLowerCase() && str !== str.toUpperCase();
   if (!isCamelCase) {
@@ -49942,11 +49942,11 @@ function looksLikeNumber(x2) {
   return /^[-]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x2);
 }
 var init_string_utils = __esm({
-  "node_modules/yargs-parser/build/lib/string-utils.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/string-utils.js"() {
   }
 });
 
-// node_modules/yargs-parser/build/lib/tokenize-arg-string.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/tokenize-arg-string.js
 function tokenizeArgString(argString) {
   if (Array.isArray(argString)) {
     return argString.map((e) => typeof e !== "string" ? e + "" : e);
@@ -49978,14 +49978,14 @@ function tokenizeArgString(argString) {
   return args;
 }
 var init_tokenize_arg_string = __esm({
-  "node_modules/yargs-parser/build/lib/tokenize-arg-string.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/tokenize-arg-string.js"() {
   }
 });
 
-// node_modules/yargs-parser/build/lib/yargs-parser-types.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/yargs-parser-types.js
 var DefaultValuesForTypeKey;
 var init_yargs_parser_types = __esm({
-  "node_modules/yargs-parser/build/lib/yargs-parser-types.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/yargs-parser-types.js"() {
     (function(DefaultValuesForTypeKey2) {
       DefaultValuesForTypeKey2["BOOLEAN"] = "boolean";
       DefaultValuesForTypeKey2["STRING"] = "string";
@@ -49995,7 +49995,7 @@ var init_yargs_parser_types = __esm({
   }
 });
 
-// node_modules/yargs-parser/build/lib/yargs-parser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/yargs-parser.js
 function combineAliases(aliases) {
   const aliasArrays = [];
   const combined = /* @__PURE__ */ Object.create(null);
@@ -50043,7 +50043,7 @@ function stripQuotes(val) {
 }
 var mixin2, YargsParser;
 var init_yargs_parser = __esm({
-  "node_modules/yargs-parser/build/lib/yargs-parser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/yargs-parser.js"() {
     init_tokenize_arg_string();
     init_yargs_parser_types();
     init_string_utils();
@@ -50842,14 +50842,14 @@ var init_yargs_parser = __esm({
   }
 });
 
-// node_modules/yargs-parser/build/lib/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/index.js
 import { format } from "util";
 import { normalize, resolve as resolve4 } from "path";
 import { readFileSync as readFileSync3 } from "fs";
 import { createRequire } from "node:module";
 var _a9, _b, _c, minNodeVersion, nodeVersion, env, require2, parser, yargsParser, lib_default;
 var init_lib3 = __esm({
-  "node_modules/yargs-parser/build/lib/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/index.js"() {
     init_string_utils();
     init_yargs_parser();
     minNodeVersion = process && process.env && process.env.YARGS_MIN_NODE_VERSION ? Number(process.env.YARGS_MIN_NODE_VERSION) : 20;
@@ -50894,7 +50894,7 @@ var init_lib3 = __esm({
   }
 });
 
-// node_modules/yargs/build/lib/utils/process-argv.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/process-argv.js
 function getProcessArgvBinIndex() {
   if (isBundledElectronApp())
     return 0;
@@ -50913,17 +50913,17 @@ function getProcessArgvBin() {
   return process.argv[getProcessArgvBinIndex()];
 }
 var init_process_argv = __esm({
-  "node_modules/yargs/build/lib/utils/process-argv.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/process-argv.js"() {
   }
 });
 
-// node_modules/y18n/build/lib/platform-shims/node.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/y18n/build/lib/platform-shims/node.js
 import { readFileSync as readFileSync4, statSync as statSync2, writeFile } from "fs";
 import { format as format2 } from "util";
 import { resolve as resolve5 } from "path";
 var node_default;
 var init_node = __esm({
-  "node_modules/y18n/build/lib/platform-shims/node.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/y18n/build/lib/platform-shims/node.js"() {
     node_default = {
       fs: {
         readFileSync: readFileSync4,
@@ -50942,7 +50942,7 @@ var init_node = __esm({
   }
 });
 
-// node_modules/y18n/build/lib/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/y18n/build/lib/index.js
 function y18n(opts, _shim) {
   shim = _shim;
   const y18n3 = new Y18N(opts);
@@ -50957,7 +50957,7 @@ function y18n(opts, _shim) {
 }
 var shim, Y18N;
 var init_lib4 = __esm({
-  "node_modules/y18n/build/lib/index.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/y18n/build/lib/index.js"() {
     Y18N = class {
       constructor(opts) {
         opts = opts || {};
@@ -51107,10 +51107,10 @@ var init_lib4 = __esm({
   }
 });
 
-// node_modules/y18n/index.mjs
+// ../../../oracle/plugins/oracle-firefox/node_modules/y18n/index.mjs
 var y18n2, y18n_default;
 var init_y18n = __esm({
-  "node_modules/y18n/index.mjs"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/y18n/index.mjs"() {
     init_node();
     init_lib4();
     y18n2 = (opts) => {
@@ -51120,9 +51120,9 @@ var init_y18n = __esm({
   }
 });
 
-// node_modules/get-caller-file/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/get-caller-file/index.js
 var require_get_caller_file = __commonJS({
-  "node_modules/get-caller-file/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/get-caller-file/index.js"(exports, module) {
     "use strict";
     module.exports = function getCallerFile2(position) {
       if (position === void 0) {
@@ -51144,7 +51144,7 @@ var require_get_caller_file = __commonJS({
   }
 });
 
-// node_modules/yargs/lib/platform-shims/esm.mjs
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/lib/platform-shims/esm.mjs
 import { notStrictEqual, strictEqual } from "assert";
 import { inspect } from "util";
 import { fileURLToPath } from "url";
@@ -51153,7 +51153,7 @@ import { createRequire as createRequire2 } from "node:module";
 import { readFileSync as readFileSync5, readdirSync as readdirSync2 } from "node:fs";
 var import_get_caller_file, __dirname, mainFilename, require3, esm_default;
 var init_esm = __esm({
-  "node_modules/yargs/lib/platform-shims/esm.mjs"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/lib/platform-shims/esm.mjs"() {
     "use strict";
     init_cliui();
     init_sync();
@@ -51214,7 +51214,7 @@ var init_esm = __esm({
   }
 });
 
-// node_modules/yargs/build/lib/typings/common-types.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/typings/common-types.js
 function assertNotStrictEqual(actual, expected, shim3, message) {
   shim3.assert.notStrictEqual(actual, expected, message);
 }
@@ -51225,23 +51225,23 @@ function objectKeys(object) {
   return Object.keys(object);
 }
 var init_common_types = __esm({
-  "node_modules/yargs/build/lib/typings/common-types.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/typings/common-types.js"() {
   }
 });
 
-// node_modules/yargs/build/lib/utils/is-promise.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/is-promise.js
 function isPromise2(maybePromise) {
   return !!maybePromise && !!maybePromise.then && typeof maybePromise.then === "function";
 }
 var init_is_promise = __esm({
-  "node_modules/yargs/build/lib/utils/is-promise.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/is-promise.js"() {
   }
 });
 
-// node_modules/yargs/build/lib/yerror.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/yerror.js
 var YError;
 var init_yerror = __esm({
-  "node_modules/yargs/build/lib/yerror.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/yerror.js"() {
     YError = class _YError extends Error {
       constructor(msg) {
         super(msg || "yargs error");
@@ -51254,7 +51254,7 @@ var init_yerror = __esm({
   }
 });
 
-// node_modules/yargs/build/lib/parse-command.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/parse-command.js
 function parseCommand(cmd) {
   const extraSpacesStrippedCommand = cmd.replace(/\s{2,}/g, " ");
   const splitCommand = extraSpacesStrippedCommand.split(/\s+(?![^[]*]|[^<]*>)/);
@@ -51287,11 +51287,11 @@ function parseCommand(cmd) {
   return parsedCommand;
 }
 var init_parse_command = __esm({
-  "node_modules/yargs/build/lib/parse-command.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/parse-command.js"() {
   }
 });
 
-// node_modules/yargs/build/lib/argsert.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/argsert.js
 function argsert(arg1, arg2, arg3) {
   function parseArgs() {
     return typeof arg1 === "object" ? [{ demanded: [], optional: [] }, arg1, arg2] : [
@@ -51349,14 +51349,14 @@ function argumentTypeError(observedType, allowedTypes, position) {
 }
 var positionName;
 var init_argsert = __esm({
-  "node_modules/yargs/build/lib/argsert.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/argsert.js"() {
     init_yerror();
     init_parse_command();
     positionName = ["first", "second", "third", "fourth", "fifth", "sixth"];
   }
 });
 
-// node_modules/yargs/build/lib/middleware.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/middleware.js
 function commandMiddlewareFactory(commandMiddleware) {
   if (!commandMiddleware)
     return [];
@@ -51385,7 +51385,7 @@ function applyMiddleware(argv, yargs, middlewares, beforeValidation) {
 }
 var GlobalMiddleware;
 var init_middleware = __esm({
-  "node_modules/yargs/build/lib/middleware.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/middleware.js"() {
     init_argsert();
     init_is_promise();
     GlobalMiddleware = class {
@@ -51445,7 +51445,7 @@ var init_middleware = __esm({
   }
 });
 
-// node_modules/yargs/build/lib/utils/maybe-async-result.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/maybe-async-result.js
 function maybeAsyncResult(getResult, resultHandler, errorHandler = (err) => {
   throw err;
 }) {
@@ -51460,12 +51460,12 @@ function isFunction2(arg) {
   return typeof arg === "function";
 }
 var init_maybe_async_result = __esm({
-  "node_modules/yargs/build/lib/utils/maybe-async-result.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/maybe-async-result.js"() {
     init_is_promise();
   }
 });
 
-// node_modules/yargs/build/lib/command.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/command.js
 function command(usage2, validation2, globalMiddleware, shim3) {
   return new CommandInstance(usage2, validation2, globalMiddleware, shim3);
 }
@@ -51486,7 +51486,7 @@ function isCommandHandlerDefinition(cmd) {
 }
 var DEFAULT_MARKER, CommandInstance;
 var init_command = __esm({
-  "node_modules/yargs/build/lib/command.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/command.js"() {
     init_common_types();
     init_is_promise();
     init_middleware();
@@ -51897,7 +51897,7 @@ var init_command = __esm({
   }
 });
 
-// node_modules/yargs/build/lib/utils/obj-filter.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/obj-filter.js
 function objFilter(original = {}, filter2 = () => true) {
   const obj = {};
   objectKeys(original).forEach((key) => {
@@ -51908,12 +51908,12 @@ function objFilter(original = {}, filter2 = () => true) {
   return obj;
 }
 var init_obj_filter = __esm({
-  "node_modules/yargs/build/lib/utils/obj-filter.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/obj-filter.js"() {
     init_common_types();
   }
 });
 
-// node_modules/yargs/build/lib/utils/set-blocking.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/set-blocking.js
 function setBlocking(blocking) {
   if (typeof process === "undefined")
     return;
@@ -51925,11 +51925,11 @@ function setBlocking(blocking) {
   });
 }
 var init_set_blocking = __esm({
-  "node_modules/yargs/build/lib/utils/set-blocking.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/set-blocking.js"() {
   }
 });
 
-// node_modules/yargs/build/lib/usage.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/usage.js
 function isBoolean(fail) {
   return typeof fail === "boolean";
 }
@@ -52455,17 +52455,17 @@ function getText2(text) {
   return isIndentedText(text) ? text.text : text;
 }
 var init_usage = __esm({
-  "node_modules/yargs/build/lib/usage.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/usage.js"() {
     init_obj_filter();
     init_yerror();
     init_set_blocking();
   }
 });
 
-// node_modules/yargs/build/lib/completion-templates.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/completion-templates.js
 var completionShTemplate, completionZshTemplate;
 var init_completion_templates = __esm({
-  "node_modules/yargs/build/lib/completion-templates.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/completion-templates.js"() {
     completionShTemplate = `###-begin-{{app_name}}-completions-###
 #
 # yargs command completion script
@@ -52527,7 +52527,7 @@ fi
   }
 });
 
-// node_modules/yargs/build/lib/completion.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/completion.js
 function completion(yargs, usage2, command2, shim3) {
   return new Completion(yargs, usage2, command2, shim3);
 }
@@ -52539,7 +52539,7 @@ function isFallbackCompletionFunction(completionFunction) {
 }
 var Completion;
 var init_completion = __esm({
-  "node_modules/yargs/build/lib/completion.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/completion.js"() {
     init_command();
     init_common_types();
     init_completion_templates();
@@ -52750,7 +52750,7 @@ var init_completion = __esm({
   }
 });
 
-// node_modules/yargs/build/lib/utils/levenshtein.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/levenshtein.js
 function levenshtein(a2, b2) {
   if (a2.length === 0)
     return b2.length;
@@ -52781,11 +52781,11 @@ function levenshtein(a2, b2) {
   return matrix[b2.length][a2.length];
 }
 var init_levenshtein = __esm({
-  "node_modules/yargs/build/lib/utils/levenshtein.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/levenshtein.js"() {
   }
 });
 
-// node_modules/yargs/build/lib/validation.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/validation.js
 function validation(yargs, usage2, shim3) {
   const __ = shim3.y18n.__;
   const __n = shim3.y18n.__n;
@@ -53054,7 +53054,7 @@ ${customMsgs.join("\n")}` : "";
 }
 var specialKeys;
 var init_validation = __esm({
-  "node_modules/yargs/build/lib/validation.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/validation.js"() {
     init_argsert();
     init_common_types();
     init_levenshtein();
@@ -53063,7 +53063,7 @@ var init_validation = __esm({
   }
 });
 
-// node_modules/yargs/build/lib/utils/apply-extends.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/apply-extends.js
 function applyExtends(config2, cwd, mergeExtends, _shim) {
   shim2 = _shim;
   let defaultConfig = {};
@@ -53115,13 +53115,13 @@ function mergeDeep(config1, config2) {
 }
 var previouslyVisitedConfigs, shim2;
 var init_apply_extends = __esm({
-  "node_modules/yargs/build/lib/utils/apply-extends.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/apply-extends.js"() {
     init_yerror();
     previouslyVisitedConfigs = [];
   }
 });
 
-// node_modules/yargs/build/lib/yargs-factory.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/yargs-factory.js
 function YargsFactory(_shim) {
   return (processArgs = [], cwd = _shim.process.cwd(), parentRequire) => {
     const yargs = new YargsInstance(processArgs, cwd, parentRequire, _shim);
@@ -53141,7 +53141,7 @@ function isYargsInstance(y) {
 }
 var __classPrivateFieldSet, __classPrivateFieldGet, _YargsInstance_command, _YargsInstance_cwd, _YargsInstance_context, _YargsInstance_completion, _YargsInstance_completionCommand, _YargsInstance_defaultShowHiddenOpt, _YargsInstance_exitError, _YargsInstance_detectLocale, _YargsInstance_emittedWarnings, _YargsInstance_exitProcess, _YargsInstance_frozens, _YargsInstance_globalMiddleware, _YargsInstance_groups, _YargsInstance_hasOutput, _YargsInstance_helpOpt, _YargsInstance_isGlobalContext, _YargsInstance_logger, _YargsInstance_output, _YargsInstance_options, _YargsInstance_parentRequire, _YargsInstance_parserConfig, _YargsInstance_parseFn, _YargsInstance_parseContext, _YargsInstance_pkgs, _YargsInstance_preservedGroups, _YargsInstance_processArgs, _YargsInstance_recommendCommands, _YargsInstance_shim, _YargsInstance_strict, _YargsInstance_strictCommands, _YargsInstance_strictOptions, _YargsInstance_usage, _YargsInstance_usageConfig, _YargsInstance_versionOpt, _YargsInstance_validation, kCopyDoubleDash, kCreateLogger, kDeleteFromParserHintObject, kEmitWarning, kFreeze, kGetDollarZero, kGetParserConfiguration, kGetUsageConfiguration, kGuessLocale, kGuessVersion, kParsePositionalNumbers, kPkgUp, kPopulateParserHintArray, kPopulateParserHintSingleValueDictionary, kPopulateParserHintArrayDictionary, kPopulateParserHintDictionary, kSanitizeKey, kSetKey, kUnfreeze, kValidateAsync, kGetCommandInstance, kGetContext, kGetHasOutput, kGetLoggerInstance, kGetParseContext, kGetUsageInstance, kGetValidationInstance, kHasParseCallback, kIsGlobalContext, kPostProcess, kRebase, kReset, kRunYargsParserAndExecuteCommands, kRunValidation, kSetHasOutput, kTrackManuallySetKeys, DEFAULT_LOCALE, YargsInstance;
 var init_yargs_factory = __esm({
-  "node_modules/yargs/build/lib/yargs-factory.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/yargs-factory.js"() {
     init_command();
     init_common_types();
     init_yerror();
@@ -54603,7 +54603,7 @@ var init_yargs_factory = __esm({
   }
 });
 
-// node_modules/yargs/index.mjs
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/index.mjs
 var yargs_exports = {};
 __export(yargs_exports, {
   default: () => yargs_default,
@@ -54611,7 +54611,7 @@ __export(yargs_exports, {
 });
 var Yargs, yargs_default;
 var init_yargs = __esm({
-  "node_modules/yargs/index.mjs"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/index.mjs"() {
     "use strict";
     init_esm();
     init_yargs_factory();
@@ -54620,7 +54620,7 @@ var init_yargs = __esm({
   }
 });
 
-// node_modules/yargs/helpers/helpers.mjs
+// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/helpers/helpers.mjs
 var helpers_exports = {};
 __export(helpers_exports, {
   Parser: () => lib_default,
@@ -54629,7 +54629,7 @@ __export(helpers_exports, {
 });
 var applyExtends2;
 var init_helpers = __esm({
-  "node_modules/yargs/helpers/helpers.mjs"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/helpers/helpers.mjs"() {
     init_apply_extends();
     init_process_argv();
     init_lib3();
@@ -54640,7 +54640,7 @@ var init_helpers = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/CLI.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/CLI.js
 import { spawn as spawn2 } from "node:child_process";
 import fs5 from "node:fs";
 import os8 from "node:os";
@@ -54655,7 +54655,7 @@ function isValidPlatform(platform) {
 }
 var packageVersion2, CLI;
 var init_CLI = __esm({
-  "node_modules/@puppeteer/browsers/lib/CLI.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/CLI.js"() {
     init_browser_data();
     init_Cache();
     init_detectPlatform();
@@ -54977,16 +54977,16 @@ var init_CLI = __esm({
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/provider.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/provider.js
 function buildArchiveFilename(browser, platform, buildId, extension2 = "zip") {
   return `${browser}-${platform}-${buildId}.${extension2}`;
 }
 var init_provider = __esm({
-  "node_modules/@puppeteer/browsers/lib/provider.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/provider.js"() {
   }
 });
 
-// node_modules/@puppeteer/browsers/lib/main.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/main.js
 var main_exports = {};
 __export(main_exports, {
   Browser: () => Browser3,
@@ -55017,7 +55017,7 @@ __export(main_exports, {
   uninstall: () => uninstall
 });
 var init_main = __esm({
-  "node_modules/@puppeteer/browsers/lib/main.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/main.js"() {
     init_launch();
     init_install();
     init_detectPlatform();
@@ -55030,7 +55030,7 @@ var init_main = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/node/LaunchOptions.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/LaunchOptions.js
 var LaunchOptions_exports = {};
 __export(LaunchOptions_exports, {
   convertPuppeteerChannelToBrowsersChannel: () => convertPuppeteerChannelToBrowsersChannel
@@ -55048,12 +55048,12 @@ function convertPuppeteerChannelToBrowsersChannel(channel) {
   }
 }
 var init_LaunchOptions = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/node/LaunchOptions.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/LaunchOptions.js"() {
     init_main();
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js
 function assertSupportedUrlRestrictions(options) {
   if (options.blocklist && options.allowlist) {
     throw new Error("Cannot specify both blocklist and allowlist");
@@ -55162,7 +55162,7 @@ async function getWSEndpoint(browserURL) {
 }
 var getWebSocketTransportClass;
 var init_BrowserConnector3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js"() {
     init_urlpattern_polyfill();
     init_BrowserConnector2();
     init_BrowserConnector();
@@ -55175,10 +55175,10 @@ var init_BrowserConnector3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/Puppeteer.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Puppeteer.js
 var Puppeteer;
 var init_Puppeteer = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/Puppeteer.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Puppeteer.js"() {
     init_BrowserConnector3();
     init_CustomQueryHandler();
     Puppeteer = class {
@@ -55264,15 +55264,15 @@ var init_Puppeteer = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/TaskQueue.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TaskQueue.js
 var init_TaskQueue = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/TaskQueue.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TaskQueue.js"() {
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/common/common.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/common.js
 var init_common = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/common/common.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/common.js"() {
     init_BrowserWebSocketTransport();
     init_CallbackRegistry();
     init_AriaQueryHandler();
@@ -55305,10 +55305,10 @@ var init_common = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/revisions.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/revisions.js
 var PUPPETEER_REVISIONS;
 var init_revisions = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/revisions.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/revisions.js"() {
     PUPPETEER_REVISIONS = Object.freeze({
       chrome: "150.0.7871.24",
       "chrome-headless-shell": "150.0.7871.24",
@@ -55317,9 +55317,9 @@ var init_revisions = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/util/util.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/util.js
 var init_util3 = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/util/util.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/util.js"() {
     init_assert();
     init_Deferred();
     init_Mutex();
@@ -55331,9 +55331,9 @@ var init_util3 = __esm({
   }
 });
 
-// node_modules/puppeteer-core/lib/puppeteer/index-browser.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/index-browser.js
 var init_index_browser = __esm({
-  "node_modules/puppeteer-core/lib/puppeteer/index-browser.js"() {
+  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/index-browser.js"() {
     init_api();
     init_cdp();
     init_common();
@@ -55342,9 +55342,9 @@ var init_index_browser = __esm({
   }
 });
 
-// node_modules/fast-glob/out/utils/array.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/array.js
 var require_array = __commonJS({
-  "node_modules/fast-glob/out/utils/array.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/array.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.splitWhen = exports.flatten = void 0;
@@ -55369,9 +55369,9 @@ var require_array = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/utils/errno.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/errno.js
 var require_errno = __commonJS({
-  "node_modules/fast-glob/out/utils/errno.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/errno.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isEnoentCodeError = void 0;
@@ -55382,9 +55382,9 @@ var require_errno = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/utils/fs.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/fs.js
 var require_fs = __commonJS({
-  "node_modules/fast-glob/out/utils/fs.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/fs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createDirentFromStats = void 0;
@@ -55407,9 +55407,9 @@ var require_fs = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/utils/path.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/path.js
 var require_path = __commonJS({
-  "node_modules/fast-glob/out/utils/path.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/path.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convertPosixPathToPattern = exports.convertWindowsPathToPattern = exports.convertPathToPattern = exports.escapePosixPath = exports.escapeWindowsPath = exports.escape = exports.removeLeadingDotSegment = exports.makeAbsolute = exports.unixify = void 0;
@@ -55460,9 +55460,9 @@ var require_path = __commonJS({
   }
 });
 
-// node_modules/is-extglob/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/is-extglob/index.js
 var require_is_extglob = __commonJS({
-  "node_modules/is-extglob/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/is-extglob/index.js"(exports, module) {
     module.exports = function isExtglob(str) {
       if (typeof str !== "string" || str === "") {
         return false;
@@ -55477,9 +55477,9 @@ var require_is_extglob = __commonJS({
   }
 });
 
-// node_modules/is-glob/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/is-glob/index.js
 var require_is_glob = __commonJS({
-  "node_modules/is-glob/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/is-glob/index.js"(exports, module) {
     var isExtglob = require_is_extglob();
     var chars = { "{": "}", "(": ")", "[": "]" };
     var strictCheck = function(str) {
@@ -55608,9 +55608,9 @@ var require_is_glob = __commonJS({
   }
 });
 
-// node_modules/glob-parent/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/glob-parent/index.js
 var require_glob_parent = __commonJS({
-  "node_modules/glob-parent/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/glob-parent/index.js"(exports, module) {
     "use strict";
     var isGlob = require_is_glob();
     var pathPosixDirname = __require("path").posix.dirname;
@@ -55637,9 +55637,9 @@ var require_glob_parent = __commonJS({
   }
 });
 
-// node_modules/braces/lib/utils.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/utils.js
 var require_utils = __commonJS({
-  "node_modules/braces/lib/utils.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/utils.js"(exports) {
     "use strict";
     exports.isInteger = (num) => {
       if (typeof num === "number") {
@@ -55719,9 +55719,9 @@ var require_utils = __commonJS({
   }
 });
 
-// node_modules/braces/lib/stringify.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/stringify.js
 var require_stringify = __commonJS({
-  "node_modules/braces/lib/stringify.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/stringify.js"(exports, module) {
     "use strict";
     var utils = require_utils();
     module.exports = (ast, options = {}) => {
@@ -55750,9 +55750,9 @@ var require_stringify = __commonJS({
   }
 });
 
-// node_modules/is-number/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/is-number/index.js
 var require_is_number = __commonJS({
-  "node_modules/is-number/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/is-number/index.js"(exports, module) {
     "use strict";
     module.exports = function(num) {
       if (typeof num === "number") {
@@ -55766,9 +55766,9 @@ var require_is_number = __commonJS({
   }
 });
 
-// node_modules/to-regex-range/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/to-regex-range/index.js
 var require_to_regex_range = __commonJS({
-  "node_modules/to-regex-range/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/to-regex-range/index.js"(exports, module) {
     "use strict";
     var isNumber2 = require_is_number();
     var toRegexRange = (min, max, options) => {
@@ -55977,9 +55977,9 @@ var require_to_regex_range = __commonJS({
   }
 });
 
-// node_modules/fill-range/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fill-range/index.js
 var require_fill_range = __commonJS({
-  "node_modules/fill-range/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fill-range/index.js"(exports, module) {
     "use strict";
     var util = __require("util");
     var toRegexRange = require_to_regex_range();
@@ -56171,9 +56171,9 @@ var require_fill_range = __commonJS({
   }
 });
 
-// node_modules/braces/lib/compile.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/compile.js
 var require_compile = __commonJS({
-  "node_modules/braces/lib/compile.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/compile.js"(exports, module) {
     "use strict";
     var fill = require_fill_range();
     var utils = require_utils();
@@ -56223,9 +56223,9 @@ var require_compile = __commonJS({
   }
 });
 
-// node_modules/braces/lib/expand.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/expand.js
 var require_expand = __commonJS({
-  "node_modules/braces/lib/expand.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/expand.js"(exports, module) {
     "use strict";
     var fill = require_fill_range();
     var stringify2 = require_stringify();
@@ -56317,9 +56317,9 @@ var require_expand = __commonJS({
   }
 });
 
-// node_modules/braces/lib/constants.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/constants.js
 var require_constants2 = __commonJS({
-  "node_modules/braces/lib/constants.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/constants.js"(exports, module) {
     "use strict";
     module.exports = {
       MAX_LENGTH: 1e4,
@@ -56418,9 +56418,9 @@ var require_constants2 = __commonJS({
   }
 });
 
-// node_modules/braces/lib/parse.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/parse.js
 var require_parse = __commonJS({
-  "node_modules/braces/lib/parse.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/parse.js"(exports, module) {
     "use strict";
     var stringify2 = require_stringify();
     var {
@@ -56656,9 +56656,9 @@ var require_parse = __commonJS({
   }
 });
 
-// node_modules/braces/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/braces/index.js
 var require_braces = __commonJS({
-  "node_modules/braces/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/braces/index.js"(exports, module) {
     "use strict";
     var stringify2 = require_stringify();
     var compile = require_compile();
@@ -56719,9 +56719,9 @@ var require_braces = __commonJS({
   }
 });
 
-// node_modules/picomatch/lib/constants.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/constants.js
 var require_constants3 = __commonJS({
-  "node_modules/picomatch/lib/constants.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/constants.js"(exports, module) {
     "use strict";
     var path31 = __require("path");
     var WIN_SLASH = "\\\\/";
@@ -56920,9 +56920,9 @@ var require_constants3 = __commonJS({
   }
 });
 
-// node_modules/picomatch/lib/utils.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/utils.js
 var require_utils2 = __commonJS({
-  "node_modules/picomatch/lib/utils.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/utils.js"(exports) {
     "use strict";
     var path31 = __require("path");
     var win32 = process.platform === "win32";
@@ -56981,9 +56981,9 @@ var require_utils2 = __commonJS({
   }
 });
 
-// node_modules/picomatch/lib/scan.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/scan.js
 var require_scan = __commonJS({
-  "node_modules/picomatch/lib/scan.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/scan.js"(exports, module) {
     "use strict";
     var utils = require_utils2();
     var {
@@ -57311,9 +57311,9 @@ var require_scan = __commonJS({
   }
 });
 
-// node_modules/picomatch/lib/parse.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/parse.js
 var require_parse2 = __commonJS({
-  "node_modules/picomatch/lib/parse.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/parse.js"(exports, module) {
     "use strict";
     var constants3 = require_constants3();
     var utils = require_utils2();
@@ -58313,9 +58313,9 @@ var require_parse2 = __commonJS({
   }
 });
 
-// node_modules/picomatch/lib/picomatch.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/picomatch.js
 var require_picomatch = __commonJS({
-  "node_modules/picomatch/lib/picomatch.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/picomatch.js"(exports, module) {
     "use strict";
     var path31 = __require("path");
     var scan = require_scan();
@@ -58454,17 +58454,17 @@ var require_picomatch = __commonJS({
   }
 });
 
-// node_modules/picomatch/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/index.js
 var require_picomatch2 = __commonJS({
-  "node_modules/picomatch/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/index.js"(exports, module) {
     "use strict";
     module.exports = require_picomatch();
   }
 });
 
-// node_modules/micromatch/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/micromatch/index.js
 var require_micromatch = __commonJS({
-  "node_modules/micromatch/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/micromatch/index.js"(exports, module) {
     "use strict";
     var util = __require("util");
     var braces = require_braces();
@@ -58623,9 +58623,9 @@ var require_micromatch = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/utils/pattern.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/pattern.js
 var require_pattern = __commonJS({
-  "node_modules/fast-glob/out/utils/pattern.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/pattern.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isAbsolute = exports.partitionAbsoluteAndRelative = exports.removeDuplicateSlashes = exports.matchAny = exports.convertPatternsToRe = exports.makeRe = exports.getPatternParts = exports.expandBraceExpansion = exports.expandPatternsWithBraceExpansion = exports.isAffectDepthOfReadingPattern = exports.endsWithSlashGlobStar = exports.hasGlobStar = exports.getBaseDirectory = exports.isPatternRelatedToParentDirectory = exports.getPatternsOutsideCurrentDirectory = exports.getPatternsInsideCurrentDirectory = exports.getPositivePatterns = exports.getNegativePatterns = exports.isPositivePattern = exports.isNegativePattern = exports.convertToNegativePattern = exports.convertToPositivePattern = exports.isDynamicPattern = exports.isStaticPattern = void 0;
@@ -58788,9 +58788,9 @@ var require_pattern = __commonJS({
   }
 });
 
-// node_modules/merge2/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/merge2/index.js
 var require_merge2 = __commonJS({
-  "node_modules/merge2/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/merge2/index.js"(exports, module) {
     "use strict";
     var Stream2 = __require("stream");
     var PassThrough2 = Stream2.PassThrough;
@@ -58907,9 +58907,9 @@ var require_merge2 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/utils/stream.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/stream.js
 var require_stream2 = __commonJS({
-  "node_modules/fast-glob/out/utils/stream.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/stream.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.merge = void 0;
@@ -58930,9 +58930,9 @@ var require_stream2 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/utils/string.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/string.js
 var require_string = __commonJS({
-  "node_modules/fast-glob/out/utils/string.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/string.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isEmpty = exports.isString = void 0;
@@ -58947,9 +58947,9 @@ var require_string = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/utils/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/index.js
 var require_utils3 = __commonJS({
-  "node_modules/fast-glob/out/utils/index.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.string = exports.stream = exports.pattern = exports.path = exports.fs = exports.errno = exports.array = void 0;
@@ -58970,9 +58970,9 @@ var require_utils3 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/managers/tasks.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/managers/tasks.js
 var require_tasks = __commonJS({
-  "node_modules/fast-glob/out/managers/tasks.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/managers/tasks.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convertPatternGroupToTask = exports.convertPatternGroupsToTasks = exports.groupPatternsByBaseDirectory = exports.getNegativePatternsAsPositive = exports.getPositivePatterns = exports.convertPatternsToTasks = exports.generate = void 0;
@@ -59066,9 +59066,9 @@ var require_tasks = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.stat/out/providers/async.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/providers/async.js
 var require_async = __commonJS({
-  "node_modules/@nodelib/fs.stat/out/providers/async.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/providers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.read = void 0;
@@ -59108,9 +59108,9 @@ var require_async = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.stat/out/providers/sync.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/providers/sync.js
 var require_sync = __commonJS({
-  "node_modules/@nodelib/fs.stat/out/providers/sync.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/providers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.read = void 0;
@@ -59136,9 +59136,9 @@ var require_sync = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.stat/out/adapters/fs.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/adapters/fs.js
 var require_fs2 = __commonJS({
-  "node_modules/@nodelib/fs.stat/out/adapters/fs.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/adapters/fs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createFileSystemAdapter = exports.FILE_SYSTEM_ADAPTER = void 0;
@@ -59159,9 +59159,9 @@ var require_fs2 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.stat/out/settings.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/settings.js
 var require_settings = __commonJS({
-  "node_modules/@nodelib/fs.stat/out/settings.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var fs9 = require_fs2();
@@ -59181,9 +59181,9 @@ var require_settings = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.stat/out/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/index.js
 var require_out = __commonJS({
-  "node_modules/@nodelib/fs.stat/out/index.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.statSync = exports.stat = exports.Settings = void 0;
@@ -59213,9 +59213,9 @@ var require_out = __commonJS({
   }
 });
 
-// node_modules/queue-microtask/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/queue-microtask/index.js
 var require_queue_microtask = __commonJS({
-  "node_modules/queue-microtask/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/queue-microtask/index.js"(exports, module) {
     var promise;
     module.exports = typeof queueMicrotask === "function" ? queueMicrotask.bind(typeof window !== "undefined" ? window : global) : (cb) => (promise || (promise = Promise.resolve())).then(cb).catch((err) => setTimeout(() => {
       throw err;
@@ -59223,9 +59223,9 @@ var require_queue_microtask = __commonJS({
   }
 });
 
-// node_modules/run-parallel/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/run-parallel/index.js
 var require_run_parallel = __commonJS({
-  "node_modules/run-parallel/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/run-parallel/index.js"(exports, module) {
     module.exports = runParallel;
     var queueMicrotask2 = require_queue_microtask();
     function runParallel(tasks, cb) {
@@ -59273,9 +59273,9 @@ var require_run_parallel = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/constants.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/constants.js
 var require_constants4 = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/constants.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/constants.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IS_SUPPORT_READDIR_WITH_FILE_TYPES = void 0;
@@ -59293,9 +59293,9 @@ var require_constants4 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/utils/fs.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/utils/fs.js
 var require_fs3 = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/utils/fs.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/utils/fs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createDirentFromStats = void 0;
@@ -59318,9 +59318,9 @@ var require_fs3 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/utils/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/utils/index.js
 var require_utils4 = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/utils/index.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/utils/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.fs = void 0;
@@ -59329,9 +59329,9 @@ var require_utils4 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/providers/common.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/common.js
 var require_common = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/providers/common.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/common.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.joinPathSegments = void 0;
@@ -59345,9 +59345,9 @@ var require_common = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/providers/async.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/async.js
 var require_async2 = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/providers/async.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.readdir = exports.readdirWithFileTypes = exports.read = void 0;
@@ -59455,9 +59455,9 @@ var require_async2 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/providers/sync.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/sync.js
 var require_sync2 = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/providers/sync.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.readdir = exports.readdirWithFileTypes = exports.read = void 0;
@@ -59514,9 +59514,9 @@ var require_sync2 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/adapters/fs.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/adapters/fs.js
 var require_fs4 = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/adapters/fs.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/adapters/fs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createFileSystemAdapter = exports.FILE_SYSTEM_ADAPTER = void 0;
@@ -59539,9 +59539,9 @@ var require_fs4 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/settings.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/settings.js
 var require_settings2 = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/settings.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var path31 = __require("path");
@@ -59569,9 +59569,9 @@ var require_settings2 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.scandir/out/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/index.js
 var require_out2 = __commonJS({
-  "node_modules/@nodelib/fs.scandir/out/index.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Settings = exports.scandirSync = exports.scandir = void 0;
@@ -59601,9 +59601,9 @@ var require_out2 = __commonJS({
   }
 });
 
-// node_modules/reusify/reusify.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/reusify/reusify.js
 var require_reusify = __commonJS({
-  "node_modules/reusify/reusify.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/reusify/reusify.js"(exports, module) {
     "use strict";
     function reusify(Constructor) {
       var head = new Constructor();
@@ -59632,9 +59632,9 @@ var require_reusify = __commonJS({
   }
 });
 
-// node_modules/fastq/queue.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fastq/queue.js
 var require_queue = __commonJS({
-  "node_modules/fastq/queue.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fastq/queue.js"(exports, module) {
     "use strict";
     var reusify = require_reusify();
     function fastqueue(context2, worker, _concurrency) {
@@ -59916,9 +59916,9 @@ var require_queue = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/readers/common.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/common.js
 var require_common2 = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/readers/common.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/common.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.joinPathSegments = exports.replacePathSegmentSeparator = exports.isAppliedFilter = exports.isFatalError = void 0;
@@ -59950,9 +59950,9 @@ var require_common2 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/readers/reader.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/reader.js
 var require_reader = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/readers/reader.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/reader.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var common = require_common2();
@@ -59967,9 +59967,9 @@ var require_reader = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/readers/async.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/async.js
 var require_async3 = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/readers/async.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var events_1 = __require("events");
@@ -60070,9 +60070,9 @@ var require_async3 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/providers/async.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/async.js
 var require_async4 = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/providers/async.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var async_1 = require_async3();
@@ -60106,9 +60106,9 @@ var require_async4 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/providers/stream.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/stream.js
 var require_stream3 = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/providers/stream.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/stream.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var stream_1 = __require("stream");
@@ -60147,9 +60147,9 @@ var require_stream3 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/readers/sync.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/sync.js
 var require_sync3 = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/readers/sync.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var fsScandir = require_out2();
@@ -60211,9 +60211,9 @@ var require_sync3 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/providers/sync.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/sync.js
 var require_sync4 = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/providers/sync.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var sync_1 = require_sync3();
@@ -60231,9 +60231,9 @@ var require_sync4 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/settings.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/settings.js
 var require_settings3 = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/settings.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var path31 = __require("path");
@@ -60263,9 +60263,9 @@ var require_settings3 = __commonJS({
   }
 });
 
-// node_modules/@nodelib/fs.walk/out/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/index.js
 var require_out3 = __commonJS({
-  "node_modules/@nodelib/fs.walk/out/index.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Settings = exports.walkStream = exports.walkSync = exports.walk = void 0;
@@ -60303,9 +60303,9 @@ var require_out3 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/readers/reader.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/reader.js
 var require_reader2 = __commonJS({
-  "node_modules/fast-glob/out/readers/reader.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/reader.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var path31 = __require("path");
@@ -60342,9 +60342,9 @@ var require_reader2 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/readers/stream.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/stream.js
 var require_stream4 = __commonJS({
-  "node_modules/fast-glob/out/readers/stream.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/stream.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var stream_1 = __require("stream");
@@ -60399,9 +60399,9 @@ var require_stream4 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/readers/async.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/async.js
 var require_async5 = __commonJS({
-  "node_modules/fast-glob/out/readers/async.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var fsWalk = require_out3();
@@ -60438,9 +60438,9 @@ var require_async5 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/matchers/matcher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/matchers/matcher.js
 var require_matcher = __commonJS({
-  "node_modules/fast-glob/out/providers/matchers/matcher.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/matchers/matcher.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60489,9 +60489,9 @@ var require_matcher = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/matchers/partial.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/matchers/partial.js
 var require_partial = __commonJS({
-  "node_modules/fast-glob/out/providers/matchers/partial.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/matchers/partial.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var matcher_1 = require_matcher();
@@ -60526,9 +60526,9 @@ var require_partial = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/filters/deep.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/deep.js
 var require_deep = __commonJS({
-  "node_modules/fast-glob/out/providers/filters/deep.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/deep.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60591,9 +60591,9 @@ var require_deep = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/filters/entry.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/entry.js
 var require_entry = __commonJS({
-  "node_modules/fast-glob/out/providers/filters/entry.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/entry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60679,9 +60679,9 @@ var require_entry = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/filters/error.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/error.js
 var require_error = __commonJS({
-  "node_modules/fast-glob/out/providers/filters/error.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/error.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60700,9 +60700,9 @@ var require_error = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/transformers/entry.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/transformers/entry.js
 var require_entry2 = __commonJS({
-  "node_modules/fast-glob/out/providers/transformers/entry.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/transformers/entry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60732,9 +60732,9 @@ var require_entry2 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/provider.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/provider.js
 var require_provider = __commonJS({
-  "node_modules/fast-glob/out/providers/provider.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var path31 = __require("path");
@@ -60786,9 +60786,9 @@ var require_provider = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/async.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/async.js
 var require_async6 = __commonJS({
-  "node_modules/fast-glob/out/providers/async.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var async_1 = require_async5();
@@ -60815,9 +60815,9 @@ var require_async6 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/stream.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/stream.js
 var require_stream5 = __commonJS({
-  "node_modules/fast-glob/out/providers/stream.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/stream.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var stream_1 = __require("stream");
@@ -60849,9 +60849,9 @@ var require_stream5 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/readers/sync.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/sync.js
 var require_sync5 = __commonJS({
-  "node_modules/fast-glob/out/readers/sync.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var fsStat = require_out();
@@ -60897,9 +60897,9 @@ var require_sync5 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/providers/sync.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/sync.js
 var require_sync6 = __commonJS({
-  "node_modules/fast-glob/out/providers/sync.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var sync_1 = require_sync5();
@@ -60926,9 +60926,9 @@ var require_sync6 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/settings.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/settings.js
 var require_settings4 = __commonJS({
-  "node_modules/fast-glob/out/settings.js"(exports) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DEFAULT_FILE_SYSTEM_ADAPTER = void 0;
@@ -60986,9 +60986,9 @@ var require_settings4 = __commonJS({
   }
 });
 
-// node_modules/fast-glob/out/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/index.js
 var require_out4 = __commonJS({
-  "node_modules/fast-glob/out/index.js"(exports, module) {
+  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/index.js"(exports, module) {
     "use strict";
     var taskManager = require_tasks();
     var async_1 = require_async6();
@@ -61292,10 +61292,10 @@ import { chmod as chmod3, link as link2, mkdir as mkdir4, open as open3, readFil
 var GENERATED_BUILD_INFO = Object.freeze({
   "packageVersion": "1.6.9",
   "protocolVersion": 8,
-  "schemaVersion": 7,
+  "schemaVersion": 8,
   "releaseSequence": 1610,
-  "sourceDigest": "2f31f624d68eff4f24f7904a64fea5b2596d5ebff8574bdebfcff758658b642d",
-  "buildId": "oracle-firefox-1.6.9-2f31f624d68eff4f"
+  "sourceDigest": "cff26d45b9531d0e8ce6361ab39aee3a0d3e085eed94526d63f3e467875e9ae4",
+  "buildId": "oracle-firefox-1.6.9-cff26d45b9531d0e"
 });
 
 // src/build-info.mjs
@@ -61918,7 +61918,7 @@ import os12 from "node:os";
 import path19 from "node:path";
 import { promisify as promisify4 } from "node:util";
 
-// node_modules/puppeteer-core/lib/puppeteer/node-env-setup.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node-env-setup.js
 init_environment();
 import fs from "node:fs";
 import path5 from "node:path";
@@ -61930,10 +61930,10 @@ environment.value = {
   ScreenRecorder: environment.value.ScreenRecorder
 };
 
-// node_modules/puppeteer-core/lib/puppeteer/index.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/index.js
 init_index_browser();
 
-// node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
 init_main();
 init_util();
 init_assert();
@@ -61941,7 +61941,7 @@ import { mkdtemp } from "node:fs/promises";
 import os9 from "node:os";
 import path16 from "node:path";
 
-// node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
 init_main();
 init_rxjs();
 init_Browser2();
@@ -61955,7 +61955,7 @@ import { existsSync as existsSync2 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join as join4 } from "node:path";
 
-// node_modules/puppeteer-core/lib/puppeteer/node/PipeTransport.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/PipeTransport.js
 init_EventEmitter();
 init_util();
 init_assert();
@@ -62026,7 +62026,7 @@ var PipeTransport = class {
   }
 };
 
-// node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
 function getBrowserTypeDisplayName(browserType) {
   switch (browserType) {
     case Browser3.FIREFOX:
@@ -62326,10 +62326,10 @@ For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides
   }
 };
 
-// node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
 init_LaunchOptions();
 
-// node_modules/puppeteer-core/lib/puppeteer/node/util/fs.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/util/fs.js
 import fs6 from "node:fs";
 var rmOptions = {
   force: true,
@@ -62340,7 +62340,7 @@ async function rm7(path31) {
   await fs6.promises.rm(path31, rmOptions);
 }
 
-// node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
 var ChromeLauncher = class extends BrowserLauncher {
   constructor(puppeteer2) {
     super(puppeteer2, "chrome");
@@ -62556,7 +62556,7 @@ function removeMatchingFlags(array, flag) {
   return array;
 }
 
-// node_modules/puppeteer-core/lib/puppeteer/node/FirefoxLauncher.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/FirefoxLauncher.js
 init_main();
 init_util();
 init_assert();
@@ -62706,7 +62706,7 @@ var FirefoxLauncher = class _FirefoxLauncher extends BrowserLauncher {
   }
 };
 
-// node_modules/puppeteer-core/lib/puppeteer/node/PuppeteerNode.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/PuppeteerNode.js
 init_main();
 init_Puppeteer();
 init_revisions();
@@ -62928,7 +62928,7 @@ var PuppeteerNode = class extends Puppeteer {
   }
 };
 
-// node_modules/puppeteer-core/lib/puppeteer/node/ScreenRecorder.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/ScreenRecorder.js
 init_rxjs();
 init_CDPSession();
 init_Debug();
@@ -63210,7 +63210,7 @@ var ScreenRecorder = (() => {
   };
 })();
 
-// node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js
+// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js
 init_environment();
 environment.value.ScreenRecorder = ScreenRecorder;
 var puppeteer = new PuppeteerNode({
@@ -64489,10 +64489,14 @@ async function waitForUserMessage(page, baselineCount, expectedText, { timeoutMs
       });
     }
     const users2 = latest.turns.filter((turn) => turn.role === "user");
-    const newUsers2 = knownTurnIds.size ? users2.filter((turn) => turn.id && !knownTurnIds.has(turn.id)) : users2.slice(baselineCount);
-    const match = newUsers2.find(
-      (turn) => semanticTextHash(turn.text) === expectedHash && attachmentManifestKey(turn.attachments) === attachmentManifestKey(expectedManifest)
-    );
+    const unseenById2 = knownTurnIds.size ? users2.filter((turn) => turn.id && !knownTurnIds.has(turn.id)) : [];
+    const countTail2 = users2.slice(baselineCount);
+    const newUsers2 = knownTurnIds.size ? Array.from(/* @__PURE__ */ new Set([...unseenById2, ...countTail2])) : countTail2;
+    const matchIndex = correlatedUserTurnIndex(newUsers2, {
+      hash: expectedHash,
+      attachments: expectedManifest
+    });
+    const match = matchIndex >= 0 ? newUsers2[matchIndex] : null;
     if (match) {
       if (!requireCanonicalUrl) return { ...latest, userTurn: { ...match, hash: expectedHash } };
       try {
@@ -64509,7 +64513,9 @@ async function waitForUserMessage(page, baselineCount, expectedText, { timeoutMs
   } catch {
   }
   const users = latest?.turns?.filter((turn) => turn.role === "user") || [];
-  const newUsers = knownTurnIds.size ? users.filter((turn) => turn.id && !knownTurnIds.has(turn.id)) : users.slice(baselineCount);
+  const unseenById = knownTurnIds.size ? users.filter((turn) => turn.id && !knownTurnIds.has(turn.id)) : [];
+  const countTail = users.slice(baselineCount);
+  const newUsers = knownTurnIds.size ? Array.from(/* @__PURE__ */ new Set([...unseenById, ...countTail])) : countTail;
   const closest = newUsers.find(
     (turn) => attachmentManifestKey(turn.attachments) === attachmentManifestKey(expectedManifest)
   ) || newUsers.at(-1) || null;
@@ -64564,6 +64570,32 @@ async function boundedAssistantSnapshot(page, probeTimeoutMs = 3e4) {
     clearTimeout(timer2);
   }
 }
+function correlatedUserTurnIndex(turns, userTurn) {
+  if (!Array.isArray(turns) || !userTurn?.id && !userTurn?.hash) return -1;
+  if (userTurn.id) {
+    const exactIdIndex = turns.findIndex((turn) => turn.role === "user" && turn.id === userTurn.id);
+    if (exactIdIndex >= 0) return exactIdIndex;
+  }
+  if (!userTurn.hash) return -1;
+  const hashMatches = [];
+  for (let index = 0; index < turns.length; index += 1) {
+    const turn = turns[index];
+    if (turn.role === "user" && semanticTextHash(turn.text) === userTurn.hash) hashMatches.push(index);
+  }
+  if (hashMatches.length !== 1) return -1;
+  const [matchIndex] = hashMatches;
+  const match = turns[matchIndex];
+  if (Array.isArray(userTurn.attachments) && Array.isArray(match.attachments) && attachmentManifestKey(match.attachments) !== attachmentManifestKey(userTurn.attachments)) return -1;
+  return matchIndex;
+}
+function assistantBoundToUserTurn(turns, userIndex) {
+  if (userIndex < 0) return null;
+  const following = turns.slice(userIndex + 1);
+  const nextUserIndex = following.findIndex((turn) => turn.role === "user");
+  const responseSegment = nextUserIndex >= 0 ? following.slice(0, nextUserIndex) : following;
+  const assistants = responseSegment.filter((turn) => turn.role === "assistant");
+  return assistants.length === 1 ? assistants[0] : null;
+}
 async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, stableMs = 2500, probeTimeoutMs = 3e4 } = {}) {
   const deadline = Date.now() + timeoutMs;
   let lastKey = "";
@@ -64571,12 +64603,8 @@ async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, st
   let terminalCycles = 0;
   while (Date.now() < deadline) {
     const snapshot = await boundedAssistantSnapshot(page, Math.min(probeTimeoutMs, Math.max(1, deadline - Date.now())));
-    let userIndex = -1;
-    if (userTurn.id) userIndex = snapshot.turns.findIndex((turn) => turn.role === "user" && turn.id === userTurn.id);
-    if (userIndex < 0) {
-      userIndex = snapshot.turns.findIndex((turn) => turn.role === "user" && semanticTextHash(turn.text) === userTurn.hash);
-    }
-    const assistant = userIndex >= 0 ? snapshot.turns.slice(userIndex + 1).find((turn) => turn.role === "assistant") : null;
+    const userIndex = correlatedUserTurnIndex(snapshot.turns, userTurn);
+    const assistant = assistantBoundToUserTurn(snapshot.turns, userIndex);
     const responseFailure = classifyAssistantResponseFailure(assistant);
     const key = assistant ? `${assistant.id || ""}:${semanticTextHash(assistant.text)}` : "";
     if (key !== lastKey) {
@@ -64594,7 +64622,14 @@ async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, st
             recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job"
           });
         }
-        return { ...snapshot, assistantTurn: assistant, text: assistant.text, html: assistant.html, responseFailure };
+        return {
+          ...snapshot,
+          assistantTurn: assistant,
+          text: assistant.text,
+          html: assistant.html,
+          responseFailure,
+          exactTurnBinding: true
+        };
       }
     } else {
       terminalCycles = 0;
@@ -64606,6 +64641,36 @@ async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, st
     "The assistant response bound to the submitted user turn could not be confirmed complete before timeout.",
     { submissionMayHaveOccurred: true, recoveryAction: "inspect the exact conversation and reconcile this job without resending" }
   );
+}
+async function reconcileAssistantAfterTurn(page, userTurn) {
+  if (!userTurn?.id && !userTurn?.hash) {
+    throw codedError(
+      "EXACT_TURN_PROOF_REQUIRED",
+      "Final response reconciliation requires an exact user-turn id or unambiguous semantic hash.",
+      { submissionMayHaveOccurred: true }
+    );
+  }
+  const snapshot = await boundedAssistantSnapshot(page);
+  const userIndex = correlatedUserTurnIndex(snapshot.turns, userTurn);
+  if (userIndex < 0) return null;
+  const assistant = assistantBoundToUserTurn(snapshot.turns, userIndex);
+  const responseFailure = classifyAssistantResponseFailure(assistant);
+  const terminal = assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure) && !snapshot.stopVisible;
+  if (!terminal) return null;
+  if (isChatGptCooldownText(assistant.text)) {
+    throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
+      submissionMayHaveOccurred: true,
+      recoveryAction: "wait for the ChatGPT account cooldown before starting a newly authorized job"
+    });
+  }
+  return {
+    ...snapshot,
+    assistantTurn: assistant,
+    text: assistant.text,
+    html: assistant.html,
+    responseFailure,
+    exactTurnBinding: true
+  };
 }
 function isChatGptCooldownText(value) {
   const normalized = String(value ?? "").replace(/\s+/gu, " ").trim();
@@ -66534,6 +66599,26 @@ var TERMINAL_JOB_STATES = /* @__PURE__ */ new Set([
 ]);
 var STATE_INDEX = new Map(JOB_STATES.map((state, index) => [state, index]));
 var SUBMIT_INDEX = STATE_INDEX.get("submit_intent");
+var PRE_SUBMIT_JOB_STATES = new Set(JOB_STATES.slice(0, SUBMIT_INDEX));
+var MONITOR_JOB_STATES = /* @__PURE__ */ new Set([
+  "user_turn_confirmed",
+  "awaiting_response",
+  "response_failed_detected",
+  "response_confirmed"
+]);
+function isCanonicalConversationUrl(value) {
+  try {
+    const parsed = new URL(String(value));
+    return parsed.protocol === "https:" && parsed.hostname === "chatgpt.com" && !parsed.search && !parsed.hash && (/^\/c\/[a-zA-Z0-9-]+$/u.test(parsed.pathname) || /^\/g\/g-p-[^/]+\/c\/[a-zA-Z0-9-]+$/u.test(parsed.pathname));
+  } catch {
+    return false;
+  }
+}
+function hasExactUserTurnProof(job) {
+  return Boolean(
+    job?.submitIntentAt && isCanonicalConversationUrl(job?.conversationUrl) && (job?.userTurnId || job?.userTurnHash)
+  );
+}
 function json(value) {
   return value == null ? null : JSON.stringify(value);
 }
@@ -66588,8 +66673,13 @@ function rowToJob(row) {
     executionOwnerInstanceId: row.execution_owner_instance_id ?? null,
     executionLeaseGeneration: row.execution_lease_generation ?? null,
     executionState: row.execution_state ?? "idle",
+    executionKind: row.execution_kind ?? "pre_submit",
     executionFailureCount: row.execution_failure_count ?? 0,
     nextExecutionNotBefore: row.next_execution_not_before ?? null,
+    monitorDeadlineAt: row.monitor_deadline_at ?? null,
+    finalReconciliationAttemptedAt: row.final_reconciliation_attempted_at ?? null,
+    assistantTurnId: row.assistant_turn_id ?? null,
+    assistantTurnHash: row.assistant_turn_hash ?? null,
     chainState: row.chain_state ?? null,
     inputRequestAbandonedAt: row.input_required_abandoned_at ?? null,
     inputRequestAbandonedReason: row.input_required_abandoned_reason ?? null,
@@ -66715,6 +66805,7 @@ var StateStore = class extends EventEmitter4 {
       if (existingVersion >= BROKER_SCHEMA_VERSION) {
         this.registerBrokerTakeover();
         this.migrateSix({ existing: true });
+        this.migrateEight();
       } else {
         if (this.productionFencing && existingVersion > 0) await this.backupBeforeMigration();
         const integrity = this.db.prepare("PRAGMA integrity_check").get()?.integrity_check;
@@ -66726,6 +66817,7 @@ var StateStore = class extends EventEmitter4 {
         this.migrateLegacy();
         this.migrateSix({ existing: hasBrokerGenerationGuards });
         if (!hasBrokerGenerationGuards) this.registerBrokerTakeover();
+        this.migrateEight();
       }
       this.backfillUntrackedUncertaintyQuarantines();
       return this;
@@ -66742,6 +66834,7 @@ var StateStore = class extends EventEmitter4 {
     this.db.function("oracle_writer_protocol", () => Number(this.brokerContext.protocolVersion || 0));
     this.db.function("oracle_broker_instance", () => String(this.brokerContext.instanceId || ""));
     this.db.function("oracle_lease_generation", () => Number(this.brokerContext.leaseGeneration || 0));
+    this.db.function("oracle_canonical_conversation_url", (value) => isCanonicalConversationUrl(value) ? 1 : 0);
   }
   schemaVersionBeforeMigration() {
     try {
@@ -67070,10 +67163,71 @@ var StateStore = class extends EventEmitter4 {
       if (!existing) {
         this.db.prepare("UPDATE account_state SET effective_concurrency = CASE WHEN cooldown_until IS NULL THEN 1 ELSE 0 END, updated_at = ? WHERE id = 1").run(now);
       }
-      this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?, ?)").run(BROKER_SCHEMA_VERSION, now);
+      this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (7, ?)").run(now);
       this.installWriterGuards();
     });
     if (existing) this.assertCoordinatorIdentity();
+  }
+  migrateEight() {
+    const migration = this.db.prepare("SELECT 1 present FROM schema_migrations WHERE version = 8").get();
+    if (migration) {
+      this.installWriterGuards();
+      return;
+    }
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    this.transaction(() => {
+      const addColumns = (table, columns) => {
+        const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
+        for (const [name, definition] of columns) {
+          if (!known.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+        }
+      };
+      addColumns("job_attempts", [
+        ["execution_kind", "TEXT NOT NULL DEFAULT 'pre_submit' CHECK (execution_kind IN ('pre_submit', 'monitor_only'))"],
+        ["monitor_deadline_at", "TEXT"],
+        ["final_reconciliation_attempted_at", "TEXT"]
+      ]);
+      addColumns("jobs", [
+        ["assistant_turn_id", "TEXT"],
+        ["assistant_turn_hash", "TEXT"]
+      ]);
+      const submitted = this.db.prepare(`
+        SELECT j.id, j.submit_intent_at, j.request_json, j.canonical_url,
+               j.user_turn_id, j.user_turn_hash, j.state
+        FROM jobs j JOIN job_attempts a ON a.job_id = j.id
+        WHERE j.submit_intent_at IS NOT NULL
+      `).all();
+      for (const row of submitted) {
+        const request3 = parse2(row.request_json) || {};
+        const timeoutSeconds = Math.max(30, Math.min(86400, Number(request3.responseTimeoutSeconds) || 10800));
+        const submittedAt = Number.isFinite(Date.parse(row.submit_intent_at)) ? Date.parse(row.submit_intent_at) : Date.now();
+        const deadline = new Date(submittedAt + timeoutSeconds * 1e3).toISOString();
+        const exactTurn = Boolean(isCanonicalConversationUrl(row.canonical_url) && (row.user_turn_id || row.user_turn_hash));
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_kind=?, monitor_deadline_at=COALESCE(monitor_deadline_at, ?)
+          WHERE job_id=?
+        `).run(exactTurn ? "monitor_only" : "pre_submit", deadline, row.id);
+        if (exactTurn && PRE_SUBMIT_JOB_STATES.has(row.state)) {
+          this.db.prepare(`
+            UPDATE jobs SET state='awaiting_response', updated_at=?, version=version+1,
+              recovery_action='reattach submitted turn without resending'
+            WHERE id=?
+          `).run(now, row.id);
+          const attempt = this.db.prepare("SELECT chain_id FROM job_attempts WHERE job_id=?").get(row.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=?").run(now, attempt.chain_id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, 'awaiting_response', ?, ?, ?, ?)
+          `).run(row.id, json({ migratedMonitorOnly: true, schemaVersion: 8 }), now, this.brokerContext.instanceId, this.brokerContext.leaseGeneration);
+        }
+      }
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS job_attempts_execution_kind_ready
+          ON job_attempts(execution_kind, execution_state, next_execution_not_before, monitor_deadline_at);
+      `);
+      this.db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES (8, ?)").run(now);
+      this.installWriterGuards();
+    });
   }
   installWriterGuards() {
     const operational = [
@@ -67364,7 +67518,9 @@ var StateStore = class extends EventEmitter4 {
     return `
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM jobs j
@@ -67479,7 +67635,8 @@ var StateStore = class extends EventEmitter4 {
     const stateClause = states.length ? `AND j.state IN (${states.map(() => "?").join(",")})` : "";
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch, c.state AS chain_state,
+             a.execution_epoch, a.execution_kind, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at, c.state AS chain_state,
              c.input_required_abandoned_at, c.input_required_abandoned_job_id,
              c.input_required_abandoned_reason
       FROM jobs j
@@ -67664,11 +67821,22 @@ var StateStore = class extends EventEmitter4 {
   allRootJobIds() {
     return this.db.prepare("SELECT root_job_id FROM job_chains").all().map((row) => row.root_job_id);
   }
+  completedJobsWithExactProof() {
+    return this.db.prepare(this.jobSelect(`
+      WHERE j.state='completed' AND j.result_json IS NOT NULL
+        AND j.submit_intent_at IS NOT NULL
+        AND oracle_canonical_conversation_url(j.canonical_url) = 1
+        AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
+        AND j.assistant_turn_hash IS NOT NULL
+    `, "ORDER BY j.completed_at, j.created_at")).all().map(rowToJob);
+  }
   queuedJobs() {
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM jobs j
@@ -67695,25 +67863,33 @@ var StateStore = class extends EventEmitter4 {
     if (TERMINAL_JOB_STATES.has(current.state) && current.state !== nextState) {
       throw codedError("JOB_TERMINAL", `Job ${id} is already terminal in state ${current.state}.`);
     }
+    if (current.submitIntentAt && PRE_SUBMIT_JOB_STATES.has(nextState)) {
+      throw codedError(
+        "INVALID_JOB_TRANSITION",
+        `Cannot return submitted job ${id} to pre-submit lifecycle state ${nextState}.`
+      );
+    }
+    for (const [field, label] of [
+      ["userTurnId", "user-turn id"],
+      ["userTurnHash", "user-turn hash"],
+      ["assistantTurnId", "assistant-turn id"],
+      ["assistantTurnHash", "assistant-turn hash"]
+    ]) {
+      if (current[field] && field in patch && patch[field] !== current[field]) {
+        throw codedError(
+          "IMMUTABLE_TURN_PROOF",
+          `The durable ${label} for job ${id} cannot be replaced.`,
+          { submissionMayHaveOccurred: Boolean(current.submitIntentAt) }
+        );
+      }
+    }
     const currentIndex = STATE_INDEX.get(current.state);
     const nextIndex = STATE_INDEX.get(nextState);
     if (!TERMINAL_JOB_STATES.has(nextState) && nextIndex < currentIndex) {
       throw codedError("INVALID_JOB_TRANSITION", `Cannot move job ${id} backward from ${current.state} to ${nextState}.`);
     }
     const now = suppliedNow || (/* @__PURE__ */ new Date()).toISOString();
-    const definitelyPostSubmit = (/* @__PURE__ */ new Set([
-      "submit_intent",
-      "user_turn_confirmed",
-      "awaiting_response",
-      "response_failed_detected",
-      "response_confirmed",
-      "completed",
-      "submission_uncertain",
-      "response_uncertain",
-      "response_failed",
-      "quarantined"
-    ])).has(nextState);
-    const submitted = definitelyPostSubmit || current.submissionMayHaveOccurred;
+    const submitted = nextState === "submit_intent" || Boolean(current.submitIntentAt);
     const assignments = ["state = ?", "updated_at = ?", "version = version + 1", "submission_may_have_happened = ?"];
     const values = [nextState, now, submitted ? 1 : 0];
     const columns = {
@@ -67731,6 +67907,8 @@ var StateStore = class extends EventEmitter4 {
       responseDisposition: "response_disposition",
       responseFailure: "response_failure_json",
       localDataRequest: "local_data_request_json",
+      assistantTurnId: "assistant_turn_id",
+      assistantTurnHash: "assistant_turn_hash",
       result: "result_json",
       error: "error_json",
       recoveryAction: "recovery_action",
@@ -67755,6 +67933,26 @@ var StateStore = class extends EventEmitter4 {
     }
     values.push(id);
     this.db.prepare(`UPDATE jobs SET ${assignments.join(", ")} WHERE id = ?`).run(...values);
+    if (nextState === "submit_intent") {
+      const timeoutSeconds = Math.max(30, Math.min(86400, Number(current.request?.responseTimeoutSeconds) || 10800));
+      this.db.prepare(`
+        UPDATE job_attempts SET monitor_deadline_at=COALESCE(monitor_deadline_at, ?)
+        WHERE job_id=?
+      `).run(new Date(Date.parse(current.submitIntentAt || now) + timeoutSeconds * 1e3).toISOString(), id);
+    }
+    if (nextState === "user_turn_confirmed") {
+      const updated = this.requireJob(id);
+      if (!isCanonicalConversationUrl(updated.conversationUrl) || !updated.userTurnId && !updated.userTurnHash || !updated.submitIntentAt) {
+        throw codedError(
+          "EXACT_TURN_PROOF_REQUIRED",
+          "Monitor-only execution requires submit intent, a canonical conversation URL, and an exact user-turn id or unambiguous semantic hash.",
+          { submissionMayHaveOccurred: true }
+        );
+      }
+      this.db.prepare(`
+        UPDATE job_attempts SET execution_kind='monitor_only' WHERE job_id=?
+      `).run(id);
+    }
     this.db.prepare(`
       INSERT INTO job_events(job_id, state, details_json, created_at, broker_instance_id, lease_generation)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -67849,13 +68047,13 @@ var StateStore = class extends EventEmitter4 {
   markFailure(id, error) {
     const job = this.requireJob(id);
     const structured = structuredError(error, { jobState: job.state });
-    if (STATE_INDEX.get(job.state) < SUBMIT_INDEX) {
+    if (!job.submitIntentAt) {
       return this.transition(id, "failed_pre_submit", {
         error: structured,
         recoveryAction: structured.safeToRetry ? "start a new authorized job" : structured.recoveryAction
       });
     }
-    const state = job.userTurnId || job.userTurnHash ? "response_uncertain" : "submission_uncertain";
+    const state = hasExactUserTurnProof(job) ? "response_uncertain" : "submission_uncertain";
     const recoveryAction = `reconcile_job ${id}`;
     const result = this.transition(id, state, {
       error: { ...structured, submissionMayHaveOccurred: true },
@@ -67867,13 +68065,13 @@ var StateStore = class extends EventEmitter4 {
   markFailureClaimed(claim, error) {
     const job = this.requireJob(claim.jobId);
     const structured = structuredError(error, { jobState: job.state });
-    if (STATE_INDEX.get(job.state) < SUBMIT_INDEX) {
+    if (!job.submitIntentAt) {
       return this.transitionClaimed(claim, "failed_pre_submit", {
         error: structured,
         recoveryAction: structured.safeToRetry ? "start a new authorized job" : structured.recoveryAction
       });
     }
-    const state = job.userTurnId || job.userTurnHash ? "response_uncertain" : "submission_uncertain";
+    const state = hasExactUserTurnProof(job) ? "response_uncertain" : "submission_uncertain";
     const recoveryAction = `reconcile_job ${job.id}`;
     const result = this.transitionClaimed(claim, state, {
       error: { ...structured, submissionMayHaveOccurred: true },
@@ -68155,21 +68353,36 @@ var StateStore = class extends EventEmitter4 {
   }
   reopenForMonitoringInCurrentTransaction(jobId, { userTurnId, userTurnHash }, now) {
     const job = this.requireJob(jobId);
+    if (!job.submitIntentAt || !isCanonicalConversationUrl(job.conversationUrl) || !userTurnId && !userTurnHash) {
+      throw codedError(
+        "EXACT_TURN_PROOF_REQUIRED",
+        "Monitor-only recovery requires immutable submit intent, a canonical conversation URL, and an exact user-turn id or unambiguous semantic hash.",
+        { submissionMayHaveOccurred: Boolean(job.submitIntentAt) }
+      );
+    }
+    if (job.userTurnId && job.userTurnId !== userTurnId || job.userTurnHash && job.userTurnHash !== userTurnHash) {
+      throw codedError(
+        "IMMUTABLE_TURN_PROOF",
+        "Monitor-only recovery cannot replace the durable exact user-turn proof.",
+        { submissionMayHaveOccurred: true }
+      );
+    }
     this.db.prepare(`
       UPDATE jobs
-      SET state='queued', user_turn_id=?, user_turn_hash=?, error_json=NULL,
+      SET state='awaiting_response', user_turn_id=?, user_turn_hash=?, error_json=NULL,
           recovery_action='reattach submitted turn without resending', completed_at=NULL,
           updated_at=?, version=version+1
       WHERE id=?
-    `).run(userTurnId ?? null, userTurnHash, now, jobId);
+    `).run(userTurnId ?? null, userTurnHash ?? null, now, jobId);
     this.db.prepare(`
       UPDATE job_attempts
       SET execution_state='idle', execution_owner_instance_id=NULL,
           execution_lease_generation=NULL, execution_heartbeat_at=NULL,
-          next_execution_not_before=NULL
+          next_execution_not_before=NULL, execution_kind='monitor_only',
+          final_reconciliation_attempted_at=NULL
       WHERE job_id=?
     `).run(jobId);
-    this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)").run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
+    this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'awaiting_response', ?, ?)").run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
     this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
     return this.requireJob(jobId);
   }
@@ -68178,7 +68391,9 @@ var StateStore = class extends EventEmitter4 {
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM job_attempts a
@@ -68196,10 +68411,14 @@ var StateStore = class extends EventEmitter4 {
   isRunnable(jobId) {
     const job = this.requireJob(jobId);
     const chain = this.getChain(job.chainId);
-    if (!chain || chain.activeJobId !== job.id || job.state !== "queued" || chain.state !== "queued") return false;
+    if (!chain || chain.activeJobId !== job.id || TERMINAL_JOB_STATES.has(job.state)) return false;
     const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(jobId);
     if (!attempt || !(/* @__PURE__ */ new Set(["idle", "backoff"])).has(attempt.execution_state || "idle")) return false;
     if (attempt.next_execution_not_before && Date.parse(attempt.next_execution_not_before) > Date.now()) return false;
+    const executionKind = attempt.execution_kind || "pre_submit";
+    if (executionKind === "pre_submit" && (job.state !== "queued" || chain.state !== "queued" || job.submitIntentAt)) return false;
+    if (executionKind === "monitor_only" && (!MONITOR_JOB_STATES.has(job.state) || !hasExactUserTurnProof(job))) return false;
+    if (this.db.prepare("SELECT 1 blocked FROM quarantines WHERE scope_key=? AND active=1").get(chain.conversationKey)) return false;
     const earlier = this.db.prepare(`
       SELECT id FROM job_chains
       WHERE conversation_key = ?
@@ -68226,16 +68445,27 @@ var StateStore = class extends EventEmitter4 {
       this.assertCurrentBroker();
       const now = (/* @__PURE__ */ new Date()).toISOString();
       const candidate = this.db.prepare(`
-        SELECT j.id AS job_id, a.chain_id, a.execution_epoch, c.accepted_sequence
+        SELECT j.id AS job_id, a.chain_id, a.execution_epoch, a.execution_kind, c.accepted_sequence
         FROM jobs j
         JOIN job_attempts a ON a.job_id = j.id
         JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
-        WHERE j.state = 'queued'
-          AND c.state = 'queued'
+        WHERE j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
           AND a.execution_state IN ('idle', 'backoff')
           AND (a.next_execution_not_before IS NULL OR a.next_execution_not_before <= ?)
           AND (? IS NULL OR j.id = ?)
-          AND (? = 1 OR j.submission_may_have_happened = 1)
+          AND (
+            (a.execution_kind = 'pre_submit' AND j.state = 'queued' AND c.state = 'queued'
+              AND j.submit_intent_at IS NULL AND ? = 1)
+            OR
+            (a.execution_kind = 'monitor_only' AND j.state IN ('user_turn_confirmed','awaiting_response','response_failed_detected','response_confirmed')
+              AND j.submit_intent_at IS NOT NULL AND j.canonical_url IS NOT NULL
+              AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
+              AND a.monitor_deadline_at IS NOT NULL
+              AND oracle_canonical_conversation_url(j.canonical_url) = 1)
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM quarantines q WHERE q.scope_key=c.conversation_key AND q.active=1
+          )
           AND NOT EXISTS (
             SELECT 1 FROM job_chains earlier
             WHERE earlier.conversation_key = c.conversation_key
@@ -68252,7 +68482,7 @@ var StateStore = class extends EventEmitter4 {
           )
         ORDER BY c.accepted_sequence, a.ordinal
         LIMIT 1
-      `).get(now, jobId, jobId, allowPreSubmit ? 1 : 0);
+      `).get(...TERMINAL_JOB_STATES, now, jobId, jobId, allowPreSubmit ? 1 : 0);
       if (!candidate) return null;
       const attemptUpdate = this.db.prepare(`
         UPDATE job_attempts
@@ -68272,13 +68502,14 @@ var StateStore = class extends EventEmitter4 {
       if (Number(attemptUpdate.changes) !== 1) return null;
       const chainUpdate = this.db.prepare(`
         UPDATE job_chains SET state='running', updated_at=?
-        WHERE id=? AND active_job_id=? AND state='queued'
+        WHERE id=? AND active_job_id=? AND state IN ('queued','running')
       `).run(now, candidate.chain_id, candidate.job_id);
       if (Number(chainUpdate.changes) !== 1) throw codedError("EXECUTION_CLAIM_RACE", "The logical chain changed while Oracle Firefox was claiming it.");
       return {
         jobId: candidate.job_id,
         chainId: candidate.chain_id,
         executionEpoch: Number(candidate.execution_epoch) + 1,
+        executionKind: candidate.execution_kind,
         brokerInstanceId: this.brokerContext.instanceId,
         leaseGeneration: this.brokerContext.leaseGeneration
       };
@@ -68334,38 +68565,171 @@ var StateStore = class extends EventEmitter4 {
     this.emit("change", transitioned);
     return transitioned;
   }
-  releaseExecutionWithBackoff(claim, error, { maximumFailures = 5 } = {}) {
+  completeResponseClaimed(claim, {
+    assistantTurnId,
+    assistantTurnHash,
+    assistantTurnBound = false,
+    assistantDisposition,
+    responseDisposition = "completed",
+    localDataRequest = null,
+    result,
+    recoveryAction = null
+  }) {
+    if (!assistantTurnHash || !assistantTurnId && assistantTurnBound !== true || !result) {
+      throw codedError(
+        "ASSISTANT_PROOF_REQUIRED",
+        "A completed response requires an assistant id or unambiguous exact-turn binding, plus its content hash and complete durable result.",
+        { submissionMayHaveOccurred: true }
+      );
+    }
+    let completed;
+    this.transaction(() => {
+      this.assertExecution(claim);
+      const job = this.requireJob(claim.jobId);
+      if (!hasExactUserTurnProof(job) || job.executionKind !== "monitor_only") {
+        throw codedError(
+          "MONITOR_CLAIM_REQUIRED",
+          "Only the exact monitor-only execution claim may commit an assistant response.",
+          { submissionMayHaveOccurred: true }
+        );
+      }
+      completed = this.transitionInCurrentTransaction(claim.jobId, "completed", {
+        assistantTurnId: assistantTurnId || null,
+        assistantTurnHash,
+        assistantDisposition,
+        responseDisposition,
+        localDataRequest,
+        result,
+        error: null,
+        recoveryAction
+      }, {
+        assistantTurnId,
+        assistantTurnHash,
+        responseDisposition,
+        terminalAtomicCommit: true
+      });
+      const releasedAt = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
+          execution_lease_generation=NULL, execution_heartbeat_at=?, next_execution_not_before=NULL
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+      `).run(releasedAt, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("STALE_EXECUTION", "The monitor claim changed before its terminal result could be committed.");
+      }
+      completed = this.requireJob(claim.jobId);
+    });
+    this.emit("change", completed);
+    return completed;
+  }
+  beginFinalMonitorReconciliation(claim) {
+    return this.transaction(() => {
+      this.assertExecution(claim);
+      const job = this.requireJob(claim.jobId);
+      if (claim.executionKind !== "monitor_only" || !hasExactUserTurnProof(job)) {
+        throw codedError("MONITOR_CLAIM_REQUIRED", "Final reconciliation requires the exact monitor-only execution claim.");
+      }
+      if (!job.monitorDeadlineAt || Date.parse(job.monitorDeadlineAt) > Date.now()) {
+        throw codedError("MONITOR_DEADLINE_ACTIVE", "The original response-monitor deadline has not expired.", { safeToRetry: true });
+      }
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET final_reconciliation_attempted_at=?
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+          AND final_reconciliation_attempted_at IS NULL
+      `).run(now, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError(
+          "FINAL_RECONCILIATION_ALREADY_ATTEMPTED",
+          "The one final exact-turn reconciliation attempt was already consumed.",
+          { submissionMayHaveOccurred: true }
+        );
+      }
+      return now;
+    });
+  }
+  releaseExecutionWithBackoff(claim, error, { maximumFailures = 5, backoffDelays = null } = {}) {
     let released;
     this.transaction(() => {
       this.assertExecution(claim);
-      const attempt = this.db.prepare("SELECT execution_failure_count FROM job_attempts WHERE job_id=?").get(claim.jobId);
+      const job = this.requireJob(claim.jobId);
+      const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id=?").get(claim.jobId);
       const failures = Number(attempt.execution_failure_count || 0) + 1;
-      if (failures >= maximumFailures) {
-        released = this.transitionInCurrentTransaction(claim.jobId, "failed_pre_submit", {
-          error: structuredError(error),
-          recoveryAction: "inspect the repeated pre-submit executor failure before authorizing another job"
+      const structured = structuredError(error, { jobState: job.state });
+      const releaseTerminal = (state, recoveryAction) => {
+        released = this.transitionInCurrentTransaction(claim.jobId, state, {
+          error: { ...structured, submissionMayHaveOccurred: state !== "failed_pre_submit" },
+          recoveryAction
         });
         this.db.prepare(`
           UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
-            execution_lease_generation=NULL, execution_failure_count=?, last_executor_error_json=? WHERE job_id=?
-        `).run(failures, json(structuredError(error)), claim.jobId);
+            execution_lease_generation=NULL, execution_failure_count=?, last_executor_error_json=?,
+            next_execution_not_before=NULL WHERE job_id=? AND execution_epoch=?
+        `).run(failures, json(structured), claim.jobId, claim.executionEpoch);
+        if (state === "submission_uncertain" || state === "response_uncertain") {
+          this.quarantine(job.conversationKey, job.id, structured.message);
+        }
+      };
+      if (!job.submitIntentAt) {
+        if (failures >= maximumFailures) {
+          releaseTerminal("failed_pre_submit", "inspect the repeated pre-submit executor failure before authorizing another job");
+          return;
+        }
+        const delays2 = backoffDelays?.length ? backoffDelays : [250, 1e3, 4e3, 15e3, 3e4];
+        const delay4 = delays2[Math.min(failures - 1, delays2.length - 1)];
+        const retryAt2 = new Date(Date.now() + delay4).toISOString();
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_state='backoff', execution_kind='pre_submit',
+            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+            execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
+          WHERE job_id=? AND execution_epoch=?
+        `).run(failures, retryAt2, json(structured), claim.jobId, claim.executionEpoch);
+        this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?").run((/* @__PURE__ */ new Date()).toISOString(), claim.chainId, claim.jobId);
+        released = this.requireJob(claim.jobId);
         return;
       }
-      const delays = [250, 1e3, 4e3, 15e3, 3e4];
+      if (!hasExactUserTurnProof(job)) {
+        releaseTerminal("submission_uncertain", `reconcile_job ${job.id}`);
+        return;
+      }
+      if (attempt.final_reconciliation_attempted_at) {
+        releaseTerminal("response_uncertain", `reconcile_job ${job.id}`);
+        return;
+      }
+      const delays = backoffDelays?.length ? backoffDelays : [250, 1e3, 4e3, 15e3, 3e4];
       const delay3 = delays[Math.min(failures - 1, delays.length - 1)];
-      const retryAt = new Date(Date.now() + delay3).toISOString();
+      const deadlineMs = Date.parse(attempt.monitor_deadline_at || job.monitorDeadlineAt || 0);
+      const retryMs = Number.isFinite(deadlineMs) && deadlineMs > 0 ? Math.min(Date.now() + delay3, deadlineMs) : Date.now() + delay3;
+      const retryAt = new Date(Math.max(Date.now(), retryMs)).toISOString();
       this.db.prepare(`
-        UPDATE job_attempts SET execution_state='backoff', execution_owner_instance_id=NULL,
-          execution_lease_generation=NULL, execution_failure_count=?, next_execution_not_before=?,
-          last_executor_error_json=? WHERE job_id=?
-      `).run(failures, retryAt, json(structuredError(error)), claim.jobId);
-      this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?").run((/* @__PURE__ */ new Date()).toISOString(), claim.chainId, claim.jobId);
+        UPDATE job_attempts SET execution_state='backoff', execution_kind='monitor_only',
+          execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+          execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
+        WHERE job_id=? AND execution_epoch=?
+      `).run(failures, retryAt, json(structured), claim.jobId, claim.executionEpoch);
+      this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?").run((/* @__PURE__ */ new Date()).toISOString(), claim.chainId, claim.jobId);
       released = this.requireJob(claim.jobId);
     });
     this.emit("change", released);
     return released;
   }
-  releaseExecutionClaim(claim) {
+  releaseExecutionClaim(claim, error = null) {
+    try {
+      this.assertExecution(claim);
+    } catch {
+      return false;
+    }
+    const job = this.requireJob(claim.jobId);
+    if (!TERMINAL_JOB_STATES.has(job.state)) {
+      return this.releaseExecutionWithBackoff(
+        claim,
+        error || codedError(
+          "EXECUTOR_EXITED_WITHOUT_SETTLEMENT",
+          "The browser executor exited without committing a terminal result; its durable claim was recovered.",
+          { safeToRetry: true, submissionMayHaveOccurred: Boolean(job.submitIntentAt) }
+        )
+      );
+    }
     let released = false;
     this.transaction(() => {
       try {
@@ -68373,15 +68737,122 @@ var StateStore = class extends EventEmitter4 {
       } catch {
         return;
       }
-      const job = this.requireJob(claim.jobId);
-      if (!TERMINAL_JOB_STATES.has(job.state)) return;
-      this.db.prepare(`
+      const changed = this.db.prepare(`
         UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
-          execution_lease_generation=NULL, execution_heartbeat_at=? WHERE job_id=?
-      `).run((/* @__PURE__ */ new Date()).toISOString(), claim.jobId);
-      released = true;
+          execution_lease_generation=NULL, execution_heartbeat_at=?
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+      `).run((/* @__PURE__ */ new Date()).toISOString(), claim.jobId, claim.executionEpoch);
+      released = Number(changed.changes) === 1;
     });
     return released;
+  }
+  sweepAbandonedExecutionClaims({
+    activeExecutorIds = [],
+    heartbeatTimeoutMs = 2e4,
+    nowMs = Date.now()
+  } = {}) {
+    const live = new Set(Array.from(activeExecutorIds, (value) => String(value)));
+    const boundedTimeout = Math.max(1, Number(heartbeatTimeoutMs) || 2e4);
+    const sweepNow = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
+    const staleBefore = new Date(sweepNow - boundedTimeout).toISOString();
+    const recovered = [];
+    const changed = [];
+    this.transaction(() => {
+      this.assertCurrentBroker();
+      const candidates = this.db.prepare(this.jobSelect(`
+        WHERE a.execution_state='running'
+          AND a.execution_owner_instance_id=?
+          AND a.execution_lease_generation=?
+          AND COALESCE(a.execution_heartbeat_at, a.execution_started_at, a.created_at) <= ?
+          AND j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
+      `, "ORDER BY a.execution_heartbeat_at, j.created_at")).all(
+        this.brokerContext.instanceId,
+        this.brokerContext.leaseGeneration,
+        staleBefore,
+        ...TERMINAL_JOB_STATES
+      ).map(rowToJob);
+      for (const job of candidates) {
+        if (live.has(job.id)) continue;
+        const monitorOnly = Boolean(job.submitIntentAt && hasExactUserTurnProof(job));
+        const terminalUncertainty = Boolean(job.submitIntentAt && !monitorOnly);
+        const nextExecutionState = terminalUncertainty ? "released" : "idle";
+        const nextExecutionKind = monitorOnly ? "monitor_only" : "pre_submit";
+        const reclaimed = this.db.prepare(`
+          UPDATE job_attempts
+          SET execution_epoch=execution_epoch+1, execution_state=?, execution_kind=?,
+              execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+              execution_started_at=NULL, execution_heartbeat_at=NULL,
+              next_execution_not_before=NULL
+          WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+            AND execution_owner_instance_id=? AND execution_lease_generation=?
+            AND COALESCE(execution_heartbeat_at, execution_started_at, created_at) <= ?
+        `).run(
+          nextExecutionState,
+          nextExecutionKind,
+          job.id,
+          job.executionEpoch,
+          this.brokerContext.instanceId,
+          this.brokerContext.leaseGeneration,
+          staleBefore
+        );
+        if (Number(reclaimed.changes) !== 1) continue;
+        const now = new Date(sweepNow).toISOString();
+        if (!job.submitIntentAt) {
+          this.db.prepare(`
+            UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
+              submission_may_have_happened=0,
+              user_turn_id=NULL, user_turn_hash=NULL,
+              assistant_turn_id=NULL, assistant_turn_hash=NULL,
+              version=version+1 WHERE id=?
+          `).run(now, "recovered abandoned pre-submit executor", job.id);
+          this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?").run(now, job.chainId, job.id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, 'queued', ?, ?, ?, ?)
+          `).run(
+            job.id,
+            json({ abandonedClaim: true, recoveredFrom: job.state, executionEpoch: job.executionEpoch }),
+            now,
+            this.brokerContext.instanceId,
+            this.brokerContext.leaseGeneration
+          );
+          recovered.push({ id: job.id, action: "requeued-pre-submit" });
+        } else if (monitorOnly) {
+          const recoveredState = PRE_SUBMIT_JOB_STATES.has(job.state) || job.state === "submit_intent" ? "awaiting_response" : job.state;
+          this.db.prepare(`
+            UPDATE jobs SET state=?, updated_at=?, recovery_action=?,
+              submission_may_have_happened=1, version=version+1 WHERE id=?
+          `).run(recoveredState, now, "recovered abandoned monitor-only executor without resending", job.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?").run(now, job.chainId, job.id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(
+            job.id,
+            recoveredState,
+            json({ abandonedClaim: true, monitorOnly: true, executionEpoch: job.executionEpoch }),
+            now,
+            this.brokerContext.instanceId,
+            this.brokerContext.leaseGeneration
+          );
+          recovered.push({ id: job.id, action: "resumed-monitor-only" });
+        } else {
+          this.transitionInCurrentTransaction(job.id, "submission_uncertain", {
+            error: {
+              code: "SUBMISSION_UNCERTAIN",
+              message: "A submitted executor was abandoned without exact canonical user-turn proof.",
+              submissionMayHaveOccurred: true
+            },
+            recoveryAction: `reconcile_job ${job.id}`
+          }, { abandonedClaim: true, executionEpoch: job.executionEpoch });
+          this.quarantine(job.conversationKey, job.id, "Abandoned submitted executor without exact user-turn proof");
+          recovered.push({ id: job.id, action: "submission-uncertain" });
+        }
+        changed.push(job.id);
+      }
+    });
+    for (const id of changed) this.emit("change", this.requireJob(id));
+    return recovered;
   }
   earliestExecutionWake() {
     return this.db.prepare(`
@@ -68504,7 +68975,8 @@ var StateStore = class extends EventEmitter4 {
       const now = (/* @__PURE__ */ new Date()).toISOString();
       const permit = this.db.prepare("SELECT * FROM submit_permits WHERE id = ? AND job_id = ?").get(permitId, jobId);
       const account = this.db.prepare("SELECT * FROM account_state WHERE id = 1").get();
-      if (!permit || permit.consumed_at || permit.invalidated_at || Date.parse(permit.expires_at) <= Date.now() || permit.gate_version !== account.gate_version || account.cooldown_until && Date.parse(account.cooldown_until) > Date.now()) {
+      const job = this.requireJob(jobId);
+      if (!permit || permit.consumed_at || permit.invalidated_at || job.submitIntentAt || job.state === "cancelled_pre_submit" || Date.parse(permit.expires_at) <= Date.now() || permit.gate_version !== account.gate_version || account.cooldown_until && Date.parse(account.cooldown_until) > Date.now()) {
         throw codedError("SUBMIT_PERMIT_INVALID", "The broker-wide submit permit expired or was invalidated. No message was sent.", { safeToRetry: true });
       }
       this.db.prepare("UPDATE submit_permits SET consumed_at = ? WHERE id = ?").run(now, permitId);
@@ -68722,13 +69194,22 @@ var StateStore = class extends EventEmitter4 {
         ORDER BY j.created_at
       `).all(...TERMINAL_JOB_STATES).map(rowToJob);
       for (const job of jobs) {
-        const interrupted = job.executionState === "running" || job.state !== "queued";
+        const preSubmitDebris = !job.submitIntentAt && Boolean(
+          job.submissionMayHaveOccurred || job.userTurnId || job.userTurnHash || job.assistantTurnId || job.assistantTurnHash
+        );
+        const interrupted = job.executionState === "running" || (job.submitIntentAt ? job.executionState !== "released" : job.state !== "queued" || preSubmitDebris);
         if (!interrupted || Number(job.lastRecoveryGeneration || 0) >= generation) continue;
         const now = (/* @__PURE__ */ new Date()).toISOString();
-        if (STATE_INDEX.get(job.state) < SUBMIT_INDEX) {
+        let executionKind = "pre_submit";
+        let executionState = "idle";
+        if (!job.submitIntentAt) {
           this.db.prepare(`
             UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
-              last_recovery_generation=?, version=version+1 WHERE id=?
+              last_recovery_generation=?, version=version+1,
+              submission_may_have_happened=0,
+              user_turn_id=NULL, user_turn_hash=NULL,
+              assistant_turn_id=NULL, assistant_turn_hash=NULL
+            WHERE id=?
           `).run(now, "resumed safely before submission", generation, job.id);
           this.db.prepare(`
             INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
@@ -68736,16 +69217,18 @@ var StateStore = class extends EventEmitter4 {
           `).run(job.id, json({ recoveredFrom: job.state, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
           this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=?").run(now, job.chainId);
           recovered.push({ id: job.id, action: "requeued" });
-        } else if (job.userTurnId || job.userTurnHash) {
+        } else if (hasExactUserTurnProof(job)) {
+          executionKind = "monitor_only";
+          const recoveredState = PRE_SUBMIT_JOB_STATES.has(job.state) || job.state === "submit_intent" ? "awaiting_response" : job.state;
           this.db.prepare(`
-            UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
+            UPDATE jobs SET state=?, updated_at=?, recovery_action=?,
               last_recovery_generation=?, version=version+1 WHERE id=?
-          `).run(now, "reattach submitted turn without resending", generation, job.id);
-          this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=?").run(now, job.chainId);
+          `).run(recoveredState, now, "reattach submitted turn without resending", generation, job.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=?").run(now, job.chainId);
           this.db.prepare(`
             INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
-            VALUES (?, 'queued', ?, ?, ?, ?)
-          `).run(job.id, json({ monitorOnly: true, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(job.id, recoveredState, json({ monitorOnly: true, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
           recovered.push({ id: job.id, action: "monitor-only" });
         } else {
           this.transitionInCurrentTransaction(job.id, "submission_uncertain", {
@@ -68755,13 +69238,29 @@ var StateStore = class extends EventEmitter4 {
           this.db.prepare("UPDATE jobs SET last_recovery_generation=? WHERE id=?").run(generation, job.id);
           this.quarantine(job.conversationKey, job.id, "Restart after submit_intent without a proven user turn");
           recovered.push({ id: job.id, action: "quarantined" });
+          executionState = "released";
         }
         this.db.prepare(`
-          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state='idle',
+          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state=?,
             execution_owner_instance_id=NULL, execution_lease_generation=NULL,
-            execution_started_at=NULL, execution_heartbeat_at=NULL WHERE job_id=?
-        `).run(job.id);
+            execution_started_at=NULL, execution_heartbeat_at=NULL,
+            execution_kind=? WHERE job_id=?
+        `).run(executionState, executionKind, job.id);
         changed.push(job.id);
+      }
+      const terminalClaims = this.db.prepare(`
+        SELECT a.job_id FROM job_attempts a JOIN jobs j ON j.id=a.job_id
+        WHERE a.execution_state='running'
+          AND j.state IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
+      `).all(...TERMINAL_JOB_STATES);
+      for (const row of terminalClaims) {
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state='released',
+            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+            execution_heartbeat_at=? WHERE job_id=? AND execution_state='running'
+        `).run((/* @__PURE__ */ new Date()).toISOString(), row.job_id);
+        recovered.push({ id: row.job_id, action: "released-terminal" });
+        changed.push(row.job_id);
       }
       this.db.prepare("UPDATE broker_state SET last_recovery_generation=?, updated_at=? WHERE id=1").run(generation, (/* @__PURE__ */ new Date()).toISOString());
     });
@@ -70004,30 +70503,189 @@ async function writeFinalMetadata(job, result) {
 `
   );
 }
+function terminalArtifactPaths(job) {
+  return {
+    responsePath: path28.join(job.sessionPath, "response.md"),
+    metadataPath: path28.join(job.sessionPath, "metadata.json")
+  };
+}
+async function artifactExists(candidate) {
+  try {
+    await access4(candidate);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function writeCompletedArtifacts(job, result) {
+  const answer = String(result?.answer ?? "");
+  const responsePath = await writeSessionFile(
+    { id: path28.basename(job.sessionPath), directory: job.sessionPath },
+    "response.md",
+    `${answer}
+`
+  );
+  triggerFailpoint("after_response_persistence");
+  await writeFinalMetadata(job, { ...result, responsePath });
+  return responsePath;
+}
+async function repairTerminalArtifacts(store2) {
+  const repaired = [];
+  const failed = [];
+  for (const job of store2.completedJobsWithExactProof()) {
+    const { responsePath, metadataPath } = terminalArtifactPaths(job);
+    try {
+      if (!await artifactExists(responsePath)) {
+        await writeSessionFile(
+          { id: path28.basename(job.sessionPath), directory: job.sessionPath },
+          "response.md",
+          `${String(job.result?.answer ?? "")}
+`
+        );
+        repaired.push({ jobId: job.id, artifact: "response.md" });
+      }
+      if (!await artifactExists(metadataPath)) {
+        await writeFinalMetadata(job, { ...job.result, responsePath });
+        repaired.push({ jobId: job.id, artifact: "metadata.json" });
+      }
+    } catch (error) {
+      failed.push({ jobId: job.id, error: structuredError(error) });
+    }
+  }
+  return { repaired, failed };
+}
 function transitionExecution(store2, executionClaim, jobId, state, patch = {}, details = null) {
   return executionClaim ? store2.transitionClaimed(executionClaim, state, patch, details) : store2.transition(jobId, state, patch, details);
 }
-async function monitorSubmittedJob({ job, page, store: store2, executionClaim }) {
-  if (!job.conversationUrl || !job.userTurnId && !job.userTurnHash) {
+async function monitorSubmittedJob({ job, page, store: store2, executionClaim, dependencies = {}, finalAttempt = false }) {
+  if (!job.submitIntentAt || !job.conversationUrl || !job.userTurnId && !job.userTurnHash || !job.monitorDeadlineAt) {
     throw codedError("SUBMISSION_UNCERTAIN", "A submitted job lacks enough durable evidence for monitor-only recovery.", {
       submissionMayHaveOccurred: true,
       recoveryAction: `reconcile_job ${job.id}`
     });
   }
-  await openExistingConversation(page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
-  transitionExecution(store2, executionClaim, job.id, "awaiting_response", { recoveryAction: "monitoring proven submitted turn" });
-  const response = await waitForAssistantAfterTurn(
+  const openConversation = dependencies.openConversation || openExistingConversation;
+  const waitForResponse = dependencies.waitForResponse || waitForAssistantAfterTurn;
+  const reconcileResponse = dependencies.reconcileResponse || reconcileAssistantAfterTurn;
+  const deadlineMs = Date.parse(job.monitorDeadlineAt || 0);
+  await openConversation(page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
+  if (!(/* @__PURE__ */ new Set(["awaiting_response", "response_failed_detected", "response_confirmed"])).has(job.state)) {
+    transitionExecution(store2, executionClaim, job.id, "awaiting_response", { recoveryAction: "monitoring proven submitted turn" });
+  }
+  const userTurn = {
+    id: job.userTurnId,
+    hash: job.userTurnHash,
+    attachments: job.attachmentManifest
+  };
+  if (finalAttempt) store2.beginFinalMonitorReconciliation(executionClaim);
+  const response = finalAttempt ? await reconcileResponse(page, userTurn) : await waitForResponse(
     page,
-    { id: job.userTurnId, hash: job.userTurnHash },
-    { timeoutMs: job.request.responseTimeoutSeconds * 1e3 }
+    userTurn,
+    { timeoutMs: Math.max(1, deadlineMs - Date.now()) }
   );
+  if (!response) {
+    throw codedError(
+      "MONITOR_DEADLINE_EXPIRED",
+      "The final exact-turn reconciliation found no complete assistant response.",
+      { submissionMayHaveOccurred: true, recoveryAction: `reconcile_job ${job.id}` }
+    );
+  }
   return finalizeResponse({ job: store2.requireJob(job.id), response, store: store2, executionClaim });
 }
+async function executeMonitorOnlyJob({
+  jobId,
+  store: store2,
+  browserManager,
+  executionClaim,
+  monitorDependencies = {}
+}) {
+  const job = store2.requireJob(jobId);
+  if (!executionClaim || executionClaim.executionKind !== "monitor_only" || job.executionKind !== "monitor_only") {
+    throw codedError(
+      "MONITOR_CLAIM_REQUIRED",
+      "Submitted response recovery requires a dedicated monitor-only execution claim.",
+      { submissionMayHaveOccurred: Boolean(job.submitIntentAt) }
+    );
+  }
+  if (!job.submitIntentAt || !job.conversationUrl || !job.userTurnId && !job.userTurnHash || !job.monitorDeadlineAt) {
+    const error = codedError(
+      "SUBMISSION_UNCERTAIN",
+      "The monitor-only claim is missing immutable exact-turn proof.",
+      { submissionMayHaveOccurred: true, recoveryAction: `reconcile_job ${job.id}` }
+    );
+    store2.markFailureClaimed(executionClaim, error);
+    throw error;
+  }
+  store2.assertExecution(executionClaim);
+  const finalAttempt = Date.parse(job.monitorDeadlineAt) <= Date.now();
+  let lease = null;
+  try {
+    lease = await browserManager.leasePage(job.id);
+    store2.assertExecution(executionClaim);
+    const authenticate = monitorDependencies.authenticate || requireAuthenticatedPage;
+    await authenticate(lease.page);
+    return await monitorSubmittedJob({
+      job: store2.requireJob(job.id),
+      page: lease.page,
+      store: store2,
+      executionClaim,
+      dependencies: monitorDependencies,
+      finalAttempt
+    });
+  } catch (error) {
+    if ((/* @__PURE__ */ new Set([
+      "STALE_EXECUTION",
+      "BROKER_LEASE_LOST",
+      "BROKER_INSTANCE_REPLACED",
+      "PROFILE_IN_USE_EXTERNALLY",
+      "BROKER_DATABASE_OWNED",
+      "BROKER_ENDPOINT_CONFLICT"
+    ])).has(error?.code)) throw error;
+    const current = store2.requireJob(job.id);
+    if (TERMINAL_JOB_STATES_FOR_WORKFLOW.has(current.state)) throw error;
+    if (store2.requireJob(job.id).finalReconciliationAttemptedAt) {
+      const failed = store2.markFailureClaimed(executionClaim, error);
+      await writeFinalMetadata(failed, {
+        jobId: failed.id,
+        authorizationId: failed.authorizationId,
+        state: failed.state,
+        status: failed.state,
+        browser: failed.request?.browser || "firefox",
+        error: failed.error || structuredError(error),
+        conversationUrl: failed.conversationUrl,
+        projectUrl: failed.projectUrl,
+        sessionPath: failed.sessionPath,
+        safeToRetry: false,
+        submissionMayHaveOccurred: true,
+        recoveryAction: failed.recoveryAction
+      }).catch(() => void 0);
+    }
+    throw error;
+  } finally {
+    if (lease) await browserManager.releasePage(job.id);
+  }
+}
+var TERMINAL_JOB_STATES_FOR_WORKFLOW = /* @__PURE__ */ new Set([
+  "completed",
+  "cancelled_pre_submit",
+  "failed_pre_submit",
+  "submission_uncertain",
+  "response_uncertain",
+  "response_failed",
+  "quarantined"
+]);
 async function finalizeResponse({ job, response, store: store2, executionClaim }) {
+  if (response?.exactTurnBinding !== true) {
+    throw codedError(
+      "EXACT_RESPONSE_BINDING_REQUIRED",
+      "Oracle refused to persist an assistant response without unambiguous binding to the exact submitted user turn.",
+      { submissionMayHaveOccurred: true, recoveryAction: `reconcile_job ${job.id}` }
+    );
+  }
   const answer = cleanAssistantText(response.text);
-  const responsePath = await writeSessionFile({ id: path28.basename(job.sessionPath), directory: job.sessionPath }, "response.md", `${answer}
-`);
-  triggerFailpoint("after_response_persistence");
+  const responsePath = terminalArtifactPaths(job).responsePath;
+  const assistantTurnId = response.assistantTurn?.id || null;
+  const assistantTurnHash = semanticTextHash(response.assistantTurn?.text ?? response.text);
   if (response.responseFailure) {
     const failure = response.responseFailure;
     const error = {
@@ -70043,10 +70701,12 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
       assistantDisposition: "response_failed",
       responseDisposition: failure.disposition,
       responseFailure: failure,
+      assistantTurnId,
+      assistantTurnHash,
       error,
       recoveryAction: error.recoveryAction
     });
-    return {
+    const detected = {
       jobId: job.id,
       rootJobId: job.rootJobId,
       authorizationId: job.authorizationId,
@@ -70070,16 +70730,19 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
       recoveryAction: error.recoveryAction,
       error
     };
+    await writeSessionFile(
+      { id: path28.basename(job.sessionPath), directory: job.sessionPath },
+      "response.md",
+      `${answer}
+`
+    );
+    triggerFailpoint("after_response_persistence");
+    return detected;
   }
   const localDataRequest = parseLocalDataRequest(answer, {
     expectedNonce: job.request.localDataNonce || null
   });
   const disposition = localDataRequest ? "local_data_request" : "final";
-  transitionExecution(store2, executionClaim, job.id, "response_confirmed", {
-    assistantDisposition: disposition,
-    responseDisposition: "completed",
-    localDataRequest
-  });
   const completedAt = (/* @__PURE__ */ new Date()).toISOString();
   const result = {
     jobId: job.id,
@@ -70109,12 +70772,43 @@ async function finalizeResponse({ job, response, store: store2, executionClaim }
     submissionCount: job.retryAttempt + 1,
     recoveryAction: localDataRequest ? "perform approved read-only checks, then call reply_with_local_data" : null
   };
-  transitionExecution(store2, executionClaim, job.id, "completed", { result, recoveryAction: result.recoveryAction });
-  await writeFinalMetadata(store2.requireJob(job.id), result);
+  if (executionClaim) {
+    store2.completeResponseClaimed(executionClaim, {
+      assistantTurnId,
+      assistantTurnHash,
+      assistantTurnBound: response.exactTurnBinding,
+      assistantDisposition: disposition,
+      responseDisposition: "completed",
+      localDataRequest,
+      result,
+      recoveryAction: result.recoveryAction
+    });
+  } else {
+    transitionExecution(store2, null, job.id, "response_confirmed", {
+      assistantTurnId,
+      assistantTurnHash,
+      assistantDisposition: disposition,
+      responseDisposition: "completed",
+      localDataRequest
+    });
+    transitionExecution(store2, null, job.id, "completed", { result, recoveryAction: result.recoveryAction });
+  }
+  triggerFailpoint("after_terminal_commit");
+  await writeCompletedArtifacts(store2.requireJob(job.id), result);
   return result;
 }
-async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, executionClaim }) {
+async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, executionClaim, monitorDependencies }) {
   let job = store2.requireJob(jobId);
+  if (executionClaim?.executionKind === "monitor_only") {
+    return executeMonitorOnlyJob({ jobId, store: store2, browserManager, executionClaim, monitorDependencies });
+  }
+  if (job.submitIntentAt || job.executionKind === "monitor_only") {
+    throw codedError(
+      "MONITOR_CLAIM_REQUIRED",
+      "A submitted job cannot enter the pre-submit workflow; it requires a dedicated monitor-only claim.",
+      { submissionMayHaveOccurred: true, recoveryAction: `reconcile_job ${job.id}` }
+    );
+  }
   let lease = null;
   if (executionClaim) store2.assertExecution(executionClaim);
   try {
@@ -70123,9 +70817,6 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
     transitionExecution(store2, executionClaim, job.id, "page_leased");
     job = store2.requireJob(job.id);
     await requireAuthenticatedPage(lease.page);
-    if (job.submitIntentAt && (job.userTurnId || job.userTurnHash)) {
-      return await monitorSubmittedJob({ job, page: lease.page, store: store2, executionClaim });
-    }
     let target = null;
     let project = null;
     if (job.operation === "continue_chat") {
@@ -70255,7 +70946,7 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
     job = store2.requireJob(job.id);
     const response = await waitForAssistantAfterTurn(
       lease.page,
-      { id: job.userTurnId, hash: job.userTurnHash },
+      { id: job.userTurnId, hash: job.userTurnHash, attachments: job.attachmentManifest },
       { timeoutMs: job.request.responseTimeoutSeconds * 1e3 }
     );
     triggerFailpoint("after_assistant_completion");
@@ -70276,6 +70967,7 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
       "LOCK_TIMEOUT"
     ])).has(error?.code)) throw error;
     let current = store2.requireJob(job.id);
+    if (TERMINAL_JOB_STATES_FOR_WORKFLOW.has(current.state)) throw error;
     if (current.submitIntentAt && !current.conversationUrl && error?.details?.conversationUrl) {
       try {
         const observedUrl = normalizeConversationUrl(error.details.conversationUrl);
@@ -70287,6 +70979,7 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
       }
     }
     if (current.state === "cancelled_pre_submit") throw error;
+    if (executionClaim && current.executionKind === "monitor_only") throw error;
     const failed = executionClaim ? store2.markFailureClaimed(executionClaim, error) : store2.markFailure(job.id, error);
     await writeFinalMetadata(failed, {
       jobId: failed.id,
@@ -70390,7 +71083,20 @@ function notifyMacOsCompletion(delivery) {
   });
 }
 var Coordinator = class {
-  constructor({ store: store2 = new StateStore(), browserManager = null, brokerContext = null, writeConcurrency, minimumSubmissionIntervalMs, jobExecutor = executeJob, completionDirectory, legacyCompletionFiles, completionNotifier = notifyMacOsCompletion } = {}) {
+  constructor({
+    store: store2 = new StateStore(),
+    browserManager = null,
+    brokerContext = null,
+    writeConcurrency,
+    minimumSubmissionIntervalMs,
+    executionHeartbeatIntervalMs,
+    abandonedClaimTimeoutMs,
+    abandonedClaimSweepIntervalMs,
+    jobExecutor = executeJob,
+    completionDirectory,
+    legacyCompletionFiles,
+    completionNotifier = notifyMacOsCompletion
+  } = {}) {
     this.store = store2;
     this.brokerContext = brokerContext || store2.brokerContext;
     this.browserManager = browserManager || new BrowserManager({ brokerContext: this.brokerContext });
@@ -70404,6 +71110,15 @@ var Coordinator = class {
     this.minimumSubmissionIntervalMs = Math.max(2e3, Math.min(3e5, Number(
       minimumSubmissionIntervalMs ?? process.env.ORACLE_FIREFOX_MINIMUM_SUBMISSION_INTERVAL_MS ?? 1e4
     ) || 1e4));
+    this.executionHeartbeatIntervalMs = Math.max(100, Number(executionHeartbeatIntervalMs) || 5e3);
+    this.abandonedClaimTimeoutMs = Math.max(
+      this.executionHeartbeatIntervalMs * 2,
+      Number(abandonedClaimTimeoutMs) || 2e4
+    );
+    this.abandonedClaimSweepIntervalMs = Math.max(
+      100,
+      Number(abandonedClaimSweepIntervalMs) || Math.min(5e3, this.abandonedClaimTimeoutMs / 2)
+    );
     this.active = /* @__PURE__ */ new Map();
     this.submitGate = Promise.resolve();
     this.startedAt = (/* @__PURE__ */ new Date()).toISOString();
@@ -70419,6 +71134,7 @@ var Coordinator = class {
     this.notificationPump = Promise.resolve();
     this.accountWakeTimer = null;
     this.executionWakeTimer = null;
+    this.abandonedClaimSweepTimer = null;
     this.onStoreChange = (job) => {
       if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
       this.queueSystemNotifications();
@@ -70442,16 +71158,22 @@ var Coordinator = class {
     this.invariants = this.store.checkInvariants();
     this.safeMode = !this.invariants.ok;
     this.recovery = this.safeMode ? [] : this.store.recoverInterruptedJobs();
+    this.artifactRepair = this.safeMode ? { repaired: [], failed: [] } : await repairTerminalArtifacts(this.store);
     if (this.legacyCompletionFiles) {
       for (const rootJobId of this.store.allRootJobIds()) this.queueCompletionRecord(rootJobId);
     }
-    if (!this.safeMode) this.schedule();
+    if (!this.safeMode) {
+      this.startAbandonedClaimSweeper();
+      this.schedule();
+    }
     this.scheduleAccountWake(this.store.accountState().cooldownUntil);
     return this;
   }
   async close() {
     this.closed = true;
     this.draining = true;
+    clearInterval(this.abandonedClaimSweepTimer);
+    this.abandonedClaimSweepTimer = null;
     await Promise.allSettled(this.active.values());
     this.store.off("change", this.onStoreChange);
     await Promise.allSettled(this.completionWrites.values());
@@ -70690,6 +71412,14 @@ var Coordinator = class {
   }
   drain() {
     if (this.closed || this.safeMode || this.draining) return;
+    try {
+      this.sweepAbandonedExecutions();
+    } catch (error) {
+      this.safeMode = true;
+      this.draining = true;
+      this.brokerFatalError = structuredError(error);
+      return;
+    }
     const account = this.store.accountState();
     const cooldownActive = account.cooldownUntil && Date.parse(account.cooldownUntil) > Date.now();
     const preSubmitLimit = cooldownActive ? 0 : Math.max(1, Math.min(this.writeConcurrency, Number(account.effectiveConcurrency) || 1));
@@ -70700,8 +71430,8 @@ var Coordinator = class {
       const job = this.store.requireJob(executionClaim.jobId);
       if (!job.submissionMayHaveOccurred) activePreSubmit += 1;
       const running = this.runJob(job, executionClaim).catch((error) => this.handleExecutorError(job, executionClaim, error)).finally(() => {
-        this.active.delete(job.id);
         this.store.releaseExecutionClaim(executionClaim);
+        this.active.delete(job.id);
         this.scheduleExecutionWake();
         this.schedule();
       });
@@ -70721,12 +71451,10 @@ var Coordinator = class {
       this.safeMode = true;
       this.draining = true;
       this.brokerFatalError = structuredError(error);
+      this.store.releaseExecutionClaim(claim, error);
       return;
     }
-    const current = this.store.requireJob(job.id);
-    if (current.state === "queued" && current.executionState === "running") {
-      this.store.releaseExecutionWithBackoff(claim, error);
-    }
+    this.store.releaseExecutionClaim(claim, error);
   }
   scheduleExecutionWake() {
     clearTimeout(this.executionWakeTimer);
@@ -70739,6 +71467,28 @@ var Coordinator = class {
       this.schedule();
     }, Math.max(1, Date.parse(when) - Date.now()));
     this.executionWakeTimer.unref?.();
+  }
+  sweepAbandonedExecutions({ nowMs = Date.now() } = {}) {
+    return this.store.sweepAbandonedExecutionClaims({
+      activeExecutorIds: this.active.keys(),
+      heartbeatTimeoutMs: this.abandonedClaimTimeoutMs,
+      nowMs
+    });
+  }
+  startAbandonedClaimSweeper() {
+    clearInterval(this.abandonedClaimSweepTimer);
+    this.abandonedClaimSweepTimer = setInterval(() => {
+      if (this.closed || this.safeMode) return;
+      try {
+        const recovered = this.sweepAbandonedExecutions();
+        if (recovered.length && !this.draining) this.schedule();
+      } catch (error) {
+        this.safeMode = true;
+        this.draining = true;
+        this.brokerFatalError = structuredError(error);
+      }
+    }, this.abandonedClaimSweepIntervalMs);
+    this.abandonedClaimSweepTimer.unref?.();
   }
   async beforeSubmit(jobId, { waitOnly = false } = {}) {
     if (waitOnly) {
@@ -70791,7 +71541,7 @@ var Coordinator = class {
       } catch (error) {
         heartbeatError = error;
       }
-    }, 5e3);
+    }, this.executionHeartbeatIntervalMs);
     executionHeartbeat.unref?.();
     try {
       const result = await this.jobExecutor({

@@ -50,6 +50,33 @@ export const TERMINAL_JOB_STATES = new Set([
 
 const STATE_INDEX = new Map(JOB_STATES.map((state, index) => [state, index]));
 const SUBMIT_INDEX = STATE_INDEX.get("submit_intent");
+const PRE_SUBMIT_JOB_STATES = new Set(JOB_STATES.slice(0, SUBMIT_INDEX));
+const MONITOR_JOB_STATES = new Set([
+  "user_turn_confirmed",
+  "awaiting_response",
+  "response_failed_detected",
+  "response_confirmed",
+]);
+
+function isCanonicalConversationUrl(value) {
+  try {
+    const parsed = new URL(String(value));
+    return parsed.protocol === "https:" && parsed.hostname === "chatgpt.com" &&
+      !parsed.search && !parsed.hash &&
+      (/^\/c\/[a-zA-Z0-9-]+$/u.test(parsed.pathname) ||
+        /^\/g\/g-p-[^/]+\/c\/[a-zA-Z0-9-]+$/u.test(parsed.pathname));
+  } catch {
+    return false;
+  }
+}
+
+function hasExactUserTurnProof(job) {
+  return Boolean(
+    job?.submitIntentAt &&
+    isCanonicalConversationUrl(job?.conversationUrl) &&
+    (job?.userTurnId || job?.userTurnHash)
+  );
+}
 
 function json(value) {
   return value == null ? null : JSON.stringify(value);
@@ -107,8 +134,13 @@ function rowToJob(row) {
     executionOwnerInstanceId: row.execution_owner_instance_id ?? null,
     executionLeaseGeneration: row.execution_lease_generation ?? null,
     executionState: row.execution_state ?? "idle",
+    executionKind: row.execution_kind ?? "pre_submit",
     executionFailureCount: row.execution_failure_count ?? 0,
     nextExecutionNotBefore: row.next_execution_not_before ?? null,
+    monitorDeadlineAt: row.monitor_deadline_at ?? null,
+    finalReconciliationAttemptedAt: row.final_reconciliation_attempted_at ?? null,
+    assistantTurnId: row.assistant_turn_id ?? null,
+    assistantTurnHash: row.assistant_turn_hash ?? null,
     chainState: row.chain_state ?? null,
     inputRequestAbandonedAt: row.input_required_abandoned_at ?? null,
     inputRequestAbandonedReason: row.input_required_abandoned_reason ?? null,
@@ -245,6 +277,7 @@ export class StateStore extends EventEmitter {
       if (existingVersion >= BROKER_SCHEMA_VERSION) {
         this.registerBrokerTakeover();
         this.migrateSix({ existing: true });
+        this.migrateEight();
       } else {
         if (this.productionFencing && existingVersion > 0) await this.backupBeforeMigration();
         const integrity = this.db.prepare("PRAGMA integrity_check").get()?.integrity_check;
@@ -259,6 +292,7 @@ export class StateStore extends EventEmitter {
         this.migrateLegacy();
         this.migrateSix({ existing: hasBrokerGenerationGuards });
         if (!hasBrokerGenerationGuards) this.registerBrokerTakeover();
+        this.migrateEight();
       }
       this.backfillUntrackedUncertaintyQuarantines();
       return this;
@@ -273,6 +307,7 @@ export class StateStore extends EventEmitter {
     this.db.function("oracle_writer_protocol", () => Number(this.brokerContext.protocolVersion || 0));
     this.db.function("oracle_broker_instance", () => String(this.brokerContext.instanceId || ""));
     this.db.function("oracle_lease_generation", () => Number(this.brokerContext.leaseGeneration || 0));
+    this.db.function("oracle_canonical_conversation_url", (value) => isCanonicalConversationUrl(value) ? 1 : 0);
   }
 
   schemaVersionBeforeMigration() {
@@ -612,11 +647,75 @@ export class StateStore extends EventEmitter {
         this.db.prepare("UPDATE account_state SET effective_concurrency = CASE WHEN cooldown_until IS NULL THEN 1 ELSE 0 END, updated_at = ? WHERE id = 1")
           .run(now);
       }
-      this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?, ?)")
-        .run(BROKER_SCHEMA_VERSION, now);
+      this.db.prepare("INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (7, ?)")
+        .run(now);
       this.installWriterGuards();
     });
     if (existing) this.assertCoordinatorIdentity();
+  }
+
+  migrateEight() {
+    const migration = this.db.prepare("SELECT 1 present FROM schema_migrations WHERE version = 8").get();
+    if (migration) {
+      this.installWriterGuards();
+      return;
+    }
+    const now = new Date().toISOString();
+    this.transaction(() => {
+      const addColumns = (table, columns) => {
+        const known = new Set(this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
+        for (const [name, definition] of columns) {
+          if (!known.has(name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+        }
+      };
+      addColumns("job_attempts", [
+        ["execution_kind", "TEXT NOT NULL DEFAULT 'pre_submit' CHECK (execution_kind IN ('pre_submit', 'monitor_only'))"],
+        ["monitor_deadline_at", "TEXT"],
+        ["final_reconciliation_attempted_at", "TEXT"],
+      ]);
+      addColumns("jobs", [
+        ["assistant_turn_id", "TEXT"],
+        ["assistant_turn_hash", "TEXT"],
+      ]);
+
+      const submitted = this.db.prepare(`
+        SELECT j.id, j.submit_intent_at, j.request_json, j.canonical_url,
+               j.user_turn_id, j.user_turn_hash, j.state
+        FROM jobs j JOIN job_attempts a ON a.job_id = j.id
+        WHERE j.submit_intent_at IS NOT NULL
+      `).all();
+      for (const row of submitted) {
+        const request = parse(row.request_json) || {};
+        const timeoutSeconds = Math.max(30, Math.min(86_400, Number(request.responseTimeoutSeconds) || 10_800));
+        const submittedAt = Number.isFinite(Date.parse(row.submit_intent_at)) ? Date.parse(row.submit_intent_at) : Date.now();
+        const deadline = new Date(submittedAt + timeoutSeconds * 1_000).toISOString();
+        const exactTurn = Boolean(isCanonicalConversationUrl(row.canonical_url) && (row.user_turn_id || row.user_turn_hash));
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_kind=?, monitor_deadline_at=COALESCE(monitor_deadline_at, ?)
+          WHERE job_id=?
+        `).run(exactTurn ? "monitor_only" : "pre_submit", deadline, row.id);
+        if (exactTurn && PRE_SUBMIT_JOB_STATES.has(row.state)) {
+          this.db.prepare(`
+            UPDATE jobs SET state='awaiting_response', updated_at=?, version=version+1,
+              recovery_action='reattach submitted turn without resending'
+            WHERE id=?
+          `).run(now, row.id);
+          const attempt = this.db.prepare("SELECT chain_id FROM job_attempts WHERE job_id=?").get(row.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=?")
+            .run(now, attempt.chain_id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, 'awaiting_response', ?, ?, ?, ?)
+          `).run(row.id, json({ migratedMonitorOnly: true, schemaVersion: 8 }), now, this.brokerContext.instanceId, this.brokerContext.leaseGeneration);
+        }
+      }
+      this.db.exec(`
+        CREATE INDEX IF NOT EXISTS job_attempts_execution_kind_ready
+          ON job_attempts(execution_kind, execution_state, next_execution_not_before, monitor_deadline_at);
+      `);
+      this.db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES (8, ?)").run(now);
+      this.installWriterGuards();
+    });
   }
 
   installWriterGuards() {
@@ -922,7 +1021,9 @@ export class StateStore extends EventEmitter {
     return `
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM jobs j
@@ -1048,7 +1149,8 @@ export class StateStore extends EventEmitter {
     const stateClause = states.length ? `AND j.state IN (${states.map(() => "?").join(",")})` : "";
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
-             a.execution_epoch, c.state AS chain_state,
+             a.execution_epoch, a.execution_kind, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at, c.state AS chain_state,
              c.input_required_abandoned_at, c.input_required_abandoned_job_id,
              c.input_required_abandoned_reason
       FROM jobs j
@@ -1261,11 +1363,23 @@ export class StateStore extends EventEmitter {
       .map((row) => row.root_job_id);
   }
 
+  completedJobsWithExactProof() {
+    return this.db.prepare(this.jobSelect(`
+      WHERE j.state='completed' AND j.result_json IS NOT NULL
+        AND j.submit_intent_at IS NOT NULL
+        AND oracle_canonical_conversation_url(j.canonical_url) = 1
+        AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
+        AND j.assistant_turn_hash IS NOT NULL
+    `, "ORDER BY j.completed_at, j.created_at")).all().map(rowToJob);
+  }
+
   queuedJobs() {
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM jobs j
@@ -1295,25 +1409,33 @@ export class StateStore extends EventEmitter {
     if (TERMINAL_JOB_STATES.has(current.state) && current.state !== nextState) {
       throw codedError("JOB_TERMINAL", `Job ${id} is already terminal in state ${current.state}.`);
     }
+    if (current.submitIntentAt && PRE_SUBMIT_JOB_STATES.has(nextState)) {
+      throw codedError(
+        "INVALID_JOB_TRANSITION",
+        `Cannot return submitted job ${id} to pre-submit lifecycle state ${nextState}.`,
+      );
+    }
+    for (const [field, label] of [
+      ["userTurnId", "user-turn id"],
+      ["userTurnHash", "user-turn hash"],
+      ["assistantTurnId", "assistant-turn id"],
+      ["assistantTurnHash", "assistant-turn hash"],
+    ]) {
+      if (current[field] && field in patch && patch[field] !== current[field]) {
+        throw codedError(
+          "IMMUTABLE_TURN_PROOF",
+          `The durable ${label} for job ${id} cannot be replaced.`,
+          { submissionMayHaveOccurred: Boolean(current.submitIntentAt) },
+        );
+      }
+    }
     const currentIndex = STATE_INDEX.get(current.state);
     const nextIndex = STATE_INDEX.get(nextState);
     if (!TERMINAL_JOB_STATES.has(nextState) && nextIndex < currentIndex) {
       throw codedError("INVALID_JOB_TRANSITION", `Cannot move job ${id} backward from ${current.state} to ${nextState}.`);
     }
     const now = suppliedNow || new Date().toISOString();
-    const definitelyPostSubmit = new Set([
-      "submit_intent",
-      "user_turn_confirmed",
-      "awaiting_response",
-      "response_failed_detected",
-      "response_confirmed",
-      "completed",
-      "submission_uncertain",
-      "response_uncertain",
-      "response_failed",
-      "quarantined",
-    ]).has(nextState);
-    const submitted = definitelyPostSubmit || current.submissionMayHaveOccurred;
+    const submitted = nextState === "submit_intent" || Boolean(current.submitIntentAt);
     const assignments = ["state = ?", "updated_at = ?", "version = version + 1", "submission_may_have_happened = ?"];
     const values = [nextState, now, submitted ? 1 : 0];
     const columns = {
@@ -1331,6 +1453,8 @@ export class StateStore extends EventEmitter {
       responseDisposition: "response_disposition",
       responseFailure: "response_failure_json",
       localDataRequest: "local_data_request_json",
+      assistantTurnId: "assistant_turn_id",
+      assistantTurnHash: "assistant_turn_hash",
       result: "result_json",
       error: "error_json",
       recoveryAction: "recovery_action",
@@ -1355,6 +1479,28 @@ export class StateStore extends EventEmitter {
     }
     values.push(id);
     this.db.prepare(`UPDATE jobs SET ${assignments.join(", ")} WHERE id = ?`).run(...values);
+    if (nextState === "submit_intent") {
+      const timeoutSeconds = Math.max(30, Math.min(86_400, Number(current.request?.responseTimeoutSeconds) || 10_800));
+      this.db.prepare(`
+        UPDATE job_attempts SET monitor_deadline_at=COALESCE(monitor_deadline_at, ?)
+        WHERE job_id=?
+      `).run(new Date(Date.parse(current.submitIntentAt || now) + timeoutSeconds * 1_000).toISOString(), id);
+    }
+    if (nextState === "user_turn_confirmed") {
+      const updated = this.requireJob(id);
+      if (!isCanonicalConversationUrl(updated.conversationUrl) ||
+          (!updated.userTurnId && !updated.userTurnHash) ||
+          !updated.submitIntentAt) {
+        throw codedError(
+          "EXACT_TURN_PROOF_REQUIRED",
+          "Monitor-only execution requires submit intent, a canonical conversation URL, and an exact user-turn id or unambiguous semantic hash.",
+          { submissionMayHaveOccurred: true },
+        );
+      }
+      this.db.prepare(`
+        UPDATE job_attempts SET execution_kind='monitor_only' WHERE job_id=?
+      `).run(id);
+    }
     this.db.prepare(`
       INSERT INTO job_events(job_id, state, details_json, created_at, broker_instance_id, lease_generation)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -1456,13 +1602,13 @@ export class StateStore extends EventEmitter {
   markFailure(id, error) {
     const job = this.requireJob(id);
     const structured = structuredError(error, { jobState: job.state });
-    if (STATE_INDEX.get(job.state) < SUBMIT_INDEX) {
+    if (!job.submitIntentAt) {
       return this.transition(id, "failed_pre_submit", {
         error: structured,
         recoveryAction: structured.safeToRetry ? "start a new authorized job" : structured.recoveryAction,
       });
     }
-    const state = job.userTurnId || job.userTurnHash ? "response_uncertain" : "submission_uncertain";
+    const state = hasExactUserTurnProof(job) ? "response_uncertain" : "submission_uncertain";
     const recoveryAction = `reconcile_job ${id}`;
     const result = this.transition(id, state, {
       error: { ...structured, submissionMayHaveOccurred: true },
@@ -1475,13 +1621,13 @@ export class StateStore extends EventEmitter {
   markFailureClaimed(claim, error) {
     const job = this.requireJob(claim.jobId);
     const structured = structuredError(error, { jobState: job.state });
-    if (STATE_INDEX.get(job.state) < SUBMIT_INDEX) {
+    if (!job.submitIntentAt) {
       return this.transitionClaimed(claim, "failed_pre_submit", {
         error: structured,
         recoveryAction: structured.safeToRetry ? "start a new authorized job" : structured.recoveryAction,
       });
     }
-    const state = job.userTurnId || job.userTurnHash ? "response_uncertain" : "submission_uncertain";
+    const state = hasExactUserTurnProof(job) ? "response_uncertain" : "submission_uncertain";
     const recoveryAction = `reconcile_job ${job.id}`;
     const result = this.transitionClaimed(claim, state, {
       error: { ...structured, submissionMayHaveOccurred: true },
@@ -1787,21 +1933,38 @@ export class StateStore extends EventEmitter {
 
   reopenForMonitoringInCurrentTransaction(jobId, { userTurnId, userTurnHash }, now) {
     const job = this.requireJob(jobId);
+    if (!job.submitIntentAt ||
+        !isCanonicalConversationUrl(job.conversationUrl) ||
+        (!userTurnId && !userTurnHash)) {
+      throw codedError(
+        "EXACT_TURN_PROOF_REQUIRED",
+        "Monitor-only recovery requires immutable submit intent, a canonical conversation URL, and an exact user-turn id or unambiguous semantic hash.",
+        { submissionMayHaveOccurred: Boolean(job.submitIntentAt) },
+      );
+    }
+    if ((job.userTurnId && job.userTurnId !== userTurnId) || (job.userTurnHash && job.userTurnHash !== userTurnHash)) {
+      throw codedError(
+        "IMMUTABLE_TURN_PROOF",
+        "Monitor-only recovery cannot replace the durable exact user-turn proof.",
+        { submissionMayHaveOccurred: true },
+      );
+    }
     this.db.prepare(`
       UPDATE jobs
-      SET state='queued', user_turn_id=?, user_turn_hash=?, error_json=NULL,
+      SET state='awaiting_response', user_turn_id=?, user_turn_hash=?, error_json=NULL,
           recovery_action='reattach submitted turn without resending', completed_at=NULL,
           updated_at=?, version=version+1
       WHERE id=?
-    `).run(userTurnId ?? null, userTurnHash, now, jobId);
+    `).run(userTurnId ?? null, userTurnHash ?? null, now, jobId);
     this.db.prepare(`
       UPDATE job_attempts
       SET execution_state='idle', execution_owner_instance_id=NULL,
           execution_lease_generation=NULL, execution_heartbeat_at=NULL,
-          next_execution_not_before=NULL
+          next_execution_not_before=NULL, execution_kind='monitor_only',
+          final_reconciliation_attempted_at=NULL
       WHERE job_id=?
     `).run(jobId);
-    this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'queued', ?, ?)")
+    this.db.prepare("INSERT INTO job_events(job_id, state, details_json, created_at) VALUES (?, 'awaiting_response', ?, ?)")
       .run(jobId, json({ reconciledFrom: job.state, monitorOnly: true }), now);
     this.syncChainForJob(jobId, now, { reconciledFrom: job.state, monitorOnly: true });
     return this.requireJob(jobId);
@@ -1812,7 +1975,9 @@ export class StateStore extends EventEmitter {
     return this.db.prepare(`
       SELECT j.*, a.chain_id, a.kind AS attempt_kind, a.ordinal AS attempt_ordinal,
              a.execution_epoch, a.execution_owner_instance_id, a.execution_lease_generation,
-             a.execution_state, a.execution_failure_count, a.next_execution_not_before,
+             a.execution_state, a.execution_kind, a.execution_failure_count,
+             a.next_execution_not_before, a.monitor_deadline_at,
+             a.final_reconciliation_attempted_at,
              c.state AS chain_state, c.input_required_abandoned_at,
              c.input_required_abandoned_job_id, c.input_required_abandoned_reason
       FROM job_attempts a
@@ -1832,10 +1997,14 @@ export class StateStore extends EventEmitter {
   isRunnable(jobId) {
     const job = this.requireJob(jobId);
     const chain = this.getChain(job.chainId);
-    if (!chain || chain.activeJobId !== job.id || job.state !== "queued" || chain.state !== "queued") return false;
+    if (!chain || chain.activeJobId !== job.id || TERMINAL_JOB_STATES.has(job.state)) return false;
     const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id = ?").get(jobId);
     if (!attempt || !new Set(["idle", "backoff"]).has(attempt.execution_state || "idle")) return false;
     if (attempt.next_execution_not_before && Date.parse(attempt.next_execution_not_before) > Date.now()) return false;
+    const executionKind = attempt.execution_kind || "pre_submit";
+    if (executionKind === "pre_submit" && (job.state !== "queued" || chain.state !== "queued" || job.submitIntentAt)) return false;
+    if (executionKind === "monitor_only" && (!MONITOR_JOB_STATES.has(job.state) || !hasExactUserTurnProof(job))) return false;
+    if (this.db.prepare("SELECT 1 blocked FROM quarantines WHERE scope_key=? AND active=1").get(chain.conversationKey)) return false;
     const earlier = this.db.prepare(`
       SELECT id FROM job_chains
       WHERE conversation_key = ?
@@ -1864,16 +2033,27 @@ export class StateStore extends EventEmitter {
       this.assertCurrentBroker();
       const now = new Date().toISOString();
       const candidate = this.db.prepare(`
-        SELECT j.id AS job_id, a.chain_id, a.execution_epoch, c.accepted_sequence
+        SELECT j.id AS job_id, a.chain_id, a.execution_epoch, a.execution_kind, c.accepted_sequence
         FROM jobs j
         JOIN job_attempts a ON a.job_id = j.id
         JOIN job_chains c ON c.id = a.chain_id AND c.active_job_id = j.id
-        WHERE j.state = 'queued'
-          AND c.state = 'queued'
+        WHERE j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
           AND a.execution_state IN ('idle', 'backoff')
           AND (a.next_execution_not_before IS NULL OR a.next_execution_not_before <= ?)
           AND (? IS NULL OR j.id = ?)
-          AND (? = 1 OR j.submission_may_have_happened = 1)
+          AND (
+            (a.execution_kind = 'pre_submit' AND j.state = 'queued' AND c.state = 'queued'
+              AND j.submit_intent_at IS NULL AND ? = 1)
+            OR
+            (a.execution_kind = 'monitor_only' AND j.state IN ('user_turn_confirmed','awaiting_response','response_failed_detected','response_confirmed')
+              AND j.submit_intent_at IS NOT NULL AND j.canonical_url IS NOT NULL
+              AND (j.user_turn_id IS NOT NULL OR j.user_turn_hash IS NOT NULL)
+              AND a.monitor_deadline_at IS NOT NULL
+              AND oracle_canonical_conversation_url(j.canonical_url) = 1)
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM quarantines q WHERE q.scope_key=c.conversation_key AND q.active=1
+          )
           AND NOT EXISTS (
             SELECT 1 FROM job_chains earlier
             WHERE earlier.conversation_key = c.conversation_key
@@ -1890,7 +2070,7 @@ export class StateStore extends EventEmitter {
           )
         ORDER BY c.accepted_sequence, a.ordinal
         LIMIT 1
-      `).get(now, jobId, jobId, allowPreSubmit ? 1 : 0);
+      `).get(...TERMINAL_JOB_STATES, now, jobId, jobId, allowPreSubmit ? 1 : 0);
       if (!candidate) return null;
       const attemptUpdate = this.db.prepare(`
         UPDATE job_attempts
@@ -1910,13 +2090,14 @@ export class StateStore extends EventEmitter {
       if (Number(attemptUpdate.changes) !== 1) return null;
       const chainUpdate = this.db.prepare(`
         UPDATE job_chains SET state='running', updated_at=?
-        WHERE id=? AND active_job_id=? AND state='queued'
+        WHERE id=? AND active_job_id=? AND state IN ('queued','running')
       `).run(now, candidate.chain_id, candidate.job_id);
       if (Number(chainUpdate.changes) !== 1) throw codedError("EXECUTION_CLAIM_RACE", "The logical chain changed while Oracle Firefox was claiming it.");
       return {
         jobId: candidate.job_id,
         chainId: candidate.chain_id,
         executionEpoch: Number(candidate.execution_epoch) + 1,
+        executionKind: candidate.execution_kind,
         brokerInstanceId: this.brokerContext.instanceId,
         leaseGeneration: this.brokerContext.leaseGeneration,
       };
@@ -1984,32 +2165,156 @@ export class StateStore extends EventEmitter {
     return transitioned;
   }
 
-  releaseExecutionWithBackoff(claim, error, { maximumFailures = 5 } = {}) {
+  completeResponseClaimed(claim, {
+    assistantTurnId,
+    assistantTurnHash,
+    assistantTurnBound = false,
+    assistantDisposition,
+    responseDisposition = "completed",
+    localDataRequest = null,
+    result,
+    recoveryAction = null,
+  }) {
+    if (!assistantTurnHash || (!assistantTurnId && assistantTurnBound !== true) || !result) {
+      throw codedError(
+        "ASSISTANT_PROOF_REQUIRED",
+        "A completed response requires an assistant id or unambiguous exact-turn binding, plus its content hash and complete durable result.",
+        { submissionMayHaveOccurred: true },
+      );
+    }
+    let completed;
+    this.transaction(() => {
+      this.assertExecution(claim);
+      const job = this.requireJob(claim.jobId);
+      if (!hasExactUserTurnProof(job) || job.executionKind !== "monitor_only") {
+        throw codedError(
+          "MONITOR_CLAIM_REQUIRED",
+          "Only the exact monitor-only execution claim may commit an assistant response.",
+          { submissionMayHaveOccurred: true },
+        );
+      }
+      completed = this.transitionInCurrentTransaction(claim.jobId, "completed", {
+        assistantTurnId: assistantTurnId || null,
+        assistantTurnHash,
+        assistantDisposition,
+        responseDisposition,
+        localDataRequest,
+        result,
+        error: null,
+        recoveryAction,
+      }, {
+        assistantTurnId,
+        assistantTurnHash,
+        responseDisposition,
+        terminalAtomicCommit: true,
+      });
+      const releasedAt = new Date().toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
+          execution_lease_generation=NULL, execution_heartbeat_at=?, next_execution_not_before=NULL
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+      `).run(releasedAt, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError("STALE_EXECUTION", "The monitor claim changed before its terminal result could be committed.");
+      }
+      completed = this.requireJob(claim.jobId);
+    });
+    this.emit("change", completed);
+    return completed;
+  }
+
+  beginFinalMonitorReconciliation(claim) {
+    return this.transaction(() => {
+      this.assertExecution(claim);
+      const job = this.requireJob(claim.jobId);
+      if (claim.executionKind !== "monitor_only" || !hasExactUserTurnProof(job)) {
+        throw codedError("MONITOR_CLAIM_REQUIRED", "Final reconciliation requires the exact monitor-only execution claim.");
+      }
+      if (!job.monitorDeadlineAt || Date.parse(job.monitorDeadlineAt) > Date.now()) {
+        throw codedError("MONITOR_DEADLINE_ACTIVE", "The original response-monitor deadline has not expired.", { safeToRetry: true });
+      }
+      const now = new Date().toISOString();
+      const changed = this.db.prepare(`
+        UPDATE job_attempts SET final_reconciliation_attempted_at=?
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+          AND final_reconciliation_attempted_at IS NULL
+      `).run(now, claim.jobId, claim.executionEpoch);
+      if (Number(changed.changes) !== 1) {
+        throw codedError(
+          "FINAL_RECONCILIATION_ALREADY_ATTEMPTED",
+          "The one final exact-turn reconciliation attempt was already consumed.",
+          { submissionMayHaveOccurred: true },
+        );
+      }
+      return now;
+    });
+  }
+
+  releaseExecutionWithBackoff(claim, error, { maximumFailures = 5, backoffDelays = null } = {}) {
     let released;
     this.transaction(() => {
       this.assertExecution(claim);
-      const attempt = this.db.prepare("SELECT execution_failure_count FROM job_attempts WHERE job_id=?").get(claim.jobId);
+      const job = this.requireJob(claim.jobId);
+      const attempt = this.db.prepare("SELECT * FROM job_attempts WHERE job_id=?").get(claim.jobId);
       const failures = Number(attempt.execution_failure_count || 0) + 1;
-      if (failures >= maximumFailures) {
-        released = this.transitionInCurrentTransaction(claim.jobId, "failed_pre_submit", {
-          error: structuredError(error),
-          recoveryAction: "inspect the repeated pre-submit executor failure before authorizing another job",
+      const structured = structuredError(error, { jobState: job.state });
+      const releaseTerminal = (state, recoveryAction) => {
+        released = this.transitionInCurrentTransaction(claim.jobId, state, {
+          error: { ...structured, submissionMayHaveOccurred: state !== "failed_pre_submit" },
+          recoveryAction,
         });
         this.db.prepare(`
           UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
-            execution_lease_generation=NULL, execution_failure_count=?, last_executor_error_json=? WHERE job_id=?
-        `).run(failures, json(structuredError(error)), claim.jobId);
+            execution_lease_generation=NULL, execution_failure_count=?, last_executor_error_json=?,
+            next_execution_not_before=NULL WHERE job_id=? AND execution_epoch=?
+        `).run(failures, json(structured), claim.jobId, claim.executionEpoch);
+        if (state === "submission_uncertain" || state === "response_uncertain") {
+          this.quarantine(job.conversationKey, job.id, structured.message);
+        }
+      };
+
+      if (!job.submitIntentAt) {
+        if (failures >= maximumFailures) {
+          releaseTerminal("failed_pre_submit", "inspect the repeated pre-submit executor failure before authorizing another job");
+          return;
+        }
+        const delays = backoffDelays?.length ? backoffDelays : [250, 1_000, 4_000, 15_000, 30_000];
+        const delay = delays[Math.min(failures - 1, delays.length - 1)];
+        const retryAt = new Date(Date.now() + delay).toISOString();
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_state='backoff', execution_kind='pre_submit',
+            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+            execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
+          WHERE job_id=? AND execution_epoch=?
+        `).run(failures, retryAt, json(structured), claim.jobId, claim.executionEpoch);
+        this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?")
+          .run(new Date().toISOString(), claim.chainId, claim.jobId);
+        released = this.requireJob(claim.jobId);
         return;
       }
-      const delays = [250, 1_000, 4_000, 15_000, 30_000];
+
+      if (!hasExactUserTurnProof(job)) {
+        releaseTerminal("submission_uncertain", `reconcile_job ${job.id}`);
+        return;
+      }
+      if (attempt.final_reconciliation_attempted_at) {
+        releaseTerminal("response_uncertain", `reconcile_job ${job.id}`);
+        return;
+      }
+      const delays = backoffDelays?.length ? backoffDelays : [250, 1_000, 4_000, 15_000, 30_000];
       const delay = delays[Math.min(failures - 1, delays.length - 1)];
-      const retryAt = new Date(Date.now() + delay).toISOString();
+      const deadlineMs = Date.parse(attempt.monitor_deadline_at || job.monitorDeadlineAt || 0);
+      const retryMs = Number.isFinite(deadlineMs) && deadlineMs > 0
+        ? Math.min(Date.now() + delay, deadlineMs)
+        : Date.now() + delay;
+      const retryAt = new Date(Math.max(Date.now(), retryMs)).toISOString();
       this.db.prepare(`
-        UPDATE job_attempts SET execution_state='backoff', execution_owner_instance_id=NULL,
-          execution_lease_generation=NULL, execution_failure_count=?, next_execution_not_before=?,
-          last_executor_error_json=? WHERE job_id=?
-      `).run(failures, retryAt, json(structuredError(error)), claim.jobId);
-      this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?")
+        UPDATE job_attempts SET execution_state='backoff', execution_kind='monitor_only',
+          execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+          execution_failure_count=?, next_execution_not_before=?, last_executor_error_json=?
+        WHERE job_id=? AND execution_epoch=?
+      `).run(failures, retryAt, json(structured), claim.jobId, claim.executionEpoch);
+      this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?")
         .run(new Date().toISOString(), claim.chainId, claim.jobId);
       released = this.requireJob(claim.jobId);
     });
@@ -2017,19 +2322,149 @@ export class StateStore extends EventEmitter {
     return released;
   }
 
-  releaseExecutionClaim(claim) {
+  releaseExecutionClaim(claim, error = null) {
+    try {
+      this.assertExecution(claim);
+    } catch {
+      return false;
+    }
+    const job = this.requireJob(claim.jobId);
+    if (!TERMINAL_JOB_STATES.has(job.state)) {
+      return this.releaseExecutionWithBackoff(
+        claim,
+        error || codedError(
+          "EXECUTOR_EXITED_WITHOUT_SETTLEMENT",
+          "The browser executor exited without committing a terminal result; its durable claim was recovered.",
+          { safeToRetry: true, submissionMayHaveOccurred: Boolean(job.submitIntentAt) },
+        ),
+      );
+    }
     let released = false;
     this.transaction(() => {
       try { this.assertExecution(claim); } catch { return; }
-      const job = this.requireJob(claim.jobId);
-      if (!TERMINAL_JOB_STATES.has(job.state)) return;
-      this.db.prepare(`
+      const changed = this.db.prepare(`
         UPDATE job_attempts SET execution_state='released', execution_owner_instance_id=NULL,
-          execution_lease_generation=NULL, execution_heartbeat_at=? WHERE job_id=?
-      `).run(new Date().toISOString(), claim.jobId);
-      released = true;
+          execution_lease_generation=NULL, execution_heartbeat_at=?
+        WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+      `).run(new Date().toISOString(), claim.jobId, claim.executionEpoch);
+      released = Number(changed.changes) === 1;
     });
     return released;
+  }
+
+  sweepAbandonedExecutionClaims({
+    activeExecutorIds = [],
+    heartbeatTimeoutMs = 20_000,
+    nowMs = Date.now(),
+  } = {}) {
+    const live = new Set(Array.from(activeExecutorIds, (value) => String(value)));
+    const boundedTimeout = Math.max(1, Number(heartbeatTimeoutMs) || 20_000);
+    const sweepNow = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
+    const staleBefore = new Date(sweepNow - boundedTimeout).toISOString();
+    const recovered = [];
+    const changed = [];
+    this.transaction(() => {
+      this.assertCurrentBroker();
+      const candidates = this.db.prepare(this.jobSelect(`
+        WHERE a.execution_state='running'
+          AND a.execution_owner_instance_id=?
+          AND a.execution_lease_generation=?
+          AND COALESCE(a.execution_heartbeat_at, a.execution_started_at, a.created_at) <= ?
+          AND j.state NOT IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
+      `, "ORDER BY a.execution_heartbeat_at, j.created_at")).all(
+        this.brokerContext.instanceId,
+        this.brokerContext.leaseGeneration,
+        staleBefore,
+        ...TERMINAL_JOB_STATES,
+      ).map(rowToJob);
+
+      for (const job of candidates) {
+        if (live.has(job.id)) continue;
+        const monitorOnly = Boolean(job.submitIntentAt && hasExactUserTurnProof(job));
+        const terminalUncertainty = Boolean(job.submitIntentAt && !monitorOnly);
+        const nextExecutionState = terminalUncertainty ? "released" : "idle";
+        const nextExecutionKind = monitorOnly ? "monitor_only" : "pre_submit";
+        const reclaimed = this.db.prepare(`
+          UPDATE job_attempts
+          SET execution_epoch=execution_epoch+1, execution_state=?, execution_kind=?,
+              execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+              execution_started_at=NULL, execution_heartbeat_at=NULL,
+              next_execution_not_before=NULL
+          WHERE job_id=? AND execution_epoch=? AND execution_state='running'
+            AND execution_owner_instance_id=? AND execution_lease_generation=?
+            AND COALESCE(execution_heartbeat_at, execution_started_at, created_at) <= ?
+        `).run(
+          nextExecutionState,
+          nextExecutionKind,
+          job.id,
+          job.executionEpoch,
+          this.brokerContext.instanceId,
+          this.brokerContext.leaseGeneration,
+          staleBefore,
+        );
+        if (Number(reclaimed.changes) !== 1) continue;
+
+        const now = new Date(sweepNow).toISOString();
+        if (!job.submitIntentAt) {
+          this.db.prepare(`
+            UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
+              submission_may_have_happened=0,
+              user_turn_id=NULL, user_turn_hash=NULL,
+              assistant_turn_id=NULL, assistant_turn_hash=NULL,
+              version=version+1 WHERE id=?
+          `).run(now, "recovered abandoned pre-submit executor", job.id);
+          this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=? AND active_job_id=?")
+            .run(now, job.chainId, job.id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, 'queued', ?, ?, ?, ?)
+          `).run(
+            job.id,
+            json({ abandonedClaim: true, recoveredFrom: job.state, executionEpoch: job.executionEpoch }),
+            now,
+            this.brokerContext.instanceId,
+            this.brokerContext.leaseGeneration,
+          );
+          recovered.push({ id: job.id, action: "requeued-pre-submit" });
+        } else if (monitorOnly) {
+          const recoveredState = PRE_SUBMIT_JOB_STATES.has(job.state) || job.state === "submit_intent"
+            ? "awaiting_response"
+            : job.state;
+          this.db.prepare(`
+            UPDATE jobs SET state=?, updated_at=?, recovery_action=?,
+              submission_may_have_happened=1, version=version+1 WHERE id=?
+          `).run(recoveredState, now, "recovered abandoned monitor-only executor without resending", job.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=? AND active_job_id=?")
+            .run(now, job.chainId, job.id);
+          this.db.prepare(`
+            INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(
+            job.id,
+            recoveredState,
+            json({ abandonedClaim: true, monitorOnly: true, executionEpoch: job.executionEpoch }),
+            now,
+            this.brokerContext.instanceId,
+            this.brokerContext.leaseGeneration,
+          );
+          recovered.push({ id: job.id, action: "resumed-monitor-only" });
+        } else {
+          this.transitionInCurrentTransaction(job.id, "submission_uncertain", {
+            error: {
+              code: "SUBMISSION_UNCERTAIN",
+              message: "A submitted executor was abandoned without exact canonical user-turn proof.",
+              submissionMayHaveOccurred: true,
+            },
+            recoveryAction: `reconcile_job ${job.id}`,
+          }, { abandonedClaim: true, executionEpoch: job.executionEpoch });
+          this.quarantine(job.conversationKey, job.id, "Abandoned submitted executor without exact user-turn proof");
+          recovered.push({ id: job.id, action: "submission-uncertain" });
+        }
+        changed.push(job.id);
+      }
+    });
+    for (const id of changed) this.emit("change", this.requireJob(id));
+    return recovered;
   }
 
   earliestExecutionWake() {
@@ -2160,8 +2595,10 @@ export class StateStore extends EventEmitter {
       const now = new Date().toISOString();
       const permit = this.db.prepare("SELECT * FROM submit_permits WHERE id = ? AND job_id = ?").get(permitId, jobId);
       const account = this.db.prepare("SELECT * FROM account_state WHERE id = 1").get();
+      const job = this.requireJob(jobId);
       if (
         !permit || permit.consumed_at || permit.invalidated_at ||
+        job.submitIntentAt || job.state === "cancelled_pre_submit" ||
         Date.parse(permit.expires_at) <= Date.now() ||
         permit.gate_version !== account.gate_version ||
         (account.cooldown_until && Date.parse(account.cooldown_until) > Date.now())
@@ -2406,13 +2843,27 @@ export class StateStore extends EventEmitter {
         ORDER BY j.created_at
       `).all(...TERMINAL_JOB_STATES).map(rowToJob);
       for (const job of jobs) {
-        const interrupted = job.executionState === "running" || job.state !== "queued";
+        const preSubmitDebris = !job.submitIntentAt && Boolean(
+          job.submissionMayHaveOccurred ||
+          job.userTurnId ||
+          job.userTurnHash ||
+          job.assistantTurnId ||
+          job.assistantTurnHash
+        );
+        const interrupted = job.executionState === "running" ||
+          (job.submitIntentAt ? job.executionState !== "released" : (job.state !== "queued" || preSubmitDebris));
         if (!interrupted || Number(job.lastRecoveryGeneration || 0) >= generation) continue;
         const now = new Date().toISOString();
-        if (STATE_INDEX.get(job.state) < SUBMIT_INDEX) {
+        let executionKind = "pre_submit";
+        let executionState = "idle";
+        if (!job.submitIntentAt) {
           this.db.prepare(`
             UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
-              last_recovery_generation=?, version=version+1 WHERE id=?
+              last_recovery_generation=?, version=version+1,
+              submission_may_have_happened=0,
+              user_turn_id=NULL, user_turn_hash=NULL,
+              assistant_turn_id=NULL, assistant_turn_hash=NULL
+            WHERE id=?
           `).run(now, "resumed safely before submission", generation, job.id);
           this.db.prepare(`
             INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
@@ -2420,16 +2871,20 @@ export class StateStore extends EventEmitter {
           `).run(job.id, json({ recoveredFrom: job.state, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
           this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=?").run(now, job.chainId);
           recovered.push({ id: job.id, action: "requeued" });
-        } else if (job.userTurnId || job.userTurnHash) {
+        } else if (hasExactUserTurnProof(job)) {
+          executionKind = "monitor_only";
+          const recoveredState = PRE_SUBMIT_JOB_STATES.has(job.state) || job.state === "submit_intent"
+            ? "awaiting_response"
+            : job.state;
           this.db.prepare(`
-            UPDATE jobs SET state='queued', updated_at=?, recovery_action=?,
+            UPDATE jobs SET state=?, updated_at=?, recovery_action=?,
               last_recovery_generation=?, version=version+1 WHERE id=?
-          `).run(now, "reattach submitted turn without resending", generation, job.id);
-          this.db.prepare("UPDATE job_chains SET state='queued', updated_at=? WHERE id=?").run(now, job.chainId);
+          `).run(recoveredState, now, "reattach submitted turn without resending", generation, job.id);
+          this.db.prepare("UPDATE job_chains SET state='running', updated_at=? WHERE id=?").run(now, job.chainId);
           this.db.prepare(`
             INSERT INTO job_events(job_id,state,details_json,created_at,broker_instance_id,lease_generation)
-            VALUES (?, 'queued', ?, ?, ?, ?)
-          `).run(job.id, json({ monitorOnly: true, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(job.id, recoveredState, json({ monitorOnly: true, recoveryGeneration: generation }), now, this.brokerContext.instanceId, generation);
           recovered.push({ id: job.id, action: "monitor-only" });
         } else {
           this.transitionInCurrentTransaction(job.id, "submission_uncertain", {
@@ -2439,13 +2894,29 @@ export class StateStore extends EventEmitter {
           this.db.prepare("UPDATE jobs SET last_recovery_generation=? WHERE id=?").run(generation, job.id);
           this.quarantine(job.conversationKey, job.id, "Restart after submit_intent without a proven user turn");
           recovered.push({ id: job.id, action: "quarantined" });
+          executionState = "released";
         }
         this.db.prepare(`
-          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state='idle',
+          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state=?,
             execution_owner_instance_id=NULL, execution_lease_generation=NULL,
-            execution_started_at=NULL, execution_heartbeat_at=NULL WHERE job_id=?
-        `).run(job.id);
+            execution_started_at=NULL, execution_heartbeat_at=NULL,
+            execution_kind=? WHERE job_id=?
+        `).run(executionState, executionKind, job.id);
         changed.push(job.id);
+      }
+      const terminalClaims = this.db.prepare(`
+        SELECT a.job_id FROM job_attempts a JOIN jobs j ON j.id=a.job_id
+        WHERE a.execution_state='running'
+          AND j.state IN (${Array.from(TERMINAL_JOB_STATES).map(() => "?").join(",")})
+      `).all(...TERMINAL_JOB_STATES);
+      for (const row of terminalClaims) {
+        this.db.prepare(`
+          UPDATE job_attempts SET execution_epoch=execution_epoch+1, execution_state='released',
+            execution_owner_instance_id=NULL, execution_lease_generation=NULL,
+            execution_heartbeat_at=? WHERE job_id=? AND execution_state='running'
+        `).run(new Date().toISOString(), row.job_id);
+        recovered.push({ id: row.job_id, action: "released-terminal" });
+        changed.push(row.job_id);
       }
       this.db.prepare("UPDATE broker_state SET last_recovery_generation=?, updated_at=? WHERE id=1")
         .run(generation, new Date().toISOString());
