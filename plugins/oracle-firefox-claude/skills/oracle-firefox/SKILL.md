@@ -1,61 +1,41 @@
 ---
 name: oracle-firefox
-description: Durable ChatGPT Pro consultation through Firefox, macOS Chrome, or Safari for reviews, ZIPs, exact chats, continuations, downloads, and local evidence.
+description: Consult ChatGPT Pro through a local browser, continue exact chats, attach files, and retrieve answers or generated downloads with durable recovery.
 ---
 
 # Oracle Firefox
 
-Use the Oracle Firefox MCP tools.
+## Start and finish
 
-## Defaults
+1. Call `doctor`. Keep the selected browser. For login, read [setup](references/setup.md). Change browsers only at the user's request, with zero outstanding jobs, through `select_browser` followed by `doctor`.
+2. Resolve the destination. Default to a new standalone chat; a project target means a new chat in that exact project. Continuation requires an exact existing chat title or URL. Read [targeting](references/targeting.md) for projects or existing chats; never guess ambiguous matches.
+3. Choose one completion handoff below. Start with `consult_start` or `continue_chat_start` and a fresh authorization UUID. Default to `modelRequirement: "pro"`, `responseFailurePolicy: "retry-once"`, and the three-hour response deadline (omit `responseTimeoutSeconds`). “Current model” selects `current`; “do not retry” selects `report`.
+4. Retain the root job ID, `jobHandle`, `completionHandle`, `receiptRecoveryHandle`, and `requestDigest` privately in this task. Use `followRetries: true` for status, wait, and result. One event-first wait is optional; pending means the existing job is still running.
+5. Consume terminal `job_result` and verify the normal answer locally. A claimed completion event is marked delivered after handoff and acknowledged after consuming the result. A local-data request is routed through [local evidence](references/local-evidence.md), including any approved abandonment.
 
-For consultations and continuations, unless the user explicitly overrides them:
+For generated-file discovery or download, use [downloads](references/downloads.md) instead of starting a chat message.
 
-- Use `consult_start` or `continue_chat_start` with a fresh UUID.
-- Set `modelRequirement: "pro"` and `responseFailurePolicy: "retry-once"`; only the broker may create the one eligible recovery continuation.
-- Use `followRetries: true` for status, wait, and result reads.
-- Choose exactly one harness-appropriate completion handoff and matching `completionMode`; do not repeatedly wake the model to poll.
-- Keep `jobHandle`, `completionHandle`, `receiptRecoveryHandle`, and `requestDigest` inside the originating task. Use the job handle after restart and `recover_start_receipt` only for the same committed start; never share handles.
-- Retrieve the terminal result and verify it locally.
+## Completion handoff
 
-Honor overrides: “current model” means `modelRequirement: "current"`; “do not retry” means `responseFailurePolicy: "report"`; “notify only” or “manual” disables automatic resumption.
+Choose one mode before starting; never select `harness` without its watcher or repeatedly wake the model to poll.
 
-## Safety invariants
+- **Codex:** `harness` with one heartbeat for the exact root job. Notify only on completion, failure, or required action. Report once, acknowledge delivery, and delete the heartbeat after terminal consumption. Without a heartbeat, use `notify` and tell the user to resume this task.
+- **Claude Code/Claudex:** `harness` with one job-specific Monitor or `oracle-firefox watch <job-id> --handle <job-handle> --completion-handle <completion-handle> --jsonl`; otherwise `notify`.
+- **Claude Desktop/no wake API:** `notify` posts a generic macOS notification; the user resumes the task to retrieve the result. It cannot wake the model.
+- **User requests manual or notify-only:** honor `manual` or `notify`, without automatic resumption or another watcher.
 
-- One authorization permits at most one Send-button click. A retry-once recovery uses its own deterministic child authorization; never create or send a duplicate recovery yourself.
-- Never replay the original request after `submit_intent` or whenever `submissionMayHaveOccurred` is true. A timeout, disconnect, plugin reload, pending receipt, or unknown result is not permission to submit again.
-- Never click or request Answer now, Regenerate/Try again, Continue generation, Stop, or Enter-as-send. Never clear, replace, or overwrite an existing draft or foreign attachment.
-- Require one exact destination. Never guess a project or conversation from a fuzzy, partial, or duplicate match.
-- Respect cooldown, response-failure, monitor-reattachment, input, quarantine, receipt, and upgrade states exactly as returned.
-- Send the smallest set. `files` bundles UTF-8 text; archives require explicit `zipFiles`. Use an absolute `cwd` and narrow selections. Never attach secrets or unrelated material; inspect inputs even though Oracle validates ZIPs and exact manifests.
-- Attachment processing may be slow. Do not resubmit while attachments are loading.
-- Never expose cookie values, signed download URLs, browser-profile contents, or private request/response artifacts. Import cookies only after explicit user consent.
-- A job UUID is routing metadata, not authority. Use only jobs started by this task or explicitly resumed with their capability; `list_jobs` is session-scoped.
-- Never manage a browser or the broker outside Oracle tools. Never switch browsers while a job is outstanding. On broker errors, preserve handles and follow the returned recovery action.
+## Recovery
 
-## Route the task
+For blocked jobs, lost receipts, draft errors, restarts, cooldowns, uncertainty, quarantine, or upgrades, read [recovery](references/recovery.md) and follow the structured recovery action.
 
-1. Call `doctor`. Keep the selected browser unless the user requests another. To change it, require zero outstanding jobs, call `select_browser` once, then call `doctor` again; never kill or restart the broker. For readiness or login, read [setup and login](references/setup.md).
-2. For generated-file discovery or download, do not send a chat message; read [exact generated-file downloads](references/downloads.md) and use that workflow instead.
-3. Resolve the destination:
-   - No continuation language or chat target means a new chat; without a project target it is standalone.
-   - A named project without a chat means a new chat in that exact project.
-   - Continue/follow-up wording requires an exact existing chat title or conversation URL.
-   For a project or existing chat, read [exact project and chat targeting](references/targeting.md) before resolving or sending.
-4. Choose the completion handoff before starting:
-   - **Codex:** set `completionMode: "harness"`; when supported, attach one heartbeat to the root job. Stay silent while pending, retrieve/report once terminal, then delete it.
-   - **Claude Code/Claudex:** set `completionMode: "harness"`; use one job-specific Monitor or `oracle-firefox watch <job-id> --handle <job-handle> --completion-handle <completion-handle> --jsonl`. Without auto-resume, use notification mode.
-   - **Claude Desktop/no wake API:** set `completionMode: "notify"`; the broker posts one generic macOS notification, then the user resumes the chat and the agent calls `job_result`. A notification cannot wake Claude's model.
-   - **Explicit manual mode:** set `completionMode: "manual"` and create no watcher.
-   Never combine handoffs or poll repeatedly.
-5. Call `consult_start` or `continue_chat_start`. Keep the root id and all private receipt/job/completion fields. If receipt delivery is lost, use `recover_start_receipt`, never another authorization. Optionally make one event-first wait; pending leaves the job running.
-6. Call `job_result` once terminal, following retries, and verify a normal answer locally.
-   If you directly claimed a subscription event, mark it delivered after the handoff and acknowledge it only after consuming the result.
-7. Before acting on a pending receipt, `blockedReason`, attention item, retry, restart, uncertainty, quarantine, cancellation, or upgrade error, read [recovery and exceptional states](references/recovery.md).
-8. If the result is `assistantDisposition: "local_data_request"`, read [local-evidence replies](references/local-evidence.md) before any check, reply, or explicitly approved abandonment.
+A timeout or disconnect never authorizes another Send. After `submit_intent` or `submissionMayHaveOccurred: true`, recovery is read-only reconciliation or monitor-only reattachment. Use the saved job handle after restart; use `recover_start_receipt` for a lost receipt from the same committed start. Never replay the original request or create a duplicate recovery continuation. Only the broker creates the single eligible retry-once child.
 
-## Completion and scope
+## Boundaries
 
-A normal answer is complete only when `job_result` returns the terminal logical result. If the result is anything else, do not improvise; use the recovery reference. A positively classified response failure is not ordinary prose containing failure-like words, and an uncertain submission requires read-only reconciliation before acknowledgement or a fresh write.
+- Each authorization permits at most one Send click. Never use Answer now, Regenerate/Try again, Continue generation, Stop, or Enter-as-send.
+- Existing drafts require explicit authorization for this exact start with `discardExistingDraft: true`; that option never covers attachments. The broker may roll back its own unchanged text-only edit before Send when that execution fails. Do not clear drafts through another browser tool.
+- Use absolute `cwd` and narrow file selections. `files` bundles UTF-8 text; archives require explicit `zipFiles`. Inspect inputs for secrets and unrelated material. Wait for attachment processing without resubmitting.
+- Keep handles, cookies, signed download URLs, profile data, and private request/response artifacts private. Cookie import requires explicit consent. A UUID alone grants no job access; only use jobs owned by this task or explicitly resumed with their capability.
+- Manage the broker and its browser through Oracle tools. Never kill/restart them to clear an error or switch browsers with outstanding jobs. Do not mutate ChatGPT projects or expose the broker to the network.
 
-Oracle Firefox keeps its compatibility name while coordinating ChatGPT through one selected local browser. Firefox and native Chrome use dedicated persistent profiles. Safari is visible, serialized, isolated from normal Safari data, and loses authentication when its automation session ends; never imply otherwise. Do not treat Oracle as an API, expose the broker to the network, or mutate ChatGPT projects. Tool schemas and returned fields are authoritative.
+Firefox and native Chrome use dedicated persistent profiles. Safari is visible and serialized, is isolated from normal Safari data, and loses authentication when its automation session ends. Tool schemas and returned fields are authoritative.

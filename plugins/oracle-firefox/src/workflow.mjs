@@ -9,8 +9,10 @@ import { codedError, structuredError } from "./errors.mjs";
 import {
   attachmentManifestKey,
   assistantSnapshot,
+  clearOwnedComposerDraft,
   findChats,
   insertComposerText,
+  installChatGptCooldownObserver,
   inspectComposerState,
   launchFirefox,
   listProjects,
@@ -297,6 +299,7 @@ export async function prepareJobRequest(operation, input) {
     responseTimeoutSeconds,
     attachmentTimeoutSeconds,
     modelRequirement,
+    discardExistingDraft: input.discardExistingDraft === true,
     maxAutomaticEvidenceReplies,
     responseFailurePolicy,
     maxAutomaticResponseRetries: responseFailurePolicy === "retry-once" ? 1 : 0,
@@ -821,7 +824,9 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
     }
     const attachmentManifest = attachmentPaths.map((attachmentPath) => path.basename(attachmentPath));
     transitionExecution(store, executionClaim, job.id, "attachment_processing", { attachmentManifest });
-    await browserManager.withInputFocus(lease, () => insertComposerText(lease.page, composerPrompt));
+    await browserManager.withInputFocus(lease, () => insertComposerText(lease.page, composerPrompt, {
+      discardExistingDraft: job.request.discardExistingDraft === true,
+    }));
     if (attachmentPaths.length > 0) {
       await uploadAttachmentFiles(lease.page, attachmentPaths, {
         timeoutMs: job.request.attachmentTimeoutSeconds * 1_000,
@@ -867,6 +872,7 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
           }
           const finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
           triggerFailpoint("after_model_verification");
+          await installChatGptCooldownObserver(lease.page);
           (executionClaim ? store.consumeSubmitPermitClaimed.bind(store, executionClaim) : store.consumeSubmitPermit.bind(store, job.id))(
             submitPermit.id,
             { modelEvidence: finalModelEvidence, submittedMessageHash: semanticTextHash(composerPrompt) },
@@ -954,6 +960,19 @@ export async function executeJob({ jobId, store, browserManager, beforeSubmit, e
     }
     if (current.state === "cancelled_pre_submit") throw error;
     if (executionClaim && current.executionKind === "monitor_only") throw error;
+    if (lease && !current.submitIntentAt && !current.submissionMayHaveOccurred) {
+      let timer;
+      try {
+        await Promise.race([
+          browserManager.withInputFocus(lease, async () => {
+            if (executionClaim) store.assertExecution(executionClaim);
+            await clearOwnedComposerDraft(lease.page);
+          }),
+          new Promise((resolve) => { timer = setTimeout(resolve, 2_000); }),
+        ]);
+      } catch { /* Preserve the original failure when cleanup is unavailable. */ }
+      finally { clearTimeout(timer); }
+    }
     const failed = executionClaim ? store.markFailureClaimed(executionClaim, error) : store.markFailure(job.id, error);
     await writeFinalMetadata(failed, {
       jobId: failed.id,

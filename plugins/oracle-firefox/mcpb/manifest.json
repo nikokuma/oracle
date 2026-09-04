@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "oracle-firefox",
   "display_name": "Oracle Firefox",
-  "version": "1.7.0",
+  "version": "1.7.2",
   "description": "Capability-isolated ChatGPT Pro consultation with durable receipt recovery, attention routing, ZIP uploads, and downloads through Firefox, native macOS Chrome, or Safari.",
   "long_description": "One identity-locked per-user broker coordinates Codex, Claude Code, Claudex, and Claude Desktop through one safely selected browser backend. Firefox remains the compatibility default, native macOS Chrome is bundle-and-signature verified, and Safari uses a serialized visible WebDriver session. Capability-owned logical chains retain same-chat FIFO, recoverable start receipts, session-scoped attention, durable completion, exact-turn monitor-only recovery, and the one-send boundary across five qualified different-chat slots.\n\nThe bundle never contains login cookies. Firefox and Chrome use separate dedicated local profiles; Safari uses an isolated automation session.",
   "author": {

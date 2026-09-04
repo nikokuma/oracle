@@ -17,6 +17,8 @@ import {
 
 const execFileAsync = promisify(execFile);
 const ORACLE_APPROVED_ATTACHMENTS = new WeakMap();
+const ORACLE_OWNED_DRAFTS = new WeakMap();
+const CHATGPT_COOLDOWN_PATTERN = /(?:you(?:'|’)?re making )?too many requests(?: too quickly)?|temporarily rate[- ]limited|please try again (?:in a (?:few )?minutes?|later)|(?:you(?:'|’)?ve|you have) (?:reached|hit) (?:the |your )?(?:current )?(?:usage |message |pro )?limit|please wait before trying again/iu;
 
 export const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -121,6 +123,12 @@ export function attachmentManifestKey(values = []) {
     .map((value) => String(value).trim().replace(/\(\d+\)(?=\.[^.]+$)/u, ""))
     .sort()
     .join("\u0000");
+}
+
+function exactHashMatches(turns, expectedHash) {
+  return turns.filter((turn) =>
+    turn.role === "user" && semanticTextHash(turn.text) === expectedHash
+  );
 }
 
 export function normalizeConversationTitle(value) {
@@ -805,6 +813,7 @@ export async function launchFirefox({ headless = false, profileDir = profileDire
     executablePath,
     userDataDir: profileDir,
     headless,
+    args: ["-no-remote"],
     defaultViewport: { width: 1280, height: 900 },
     ...(downloadPath ? {
       extraPrefsFirefox: {
@@ -1153,24 +1162,79 @@ export async function inspectComposerState(page) {
   );
 }
 
-export async function insertComposerText(page, text, { expectedAttachments } = {}) {
+async function clearComposerText(page) {
+  const editor = await waitForComposer(page);
+  await editor.click();
+  await editor.evaluate((node) => {
+    node.focus();
+    if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) {
+      const prototype = node instanceof HTMLTextAreaElement
+        ? HTMLTextAreaElement.prototype
+        : HTMLInputElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+      if (setter) setter.call(node, "");
+      else node.value = "";
+    } else {
+      node.replaceChildren();
+    }
+    node.dispatchEvent(new InputEvent("input", {
+      bubbles: true,
+      data: null,
+      inputType: "deleteContentBackward",
+    }));
+    node.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await delay(250);
+}
+
+export async function insertComposerText(page, text, {
+  expectedAttachments,
+  discardExistingDraft = false,
+} = {}) {
   const content = String(text);
   if (!content) throw new Error("Cannot submit an empty prompt.");
   const before = await inspectComposerState(page);
-  if (normalizeSemanticText(before.text)) {
-    throw new Error("ChatGPT composer contains an existing draft. Refusing to clear or overwrite it.");
-  }
   const expected = [...(expectedAttachments ?? ORACLE_APPROVED_ATTACHMENTS.get(page) ?? [])].sort();
   if (before.attachments.join("\u0000") !== expected.join("\u0000")) {
     throw new Error(`ChatGPT composer already contains foreign attachments: ${before.attachments.join(", ")}.`);
+  }
+  if (normalizeSemanticText(before.text)) {
+    if (discardExistingDraft !== true) {
+      throw codedError(
+        "COMPOSER_DRAFT_PRESENT",
+        "ChatGPT composer contains an existing draft. Explicit user authorization is required to discard it.",
+        {
+          safeToRetry: false,
+          recoveryAction: "Ask the user to clear the draft manually or explicitly authorize discardExistingDraft for one new start.",
+          details: { discardExistingDraftAvailable: true },
+        },
+      );
+    }
+    await clearComposerText(page);
+    const cleared = await inspectComposerState(page);
+    if (normalizeSemanticText(cleared.text)) {
+      throw codedError(
+        "COMPOSER_CLEAR_FAILED",
+        "The explicitly authorized composer draft could not be cleared; no message was sent.",
+        { safeToRetry: false },
+      );
+    }
+    if (cleared.attachments.join("\u0000") !== expected.join("\u0000")) {
+      throw codedError(
+        "ATTACHMENT_MISMATCH",
+        "The composer attachment set changed while clearing the explicitly authorized text draft; no message was sent.",
+        { safeToRetry: false },
+      );
+    }
   }
   const editor = await waitForComposer(page);
   await editor.click();
   const editorKind = await editor.evaluate((node) =>
     node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement ? "value" : "contenteditable",
   );
+  let insertedFingerprint;
   if (editorKind === "value") {
-    await editor.evaluate((node, value) => {
+    insertedFingerprint = await editor.evaluate((node, value) => {
       node.focus();
       const prototype =
         node instanceof HTMLTextAreaElement
@@ -1187,6 +1251,7 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
         }),
       );
       node.dispatchEvent(new Event("change", { bubbles: true }));
+      return node.value;
     }, content);
   } else {
     const inserted = await editor.evaluate((node, value) => {
@@ -1202,16 +1267,19 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
       // Insert the complete authorized value as one edit. Per-character key
       // events let ProseMirror consume prefixes such as `1. ` or `- ` as
       // Markdown shortcuts, changing the draft before the exact-text guard.
-      return document.execCommand("insertText", false, value);
+      const accepted = document.execCommand("insertText", false, value);
+      return { accepted, fingerprint: node.innerHTML };
     }, content);
-    if (!inserted) {
+    if (!inserted.accepted) {
       throw codedError(
         "COMPOSER_INSERT_FAILED",
         "Firefox refused the atomic composer insertion; no message was sent.",
         { safeToRetry: true },
       );
     }
+    insertedFingerprint = inserted.fingerprint;
   }
+  ORACLE_OWNED_DRAFTS.set(page, { editor, fingerprint: insertedFingerprint });
   await delay(250);
   const observed = await readComposerText(page);
   const expectedNormalized = normalizeSemanticText(content);
@@ -1227,6 +1295,35 @@ export async function insertComposerText(page, text, { expectedAttachments } = {
     );
   }
   return observed.length;
+}
+
+// Roll back only an unchanged, text-only edit made by this page execution.
+// No durable claim is inferred from matching prompt text in a later job.
+export async function clearOwnedComposerDraft(page) {
+  const owned = ORACLE_OWNED_DRAFTS.get(page);
+  ORACLE_OWNED_DRAFTS.delete(page);
+  if (!owned) return false;
+  try {
+    return await owned.editor.evaluate((node, fingerprint) => {
+      if (!node.isConnected || ("value" in node ? node.value : node.innerHTML) !== fingerprint) return false;
+      const root = node.closest('[data-testid*="composer"]') || node.closest("form") || node.parentElement;
+      if (!root || root.querySelector('[data-testid*="attachment"], [data-testid*="file"], [aria-label*="Remove attachment" i], [title*="attachment" i]')) return false;
+      if (Array.from(root.querySelectorAll('input[type="file"]')).some((input) => input.files?.length)) return false;
+      if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) {
+        const prototype = node instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+        if (setter) setter.call(node, "");
+        else node.value = "";
+      } else {
+        node.replaceChildren();
+      }
+      node.dispatchEvent(new InputEvent("input", { bubbles: true, data: null, inputType: "deleteContentBackward" }));
+      node.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    }, owned.fingerprint);
+  } finally {
+    await owned.editor.dispose().catch(() => undefined);
+  }
 }
 
 export async function uploadAttachmentFiles(page, filePaths, { timeoutMs = 600_000 } = {}) {
@@ -1436,12 +1533,28 @@ export async function waitForUserMessage(
       hash: expectedHash,
       attachments: expectedManifest,
     });
-    const match = matchIndex >= 0 ? newUsers[matchIndex] : null;
+    let match = matchIndex >= 0 ? newUsers[matchIndex] : null;
+    let attachmentEvidence = match ? "rendered_manifest" : null;
+    if (!match && expectedManifest.length > 0) {
+      // ChatGPT intermittently omits attachment chips from the submitted user
+      // turn even though the exact manifest was verified upload-ready before
+      // the one authorized click. Accept only one exact new text turn whose
+      // rendered manifest is absent; a visible foreign/different manifest
+      // still fails closed.
+      const missingManifestMatches = exactHashMatches(newUsers, expectedHash)
+        .filter((turn) => Array.isArray(turn.attachments) && turn.attachments.length === 0);
+      if (missingManifestMatches.length === 1) {
+        [match] = missingManifestMatches;
+        attachmentEvidence = "pre_submit_verified_post_submit_unavailable";
+      }
+    }
     if (match) {
-      if (!requireCanonicalUrl) return { ...latest, userTurn: { ...match, hash: expectedHash } };
+      if (!requireCanonicalUrl) {
+        return { ...latest, userTurn: { ...match, hash: expectedHash, attachmentEvidence } };
+      }
       try {
         normalizeConversationUrl(latest.url);
-        return { ...latest, userTurn: { ...match, hash: expectedHash } };
+        return { ...latest, userTurn: { ...match, hash: expectedHash, attachmentEvidence } };
       } catch {
         // New project/standalone chats can render the submitted turn before
         // ChatGPT's SPA exposes the canonical /c/ URL. Keep observing without
@@ -1486,6 +1599,10 @@ export async function submitComposer(page) {
   if (!button) {
     throw new Error("A visible, enabled ChatGPT Send button was not found. No submission was attempted.");
   }
+  // Once the trusted click can occur, a draft must never be rolled back.
+  const owned = ORACLE_OWNED_DRAFTS.get(page);
+  ORACLE_OWNED_DRAFTS.delete(page);
+  await owned?.editor.dispose().catch(() => undefined);
   await button.click();
   await button.dispose();
   return "button";
@@ -1608,8 +1725,12 @@ export async function probeAssistantAfterTurn(page, userTurn, { includeContent =
       .replace(/[ \t]+\n/gu, "\n")
       .replace(/\n[ \t]+/gu, "\n")
       .trim();
-    const hash = (value) => {
+    const hash = async (value) => {
       const bytes = new TextEncoder().encode(normalize(value));
+      if (globalThis.crypto?.subtle) {
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+      }
       const words = [];
       const hashWords = [];
       const constants = [];
@@ -1654,7 +1775,7 @@ export async function probeAssistantAfterTurn(page, userTurn, { includeContent =
         const next = [a, b, c, d, e, f, g, h];
         for (let index = 0; index < 8; index += 1) hashWords[index] = (hashWords[index] + next[index]) | 0;
       }
-      return hashWords.map((word) => (word >>> 0).toString(16).padStart(8, "0")).join("");
+      return hashWords.slice(0, 8).map((word) => (word >>> 0).toString(16).padStart(8, "0")).join("");
     };
     const serializeUserSource = (node) => {
       if (node.nodeType === Node.TEXT_NODE) return node.textContent || "";
@@ -1815,16 +1936,23 @@ export async function waitForAssistantAfterTurn(
       stableSince = Date.now();
       terminalCycles = 0;
     }
-    if (probe.assistant && (
-      key !== `${cachedAssistant?.id || ""}:${cachedAssistant?.hash || ""}` ||
-      (terminalHint && terminalContentKey !== key)
-    )) {
+    if (terminalHint && Date.now() - stableSince >= stableMs && terminalContentKey !== key) {
       const content = await boundedAssistantTurnProbe(page, userTurn, { includeContent: true }, boundedTimeout);
       monitorMetrics.contentFetchCount += 1;
       monitorMetrics.maxProbeLatencyMs = Math.max(monitorMetrics.maxProbeLatencyMs, content.latencyMs);
       monitorMetrics.maxProbePayloadBytes = Math.max(monitorMetrics.maxProbePayloadBytes, content.payloadBytes);
+      const contentKey = content.assistant ? `${content.assistant.id || ""}:${content.assistant.hash}` : "";
+      if (contentKey !== key || content.stopVisible ||
+        !(content.assistant?.completionVisible || content.assistant?.errorIndicators?.length)) {
+        cachedAssistant = null;
+        terminalContentKey = "";
+        terminalCycles = 0;
+        stableSince = Date.now();
+        await delay(Math.min(500, Math.max(0, deadline - Date.now())));
+        continue;
+      }
       cachedAssistant = content.assistant;
-      if (terminalHint && content.assistant) terminalContentKey = key;
+      if (content.assistant) terminalContentKey = key;
     }
     const assistant = cachedAssistant ? {
       ...cachedAssistant,
@@ -1832,7 +1960,7 @@ export async function waitForAssistantAfterTurn(
       html: cachedAssistant.html || "",
     } : null;
     const responseFailure = classifyAssistantResponseFailure(assistant);
-    const terminal = terminalHint && assistant && !isPlaceholder(assistant.text) &&
+    const terminal = terminalHint && terminalContentKey === key && assistant && !isPlaceholder(assistant.text) &&
       (assistant.completionVisible || responseFailure);
     if (terminal) {
       terminalCycles += 1;
@@ -1858,7 +1986,7 @@ export async function waitForAssistantAfterTurn(
     } else {
       terminalCycles = 0;
     }
-    await delay(500);
+    await delay(Math.min(terminalHint ? 500 : 2_000, Math.max(0, deadline - Date.now())));
   }
   throw codedError(
     "RESPONSE_TIMEOUT",
@@ -1881,7 +2009,8 @@ export async function reconcileAssistantAfterTurn(page, userTurn) {
   const assistant = content.assistant;
   const responseFailure = classifyAssistantResponseFailure(assistant);
   const terminal = assistant && !isPlaceholder(assistant.text) &&
-    (assistant.completionVisible || responseFailure) && !probe.stopVisible;
+    (assistant.completionVisible || responseFailure) && !probe.stopVisible && !content.stopVisible &&
+    assistant.id === probe.assistant.id && assistant.hash === probe.assistant.hash;
   if (!terminal) return null;
   if (isChatGptCooldownText(assistant.text)) {
     throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
@@ -1909,24 +2038,71 @@ export async function reconcileAssistantAfterTurn(page, userTurn) {
 
 function isChatGptCooldownText(value) {
   const normalized = String(value ?? "").replace(/\s+/gu, " ").trim();
-  return /(?:you(?:'|’)?re making )?too many requests(?: too quickly)?|temporarily rate[- ]limited|please try again (?:in a (?:few )?minutes?|later)/iu.test(normalized);
+  return CHATGPT_COOLDOWN_PATTERN.test(normalized);
+}
+
+export async function installChatGptCooldownObserver(page) {
+  await page.evaluate(({ patternSource, patternFlags }) => {
+    const key = "__oracleFirefoxCooldownObserverV1";
+    const existing = globalThis[key];
+    existing?.observer?.disconnect?.();
+    const pattern = new RegExp(patternSource, patternFlags);
+    const state = { notices: [], observer: null };
+    const noticeContainer = (element) => element.closest([
+      '[role="alert"]',
+      '[role="status"]',
+      '[aria-live]',
+      '[data-sonner-toast]',
+      '[data-testid*="toast"]',
+      '[data-testid*="error"]',
+      '[class*="toast"]',
+      '[class*="notification"]',
+    ].join(","));
+    const record = (node) => {
+      const element = node instanceof HTMLElement
+        ? node
+        : node?.parentElement instanceof HTMLElement ? node.parentElement : null;
+      if (!element || element.closest('[data-message-author-role], [data-turn], [data-testid^="conversation-turn"]')) return;
+      const container = noticeContainer(element) || element;
+      const style = getComputedStyle(container);
+      if (!noticeContainer(element) && style.position !== "fixed" && style.position !== "absolute") return;
+      const text = String(container.innerText || container.textContent || "").replace(/\s+/gu, " ").trim();
+      if (!text || !pattern.test(text)) return;
+      state.notices.push({
+        id: container.getAttribute("data-testid") || container.getAttribute("data-sonner-toast") || container.id || null,
+        text: text.slice(0, 500),
+      });
+      if (state.notices.length > 8) state.notices.shift();
+    };
+    state.observer = new MutationObserver((records) => {
+      for (const recordEntry of records) {
+        for (const node of recordEntry.addedNodes) record(node);
+      }
+    });
+    state.observer.observe(document.documentElement, { childList: true, subtree: true });
+    globalThis[key] = state;
+  }, { patternSource: CHATGPT_COOLDOWN_PATTERN.source, patternFlags: CHATGPT_COOLDOWN_PATTERN.flags });
 }
 
 async function readChatGptCooldownNotice(page) {
-  return page.evaluate(() => {
+  return page.evaluate(({ patternSource, patternFlags }) => {
+    const pattern = new RegExp(patternSource, patternFlags);
+    const captured = globalThis.__oracleFirefoxCooldownObserverV1?.notices?.at(-1) || null;
+    if (captured) return captured;
     const visible = (node) =>
       node instanceof HTMLElement &&
       node.getBoundingClientRect().width > 0 &&
       node.getBoundingClientRect().height > 0;
     const notices = Array.from(
-      document.querySelectorAll('[role="alert"], [data-sonner-toast], [data-testid*="toast"], [data-testid*="error"]'),
+      document.querySelectorAll('[role="alert"], [role="status"], [aria-live], [data-sonner-toast], [data-testid*="toast"], [data-testid*="error"], [class*="toast"], [class*="notification"]'),
     ).filter(visible);
     const matched = notices
+      .filter((node) => !node.closest('[data-message-author-role], [data-turn], [data-testid^="conversation-turn"]'))
       .map((node) => ({
         id: node.getAttribute("data-testid") || node.getAttribute("data-sonner-toast") || node.id || null,
         text: (node.innerText || node.textContent || "").replace(/\s+/gu, " ").trim(),
       }))
-      .find((notice) => /too many requests(?: too quickly)?|temporarily rate[- ]limited|try again later/iu.test(notice.text));
+      .find((notice) => pattern.test(notice.text));
     return matched || null;
-  });
+  }, { patternSource: CHATGPT_COOLDOWN_PATTERN.source, patternFlags: CHATGPT_COOLDOWN_PATTERN.flags });
 }

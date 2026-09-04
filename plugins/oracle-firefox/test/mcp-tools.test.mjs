@@ -23,7 +23,7 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
   let brokerPid = null;
   try {
     await client.connect(transport);
-    assert.equal(client.getServerVersion()?.version, "1.7.0");
+    assert.equal(client.getServerVersion()?.version, "1.7.2");
     assert.match(client.getInstructions() || "", /one durable, identity-locked broker/u);
     assert.match(client.getInstructions() || "", /pending result never authorizes another send/u);
     const listed = await client.listTools();
@@ -76,6 +76,8 @@ test("bundled MCP initializes, lists the durable API, and performs doctor", { ti
       const tool = listed.tools.find((entry) => entry.name === name);
       assert.equal(tool.inputSchema.properties.zipFiles.type, "array", `${name} must expose raw ZIP inputs`);
       assert.equal(tool.inputSchema.properties.zipFiles.maxItems, 5, `${name} must cap ZIP attachment count`);
+      assert.equal(tool.inputSchema.properties.discardExistingDraft.type, "boolean", `${name} must expose explicit draft discard`);
+      assert.equal(tool.inputSchema.properties.discardExistingDraft.default, false, `${name} must fail closed by default`);
     }
     const status = await client.callTool({ name: "broker_status", arguments: {} });
     brokerPid = status.structuredContent.pid;

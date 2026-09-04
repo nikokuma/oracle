@@ -9,7 +9,7 @@ import { ORACLE_FIREFOX_VERSION } from "./build-info.mjs";
 import { structuredError } from "./errors.mjs";
 
 const harnessName = process.env.ORACLE_FIREFOX_HARNESS || "codex-mcp";
-const defaultCompletionMode = harnessName === "claude-desktop-mcp" ? "notify" : "manual";
+const defaultCompletionMode = "notify";
 const canonicalTools = new Map(pluginMeta.tools.map((tool) => [tool.name, tool]));
 
 function prepareExecutionParams(params) {
@@ -35,12 +35,13 @@ const projectFields = {
 };
 const executionFields = {
   modelRequirement: z.enum(["pro", "current"]).default("pro").describe("Require and verify Pro by default; current explicitly preserves the visible model."),
-  responseTimeoutSeconds: z.number().int().min(30).max(86400).default(10800),
+  responseTimeoutSeconds: z.number().int().min(30).max(86400).default(10800).describe("Maximum response monitoring time. For ChatGPT Pro, omit this field to keep the three-hour default; do not shorten it unless the user explicitly requests a shorter deadline."),
   attachmentTimeoutSeconds: z.number().int().min(30).max(1800).default(600),
   maxAutomaticEvidenceReplies: z.number().int().min(0).max(3).default(3),
   responseFailurePolicy: z.enum(["report", "retry-once"]).default("report").describe("Report terminal response failures, or authorize one durable recovery continuation for narrowly classified retryable failures."),
-  completionMode: z.enum(["manual", "notify", "harness"]).default(defaultCompletionMode).describe("Choose manual retrieval, a local OS notification, or a harness-owned completion watcher. Claude Desktop defaults to notify because a notification cannot wake its model."),
+  completionMode: z.enum(["manual", "notify", "harness"]).default(defaultCompletionMode).describe("Choose manual retrieval, a local OS notification, or a harness-owned completion watcher. Use harness only when the caller actually establishes one exact job watcher; otherwise notify is the safe default."),
   headless: z.boolean().default(false),
+  discardExistingDraft: z.boolean().default(false).describe("Set true only after the user explicitly authorizes discarding pre-existing composer text for this start. Never removes attachments."),
 };
 const zipFields = {
   zipFiles: z.array(z.string()).max(5).default([]).describe("Explicit .zip paths to snapshot, validate, and upload unchanged; paths are resolved from cwd."),

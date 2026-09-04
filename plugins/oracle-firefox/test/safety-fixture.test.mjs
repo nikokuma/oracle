@@ -7,8 +7,10 @@ import {
   attachmentManifestKey,
   assistantSnapshot,
   classifyAssistantResponseFailure,
+  clearOwnedComposerDraft,
   inspectComposerState,
   insertComposerText,
+  installChatGptCooldownObserver,
   launchFirefox,
   normalizeSemanticText,
   probeAssistantAfterTurn,
@@ -21,13 +23,13 @@ import {
   waitForAssistantAfterTurn,
   waitForUserMessage,
 } from "../src/firefox.mjs";
-import { ensureModelRequirement } from "../src/model.mjs";
+import { ensureModelRequirement, verifyModelRequirement } from "../src/model.mjs";
 
 async function withPage(html, callback) {
   const profile = await mkdtemp(path.join(os.tmpdir(), "oracle-firefox-safety-"));
   const browser = await launchFirefox({ headless: true, profileDir: profile });
   try {
-    const page = (await browser.pages())[0] || (await browser.newPage());
+    const page = await browser.newPage();
     await page.setContent(html);
     return await callback(page);
   } finally {
@@ -45,6 +47,34 @@ test("refuses foreign drafts and never uses Enter when Send is disabled", async 
     await assert.rejects(() => insertComposerText(page, "authorized"), /existing draft/u);
     await assert.rejects(() => submitComposer(page), /No submission was attempted/u);
     assert.equal(await page.evaluate(() => window.enterCount), 0);
+  });
+});
+
+test("discards an existing text draft only with explicit one-shot authorization", async () => {
+  await withPage(`
+    <textarea id="prompt-textarea">user draft</textarea>
+    <button data-testid="send-button" disabled>Send</button>
+    <script>window.enterCount=0; document.addEventListener('keydown', event => { if (event.key === 'Enter') window.enterCount += 1; });</script>
+  `, async (page) => {
+    await insertComposerText(page, "authorized", { discardExistingDraft: true });
+    assert.equal(await readComposerText(page), "authorized");
+    assert.equal(await page.evaluate(() => window.enterCount), 0);
+  });
+});
+
+test("explicit text-draft discard never removes a foreign attachment", async () => {
+  await withPage(`
+    <form>
+      <textarea id="prompt-textarea">user draft</textarea>
+      <div data-testid="attachment-chip" aria-label="Remove attachment foreign.txt">foreign.txt</div>
+    </form>
+  `, async (page) => {
+    await assert.rejects(
+      () => insertComposerText(page, "authorized", { discardExistingDraft: true }),
+      /foreign attachments/u,
+    );
+    assert.equal(await readComposerText(page), "user draft");
+    assert.equal((await inspectComposerState(page)).attachments.includes("foreign.txt"), true);
   });
 });
 
@@ -423,11 +453,62 @@ test("correlates ChatGPT duplicate-suffixed attachment names exactly", async () 
   });
 });
 
+test("accepts one exact submitted turn when ChatGPT omits the rendered attachment chip", async () => {
+  await withPage(`
+    <main><article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="attachment-user">
+      <div data-message-content>attached prompt</div>
+    </article></main>
+  `, async (page) => {
+    const confirmed = await waitForUserMessage(page, 0, "attached prompt", {
+      expectedAttachments: ["review.zip"],
+      timeoutMs: 1_000,
+      requireCanonicalUrl: false,
+    });
+    assert.equal(confirmed.userTurn.id, "attachment-user");
+    assert.equal(confirmed.userTurn.attachmentEvidence, "pre_submit_verified_post_submit_unavailable");
+  });
+});
+
+test("still refuses a visible foreign post-submit attachment manifest", async () => {
+  await withPage(`
+    <main><article data-testid="conversation-turn-1" data-message-author-role="user" data-message-id="attachment-user">
+      <div role="group" aria-label="foreign.zip"></div>
+      <div data-message-content>attached prompt</div>
+    </article></main>
+  `, async (page) => {
+    await assert.rejects(
+      () => waitForUserMessage(page, 0, "attached prompt", {
+        expectedAttachments: ["review.zip"],
+        timeoutMs: 100,
+        requireCanonicalUrl: false,
+      }),
+      (error) => error.code === "SUBMISSION_UNCERTAIN",
+    );
+  });
+});
+
 test("classifies ChatGPT's visible request throttle as account cooldown", async () => {
   await withPage(`
     <main></main>
     <div role="alert" style="width:200px;height:30px">You're making too many requests too quickly. Try again later.</div>
   `, async (page) => {
+    await assert.rejects(
+      () => waitForUserMessage(page, 0, "authorized prompt", { timeoutMs: 1_000, requireCanonicalUrl: false }),
+      (error) => error.code === "ACCOUNT_COOLDOWN" && error.submissionMayHaveOccurred === false,
+    );
+  });
+});
+
+test("retains a transient ChatGPT cooldown notice that disappears before the next poll", async () => {
+  await withPage("<main></main>", async (page) => {
+    await installChatGptCooldownObserver(page);
+    await page.evaluate(() => {
+      const notice = document.createElement("div");
+      notice.setAttribute("role", "alert");
+      notice.textContent = "You've reached your current Pro limit. Please wait before trying again.";
+      document.body.append(notice);
+      notice.remove();
+    });
     await assert.rejects(
       () => waitForUserMessage(page, 0, "authorized prompt", { timeoutMs: 1_000, requireCanonicalUrl: false }),
       (error) => error.code === "ACCOUNT_COOLDOWN" && error.submissionMayHaveOccurred === false,
@@ -489,4 +570,99 @@ test("classifies a visible generation error but never marks it retryable from pr
     text: "Something went wrong in the old implementation, so here is the corrected plan with all requested details.",
     errorIndicators: [],
   }), null);
+});
+
+
+test("hash-only recovery binds Unicode and multiline messages after turn IDs change", async () => {
+  const prompt = "résumé 🧿\nsecond line";
+  await withPage(`<main>
+    <article data-message-author-role="user" data-message-id="new-id"><div data-message-content>${prompt}</div></article>
+    <article data-message-author-role="assistant" data-message-id="answer"><div class="markdown">Recovered answer</div><button data-testid="copy-turn-action-button">Copy</button></article>
+  </main>`, async (page) => {
+    const probe = await probeAssistantAfterTurn(page, { id: "obsolete-id", hash: semanticTextHash(prompt) });
+    assert.equal(probe.userMatchCount, 1);
+    assert.equal(probe.assistant.hash, semanticTextHash("Recovered answer"));
+    const result = await reconcileAssistantAfterTurn(page, { hash: semanticTextHash(prompt) });
+    assert.equal(result?.text, "Recovered answer");
+  });
+});
+
+test("streaming probes defer full content until the exact answer is complete", async () => {
+  await withPage(`<main>
+    <article data-message-author-role="user" data-message-id="user"><div data-message-content>question</div></article>
+    <article data-message-author-role="assistant" data-message-id="answer"><div class="markdown">draft 0</div></article>
+    <button data-testid="stop-button">Stop</button>
+  </main>`, async (page) => {
+    await page.evaluate(() => {
+      let count = 0;
+      const timer = setInterval(() => {
+        document.querySelector('.markdown').textContent = 'draft ' + ++count;
+        if (count === 6) {
+          clearInterval(timer);
+          document.querySelector('.markdown').textContent = 'Complete answer';
+          document.querySelector('[data-testid="stop-button"]').remove();
+          document.querySelector('[data-message-id="answer"]').insertAdjacentHTML('beforeend', '<button data-testid="copy-turn-action-button">Copy</button>');
+        }
+      }, 200);
+    });
+    const result = await waitForAssistantAfterTurn(page, { id: "user" }, { timeoutMs: 6_000, stableMs: 100 });
+    assert.equal(result.text, "Complete answer");
+    assert.equal(result.monitorMetrics.contentFetchCount, 1);
+  });
+});
+
+test("final reconciliation rejects a response that changes between metadata and content reads", async () => {
+  let call = 0;
+  const page = { evaluate: async () => ({
+    userMatchCount: 1, assistantCount: 1, stopVisible: false,
+    assistant: { id: "answer", hash: ++call === 1 ? "old" : "new", text: "changed answer", completionVisible: true, errorIndicators: [] },
+  }) };
+  assert.equal(await reconcileAssistantAfterTurn(page, { id: "user" }), null);
+});
+
+test("pre-send rollback removes only this execution's unchanged text-only draft", async () => {
+  await withPage('<form><textarea id="prompt-textarea"></textarea><button data-testid="send-button">Send</button></form>', async (page) => {
+    await insertComposerText(page, "authorized");
+    assert.equal(await clearOwnedComposerDraft(page), true);
+    assert.equal(await readComposerText(page), "");
+    await insertComposerText(page, "authorized");
+    await page.evaluate(() => { document.querySelector('textarea').value = 'human edit'; });
+    assert.equal(await clearOwnedComposerDraft(page), false);
+    assert.equal(await readComposerText(page), "human edit");
+    await page.evaluate(() => { document.querySelector('textarea').value = ''; });
+    await insertComposerText(page, "authorized");
+    await page.evaluate(() => { document.querySelector('form').insertAdjacentHTML('beforeend', '<div data-testid="attachment-chip">file.zip</div>'); });
+    assert.equal(await clearOwnedComposerDraft(page), false);
+    assert.equal(await readComposerText(page), "authorized");
+    await page.evaluate(() => { document.querySelector('[data-testid="attachment-chip"]').remove(); document.querySelector('textarea').value = ''; });
+    await insertComposerText(page, "authorized");
+    await submitComposer(page);
+    assert.equal(await clearOwnedComposerDraft(page), false);
+  });
+});
+
+
+test("failed insertion can roll back its own synchronously transformed draft", async () => {
+  await withPage(`<form><textarea id="prompt-textarea"></textarea></form>
+    <script>document.querySelector('textarea').addEventListener('input', (event) => { if (event.inputType === 'insertFromPaste') event.target.value = 'transformed draft'; });</script>
+  `, async (page) => {
+    await assert.rejects(() => insertComposerText(page, "authorized"), { code: "COMPOSER_MISMATCH" });
+    assert.equal(await clearOwnedComposerDraft(page), true);
+    assert.equal(await readComposerText(page), "");
+  });
+});
+
+
+test("Pro verification accepts compact model labels and never sidebar chat titles", async () => {
+  await withPage(`<aside><button aria-label="Pin Search AI Models for Logic Pro">Pro chat</button></aside>
+    <form><button class="__composer-pill">6Pro</button><textarea id="prompt-textarea"></textarea></form>
+  `, async (page) => {
+    const evidence = await verifyModelRequirement(page);
+    assert.equal(evidence.resolvedLabel, "6Pro");
+    assert.equal(evidence.source, "button.__composer-pill");
+    await page.evaluate(() => { document.querySelector('.__composer-pill').textContent = 'Instant'; });
+    await assert.rejects(() => verifyModelRequirement(page), { code: "MODEL_REQUIREMENT_NOT_MET" });
+    await page.evaluate(() => { document.querySelector('.__composer-pill').remove(); });
+    await assert.rejects(() => ensureModelRequirement(page), { code: "MODEL_REQUIREMENT_NOT_MET" });
+  });
 });

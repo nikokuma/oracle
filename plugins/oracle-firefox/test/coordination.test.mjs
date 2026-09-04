@@ -123,6 +123,60 @@ test("an exact fingerprint permits manual orphaned-quarantine acknowledgement wi
   });
 });
 
+test("acknowledging uncertainty releases logical outstanding accounting without rewriting history", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex" });
+    const caller = authenticate(store, session, "codex");
+    const owned = ownedJob(store, caller);
+    makeResponseUncertain(store, owned.job);
+
+    assert.equal(store.requireJob(owned.job.id).state, "response_uncertain");
+    assert.equal(store.logicalQueueCounts().blockedUncertainty, 1);
+    assert.equal(store.logicalQueueCounts().logicalOutstanding, 1);
+
+    store.acknowledge(owned.job.id);
+    assert.equal(store.requireJob(owned.job.id).state, "response_uncertain");
+    assert.deepEqual(store.logicalQueueCounts(), {
+      executing: 0,
+      monitoring: 0,
+      runnableQueued: 0,
+      blockedAttention: 0,
+      blockedUncertainty: 0,
+      logicalOutstanding: 0,
+    });
+  });
+});
+
+test("newer chain events supersede stale completion deliveries and expired claims are reclaimable", async () => {
+  await withStore(async (store) => {
+    const session = store.createOwnerSession({ harness: "codex" });
+    const caller = authenticate(store, session, "codex");
+    const owned = ownedJob(store, caller);
+    makeResponseUncertain(store, owned.job);
+
+    const stale = store.claimCompletion(owned.subscription.handle, caller, { claimSeconds: 10 });
+    assert.equal(stale.state, "response_uncertain");
+    store.reopenForMonitoring(owned.job.id, {
+      userTurnId: "legacy-user-turn",
+      userTurnHash: "submitted-hash",
+    });
+    store.transition(owned.job.id, "completed", { result: { answer: "done" } });
+
+    assert.throws(
+      () => store.acknowledgeCompletion(owned.subscription.handle, caller, stale.deliveryId),
+      (error) => error.code === "COMPLETION_SUPERSEDED",
+    );
+    const current = store.claimCompletion(owned.subscription.handle, caller, { claimSeconds: 10 });
+    assert.equal(current.state, "completed");
+    store.db.prepare("UPDATE completion_deliveries SET claim_expires_at=? WHERE id=?")
+      .run("2000-01-01T00:00:00.000Z", current.deliveryId);
+    assert.equal(store.requeueExpiredSubscriberClaims(), 1);
+    const reclaimed = store.claimCompletion(owned.subscription.handle, caller, { claimSeconds: 10 });
+    assert.equal(reclaimed.deliveryId, current.deliveryId);
+    assert.equal(reclaimed.state, "completed");
+  });
+});
+
 test("orphaned acknowledgement requires both lost-capability and exact-chat manual-inspection confirmation", async () => {
   await withStore(async (store) => {
     const ownerSession = store.createOwnerSession({ harness: "codex" });

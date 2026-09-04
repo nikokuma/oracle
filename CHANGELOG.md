@@ -4,6 +4,7 @@
 
 ### Added
 
+- Oracle Firefox: add explicit one-start `discardExistingDraft` authorization across MCP, CLI, and the bundled skill; clear text only after opt-in, preserve the fail-closed default, and never remove foreign attachments.
 - Oracle Firefox 1.7.0: publish schema 8 and wire protocol 9; add capability-owned start-receipt recovery, session-scoped attention listing, execution/blocker/result/monitor status fields, aggregate delivery and version-skew health, concurrency provenance, and stable recovery errors across MCP, CLI, Codex, Claude Code, Claudex, and Claude Desktop.
 - Oracle Firefox 1.6: add a persisted idle-only browser selector, full native macOS Chrome launch through the Google-signed `/Applications` bundle with Parallels/VM rejection, and a visible serialized Safari WebDriver backend with explicit session-only authentication and capability limits.
 - Oracle Firefox 1.5: add a canonical TMPDIR-independent endpoint, coordinator and profile lifetime leases, signed instance locators, broker generations, SQLite writer fencing, atomic execution claims, generation-scoped recovery, directional idle upgrades, and one source-derived build identity across Codex, Claude Code, Claudex, and Desktop artifacts.
@@ -17,6 +18,7 @@
 
 ### Changed
 
+- Oracle Firefox 1.7.1: default unattended starts to completion notification, keep the three-hour Pro response deadline unless the user explicitly shortens it, and require a real harness watcher whenever agents select harness delivery.
 - Oracle Firefox 1.7.0: keep protocol 8 read-compatible while requiring protocol 9 for every mutation; older writers receive `CLIENT_UPGRADE_REQUIRED` without stopping, downgrading, or replacing the broker. Schema-8 migration classifies historical submissions only from durable SQLite evidence, never `response.md`, and preserves browser profiles, sessions, capabilities, subscriptions, and Firefox as the default.
 - Oracle Firefox 1.6.1: allow five different conversations to remain in response monitoring while account-wide trusted submission remains serialized and paced at ten seconds; idle same-protocol clients now hand off safely to a newer broker without interrupting outstanding work.
 - Oracle Firefox 1.5 initially started with one active conversation and retained explicit qualification for up to five isolated different-chat jobs while preserving same-chat FIFO, serialized trusted input/model/Send actions, and cooldown backpressure.
@@ -28,6 +30,10 @@
 
 ### Fixed
 
+- Oracle Firefox 1.7.2: fix SHA-256 fallback correlation after turn IDs change, fetch full response content only after stable completion, reject torn response snapshots, and pace active-response probes at two seconds. Roll back only the current execution's unchanged text-only draft on pre-Send failure, verify compact Pro labels from model controls instead of sidebar chat titles, and shorten the skill workflow while retaining durable recovery and submission boundaries.
+
+- Oracle Firefox 1.7.1: accept one exact submitted user turn when ChatGPT omits only its rendered attachment chip after the manifest was verified upload-ready before Send; preserve fail-closed handling for visible foreign attachments and duplicate text. Capture transient account-limit notices before they disappear, stop acknowledged uncertainty from inflating the live queue, supersede stale completion events, and reclaim expired harness claims without losing newer results.
+- Oracle Firefox: launch dedicated Firefox with `-no-remote` so visible setup remains isolated from an already-running personal Firefox instance and can expose the Oracle profile for manual login or draft cleanup.
 - Oracle Firefox 1.7.0: expose mutually exclusive logical queue and attention counts, hold malformed or overdue local-data requests for explicit capability-owned resolution, deduplicate broker-wide cooldown incidents, move pacing waits outside the trusted Send lock with exact pre-click revalidation, bound exact-turn monitoring payloads, isolate each browser download attempt by browser generation, and terminate only Oracle's exact owned Safari driver process.
 - Oracle Firefox 1.6.9: recover once from a degraded idle browser before leasing a job page, close every failed new page, accept Firefox BiDi navigation timeouts only when the exact target DOM is independently usable, and persist one terminal pre-submit result instead of repeating a page-open failure five times; allow a newer broker to drain safely while durable queued jobs remain.
 - Oracle Firefox 1.6.8: reconstruct inline-code delimiters from ChatGPT's rendered user-turn DOM so exact post-Send correlation and read-only reconciliation retain authorized backticks without weakening any other semantic comparison.

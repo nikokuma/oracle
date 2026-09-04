@@ -28,6 +28,7 @@ function common(args) {
     responseFailurePolicy: option(args, ["--response-failure-policy"], "report"),
     completionMode: option(args, ["--completion-mode"], "manual"),
     headless: bool(args, "--headless"),
+    discardExistingDraft: bool(args, "--discard-existing-draft"),
   };
 }
 function target(args) {

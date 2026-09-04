@@ -1,15 +1,15 @@
 {
   "name": "oracle-firefox-codex-plugin",
-  "version": "1.7.0",
+  "version": "1.7.2",
   "private": true,
   "type": "module",
   "license": "MIT",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "build:mcpb": "node scripts/build.mjs && mcpb validate mcpb && mcpb pack mcpb releases/oracle-firefox-1.7.0.mcpb",
+    "build:mcpb": "node scripts/build.mjs && mcpb validate mcpb && mcpb pack mcpb releases/oracle-firefox-1.7.2.mcpb",
     "generate:harnesses": "node scripts/generate-harnesses.mjs",
     "test": "node --test",
-    "test:portable": "node --test test/archives.test.mjs test/broker-identity.test.mjs test/broker-multiprocess.test.mjs test/browser-backends.test.mjs test/browser-manager.test.mjs test/browser-session-import.test.mjs test/bundle.test.mjs test/coordination.test.mjs test/coordinator-diagnostics.test.mjs test/downloads.test.mjs test/evidence.test.mjs test/mcp-tools.test.mjs test/packaging.test.mjs test/profiles.test.mjs test/protocol.test.mjs test/safari-webdriver.test.mjs test/safety.test.mjs test/scheduler.test.mjs test/state-store.test.mjs",
+    "test:portable": "node --test test/archives.test.mjs test/broker-identity.test.mjs test/broker-multiprocess.test.mjs test/browser-backends.test.mjs test/browser-manager.test.mjs test/browser-session-import.test.mjs test/bundle.test.mjs test/coordination.test.mjs test/coordinator-diagnostics.test.mjs test/downloads.test.mjs test/evidence.test.mjs test/mcp-tools.test.mjs test/packaging.test.mjs test/profiles.test.mjs test/protocol.test.mjs test/response-monitor.test.mjs test/safari-webdriver.test.mjs test/safety.test.mjs test/scheduler.test.mjs test/state-store.test.mjs",
     "doctor": "node dist/cli.mjs doctor"
   },
   "dependencies": {

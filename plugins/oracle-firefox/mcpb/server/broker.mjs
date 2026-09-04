@@ -48,10 +48,10 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/environment.js
+// node_modules/puppeteer-core/lib/puppeteer/environment.js
 var isNode, environment;
 var init_environment = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/environment.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/environment.js"() {
     isNode = !!(typeof process !== "undefined" && process.version);
     environment = {
       value: {
@@ -68,7 +68,7 @@ var init_environment = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/rxjs/rxjs.js
+// node_modules/puppeteer-core/lib/third_party/rxjs/rxjs.js
 function __extends(d, b2) {
   if (typeof b2 !== "function" && b2 !== null)
     throw new TypeError("Class extends value " + String(b2) + " is not a constructor or null");
@@ -1519,7 +1519,7 @@ function tap(observerOrNext, error, complete) {
 }
 var extendStatics, UnsubscriptionError, Subscription, EMPTY_SUBSCRIPTION, config, timeoutProvider, COMPLETE_NOTIFICATION, context, Subscriber, _bind, ConsumerObserver, SafeSubscriber, EMPTY_OBSERVER, observable, Observable, OperatorSubscriber, ObjectUnsubscribedError, Subject, AnonymousSubject, dateTimestampProvider, ReplaySubject, Action, intervalProvider, AsyncAction, Scheduler, AsyncScheduler, asyncScheduler, async, EMPTY, isArrayLike, iterator, EmptyError, isArray, isArray2, getPrototypeOf, objectProto, getKeys, nodeEventEmitterMethods, eventTargetMethods, jqueryMethods, NEVER, isArray3;
 var init_rxjs = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/rxjs/rxjs.js"() {
+  "node_modules/puppeteer-core/lib/third_party/rxjs/rxjs.js"() {
     extendStatics = function(d, b2) {
       extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b22) {
         d2.__proto__ = b22;
@@ -2382,7 +2382,7 @@ var init_rxjs = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/mitt/mitt.js
+// node_modules/puppeteer-core/lib/third_party/mitt/mitt.js
 function mitt_default(n) {
   return { all: n = n || /* @__PURE__ */ new Map(), on: function(t, e) {
     var i = n.get(t);
@@ -2400,14 +2400,14 @@ function mitt_default(n) {
   } };
 }
 var init_mitt = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/mitt/mitt.js"() {
+  "node_modules/puppeteer-core/lib/third_party/mitt/mitt.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/disposable.js
+// node_modules/puppeteer-core/lib/puppeteer/util/disposable.js
 var disposeSymbol, asyncDisposeSymbol, DisposableStackPolyfill, DisposableStack, AsyncDisposableStackPolyfill, AsyncDisposableStack, SuppressedErrorPolyfill, SuppressedError2;
 var init_disposable = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/disposable.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/disposable.js"() {
     Symbol.dispose ??= /* @__PURE__ */ Symbol("dispose");
     Symbol.asyncDispose ??= /* @__PURE__ */ Symbol("asyncDispose");
     disposeSymbol = Symbol.dispose;
@@ -2713,10 +2713,10 @@ var init_disposable = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/assert.js
+// node_modules/puppeteer-core/lib/puppeteer/util/assert.js
 var assert;
 var init_assert = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/assert.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/assert.js"() {
     assert = (value, message) => {
       if (!value) {
         throw new Error(message);
@@ -2725,7 +2725,7 @@ var init_assert = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/encoding.js
+// node_modules/puppeteer-core/lib/puppeteer/util/encoding.js
 function stringToTypedArray(string, base64Encoded = false) {
   if (base64Encoded) {
     if ("fromBase64" in Uint8Array) {
@@ -2767,22 +2767,22 @@ function mergeUint8Arrays(items) {
   return result;
 }
 var init_encoding = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/encoding.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/encoding.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/version.js
+// node_modules/puppeteer-core/lib/puppeteer/util/version.js
 var packageVersion;
 var init_version = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/version.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/version.js"() {
     packageVersion = "25.3.0";
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Debug.js
+// node_modules/puppeteer-core/lib/puppeteer/common/Debug.js
 var debug, capturedLogs, captureLogs;
 var init_Debug = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Debug.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/Debug.js"() {
     init_environment();
     debug = (prefix) => {
       if (isNode) {
@@ -2820,10 +2820,10 @@ var init_Debug = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Errors.js
+// node_modules/puppeteer-core/lib/puppeteer/common/Errors.js
 var PuppeteerError, TimeoutError, TouchError, ProtocolError, UnsupportedOperation, TargetCloseError, ConnectionClosedError;
 var init_Errors = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Errors.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/Errors.js"() {
     PuppeteerError = class extends Error {
       /**
        * @internal
@@ -2876,10 +2876,10 @@ var init_Errors = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PDFOptions.js
+// node_modules/puppeteer-core/lib/puppeteer/common/PDFOptions.js
 var paperFormats;
 var init_PDFOptions = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PDFOptions.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/PDFOptions.js"() {
     paperFormats = {
       letter: {
         cm: { width: 21.59, height: 27.94 },
@@ -2929,7 +2929,7 @@ var init_PDFOptions = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/util.js
+// node_modules/puppeteer-core/lib/puppeteer/common/util.js
 function evaluationString(fun, ...args) {
   if (isString(fun)) {
     assert(args.length === 0, "Cannot evaluate a string with arguments");
@@ -3109,7 +3109,7 @@ function filterAsync(predicate) {
 }
 var debugError, debugCatchError, DEFAULT_VIEWPORT, SOURCE_URL, PuppeteerURL, withSourcePuppeteerURLIfNone, getSourcePuppeteerURLIfAvailable, isString, isNumber, isPlainObject, isRegExp, isDate, VALID_DIALOG_TYPES, UTILITY_WORLD_NAME, SOURCE_URL_REGEX, NETWORK_IDLE_TIME, unitToPixels;
 var init_util = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/util.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/util.js"() {
     init_rxjs();
     init_environment();
     init_assert();
@@ -3210,10 +3210,10 @@ var init_util = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js
+// node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js
 var EventEmitter2;
 var init_EventEmitter = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/EventEmitter.js"() {
     init_mitt();
     init_disposable();
     init_util();
@@ -3333,10 +3333,10 @@ var init_EventEmitter = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Browser.js
+// node_modules/puppeteer-core/lib/puppeteer/api/Browser.js
 var WEB_PERMISSION_TO_PROTOCOL_PERMISSION, Browser;
 var init_Browser = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Browser.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/Browser.js"() {
     init_rxjs();
     init_EventEmitter();
     init_util();
@@ -3499,10 +3499,10 @@ var init_Browser = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Deferred.js
+// node_modules/puppeteer-core/lib/puppeteer/util/Deferred.js
 var Deferred;
 var init_Deferred = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Deferred.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/Deferred.js"() {
     init_Errors();
     Deferred = class _Deferred {
       static create(opts) {
@@ -3591,10 +3591,10 @@ var init_Deferred = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Mutex.js
+// node_modules/puppeteer-core/lib/puppeteer/util/Mutex.js
 var MutexGuard, Mutex;
 var init_Mutex = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Mutex.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/Mutex.js"() {
     init_Deferred();
     init_disposable();
     MutexGuard = class {
@@ -3636,10 +3636,10 @@ var init_Mutex = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/BrowserContext.js
+// node_modules/puppeteer-core/lib/puppeteer/api/BrowserContext.js
 var BrowserContext;
 var init_BrowserContext = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/BrowserContext.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/BrowserContext.js"() {
     init_rxjs();
     init_EventEmitter();
     init_util();
@@ -3785,10 +3785,10 @@ var init_BrowserContext = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/CDPSession.js
+// node_modules/puppeteer-core/lib/puppeteer/api/CDPSession.js
 var CDPSessionEvent, CDPSession;
 var init_CDPSession = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/CDPSession.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/CDPSession.js"() {
     init_EventEmitter();
     (function(CDPSessionEvent2) {
       CDPSessionEvent2.Disconnected = /* @__PURE__ */ Symbol("CDPSession.Disconnected");
@@ -3816,10 +3816,10 @@ var init_CDPSession = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/DeviceRequestPrompt.js
+// node_modules/puppeteer-core/lib/puppeteer/api/DeviceRequestPrompt.js
 var DeviceRequestPrompt;
 var init_DeviceRequestPrompt = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/DeviceRequestPrompt.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/DeviceRequestPrompt.js"() {
     DeviceRequestPrompt = class {
       /**
        * Current list of selectable devices.
@@ -3829,10 +3829,10 @@ var init_DeviceRequestPrompt = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Dialog.js
+// node_modules/puppeteer-core/lib/puppeteer/api/Dialog.js
 var Dialog;
 var init_Dialog = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Dialog.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/Dialog.js"() {
     init_assert();
     Dialog = class {
       #type;
@@ -3898,10 +3898,10 @@ var init_Dialog = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/AsyncIterableUtil.js
+// node_modules/puppeteer-core/lib/puppeteer/util/AsyncIterableUtil.js
 var AsyncIterableUtil;
 var init_AsyncIterableUtil = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/AsyncIterableUtil.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/AsyncIterableUtil.js"() {
     AsyncIterableUtil = class {
       static async *map(iterable, map2) {
         for await (const value of iterable) {
@@ -3930,15 +3930,15 @@ var init_AsyncIterableUtil = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/ElementHandleSymbol.js
+// node_modules/puppeteer-core/lib/puppeteer/api/ElementHandleSymbol.js
 var _isElementHandle;
 var init_ElementHandleSymbol = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/ElementHandleSymbol.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/ElementHandleSymbol.js"() {
     _isElementHandle = /* @__PURE__ */ Symbol("_isElementHandle");
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/ErrorLike.js
+// node_modules/puppeteer-core/lib/puppeteer/util/ErrorLike.js
 function isErrorLike(obj) {
   return typeof obj === "object" && obj !== null && "name" in obj && "message" in obj;
 }
@@ -3955,11 +3955,11 @@ function createProtocolErrorMessage(object) {
   return message;
 }
 var init_ErrorLike = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/ErrorLike.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/ErrorLike.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Function.js
+// node_modules/puppeteer-core/lib/puppeteer/util/Function.js
 function stringifyFunction(fn) {
   let value = fn.toString();
   if (value.match(/^(async )*function(\(|\s)/) || value.match(/^(async )*function\s*\*\s*/)) {
@@ -3978,7 +3978,7 @@ function stringifyFunction(fn) {
 }
 var createdFunctions, createFunction, interpolateFunction;
 var init_Function = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/Function.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/Function.js"() {
     createdFunctions = /* @__PURE__ */ new Map();
     createFunction = (functionValue) => {
       let fn = createdFunctions.get(functionValue);
@@ -4005,7 +4005,7 @@ var init_Function = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/HandleIterator.js
+// node_modules/puppeteer-core/lib/puppeteer/common/HandleIterator.js
 async function* fastTransposeIteratorHandle(iterator2, size) {
   const env_1 = { stack: [], error: void 0, hasError: false };
   try {
@@ -4070,7 +4070,7 @@ async function* transposeIterableHandle(handle) {
 }
 var __addDisposableResource, __disposeResources, DEFAULT_BATCH_SIZE;
 var init_HandleIterator = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/HandleIterator.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/HandleIterator.js"() {
     init_disposable();
     __addDisposableResource = function(env2, value, async2) {
       if (value !== null && value !== void 0) {
@@ -4134,10 +4134,10 @@ var init_HandleIterator = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/LazyArg.js
+// node_modules/puppeteer-core/lib/puppeteer/common/LazyArg.js
 var LazyArg;
 var init_LazyArg = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/LazyArg.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/LazyArg.js"() {
     LazyArg = class _LazyArg {
       static create = (get) => {
         return new _LazyArg(get);
@@ -4153,10 +4153,10 @@ var init_LazyArg = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js
 var __addDisposableResource2, __disposeResources2, QueryHandler;
 var init_QueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js"() {
     init_ElementHandleSymbol();
     init_ErrorLike();
     init_Function();
@@ -4373,10 +4373,10 @@ var init_QueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/AriaQueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/AriaQueryHandler.js
 var isKnownAttribute, ATTRIBUTE_REGEXP, parseARIASelector, ARIAQueryHandler;
 var init_AriaQueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/AriaQueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/AriaQueryHandler.js"() {
     init_assert();
     init_AsyncIterableUtil();
     init_QueryHandler();
@@ -4414,10 +4414,10 @@ var init_AriaQueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CSSQueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/CSSQueryHandler.js
 var CSSQueryHandler;
 var init_CSSQueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CSSQueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/CSSQueryHandler.js"() {
     init_QueryHandler();
     CSSQueryHandler = class extends QueryHandler {
       static querySelector = (element, selector, { cssQuerySelector }) => {
@@ -4430,18 +4430,18 @@ var init_CSSQueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/generated/injected.js
+// node_modules/puppeteer-core/lib/puppeteer/generated/injected.js
 var source;
 var init_injected = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/generated/injected.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/generated/injected.js"() {
     source = '"use strict";var N=Object.defineProperty;var B=Object.getOwnPropertyDescriptor;var Y=Object.getOwnPropertyNames;var G=Object.prototype.hasOwnProperty;var l=(t,e)=>{for(var r in e)N(t,r,{get:e[r],enumerable:!0})},J=(t,e,r,o)=>{if(e&&typeof e=="object"||typeof e=="function")for(let n of Y(e))!G.call(t,n)&&n!==r&&N(t,n,{get:()=>e[n],enumerable:!(o=B(e,n))||o.enumerable});return t};var z=t=>J(N({},"__esModule",{value:!0}),t);var ye={};l(ye,{default:()=>pe});module.exports=z(ye);var b=class extends Error{constructor(e,r){super(e,r),this.name=this.constructor.name}get[Symbol.toStringTag](){return this.constructor.name}},p=class extends b{};var c=class t{static create(e){return new t(e)}static async race(e){let r=new Set;try{let o=e.map(n=>n instanceof t?(n.#n&&r.add(n),n.valueOrThrow()):n);return await Promise.race(o)}finally{for(let o of r)o.reject(new Error("Timeout cleared"))}}#e=!1;#r=!1;#o;#t;#a=new Promise(e=>{this.#t=e});#n;#i;constructor(e){e&&e.timeout>0&&(this.#i=new p(e.message),this.#n=setTimeout(()=>{this.reject(this.#i)},e.timeout))}#l(e){clearTimeout(this.#n),this.#o=e,this.#t()}resolve(e){this.#r||this.#e||(this.#e=!0,this.#l(e))}reject(e){this.#r||this.#e||(this.#r=!0,this.#l(e))}resolved(){return this.#e}finished(){return this.#e||this.#r}value(){return this.#o}#s;valueOrThrow(){return this.#s||(this.#s=(async()=>{if(await this.#a,this.#r)throw this.#o;return this.#o})()),this.#s}};var W=new Map,j=t=>{let e=W.get(t);return e||(e=new Function(`return ${t}`)(),W.set(t,e),e)};var v={};l(v,{ariaQuerySelector:()=>K,ariaQuerySelectorAll:()=>x});var K=(t,e)=>globalThis.__ariaQuerySelector(t,e),x=async function*(t,e){yield*await globalThis.__ariaQuerySelectorAll(t,e)};var E={};l(E,{cssQuerySelector:()=>Z,cssQuerySelectorAll:()=>ee});var Z=(t,e)=>t.querySelector(e),ee=function(t,e){return t.querySelectorAll(e)};var A={};l(A,{CustomQuerySelectorRegistry:()=>y,customQuerySelectors:()=>P});var y=class{#e=new Map;register(e,r){if(!r.queryOne&&r.queryAll){let o=r.queryAll;r.queryOne=(n,i)=>{for(let s of o(n,i))return s;return null}}else if(r.queryOne&&!r.queryAll){let o=r.queryOne;r.queryAll=(n,i)=>{let s=o(n,i);return s?[s]:[]}}else if(!r.queryOne||!r.queryAll)throw new Error("At least one query method must be defined.");this.#e.set(e,{querySelector:r.queryOne,querySelectorAll:r.queryAll})}unregister(e){this.#e.delete(e)}get(e){return this.#e.get(e)}clear(){this.#e.clear()}},P=new y;var R={};l(R,{pierceQuerySelector:()=>te,pierceQuerySelectorAll:()=>re});var te=(t,e)=>{let r=null,o=n=>{let i=document.createTreeWalker(n,NodeFilter.SHOW_ELEMENT);do{let s=i.currentNode;s.shadowRoot&&o(s.shadowRoot),!(s instanceof ShadowRoot)&&s!==n&&!r&&s.matches(e)&&(r=s)}while(!r&&i.nextNode())};return t instanceof Document&&(t=t.documentElement),o(t),r},re=(t,e)=>{let r=[],o=n=>{let i=document.createTreeWalker(n,NodeFilter.SHOW_ELEMENT);do{let s=i.currentNode;s.shadowRoot&&o(s.shadowRoot),!(s instanceof ShadowRoot)&&s!==n&&s.matches(e)&&r.push(s)}while(i.nextNode())};return t instanceof Document&&(t=t.documentElement),o(t),r};var u=(t,e)=>{if(!t)throw new Error(e)};var w=class{#e;#r;#o;#t;constructor(e,r){this.#e=e,this.#r=r}async start(){let e=this.#t=c.create(),r=await this.#e();if(r){e.resolve(r);return}this.#o=new MutationObserver(async()=>{let o=await this.#e();o&&(e.resolve(o),await this.stop())}),this.#o.observe(this.#r,{childList:!0,subtree:!0,attributes:!0})}async stop(){u(this.#t,"Polling never started."),this.#t.finished()||this.#t.reject(new Error("Polling stopped")),this.#o&&(this.#o.disconnect(),this.#o=void 0)}result(){return u(this.#t,"Polling never started."),this.#t.valueOrThrow()}},T=class{#e;#r;constructor(e){this.#e=e}async start(){let e=this.#r=c.create(),r=await this.#e();if(r){e.resolve(r);return}let o=async()=>{if(e.finished())return;let n=await this.#e();if(!n){window.requestAnimationFrame(o);return}e.resolve(n),await this.stop()};window.requestAnimationFrame(o)}async stop(){u(this.#r,"Polling never started."),this.#r.finished()||this.#r.reject(new Error("Polling stopped"))}result(){return u(this.#r,"Polling never started."),this.#r.valueOrThrow()}},S=class{#e;#r;#o;#t;constructor(e,r){this.#e=e,this.#r=r}async start(){let e=this.#t=c.create(),r=await this.#e();if(r){e.resolve(r);return}this.#o=setInterval(async()=>{let o=await this.#e();o&&(e.resolve(o),await this.stop())},this.#r)}async stop(){u(this.#t,"Polling never started."),this.#t.finished()||this.#t.reject(new Error("Polling stopped")),this.#o&&(clearInterval(this.#o),this.#o=void 0)}result(){return u(this.#t,"Polling never started."),this.#t.valueOrThrow()}};var L={};l(L,{PCombinator:()=>U,pQuerySelector:()=>me,pQuerySelectorAll:()=>X});var a=class{static async*map(e,r){for await(let o of e)yield await r(o)}static async*flatMap(e,r){for await(let o of e)yield*r(o)}static async collect(e){let r=[];for await(let o of e)r.push(o);return r}static async first(e){for await(let r of e)return r}};var O={};l(O,{textQuerySelectorAll:()=>m});var oe=new Set(["checkbox","image","radio"]),ne=t=>t instanceof HTMLSelectElement||t instanceof HTMLTextAreaElement||t instanceof HTMLInputElement&&!oe.has(t.type),se=new Set(["SCRIPT","STYLE"]),f=t=>!se.has(t.nodeName)&&!document.head?.contains(t),C=new WeakMap,V=t=>{for(;t;)C.delete(t),t instanceof ShadowRoot?t=t.host:t=t.parentNode},F=new WeakSet,I,ie=()=>{let t=globalThis.MutationObserver;if(!t)throw new Error("MutationObserver is not available in this environment.");return I||(I=new t(e=>{for(let r of e)V(r.target)})),I},d=t=>{let e=C.get(t);if(e||(e={full:"",immediate:[]},!f(t)))return e;let r="";if(ne(t))e.full=t.value,e.immediate.push(t.value),t.addEventListener("input",o=>{V(o.target)},{once:!0,capture:!0});else{for(let o=t.firstChild;o;o=o.nextSibling){if(o.nodeType===Node.TEXT_NODE){e.full+=o.nodeValue??"",r+=o.nodeValue??"";continue}r&&e.immediate.push(r),r="",o.nodeType===Node.ELEMENT_NODE&&(e.full+=d(o).full)}r&&e.immediate.push(r),t instanceof Element&&t.shadowRoot&&(e.full+=d(t.shadowRoot).full),F.has(t)||(ie().observe(t,{childList:!0,characterData:!0,subtree:!0}),F.add(t))}return C.set(t,e),e};var m=function*(t,e){let r=!1;for(let o of t.childNodes)if(o instanceof Element&&f(o)){let n;o.shadowRoot?n=m(o.shadowRoot,e):n=m(o,e);for(let i of n)yield i,r=!0}r||t instanceof Element&&f(t)&&d(t).full.includes(e)&&(yield t)};var M={};l(M,{checkVisibility:()=>ae,pierce:()=>g,pierceAll:()=>k});var le=["hidden","collapse"],ae=(t,e)=>{if(!t)return e===!1;if(e===void 0)return t;let r=t.nodeType===Node.TEXT_NODE?t.parentElement:t,o=window.getComputedStyle(r),n=o&&!le.includes(o.visibility)&&!ce(r);return e===n?t:!1};function ce(t){let e=t.getBoundingClientRect();return e.width===0||e.height===0}var ue=t=>"shadowRoot"in t&&t.shadowRoot instanceof ShadowRoot;function*g(t){ue(t)?yield t.shadowRoot:yield t}function*k(t){t=g(t).next().value,yield t;let e=[document.createTreeWalker(t,NodeFilter.SHOW_ELEMENT)];for(let r of e){let o;for(;o=r.nextNode();)o.shadowRoot&&(yield o.shadowRoot,e.push(document.createTreeWalker(o.shadowRoot,NodeFilter.SHOW_ELEMENT)))}}var D={};l(D,{xpathQuerySelectorAll:()=>q});var q=function*(t,e,r=-1){let n=(t.ownerDocument||document).evaluate(e,t,null,XPathResult.ORDERED_NODE_ITERATOR_TYPE),i=[],s;for(;(s=n.iterateNext())&&(i.push(s),!(r&&i.length===r)););for(let h=0;h<i.length;h++)s=i[h],yield s,i[h]=null};var de=/[-\\w\\P{ASCII}*]/u,U=(r=>(r.Descendent=">>>",r.Child=">>>>",r))(U||{}),H=t=>"querySelectorAll"in t,Q=class{#e;#r=[];#o=void 0;elements;constructor(e,r){this.elements=[e],this.#e=r,this.#t()}async run(){for(typeof this.#o=="string"&&this.#o.trimStart()===":scope"&&this.#t();this.#o!==void 0;this.#t()){let e=this.#o;typeof e=="string"?e[0]&&de.test(e[0])?this.elements=a.flatMap(this.elements,async function*(r){H(r)&&(yield*r.querySelectorAll(e))}):this.elements=a.flatMap(this.elements,async function*(r){if(!r.parentElement){if(!H(r))return;yield*r.querySelectorAll(e);return}let o=0;for(let n of r.parentElement.children)if(++o,n===r)break;yield*r.parentElement.querySelectorAll(`:scope>:nth-child(${o})${e}`)}):this.elements=a.flatMap(this.elements,async function*(r){switch(e.name){case"text":yield*m(r,e.value);break;case"xpath":yield*q(r,e.value);break;case"aria":yield*x(r,e.value);break;default:let o=P.get(e.name);if(!o)throw new Error(`Unknown selector type: ${e.name}`);yield*o.querySelectorAll(r,e.value)}})}}#t(){if(this.#r.length!==0){this.#o=this.#r.shift();return}if(this.#e.length===0){this.#o=void 0;return}let e=this.#e.shift();switch(e){case">>>>":{this.elements=a.flatMap(this.elements,g),this.#t();break}case">>>":{this.elements=a.flatMap(this.elements,k),this.#t();break}default:this.#r=e,this.#t();break}}},_=class{#e=new WeakMap;calculate(e,r=[]){if(e===null)return r;e instanceof ShadowRoot&&(e=e.host);let o=this.#e.get(e);if(o)return[...o,...r];let n=0;for(let s=e.previousSibling;s;s=s.previousSibling)++n;let i=this.calculate(e.parentNode,[n]);return this.#e.set(e,i),[...i,...r]}},$=(t,e)=>{if(t.length+e.length===0)return 0;let[r=-1,...o]=t,[n=-1,...i]=e;return r===n?$(o,i):r<n?-1:1},fe=async function*(t){let e=new Set;for await(let o of t)e.add(o);let r=new _;yield*[...e.values()].map(o=>[o,r.calculate(o)]).sort(([,o],[,n])=>$(o,n)).map(([o])=>o)},X=function(t,e){let r=JSON.parse(e);if(r.some(o=>{let n=0;return o.some(i=>(typeof i=="string"?++n:n=0,n>1))}))throw new Error("Multiple deep combinators found in sequence.");return fe(a.flatMap(r,o=>{let n=new Q(t,o);return n.run(),n.elements}))},me=async function(t,e){for await(let r of X(t,e))return r;return null};var he=Object.freeze({...v,...A,...R,...L,...O,...M,...D,...E,Deferred:c,createFunction:j,createTextContent:d,IntervalPoller:S,isSuitableNodeForTextMatching:f,MutationPoller:w,RAFPoller:T}),pe=he;\n';
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/ScriptInjector.js
+// node_modules/puppeteer-core/lib/puppeteer/common/ScriptInjector.js
 var ScriptInjector, scriptInjector;
 var init_ScriptInjector = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/ScriptInjector.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/ScriptInjector.js"() {
     init_injected();
     ScriptInjector = class {
       #updated = false;
@@ -4482,10 +4482,10 @@ var init_ScriptInjector = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CustomQueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/CustomQueryHandler.js
 var CustomQueryHandlerRegistry, customQueryHandlers;
 var init_CustomQueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CustomQueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/CustomQueryHandler.js"() {
     init_assert();
     init_Function();
     init_QueryHandler();
@@ -4574,10 +4574,10 @@ var init_CustomQueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PierceQueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/PierceQueryHandler.js
 var PierceQueryHandler;
 var init_PierceQueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PierceQueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/PierceQueryHandler.js"() {
     init_QueryHandler();
     PierceQueryHandler = class extends QueryHandler {
       static querySelector = (element, selector, { pierceQuerySelector }) => {
@@ -4590,10 +4590,10 @@ var init_PierceQueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PQueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/PQueryHandler.js
 var PQueryHandler;
 var init_PQueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PQueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/PQueryHandler.js"() {
     init_QueryHandler();
     PQueryHandler = class extends QueryHandler {
       static querySelectorAll = (element, selector, { pQuerySelectorAll }) => {
@@ -4606,7 +4606,7 @@ var init_PQueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/parsel-js/parsel-js.js
+// node_modules/puppeteer-core/lib/third_party/parsel-js/parsel-js.js
 function gobbleParens(text, offset) {
   let nesting = 0;
   let result = "";
@@ -4751,7 +4751,7 @@ function stringify(listOrNode) {
 }
 var TOKENS, TRIM_TOKENS, getArgumentPatternByType, STRING_PATTERN, ESCAPE_PATTERN;
 var init_parsel_js = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/parsel-js/parsel-js.js"() {
+  "node_modules/puppeteer-core/lib/third_party/parsel-js/parsel-js.js"() {
     TOKENS = {
       attribute: /\[\s*(?:(?<namespace>\*|[-\w\P{ASCII}]*)\|)?(?<name>[-\w\P{ASCII}]+)\s*(?:(?<operator>\W?=)\s*(?<value>.+?)\s*(\s(?<caseSensitive>[iIsS]))?\s*)?\]/gu,
       id: /#(?<name>[-\w\P{ASCII}]+)/gu,
@@ -4779,7 +4779,7 @@ var init_parsel_js = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PSelectorParser.js
+// node_modules/puppeteer-core/lib/puppeteer/common/PSelectorParser.js
 function parsePSelectors(selector) {
   let isPureCSS = true;
   let hasAria = false;
@@ -4864,7 +4864,7 @@ function parsePSelectors(selector) {
 }
 var ESCAPE_REGEXP, unquote;
 var init_PSelectorParser = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/PSelectorParser.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/PSelectorParser.js"() {
     init_parsel_js();
     TOKENS["nesting"] = /&/g;
     TOKENS["combinator"] = /\s*(>>>>?|[\s>+~])\s*/g;
@@ -4883,10 +4883,10 @@ var init_PSelectorParser = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TextQueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/TextQueryHandler.js
 var TextQueryHandler;
 var init_TextQueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TextQueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/TextQueryHandler.js"() {
     init_QueryHandler();
     TextQueryHandler = class extends QueryHandler {
       static querySelectorAll = (element, selector, { textQuerySelectorAll }) => {
@@ -4896,10 +4896,10 @@ var init_TextQueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/XPathQueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/XPathQueryHandler.js
 var XPathQueryHandler;
 var init_XPathQueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/XPathQueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/XPathQueryHandler.js"() {
     init_QueryHandler();
     XPathQueryHandler = class extends QueryHandler {
       static querySelectorAll = (element, selector, { xpathQuerySelectorAll }) => {
@@ -4915,7 +4915,7 @@ var init_XPathQueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/GetQueryHandler.js
+// node_modules/puppeteer-core/lib/puppeteer/common/GetQueryHandler.js
 function getQueryHandlerAndSelector(selector) {
   for (const handlerMap of [
     customQueryHandlers.names().map((name) => {
@@ -4961,7 +4961,7 @@ function getQueryHandlerAndSelector(selector) {
 }
 var BUILTIN_QUERY_HANDLERS, QUERY_SEPARATORS;
 var init_GetQueryHandler = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/GetQueryHandler.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/GetQueryHandler.js"() {
     init_AriaQueryHandler();
     init_CSSQueryHandler();
     init_CustomQueryHandler();
@@ -4980,7 +4980,7 @@ var init_GetQueryHandler = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/decorators.js
+// node_modules/puppeteer-core/lib/puppeteer/util/decorators.js
 function moveable(Class, _2) {
   let hasDispose = false;
   if (Class.prototype[disposeSymbol]) {
@@ -5119,7 +5119,7 @@ function bubble(events) {
 }
 var __addDisposableResource3, __disposeResources3, instances, bubbleHandlers, bubbleInitializer;
 var init_decorators = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/decorators.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/decorators.js"() {
     init_disposable();
     init_Mutex();
     __addDisposableResource3 = function(env2, value, async2) {
@@ -5200,10 +5200,10 @@ var init_decorators = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/JSHandle.js
+// node_modules/puppeteer-core/lib/puppeteer/api/JSHandle.js
 var __runInitializers, __esDecorate, __addDisposableResource4, __disposeResources4, JSHandle;
 var init_JSHandle = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/JSHandle.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/JSHandle.js"() {
     init_util();
     init_decorators();
     init_disposable();
@@ -5410,7 +5410,7 @@ var init_JSHandle = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/locators/locators.js
+// node_modules/puppeteer-core/lib/puppeteer/api/locators/locators.js
 function checkLocatorArray(locators) {
   for (const locator of locators) {
     if (!(locator instanceof Locator)) {
@@ -5421,7 +5421,7 @@ function checkLocatorArray(locators) {
 }
 var __addDisposableResource5, __disposeResources5, LocatorEvent, Locator, FunctionLocator, DelegatedLocator, FilteredLocator, MappedLocator, NodeLocator, RaceLocator, RETRY_DELAY;
 var init_locators = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/locators/locators.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/locators/locators.js"() {
     init_rxjs();
     init_EventEmitter();
     init_util();
@@ -6145,7 +6145,7 @@ var init_locators = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js
+// node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js
 function bindIsolatedHandle(target, _2) {
   return async function(...args) {
     if (this.realm === this.frame.isolatedRealm()) {
@@ -6189,7 +6189,7 @@ function intersectBoundingBox(box, width, height) {
 }
 var __runInitializers2, __esDecorate2, __addDisposableResource6, __disposeResources6, __setFunctionName, ElementHandle;
 var init_ElementHandle = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/ElementHandle.js"() {
     init_GetQueryHandler();
     init_LazyArg();
     init_util();
@@ -7472,10 +7472,10 @@ var init_ElementHandle = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Extension.js
+// node_modules/puppeteer-core/lib/puppeteer/api/Extension.js
 var Extension;
 var init_Extension = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Extension.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/Extension.js"() {
     Extension = class {
       #id;
       #version;
@@ -7539,10 +7539,10 @@ var init_Extension = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js
+// node_modules/puppeteer-core/lib/puppeteer/api/Frame.js
 var __runInitializers3, __esDecorate3, __addDisposableResource7, __disposeResources7, FrameEvent, throwIfDetached, Frame;
 var init_Frame = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/Frame.js"() {
     init_EventEmitter();
     init_GetQueryHandler();
     init_HandleIterator();
@@ -8351,7 +8351,7 @@ var init_Frame = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js
+// node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js
 function headersArray(headers) {
   const result = [];
   for (const name of Object.keys(headers)) {
@@ -8377,7 +8377,7 @@ function handleError(error) {
 }
 var HTTPRequest, InterceptResolutionAction, STATUS_TEXTS, errorReasons;
 var init_HTTPRequest = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/HTTPRequest.js"() {
     init_util();
     init_assert();
     init_encoding();
@@ -8750,10 +8750,10 @@ var init_HTTPRequest = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/HTTPResponse.js
+// node_modules/puppeteer-core/lib/puppeteer/api/HTTPResponse.js
 var HTTPResponse;
 var init_HTTPResponse = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/HTTPResponse.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/HTTPResponse.js"() {
     HTTPResponse = class {
       /**
        * @internal
@@ -8801,7 +8801,7 @@ var init_HTTPResponse = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/incremental-id-generator.js
+// node_modules/puppeteer-core/lib/puppeteer/util/incremental-id-generator.js
 function createIncrementalIdGenerator() {
   let id = 0;
   return () => {
@@ -8812,14 +8812,14 @@ function createIncrementalIdGenerator() {
   };
 }
 var init_incremental_id_generator = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/incremental-id-generator.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/incremental-id-generator.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Input.js
+// node_modules/puppeteer-core/lib/puppeteer/api/Input.js
 var Keyboard, MouseButton, Mouse, Touchscreen;
 var init_Input = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Input.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/Input.js"() {
     init_Errors();
     init_incremental_id_generator();
     Keyboard = class {
@@ -8909,10 +8909,10 @@ var init_Input = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TimeoutSettings.js
+// node_modules/puppeteer-core/lib/puppeteer/common/TimeoutSettings.js
 var DEFAULT_TIMEOUT, TimeoutSettings;
 var init_TimeoutSettings = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TimeoutSettings.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/TimeoutSettings.js"() {
     DEFAULT_TIMEOUT = 3e4;
     TimeoutSettings = class {
       #defaultTimeout;
@@ -8946,7 +8946,7 @@ var init_TimeoutSettings = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Page.js
+// node_modules/puppeteer-core/lib/puppeteer/api/Page.js
 function setDefaultScreenshotOptions(options) {
   options.optimizeForSpeed ??= false;
   options.type ??= "png";
@@ -8984,7 +8984,7 @@ function roundRectangle(clip) {
 }
 var __runInitializers4, __esDecorate4, __addDisposableResource8, __disposeResources8, Page;
 var init_Page = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Page.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/Page.js"() {
     init_rxjs();
     init_Errors();
     init_EventEmitter();
@@ -10420,10 +10420,10 @@ var init_Page = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js
+// node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js
 var WaitTask, TaskManager;
 var init_WaitTask = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js"() {
     init_Deferred();
     init_ErrorLike();
     init_Function();
@@ -10600,10 +10600,10 @@ var init_WaitTask = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Realm.js
+// node_modules/puppeteer-core/lib/puppeteer/api/Realm.js
 var Realm;
 var init_Realm = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Realm.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/Realm.js"() {
     init_WaitTask();
     init_disposable();
     Realm = class {
@@ -10670,10 +10670,10 @@ var init_Realm = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Target.js
+// node_modules/puppeteer-core/lib/puppeteer/api/Target.js
 var TargetType, Target;
 var init_Target = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/Target.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/Target.js"() {
     (function(TargetType2) {
       TargetType2["PAGE"] = "page";
       TargetType2["BACKGROUND_PAGE"] = "background_page";
@@ -10707,10 +10707,10 @@ var init_Target = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/WebWorker.js
+// node_modules/puppeteer-core/lib/puppeteer/api/WebWorker.js
 var WebWorkerEvent, WebWorker;
 var init_WebWorker = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/WebWorker.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/WebWorker.js"() {
     init_Errors();
     init_EventEmitter();
     init_TimeoutSettings();
@@ -10806,9 +10806,9 @@ var init_WebWorker = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/api.js
+// node_modules/puppeteer-core/lib/puppeteer/api/api.js
 var init_api = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/api/api.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/api/api.js"() {
     init_Browser();
     init_BrowserContext();
     init_CDPSession();
@@ -10829,10 +10829,10 @@ var init_api = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Accessibility.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Accessibility.js
 var __addDisposableResource9, __disposeResources9, Accessibility, AXNode;
 var init_Accessibility = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Accessibility.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Accessibility.js"() {
     init_util();
     __addDisposableResource9 = function(env2, value, async2) {
       if (value !== null && value !== void 0) {
@@ -11371,10 +11371,10 @@ var init_Accessibility = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Binding.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Binding.js
 var __addDisposableResource10, __disposeResources10, Binding;
 var init_Binding = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Binding.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Binding.js"() {
     init_JSHandle();
     init_util();
     init_disposable();
@@ -11521,10 +11521,10 @@ var init_Binding = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BluetoothEmulation.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/BluetoothEmulation.js
 var CdpBluetoothEmulation;
 var init_BluetoothEmulation = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BluetoothEmulation.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/BluetoothEmulation.js"() {
     CdpBluetoothEmulation = class {
       #connection;
       constructor(connection) {
@@ -11547,10 +11547,10 @@ var init_BluetoothEmulation = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/ConsoleMessage.js
+// node_modules/puppeteer-core/lib/puppeteer/common/ConsoleMessage.js
 var ConsoleMessage;
 var init_ConsoleMessage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/ConsoleMessage.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/ConsoleMessage.js"() {
     ConsoleMessage = class {
       #type;
       #text;
@@ -11621,10 +11621,10 @@ var init_ConsoleMessage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/FileChooser.js
+// node_modules/puppeteer-core/lib/puppeteer/common/FileChooser.js
 var FileChooser;
 var init_FileChooser = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/FileChooser.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/FileChooser.js"() {
     init_assert();
     FileChooser = class {
       #element;
@@ -11673,10 +11673,10 @@ var init_FileChooser = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/NetworkManagerEvents.js
+// node_modules/puppeteer-core/lib/puppeteer/common/NetworkManagerEvents.js
 var NetworkManagerEvent;
 var init_NetworkManagerEvents = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/NetworkManagerEvents.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/NetworkManagerEvents.js"() {
     (function(NetworkManagerEvent2) {
       NetworkManagerEvent2.Request = /* @__PURE__ */ Symbol("NetworkManager.Request");
       NetworkManagerEvent2.RequestServedFromCache = /* @__PURE__ */ Symbol("NetworkManager.RequestServedFromCache");
@@ -11687,10 +11687,10 @@ var init_NetworkManagerEvents = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js
+// node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js
 var CallbackRegistry, Callback;
 var init_CallbackRegistry = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/CallbackRegistry.js"() {
     init_Deferred();
     init_ErrorLike();
     init_Errors();
@@ -11810,10 +11810,10 @@ var init_CallbackRegistry = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js
 var CdpCDPSession;
 var init_CdpSession = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/CdpSession.js"() {
     init_CDPSession();
     init_CallbackRegistry();
     init_Errors();
@@ -11944,13 +11944,13 @@ var init_CdpSession = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js
 function isTargetClosedError(error) {
   return error instanceof TargetCloseError;
 }
 var debugProtocolSend, debugProtocolReceive, Connection;
 var init_Connection = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Connection.js"() {
     init_CDPSession();
     init_CallbackRegistry();
     init_Debug();
@@ -12194,7 +12194,7 @@ var init_Connection = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Coverage.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Coverage.js
 function convertToDisjointRanges(nestedRanges) {
   const points = [];
   for (const range of nestedRanges) {
@@ -12240,7 +12240,7 @@ function convertToDisjointRanges(nestedRanges) {
 }
 var Coverage, JSCoverage, CSSCoverage;
 var init_Coverage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Coverage.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Coverage.js"() {
     init_EventEmitter();
     init_util();
     init_assert();
@@ -12504,10 +12504,10 @@ var init_Coverage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Dialog.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Dialog.js
 var CdpDialog;
 var init_Dialog2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Dialog.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Dialog.js"() {
     init_Dialog();
     CdpDialog = class extends Dialog {
       #client;
@@ -12525,10 +12525,10 @@ var init_Dialog2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/EmulationManager.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/EmulationManager.js
 var __runInitializers5, __esDecorate5, __setFunctionName2, EmulatedState, EmulationManager;
 var init_EmulationManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/EmulationManager.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/EmulationManager.js"() {
     init_CDPSession();
     init_util();
     init_assert();
@@ -13018,10 +13018,10 @@ var init_EmulationManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpIssue.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/CdpIssue.js
 var CdpIssue;
 var init_CdpIssue = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpIssue.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/CdpIssue.js"() {
     CdpIssue = class {
       #code;
       #details;
@@ -13039,10 +13039,10 @@ var init_CdpIssue = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpPreloadScript.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/CdpPreloadScript.js
 var CdpPreloadScript;
 var init_CdpPreloadScript = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/CdpPreloadScript.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/CdpPreloadScript.js"() {
     CdpPreloadScript = class {
       /**
        * This is the ID of the preload script returned by
@@ -13076,10 +13076,10 @@ var init_CdpPreloadScript = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/DeviceRequestPrompt.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/DeviceRequestPrompt.js
 var CdpDeviceRequestPrompt, CdpDeviceRequestPromptManager;
 var init_DeviceRequestPrompt2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/DeviceRequestPrompt.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/DeviceRequestPrompt.js"() {
     init_DeviceRequestPrompt();
     init_assert();
     init_Deferred();
@@ -13220,7 +13220,7 @@ var init_DeviceRequestPrompt2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/utils.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/utils.js
 function createConsoleMessage(event, values, targetId) {
   const textTokens = [];
   for (const arg of values) {
@@ -13393,7 +13393,7 @@ function convertConsoleMessageLevel(method) {
 }
 var getErrorDetails, CDP_BINDING_PREFIX;
 var init_utils = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/utils.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/utils.js"() {
     init_ConsoleMessage();
     init_util();
     init_assert();
@@ -13416,7 +13416,7 @@ var init_utils = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/JSHandle.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/JSHandle.js
 async function releaseObject(client, remoteObject) {
   if (!remoteObject.objectId) {
     return;
@@ -13427,7 +13427,7 @@ async function releaseObject(client, remoteObject) {
 }
 var CdpJSHandle;
 var init_JSHandle2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/JSHandle.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/JSHandle.js"() {
     init_JSHandle();
     init_util();
     init_utils();
@@ -13506,10 +13506,10 @@ var init_JSHandle2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ElementHandle.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/ElementHandle.js
 var __runInitializers6, __esDecorate6, NON_ELEMENT_NODE_ROLES, CdpElementHandle;
 var init_ElementHandle2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ElementHandle.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/ElementHandle.js"() {
     init_ElementHandle();
     init_util();
     init_environment();
@@ -13698,10 +13698,10 @@ var init_ElementHandle2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js
 var __addDisposableResource11, __disposeResources11, ariaQuerySelectorBinding, ariaQuerySelectorAllBinding, ExecutionContext, rewriteError2;
 var init_ExecutionContext = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/ExecutionContext.js"() {
     init_CDPSession();
     init_AriaQueryHandler();
     init_EventEmitter();
@@ -14133,10 +14133,10 @@ ${sourceUrlComment}
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManagerEvents.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManagerEvents.js
 var FrameManagerEvent;
 var init_FrameManagerEvents = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManagerEvents.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManagerEvents.js"() {
     (function(FrameManagerEvent2) {
       FrameManagerEvent2.FrameAttached = /* @__PURE__ */ Symbol("FrameManager.FrameAttached");
       FrameManagerEvent2.FrameNavigated = /* @__PURE__ */ Symbol("FrameManager.FrameNavigated");
@@ -14150,19 +14150,19 @@ var init_FrameManagerEvents = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorlds.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorlds.js
 var MAIN_WORLD, PUPPETEER_WORLD;
 var init_IsolatedWorlds = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorlds.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorlds.js"() {
     MAIN_WORLD = /* @__PURE__ */ Symbol("mainWorld");
     PUPPETEER_WORLD = /* @__PURE__ */ Symbol("puppeteerWorld");
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/WebWorker.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/WebWorker.js
 var CdpWebWorker;
 var init_WebWorker2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/WebWorker.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/WebWorker.js"() {
     init_CDPSession();
     init_Target();
     init_WebWorker();
@@ -14269,10 +14269,10 @@ var init_WebWorker2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js
 var IsolatedWorld;
 var init_IsolatedWorld = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/IsolatedWorld.js"() {
     init_rxjs();
     init_Realm();
     init_EventEmitter();
@@ -14438,10 +14438,10 @@ var init_IsolatedWorld = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/LifecycleWatcher.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/LifecycleWatcher.js
 var puppeteerToProtocolLifecycle, LifecycleWatcher;
 var init_LifecycleWatcher = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/LifecycleWatcher.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/LifecycleWatcher.js"() {
     init_Frame();
     init_EventEmitter();
     init_NetworkManagerEvents();
@@ -14603,7 +14603,7 @@ var init_LifecycleWatcher = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Frame.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Frame.js
 function referrerPolicyToProtocol(referrerPolicy) {
   return referrerPolicy.replaceAll(/-./g, (match) => {
     return match[1].toUpperCase();
@@ -14611,7 +14611,7 @@ function referrerPolicyToProtocol(referrerPolicy) {
 }
 var __runInitializers7, __esDecorate7, CdpFrame;
 var init_Frame2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Frame.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Frame.js"() {
     init_Frame();
     init_Errors();
     init_util();
@@ -14952,10 +14952,10 @@ var init_Frame2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameTree.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/FrameTree.js
 var FrameTree;
 var init_FrameTree = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameTree.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/FrameTree.js"() {
     init_Deferred();
     FrameTree = class {
       #frames = /* @__PURE__ */ new Map();
@@ -15033,10 +15033,10 @@ var init_FrameTree = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPRequest.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPRequest.js
 var CdpHTTPRequest;
 var init_HTTPRequest2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPRequest.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPRequest.js"() {
     init_HTTPRequest();
     init_util();
     init_encoding();
@@ -15214,10 +15214,10 @@ var init_HTTPRequest2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/SecurityDetails.js
+// node_modules/puppeteer-core/lib/puppeteer/common/SecurityDetails.js
 var SecurityDetails;
 var init_SecurityDetails = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/SecurityDetails.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/SecurityDetails.js"() {
     SecurityDetails = class {
       #subjectName;
       #issuer;
@@ -15278,7 +15278,7 @@ var init_SecurityDetails = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/httpUtils.js
+// node_modules/puppeteer-core/lib/puppeteer/util/httpUtils.js
 function normalizeHeaderValue(name, value) {
   if (!value.includes("\n")) {
     return value;
@@ -15288,14 +15288,14 @@ function normalizeHeaderValue(name, value) {
   }).filter(Boolean).join(name === "set-cookie" ? "\n " : ", ");
 }
 var init_httpUtils = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/httpUtils.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/httpUtils.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPResponse.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPResponse.js
 var CdpHTTPResponse;
 var init_HTTPResponse2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPResponse.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/HTTPResponse.js"() {
     init_HTTPResponse();
     init_Errors();
     init_SecurityDetails();
@@ -15412,10 +15412,10 @@ var init_HTTPResponse2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkEventManager.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkEventManager.js
 var NetworkEventManager;
 var init_NetworkEventManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkEventManager.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkEventManager.js"() {
     init_HTTPRequest2();
     NetworkEventManager = class {
       /**
@@ -15570,10 +15570,10 @@ var init_NetworkEventManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkManager.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkManager.js
 var NetworkManager;
 var init_NetworkManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkManager.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/NetworkManager.js"() {
     init_CDPSession();
     init_EventEmitter();
     init_NetworkManagerEvents();
@@ -16087,10 +16087,10 @@ var init_NetworkManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManager.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManager.js
 var CHROME_EXTENSION_PREFIX, FrameManager;
 var init_FrameManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManager.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/FrameManager.js"() {
     init_CDPSession();
     init_Frame();
     init_EventEmitter();
@@ -16539,10 +16539,10 @@ var init_FrameManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/USKeyboardLayout.js
+// node_modules/puppeteer-core/lib/puppeteer/common/USKeyboardLayout.js
 var _keyDefinitions;
 var init_USKeyboardLayout = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/USKeyboardLayout.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/USKeyboardLayout.js"() {
     _keyDefinitions = {
       "0": { keyCode: 48, key: "0", code: "Digit0" },
       "1": { keyCode: 49, key: "1", code: "Digit1" },
@@ -16931,10 +16931,10 @@ var init_USKeyboardLayout = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Input.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Input.js
 var CdpKeyboard, getFlag, getButtonFromPressedButtons, CdpMouse, CdpTouchHandle, CdpTouchscreen;
 var init_Input2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Input.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Input.js"() {
     init_Input();
     init_Errors();
     init_USKeyboardLayout();
@@ -17406,10 +17406,10 @@ var init_Input2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Tracing.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Tracing.js
 var Tracing;
 var init_Tracing = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Tracing.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Tracing.js"() {
     init_util();
     init_assert();
     init_Deferred();
@@ -17502,10 +17502,10 @@ var init_Tracing = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/WebMCP.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/WebMCP.js
 var WebMCPTool, WebMCPToolCall, WebMCP;
 var init_WebMCP = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/WebMCP.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/WebMCP.js"() {
     init_EventEmitter();
     init_util();
     init_IsolatedWorlds();
@@ -17750,7 +17750,7 @@ var init_WebMCP = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Page.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Page.js
 function convertSameSiteFromPuppeteerToCdp(sameSite) {
   switch (sameSite) {
     case "Strict":
@@ -17788,7 +17788,7 @@ function convertCookiesPartitionKeyFromPuppeteerToCdp(partitionKey) {
 }
 var __addDisposableResource12, __disposeResources12, CdpPage, supportedMetrics;
 var init_Page2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Page.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Page.js"() {
     init_rxjs();
     init_CDPSession();
     init_Page();
@@ -18741,10 +18741,10 @@ var init_Page2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserContext.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserContext.js
 var __addDisposableResource13, __disposeResources13, CdpBrowserContext;
 var init_BrowserContext2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserContext.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserContext.js"() {
     init_Browser();
     init_BrowserContext();
     init_assert();
@@ -18927,10 +18927,10 @@ var init_BrowserContext2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Extension.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Extension.js
 var CdpExtension;
 var init_Extension2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Extension.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Extension.js"() {
     init_api();
     init_util();
     init_ErrorLike();
@@ -19000,10 +19000,10 @@ var init_Extension2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Target.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Target.js
 var InitializationStatus, CdpTarget, PageTarget, DevToolsTarget, WorkerTarget, OtherTarget;
 var init_Target2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Target.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Target.js"() {
     init_Target();
     init_util();
     init_Deferred();
@@ -19244,7 +19244,7 @@ var init_Target2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/urlpattern-polyfill/urlpattern-polyfill.js
+// node_modules/puppeteer-core/lib/third_party/urlpattern-polyfill/urlpattern-polyfill.js
 function Oe(e, t) {
   return (t ? /^[\x00-\xFF]*$/ : /^[\x00-\x7F]*$/).test(e);
 }
@@ -19632,7 +19632,7 @@ function Ae(e, t) {
 }
 var Pe, a, P, Re, Ee, v, b, J, Q, re, C, V, O, Y;
 var init_urlpattern_polyfill = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/third_party/urlpattern-polyfill/urlpattern-polyfill.js"() {
+  "node_modules/puppeteer-core/lib/third_party/urlpattern-polyfill/urlpattern-polyfill.js"() {
     Pe = Object.defineProperty;
     a = (e, t) => Pe(e, "name", { value: t, configurable: true });
     P = class {
@@ -20029,13 +20029,13 @@ var init_urlpattern_polyfill = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js
 function isPageTargetBecomingPrimary(target, newTargetInfo) {
   return Boolean(target._subtype()) && !newTargetInfo.subtype;
 }
 var TargetManager;
 var init_TargetManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManager.js"() {
     init_urlpattern_polyfill();
     init_CDPSession();
     init_EventEmitter();
@@ -20414,13 +20414,13 @@ var init_TargetManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Browser.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/Browser.js
 function isDevToolsPageTarget(url) {
   return url.startsWith("devtools://devtools/bundled/devtools_app.html");
 }
 var CdpBrowser;
 var init_Browser2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/Browser.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/Browser.js"() {
     init_Browser();
     init_CDPSession();
     init_Deferred();
@@ -20786,7 +20786,7 @@ var init_Browser2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserConnector.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserConnector.js
 async function _connectToCdpBrowser(connectionTransport, url, options) {
   const { acceptInsecureCerts = false, networkEnabled = true, issuesEnabled = true, defaultViewport = DEFAULT_VIEWPORT, downloadBehavior, targetFilter, _isPageTarget: isPageTarget, slowMo = 0, protocolTimeout, handleDevToolsAsPage, idGenerator = createIncrementalIdGenerator(), blocklist, allowlist } = options;
   const connection = new Connection(
@@ -20805,7 +20805,7 @@ async function _connectToCdpBrowser(connectionTransport, url, options) {
   return browser;
 }
 var init_BrowserConnector = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserConnector.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/BrowserConnector.js"() {
     init_util();
     init_incremental_id_generator();
     init_Browser2();
@@ -20813,16 +20813,16 @@ var init_BrowserConnector = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ExtensionTransport.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/ExtensionTransport.js
 var init_ExtensionTransport = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/ExtensionTransport.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/ExtensionTransport.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/PredefinedNetworkConditions.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/PredefinedNetworkConditions.js
 var PredefinedNetworkConditions;
 var init_PredefinedNetworkConditions = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/PredefinedNetworkConditions.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/PredefinedNetworkConditions.js"() {
     PredefinedNetworkConditions = Object.freeze({
       // Generally aligned with DevTools
       // https://source.chromium.org/chromium/chromium/src/+/main:third_party/devtools-frontend/src/front_end/core/sdk/NetworkManager.ts;l=398;drc=225e1240f522ca684473f541ae6dae6cd766dd33.
@@ -20864,15 +20864,15 @@ var init_PredefinedNetworkConditions = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManageEvents.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManageEvents.js
 var init_TargetManageEvents = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManageEvents.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/TargetManageEvents.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/cdp.js
+// node_modules/puppeteer-core/lib/puppeteer/cdp/cdp.js
 var init_cdp = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/cdp/cdp.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/cdp/cdp.js"() {
     init_Accessibility();
     init_Binding();
     init_BluetoothEmulation();
@@ -20914,14 +20914,14 @@ var init_cdp = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/BrowserWebSocketTransport.js
+// node_modules/puppeteer-core/lib/puppeteer/common/BrowserWebSocketTransport.js
 var BrowserWebSocketTransport_exports = {};
 __export(BrowserWebSocketTransport_exports, {
   BrowserWebSocketTransport: () => BrowserWebSocketTransport
 });
 var BrowserWebSocketTransport;
 var init_BrowserWebSocketTransport = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/BrowserWebSocketTransport.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/BrowserWebSocketTransport.js"() {
     init_util();
     BrowserWebSocketTransport = class _BrowserWebSocketTransport {
       static create(url) {
@@ -20960,10 +20960,10 @@ var init_BrowserWebSocketTransport = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Device.js
+// node_modules/puppeteer-core/lib/puppeteer/common/Device.js
 var knownDevices, knownDevicesByName, KnownDevices;
 var init_Device = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Device.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/Device.js"() {
     knownDevices = [
       {
         name: "Blackberry PlayBook",
@@ -22546,7 +22546,7 @@ var init_Device = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/mitt/dist/mitt.mjs
+// node_modules/mitt/dist/mitt.mjs
 function mitt_default2(n) {
   return { all: n = n || /* @__PURE__ */ new Map(), on: function(t, e) {
     var i = n.get(t);
@@ -22564,14 +22564,14 @@ function mitt_default2(n) {
   } };
 }
 var init_mitt2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/mitt/dist/mitt.mjs"() {
+  "node_modules/mitt/dist/mitt.mjs"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/EventEmitter.js
+// node_modules/chromium-bidi/lib/utils/EventEmitter.js
 var EventEmitter3;
 var init_EventEmitter2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/EventEmitter.js"() {
+  "node_modules/chromium-bidi/lib/utils/EventEmitter.js"() {
     init_mitt2();
     EventEmitter3 = class {
       #emitter = mitt_default2();
@@ -22624,10 +22624,10 @@ var init_EventEmitter2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/log.js
+// node_modules/chromium-bidi/lib/utils/log.js
 var LogType;
 var init_log = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/log.js"() {
+  "node_modules/chromium-bidi/lib/utils/log.js"() {
     (function(LogType2) {
       LogType2["bidi"] = "bidi";
       LogType2["cdp"] = "cdp";
@@ -22639,10 +22639,10 @@ var init_log = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/ProcessingQueue.js
+// node_modules/chromium-bidi/lib/utils/ProcessingQueue.js
 var _a, ProcessingQueue;
 var init_ProcessingQueue = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/ProcessingQueue.js"() {
+  "node_modules/chromium-bidi/lib/utils/ProcessingQueue.js"() {
     init_log();
     ProcessingQueue = class {
       static LOGGER_PREFIX = `${LogType.debug}:queue`;
@@ -22688,13 +22688,13 @@ var init_ProcessingQueue = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/cdp.js
+// node_modules/chromium-bidi/lib/protocol/cdp.js
 var init_cdp2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/cdp.js"() {
+  "node_modules/chromium-bidi/lib/protocol/cdp.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/chromium-bidi.js
+// node_modules/chromium-bidi/lib/protocol/chromium-bidi.js
 var chromium_bidi_exports = {};
 __export(chromium_bidi_exports, {
   BiDiModule: () => BiDiModule,
@@ -22709,7 +22709,7 @@ __export(chromium_bidi_exports, {
 });
 var BiDiModule, Script, Log, BrowsingContext, Input, Network, Bluetooth, Speculation, EVENT_NAMES;
 var init_chromium_bidi = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/chromium-bidi.js"() {
+  "node_modules/chromium-bidi/lib/protocol/chromium-bidi.js"() {
     (function(BiDiModule2) {
       BiDiModule2["Bluetooth"] = "bluetooth";
       BiDiModule2["Browser"] = "browser";
@@ -22801,16 +22801,16 @@ var init_chromium_bidi = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi.js
+// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi.js
 var init_webdriver_bidi = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi.js"() {
+  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/ErrorResponse.js
+// node_modules/chromium-bidi/lib/protocol/ErrorResponse.js
 var Exception, InvalidArgumentException, InvalidSelectorException, MoveTargetOutOfBoundsException, NoSuchAlertException, NoSuchElementException, NoSuchFrameException, NoSuchHandleException, NoSuchHistoryEntryException, NoSuchInterceptException, NoSuchNodeException, NoSuchRequestException, NoSuchScriptException, NoSuchUserContextException, UnknownCommandException, UnknownErrorException, UnableToCaptureScreenException, UnsupportedOperationException, UnableToSetCookieException, UnableToSetFileInputException, InvalidWebExtensionException, NoSuchWebExtensionException, NoSuchNetworkCollectorException, NoSuchNetworkDataException;
 var init_ErrorResponse = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/ErrorResponse.js"() {
+  "node_modules/chromium-bidi/lib/protocol/ErrorResponse.js"() {
     Exception = class extends Error {
       error;
       message;
@@ -22949,33 +22949,33 @@ var init_ErrorResponse = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-permissions.js
+// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-permissions.js
 var init_webdriver_bidi_permissions = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-permissions.js"() {
+  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-permissions.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-bluetooth.js
+// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-bluetooth.js
 var init_webdriver_bidi_bluetooth = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-bluetooth.js"() {
+  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-bluetooth.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-nav-speculation.js
+// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-nav-speculation.js
 var init_webdriver_bidi_nav_speculation = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-nav-speculation.js"() {
+  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-nav-speculation.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-ua-client-hints.js
+// node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-ua-client-hints.js
 var init_webdriver_bidi_ua_client_hints = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-ua-client-hints.js"() {
+  "node_modules/chromium-bidi/lib/protocol/generated/webdriver-bidi-ua-client-hints.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/protocol.js
+// node_modules/chromium-bidi/lib/protocol/protocol.js
 var init_protocol = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/protocol/protocol.js"() {
+  "node_modules/chromium-bidi/lib/protocol/protocol.js"() {
     init_cdp2();
     init_chromium_bidi();
     init_webdriver_bidi();
@@ -22987,10 +22987,10 @@ var init_protocol = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiNoOpParser.js
+// node_modules/chromium-bidi/lib/bidiMapper/BidiNoOpParser.js
 var BidiNoOpParser;
 var init_BidiNoOpParser = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiNoOpParser.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/BidiNoOpParser.js"() {
     BidiNoOpParser = class {
       // Bluetooth module
       // keep-sorted start block=yes
@@ -23253,7 +23253,7 @@ var init_BidiNoOpParser = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/BrowserProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/browser/BrowserProcessor.js
 function getProxyStr(proxyConfig) {
   if (proxyConfig.proxyType === "direct" || proxyConfig.proxyType === "system") {
     return void 0;
@@ -23290,7 +23290,7 @@ function getProxyStr(proxyConfig) {
 }
 var BrowserProcessor;
 var init_BrowserProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/BrowserProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/browser/BrowserProcessor.js"() {
     init_protocol();
     BrowserProcessor = class {
       #browserCdpClient;
@@ -23482,10 +23482,10 @@ var init_BrowserProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpProcessor.js
 var CdpProcessor;
 var init_CdpProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpProcessor.js"() {
     init_protocol();
     CdpProcessor = class {
       #browsingContextStorage;
@@ -23526,10 +23526,10 @@ var init_CdpProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextProcessor.js
 var BrowsingContextProcessor;
 var init_BrowsingContextProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextProcessor.js"() {
     init_protocol();
     BrowsingContextProcessor = class {
       #browserCdpClient;
@@ -23764,7 +23764,7 @@ var init_BrowsingContextProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/emulation/EmulationProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/emulation/EmulationProcessor.js
 function isValidLocale(locale) {
   try {
     new Intl.Locale(locale);
@@ -23792,7 +23792,7 @@ function isTimeZoneOffsetString(timezone) {
 }
 var EmulationProcessor;
 var init_EmulationProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/emulation/EmulationProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/emulation/EmulationProcessor.js"() {
     init_protocol();
     EmulationProcessor = class {
       #userContextStorage;
@@ -24103,18 +24103,18 @@ var init_EmulationProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/assert.js
+// node_modules/chromium-bidi/lib/utils/assert.js
 function assert2(predicate, message) {
   if (!predicate) {
     throw new Error(message ?? "Internal assertion failed.");
   }
 }
 var init_assert2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/assert.js"() {
+  "node_modules/chromium-bidi/lib/utils/assert.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/graphemeTools.js
+// node_modules/chromium-bidi/lib/utils/graphemeTools.js
 function isSingleComplexGrapheme(value) {
   return isSingleGrapheme(value) && value.length > 1;
 }
@@ -24123,14 +24123,14 @@ function isSingleGrapheme(value) {
   return [...segmenter2.segment(value)].length === 1;
 }
 var init_graphemeTools = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/graphemeTools.js"() {
+  "node_modules/chromium-bidi/lib/utils/graphemeTools.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputSource.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputSource.js
 var _a2, NoneSource, KeySource, PointerSource, WheelSource;
 var init_InputSource = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputSource.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputSource.js"() {
     NoneSource = class {
       type = "none";
     };
@@ -24267,7 +24267,7 @@ var init_InputSource = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/keyUtils.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/input/keyUtils.js
 function getNormalizedKey(value) {
   switch (value) {
     case "\uE000":
@@ -24732,14 +24732,14 @@ function getKeyLocation(key) {
   }
 }
 var init_keyUtils = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/keyUtils.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/keyUtils.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/USKeyboardLayout.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/input/USKeyboardLayout.js
 var KeyToKeyCode;
 var init_USKeyboardLayout2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/USKeyboardLayout.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/USKeyboardLayout.js"() {
     KeyToKeyCode = {
       "0": 48,
       "1": 49,
@@ -24995,7 +24995,7 @@ var init_USKeyboardLayout2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/ActionDispatcher.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/input/ActionDispatcher.js
 async function getElementCenter(context2, element) {
   const hiddenSandboxRealm = await context2.getOrCreateHiddenSandbox();
   const result = await hiddenSandboxRealm.callFunction(CALCULATE_IN_VIEW_CENTER_PT_DECL, false, { type: "undefined" }, [element]);
@@ -25078,7 +25078,7 @@ function getRadii(width, height) {
 }
 var CALCULATE_IN_VIEW_CENTER_PT_DECL, IS_MAC_DECL, ActionDispatcher, getKeyEventUnmodifiedText, getKeyEventText;
 var init_ActionDispatcher = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/ActionDispatcher.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/ActionDispatcher.js"() {
     init_protocol();
     init_assert2();
     init_graphemeTools();
@@ -25653,10 +25653,10 @@ var init_ActionDispatcher = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Mutex.js
+// node_modules/chromium-bidi/lib/utils/Mutex.js
 var Mutex2;
 var init_Mutex2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Mutex.js"() {
+  "node_modules/chromium-bidi/lib/utils/Mutex.js"() {
     Mutex2 = class {
       #locked = false;
       #acquirers = [];
@@ -25696,10 +25696,10 @@ var init_Mutex2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputState.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputState.js
 var InputState;
 var init_InputState = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputState.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputState.js"() {
     init_protocol();
     init_Mutex2();
     init_InputSource();
@@ -25775,10 +25775,10 @@ var init_InputState = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputStateManager.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputStateManager.js
 var InputStateManager;
 var init_InputStateManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputStateManager.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputStateManager.js"() {
     init_assert2();
     init_InputState();
     InputStateManager = class extends WeakMap {
@@ -25793,10 +25793,10 @@ var init_InputStateManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputProcessor.js
 var InputProcessor;
 var init_InputProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/input/InputProcessor.js"() {
     init_protocol();
     init_assert2();
     init_ActionDispatcher();
@@ -25965,7 +25965,7 @@ var init_InputProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/base64.js
+// node_modules/chromium-bidi/lib/utils/base64.js
 function base64ToString(base64Str) {
   if ("atob" in globalThis) {
     return globalThis.atob(base64Str);
@@ -25973,11 +25973,11 @@ function base64ToString(base64Str) {
   return Buffer.from(base64Str, "base64").toString("ascii");
 }
 var init_base64 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/base64.js"() {
+  "node_modules/chromium-bidi/lib/utils/base64.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkUtils.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkUtils.js
 function computeHeadersSize(headers) {
   const requestHeaders = headers.reduce((acc, header) => {
     return `${acc}${header.name}: ${header.value.value}\r
@@ -26184,13 +26184,13 @@ function getTiming(timing, offset = 0) {
   return timing + offset;
 }
 var init_NetworkUtils = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkUtils.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkUtils.js"() {
     init_ErrorResponse();
     init_base64();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkProcessor.js
 function unescapeURLPattern(pattern) {
   const forbidden = /* @__PURE__ */ new Set(["(", ")", "*", "{", "}"]);
   let result = "";
@@ -26245,7 +26245,7 @@ function parseBiDiHeaders(headers) {
 }
 var NetworkProcessor, FORBIDDEN_HEADER_NAME_SYMBOLS, FORBIDDEN_HEADER_VALUE_SYMBOLS;
 var init_NetworkProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkProcessor.js"() {
     init_protocol();
     init_NetworkUtils();
     NetworkProcessor = class _NetworkProcessor {
@@ -26676,10 +26676,10 @@ var init_NetworkProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/permissions/PermissionsProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/permissions/PermissionsProcessor.js
 var PermissionsProcessor;
 var init_PermissionsProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/permissions/PermissionsProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/permissions/PermissionsProcessor.js"() {
     init_protocol();
     PermissionsProcessor = class {
       #browserCdpClient;
@@ -26710,7 +26710,7 @@ var init_PermissionsProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/uuid.js
+// node_modules/chromium-bidi/lib/utils/uuid.js
 function bytesToHex(bytes) {
   return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
 }
@@ -26735,14 +26735,14 @@ function uuidv4() {
   ].join("-");
 }
 var init_uuid = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/uuid.js"() {
+  "node_modules/chromium-bidi/lib/utils/uuid.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/ChannelProxy.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/ChannelProxy.js
 var ChannelProxy;
 var init_ChannelProxy = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/ChannelProxy.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/ChannelProxy.js"() {
     init_protocol();
     init_log();
     init_uuid();
@@ -26939,10 +26939,10 @@ var init_ChannelProxy = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScript.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScript.js
 var PreloadScript;
 var init_PreloadScript = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScript.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScript.js"() {
     init_uuid();
     init_ChannelProxy();
     PreloadScript = class {
@@ -27044,10 +27044,10 @@ var init_PreloadScript = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/ScriptProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/ScriptProcessor.js
 var ScriptProcessor;
 var init_ScriptProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/ScriptProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/ScriptProcessor.js"() {
     init_protocol();
     init_PreloadScript();
     ScriptProcessor = class {
@@ -27159,10 +27159,10 @@ var init_ScriptProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/SessionProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/session/SessionProcessor.js
 var SessionProcessor;
 var init_SessionProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/SessionProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/session/SessionProcessor.js"() {
     init_protocol();
     SessionProcessor = class {
       #eventManager;
@@ -27271,10 +27271,10 @@ var init_SessionProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/storage/StorageProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/storage/StorageProcessor.js
 var StorageProcessor;
 var init_StorageProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/storage/StorageProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/storage/StorageProcessor.js"() {
     init_protocol();
     init_assert2();
     init_log();
@@ -27425,10 +27425,10 @@ var init_StorageProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/webExtension/WebExtensionProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/webExtension/WebExtensionProcessor.js
 var WebExtensionProcessor;
 var init_WebExtensionProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/webExtension/WebExtensionProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/webExtension/WebExtensionProcessor.js"() {
     init_protocol();
     WebExtensionProcessor = class {
       #browserCdpClient;
@@ -27474,10 +27474,10 @@ var init_WebExtensionProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/OutgoingMessage.js
+// node_modules/chromium-bidi/lib/bidiMapper/OutgoingMessage.js
 var OutgoingMessage;
 var init_OutgoingMessage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/OutgoingMessage.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/OutgoingMessage.js"() {
     OutgoingMessage = class _OutgoingMessage {
       #message;
       #googChannel;
@@ -27512,10 +27512,10 @@ var init_OutgoingMessage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/CommandProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/CommandProcessor.js
 var CommandProcessor;
 var init_CommandProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/CommandProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/CommandProcessor.js"() {
     init_protocol();
     init_EventEmitter2();
     init_log();
@@ -27811,10 +27811,10 @@ var init_CommandProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/bluetooth/BluetoothProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/bluetooth/BluetoothProcessor.js
 var BluetoothGattItem, BluetoothDescriptor, BluetoothCharacteristic, BluetoothService, BluetoothDevice, BluetoothProcessor;
 var init_BluetoothProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/bluetooth/BluetoothProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/bluetooth/BluetoothProcessor.js"() {
     init_protocol();
     BluetoothGattItem = class {
       id;
@@ -28183,10 +28183,10 @@ var init_BluetoothProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfig.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfig.js
 var ContextConfig;
 var init_ContextConfig = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfig.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfig.js"() {
     ContextConfig = class _ContextConfig {
       // keep-sorted start block=yes
       acceptInsecureCerts;
@@ -28238,10 +28238,10 @@ var init_ContextConfig = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfigStorage.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfigStorage.js
 var ContextConfigStorage;
 var init_ContextConfigStorage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfigStorage.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/browser/ContextConfigStorage.js"() {
     init_ContextConfig();
     ContextConfigStorage = class {
       #global = new ContextConfig();
@@ -28301,10 +28301,10 @@ var init_ContextConfigStorage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/UserContextStorage.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/browser/UserContextStorage.js
 var UserContextStorage;
 var init_UserContextStorage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/browser/UserContextStorage.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/browser/UserContextStorage.js"() {
     init_protocol();
     UserContextStorage = class {
       #browserClient;
@@ -28343,10 +28343,10 @@ var init_UserContextStorage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Deferred.js
+// node_modules/chromium-bidi/lib/utils/Deferred.js
 var Deferred2;
 var init_Deferred2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Deferred.js"() {
+  "node_modules/chromium-bidi/lib/utils/Deferred.js"() {
     Deferred2 = class {
       #isFinished = false;
       #promise;
@@ -28397,25 +28397,25 @@ var init_Deferred2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/time.js
+// node_modules/chromium-bidi/lib/utils/time.js
 function getTimestamp() {
   return (/* @__PURE__ */ new Date()).getTime();
 }
 var init_time = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/time.js"() {
+  "node_modules/chromium-bidi/lib/utils/time.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/unitConversions.js
+// node_modules/chromium-bidi/lib/utils/unitConversions.js
 function inchesFromCm(cm) {
   return cm / 2.54;
 }
 var init_unitConversions = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/unitConversions.js"() {
+  "node_modules/chromium-bidi/lib/utils/unitConversions.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/SharedId.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/SharedId.js
 function getSharedId(frameId, documentId, backendNodeId) {
   return `f.${frameId}.d.${documentId}.e.${backendNodeId}`;
 }
@@ -28465,15 +28465,15 @@ function parseSharedId(sharedId) {
 }
 var SHARED_ID_DIVIDER;
 var init_SharedId = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/SharedId.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/SharedId.js"() {
     SHARED_ID_DIVIDER = "_element_";
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/Realm.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/Realm.js
 var Realm2;
 var init_Realm2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/Realm.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/Realm.js"() {
     init_protocol();
     init_log();
     init_uuid();
@@ -28901,10 +28901,10 @@ var init_Realm2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/WindowRealm.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/WindowRealm.js
 var WindowRealm;
 var init_WindowRealm = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/WindowRealm.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/WindowRealm.js"() {
     init_protocol();
     init_Realm2();
     init_SharedId();
@@ -29015,7 +29015,7 @@ var init_WindowRealm = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/urlHelpers.js
+// node_modules/chromium-bidi/lib/utils/urlHelpers.js
 function urlMatchesAboutBlank(url) {
   if (url === "") {
     return true;
@@ -29032,14 +29032,14 @@ function urlMatchesAboutBlank(url) {
   }
 }
 var init_urlHelpers = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/urlHelpers.js"() {
+  "node_modules/chromium-bidi/lib/utils/urlHelpers.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/NavigationTracker.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/context/NavigationTracker.js
 var NavigationResult, NavigationState, NavigationTracker;
 var init_NavigationTracker = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/NavigationTracker.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/context/NavigationTracker.js"() {
     init_protocol();
     init_Deferred2();
     init_log();
@@ -29313,7 +29313,7 @@ var init_NavigationTracker = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextImpl.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextImpl.js
 function serializeOrigin(origin) {
   if (["://", ""].includes(origin)) {
     origin = "null";
@@ -29408,7 +29408,7 @@ function parseInteger(value) {
 }
 var _a3, BrowsingContextImpl;
 var init_BrowsingContextImpl = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextImpl.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextImpl.js"() {
     init_protocol();
     init_assert2();
     init_Deferred2();
@@ -30598,10 +30598,10 @@ var init_BrowsingContextImpl = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/WorkerRealm.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/WorkerRealm.js
 var WorkerRealm;
 var init_WorkerRealm = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/WorkerRealm.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/WorkerRealm.js"() {
     init_Realm2();
     WorkerRealm = class extends Realm2 {
       #realmType;
@@ -30654,7 +30654,7 @@ var init_WorkerRealm = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/log/logHelper.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/log/logHelper.js
 function isFormatSpecifier(str) {
   return specifiers.some((spec) => str.includes(spec));
 }
@@ -30759,13 +30759,13 @@ function getRemoteValuesText(args, formatText) {
 }
 var specifiers;
 var init_logHelper = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/log/logHelper.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/log/logHelper.js"() {
     init_assert2();
     specifiers = ["%s", "%d", "%i", "%f", "%o", "%O", "%c"];
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/log/LogManager.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/log/LogManager.js
 function getBidiStackTrace(cdpStackTrace) {
   const stackFrames = cdpStackTrace?.callFrames.map((callFrame) => {
     return {
@@ -30804,7 +30804,7 @@ function getLogMethod(consoleApiType) {
 }
 var _a4, LogManager;
 var init_LogManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/log/LogManager.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/log/LogManager.js"() {
     init_protocol();
     init_log();
     init_logHelper();
@@ -30944,10 +30944,10 @@ var init_LogManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/CollectorsStorage.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/network/CollectorsStorage.js
 var CollectorsStorage;
 var init_CollectorsStorage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/CollectorsStorage.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/CollectorsStorage.js"() {
     init_ErrorResponse();
     init_log();
     init_uuid();
@@ -31068,10 +31068,10 @@ var init_CollectorsStorage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/DefaultMap.js
+// node_modules/chromium-bidi/lib/utils/DefaultMap.js
 var DefaultMap;
 var init_DefaultMap = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/DefaultMap.js"() {
+  "node_modules/chromium-bidi/lib/utils/DefaultMap.js"() {
     DefaultMap = class extends Map {
       /** The default value to return whenever a key is not present in the map. */
       #getDefaultValue;
@@ -31089,7 +31089,7 @@ var init_DefaultMap = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkRequest.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkRequest.js
 function getCdpBodyFromBiDiBytesValue(body) {
   let parsedBody;
   if (body?.type === "string") {
@@ -31109,7 +31109,7 @@ function getSizeFromBiDiBytesValue(body) {
 }
 var _a5, REALM_REGEX, NetworkRequest;
 var init_NetworkRequest = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkRequest.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkRequest.js"() {
     init_protocol();
     init_assert2();
     init_DefaultMap();
@@ -31876,10 +31876,10 @@ var init_NetworkRequest = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkStorage.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkStorage.js
 var MAX_TOTAL_COLLECTED_SIZE, NetworkStorage;
 var init_NetworkStorage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkStorage.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/network/NetworkStorage.js"() {
     init_protocol();
     init_uuid();
     init_CollectorsStorage();
@@ -32222,10 +32222,10 @@ var init_NetworkStorage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTarget.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTarget.js
 var CdpTarget2;
 var init_CdpTarget = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTarget.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTarget.js"() {
     init_chromium_bidi();
     init_protocol();
     init_Deferred2();
@@ -32839,10 +32839,10 @@ var init_CdpTarget = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTargetManager.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTargetManager.js
 var cdpToBidiTargetTypes, CdpTargetManager;
 var init_CdpTargetManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTargetManager.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/cdp/CdpTargetManager.js"() {
     init_log();
     init_BrowsingContextImpl();
     init_WorkerRealm();
@@ -33094,10 +33094,10 @@ var init_CdpTargetManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextStorage.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextStorage.js
 var BrowsingContextStorage;
 var init_BrowsingContextStorage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextStorage.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/context/BrowsingContextStorage.js"() {
     init_protocol();
     init_EventEmitter2();
     BrowsingContextStorage = class {
@@ -33212,10 +33212,10 @@ var init_BrowsingContextStorage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScriptStorage.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScriptStorage.js
 var PreloadScriptStorage;
 var init_PreloadScriptStorage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScriptStorage.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/PreloadScriptStorage.js"() {
     init_ErrorResponse();
     PreloadScriptStorage = class {
       /** Tracks all BiDi preload scripts.  */
@@ -33271,10 +33271,10 @@ var init_PreloadScriptStorage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/RealmStorage.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/script/RealmStorage.js
 var RealmStorage;
 var init_RealmStorage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/script/RealmStorage.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/script/RealmStorage.js"() {
     init_protocol();
     init_WindowRealm();
     RealmStorage = class {
@@ -33344,10 +33344,10 @@ var init_RealmStorage = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Buffer.js
+// node_modules/chromium-bidi/lib/utils/Buffer.js
 var Buffer2;
 var init_Buffer = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/Buffer.js"() {
+  "node_modules/chromium-bidi/lib/utils/Buffer.js"() {
     Buffer2 = class {
       #capacity;
       #entries = [];
@@ -33376,10 +33376,10 @@ var init_Buffer = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/IdWrapper.js
+// node_modules/chromium-bidi/lib/utils/IdWrapper.js
 var IdWrapper;
 var init_IdWrapper = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/utils/IdWrapper.js"() {
+  "node_modules/chromium-bidi/lib/utils/IdWrapper.js"() {
     IdWrapper = class _IdWrapper {
       static #counter = 0;
       #id;
@@ -33393,7 +33393,7 @@ var init_IdWrapper = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/events.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/session/events.js
 function isCdpEvent(name) {
   return name.split(".").at(0)?.startsWith(chromium_bidi_exports.BiDiModule.Cdp) ?? false;
 }
@@ -33403,12 +33403,12 @@ function assertSupportedEvent(name) {
   }
 }
 var init_events = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/events.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/session/events.js"() {
     init_protocol();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/SubscriptionManager.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/session/SubscriptionManager.js
 function unrollEvents(events) {
   const allEvents = /* @__PURE__ */ new Set();
   function addEvents(events2) {
@@ -33476,7 +33476,7 @@ function equal(setA, setB) {
 }
 var SubscriptionManager;
 var init_SubscriptionManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/SubscriptionManager.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/session/SubscriptionManager.js"() {
     init_protocol();
     init_uuid();
     SubscriptionManager = class {
@@ -33635,10 +33635,10 @@ var init_SubscriptionManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/EventManager.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/session/EventManager.js
 var _a6, EventWrapper, eventBufferLength, EventManager;
 var init_EventManager = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/session/EventManager.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/session/EventManager.js"() {
     init_protocol();
     init_Buffer();
     init_DefaultMap();
@@ -33863,10 +33863,10 @@ var init_EventManager = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/speculation/SpeculationProcessor.js
+// node_modules/chromium-bidi/lib/bidiMapper/modules/speculation/SpeculationProcessor.js
 var SpeculationProcessor;
 var init_SpeculationProcessor = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/modules/speculation/SpeculationProcessor.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/modules/speculation/SpeculationProcessor.js"() {
     init_log();
     SpeculationProcessor = class {
       #eventManager;
@@ -33910,10 +33910,10 @@ var init_SpeculationProcessor = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiServer.js
+// node_modules/chromium-bidi/lib/bidiMapper/BidiServer.js
 var BidiServer;
 var init_BidiServer = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiServer.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/BidiServer.js"() {
     init_EventEmitter2();
     init_log();
     init_ProcessingQueue();
@@ -34049,7 +34049,7 @@ var init_BidiServer = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiMapper.js
+// node_modules/chromium-bidi/lib/bidiMapper/BidiMapper.js
 var BidiMapper_exports = {};
 __export(BidiMapper_exports, {
   BidiServer: () => BidiServer,
@@ -34057,25 +34057,25 @@ __export(BidiMapper_exports, {
   OutgoingMessage: () => OutgoingMessage
 });
 var init_BidiMapper = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/bidiMapper/BidiMapper.js"() {
+  "node_modules/chromium-bidi/lib/bidiMapper/BidiMapper.js"() {
     init_BidiServer();
     init_EventEmitter2();
     init_OutgoingMessage();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/index.js
+// node_modules/chromium-bidi/lib/index.js
 var init_lib = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/chromium-bidi/lib/index.js"() {
+  "node_modules/chromium-bidi/lib/index.js"() {
     init_BidiMapper();
     init_protocol();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js
 var BidiCdpSession;
 var init_CDPSession2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/CDPSession.js"() {
     init_CDPSession();
     init_Errors();
     init_Deferred();
@@ -34159,7 +34159,7 @@ var init_CDPSession2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Connection.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Connection.js
 function createProtocolError(object) {
   let message = `${object.error} ${object.message}`;
   if (object.stacktrace) {
@@ -34172,7 +34172,7 @@ function isCdpEvent2(event) {
 }
 var debugProtocolSend2, debugProtocolReceive2, BidiConnection;
 var init_Connection2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Connection.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Connection.js"() {
     init_CallbackRegistry();
     init_Debug();
     init_Errors();
@@ -34308,7 +34308,7 @@ var init_Connection2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js
 async function connectBidiOverCdp(cdp) {
   const transportBiDi = new NoOpTransport();
   const cdpConnectionAdapter = new CdpConnectionAdapter(cdp);
@@ -34341,7 +34341,7 @@ async function connectBidiOverCdp(cdp) {
 }
 var bidiServerLogger, CdpConnectionAdapter, CDPClientAdapter, NoOpTransport;
 var init_BidiOverCdp = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/BidiOverCdp.js"() {
     init_lib();
     init_Debug();
     init_Errors();
@@ -34440,10 +34440,10 @@ var init_BidiOverCdp = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BluetoothEmulation.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/BluetoothEmulation.js
 var BidiBluetoothEmulation;
 var init_BluetoothEmulation2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BluetoothEmulation.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/BluetoothEmulation.js"() {
     BidiBluetoothEmulation = class {
       #session;
       #contextId;
@@ -34476,10 +34476,10 @@ var init_BluetoothEmulation2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/DeviceRequestPrompt.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/DeviceRequestPrompt.js
 var BidiDeviceRequestPromptManager, BidiDeviceRequestPrompt;
 var init_DeviceRequestPrompt3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/DeviceRequestPrompt.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/DeviceRequestPrompt.js"() {
     init_DeviceRequestPrompt();
     init_Errors();
     init_Deferred();
@@ -34556,10 +34556,10 @@ var init_DeviceRequestPrompt3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Navigation.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Navigation.js
 var __runInitializers8, __esDecorate8, Navigation;
 var init_Navigation = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Navigation.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Navigation.js"() {
     init_EventEmitter();
     init_decorators();
     init_disposable();
@@ -34721,10 +34721,10 @@ var init_Navigation = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js
 var __runInitializers9, __esDecorate9, _a7, Realm3, WindowRealm2, DedicatedWorkerRealm, SharedWorkerRealm;
 var init_Realm3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Realm.js"() {
     init_EventEmitter();
     init_decorators();
     init_disposable();
@@ -35007,10 +35007,10 @@ var init_Realm3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Request.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Request.js
 var __runInitializers10, __esDecorate10, Request;
 var init_Request = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Request.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Request.js"() {
     init_Errors();
     init_EventEmitter();
     init_decorators();
@@ -35298,10 +35298,10 @@ var init_Request = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserPrompt.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserPrompt.js
 var __runInitializers11, __esDecorate11, UserPrompt;
 var init_UserPrompt = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserPrompt.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserPrompt.js"() {
     init_EventEmitter();
     init_decorators();
     init_disposable();
@@ -35428,10 +35428,10 @@ var init_UserPrompt = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js
 var __runInitializers12, __esDecorate12, BrowsingContext2;
 var init_BrowsingContext = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/BrowsingContext.js"() {
     init_EventEmitter();
     init_util();
     init_assert();
@@ -36020,10 +36020,10 @@ var init_BrowsingContext = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserContext.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserContext.js
 var __runInitializers13, __esDecorate13, UserContext;
 var init_UserContext = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserContext.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/UserContext.js"() {
     init_EventEmitter();
     init_assert();
     init_decorators();
@@ -36221,10 +36221,10 @@ var init_UserContext = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Deserializer.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Deserializer.js
 var BidiDeserializer;
 var init_Deserializer = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Deserializer.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Deserializer.js"() {
     init_util();
     BidiDeserializer = class {
       static deserialize(result) {
@@ -36297,10 +36297,10 @@ var init_Deserializer = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/JSHandle.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/JSHandle.js
 var BidiJSHandle;
 var init_JSHandle3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/JSHandle.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/JSHandle.js"() {
     init_JSHandle();
     init_Errors();
     init_Deserializer();
@@ -36366,10 +36366,10 @@ var init_JSHandle3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/ElementHandle.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/ElementHandle.js
 var __runInitializers14, __esDecorate14, __addDisposableResource14, __disposeResources14, BidiElementHandle;
 var init_ElementHandle3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/ElementHandle.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/ElementHandle.js"() {
     init_ElementHandle();
     init_Errors();
     init_environment();
@@ -36583,10 +36583,10 @@ var init_ElementHandle3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Dialog.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Dialog.js
 var BidiDialog;
 var init_Dialog3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Dialog.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Dialog.js"() {
     init_Dialog();
     BidiDialog = class _BidiDialog extends Dialog {
       static from(prompt) {
@@ -36608,10 +36608,10 @@ var init_Dialog3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/ExposedFunction.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/ExposedFunction.js
 var __addDisposableResource15, __disposeResources15, ExposableFunction;
 var init_ExposedFunction = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/ExposedFunction.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/ExposedFunction.js"() {
     init_EventEmitter();
     init_util();
     init_disposable();
@@ -36857,10 +36857,10 @@ var init_ExposedFunction = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPResponse.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPResponse.js
 var __runInitializers15, __esDecorate15, BidiHTTPResponse;
 var init_HTTPResponse3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPResponse.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPResponse.js"() {
     init_HTTPResponse();
     init_Errors();
     init_SecurityDetails();
@@ -37027,7 +37027,7 @@ var init_HTTPResponse3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js
 function getBidiHeaders(rawHeaders) {
   const headers = [];
   for (const [name, value] of Object.entries(rawHeaders ?? [])) {
@@ -37048,7 +37048,7 @@ function getBidiHeaders(rawHeaders) {
 }
 var _a8, requests, BidiHTTPRequest;
 var init_HTTPRequest3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/HTTPRequest.js"() {
     init_HTTPRequest();
     init_Errors();
     init_encoding();
@@ -37262,10 +37262,10 @@ var init_HTTPRequest3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Serializer.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Serializer.js
 var UnserializableError, BidiSerializer;
 var init_Serializer = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Serializer.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Serializer.js"() {
     init_util();
     UnserializableError = class extends Error {
     };
@@ -37368,7 +37368,7 @@ var init_Serializer = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/util.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/util.js
 function convertConsoleMessageLevel2(method) {
   switch (method) {
     case "group":
@@ -37454,7 +37454,7 @@ function rewriteEvaluationError(error) {
   throw error;
 }
 var init_util2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/util.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/util.js"() {
     init_ConsoleMessage();
     init_Errors();
     init_util();
@@ -37463,10 +37463,10 @@ var init_util2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js
 var __addDisposableResource16, __disposeResources16, BidiRealm, BidiFrameRealm, BidiWorkerRealm;
 var init_Realm4 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Realm.js"() {
     init_Realm();
     init_WebWorker();
     init_AriaQueryHandler();
@@ -37791,10 +37791,10 @@ ${sourceUrlComment}
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js
 var BidiWebWorker;
 var init_WebWorker3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/WebWorker.js"() {
     init_WebWorker();
     init_Errors();
     init_Realm4();
@@ -37823,10 +37823,10 @@ var init_WebWorker3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Frame.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Frame.js
 var __runInitializers16, __esDecorate16, __setFunctionName3, BidiFrame;
 var init_Frame3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Frame.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Frame.js"() {
     init_rxjs();
     init_Frame();
     init_Accessibility();
@@ -38304,10 +38304,10 @@ var init_Frame3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Input.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Input.js
 var SourceActionsType, ActionType, getBidiKeyValue, BidiKeyboard, getBidiButton, BidiMouse, BidiTouchHandle, BidiTouchscreen;
 var init_Input3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Input.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Input.js"() {
     init_Input();
     init_Errors();
     init_Errors();
@@ -38915,7 +38915,7 @@ var init_Input3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Page.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Page.js
 function evaluationExpression(fun, ...args) {
   return `() => {${evaluationString(fun, ...args)}}`;
 }
@@ -39047,7 +39047,7 @@ function convertCookiesPartitionKeyFromPuppeteerToBiDi(partitionKey) {
 }
 var __esDecorate17, __runInitializers17, __addDisposableResource17, __disposeResources17, BidiPage, CDP_SPECIFIC_PREFIX;
 var init_Page3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Page.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Page.js"() {
     init_rxjs();
     init_Page();
     init_Coverage();
@@ -39812,10 +39812,10 @@ var init_Page3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Target.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Target.js
 var BidiBrowserTarget, BidiPageTarget, BidiFrameTarget, BidiWorkerTarget;
 var init_Target3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Target.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Target.js"() {
     init_Target();
     init_Errors();
     init_Page3();
@@ -39947,10 +39947,10 @@ var init_Target3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserContext.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserContext.js
 var __esDecorate18, __runInitializers18, __addDisposableResource18, __disposeResources18, BidiBrowserContext;
 var init_BrowserContext3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserContext.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserContext.js"() {
     init_Browser();
     init_BrowserContext();
     init_Errors();
@@ -40327,10 +40327,10 @@ var init_BrowserContext3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Browser.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Browser.js
 var __runInitializers19, __esDecorate19, __addDisposableResource19, __disposeResources19, Browser2;
 var init_Browser3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Browser.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Browser.js"() {
     init_Errors();
     init_EventEmitter();
     init_decorators();
@@ -40669,10 +40669,10 @@ var init_Browser3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Session.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/core/Session.js
 var __runInitializers20, __esDecorate20, Session;
 var init_Session = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/core/Session.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/core/Session.js"() {
     init_EventEmitter();
     init_decorators();
     init_disposable();
@@ -40845,10 +40845,10 @@ var init_Session = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Browser.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/Browser.js
 var __esDecorate21, __runInitializers21, __setFunctionName4, BidiBrowser;
 var init_Browser4 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/Browser.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/Browser.js"() {
     init_Browser();
     init_Errors();
     init_EventEmitter();
@@ -41188,7 +41188,7 @@ var init_Browser4 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/bidi.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/bidi.js
 var bidi_exports = {};
 __export(bidi_exports, {
   BidiBrowser: () => BidiBrowser,
@@ -41215,7 +41215,7 @@ __export(bidi_exports, {
   requests: () => requests
 });
 var init_bidi = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/bidi.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/bidi.js"() {
     init_BidiOverCdp();
     init_Browser4();
     init_BrowserContext3();
@@ -41231,7 +41231,7 @@ var init_bidi = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserConnector.js
+// node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserConnector.js
 async function _connectToBiDiBrowser(connectionTransport, url, options) {
   const { acceptInsecureCerts = false, networkEnabled = true, issuesEnabled = true, defaultViewport = DEFAULT_VIEWPORT } = options;
   const { bidiConnection, cdpConnection, closeCallback } = await getBiDiConnection(connectionTransport, url, options);
@@ -41292,7 +41292,7 @@ async function getBiDiConnection(connectionTransport, url, options) {
   };
 }
 var init_BrowserConnector2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserConnector.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/bidi/BrowserConnector.js"() {
     init_Connection();
     init_Errors();
     init_util();
@@ -41300,9 +41300,9 @@ var init_BrowserConnector2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/constants.js
+// node_modules/ws/lib/constants.js
 var require_constants = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/constants.js"(exports, module) {
+  "node_modules/ws/lib/constants.js"(exports, module) {
     "use strict";
     var BINARY_TYPES = ["nodebuffer", "arraybuffer", "fragments"];
     var hasBlob = typeof Blob !== "undefined";
@@ -41323,9 +41323,9 @@ var require_constants = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/buffer-util.js
+// node_modules/ws/lib/buffer-util.js
 var require_buffer_util = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/buffer-util.js"(exports, module) {
+  "node_modules/ws/lib/buffer-util.js"(exports, module) {
     "use strict";
     var { EMPTY_BUFFER } = require_constants();
     var FastBuffer = Buffer[Symbol.species];
@@ -41398,9 +41398,9 @@ var require_buffer_util = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/limiter.js
+// node_modules/ws/lib/limiter.js
 var require_limiter = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/limiter.js"(exports, module) {
+  "node_modules/ws/lib/limiter.js"(exports, module) {
     "use strict";
     var kDone = /* @__PURE__ */ Symbol("kDone");
     var kRun = /* @__PURE__ */ Symbol("kRun");
@@ -41448,9 +41448,9 @@ var require_limiter = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/permessage-deflate.js
+// node_modules/ws/lib/permessage-deflate.js
 var require_permessage_deflate = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/permessage-deflate.js"(exports, module) {
+  "node_modules/ws/lib/permessage-deflate.js"(exports, module) {
     "use strict";
     var zlib = __require("zlib");
     var bufferUtil = require_buffer_util();
@@ -41831,9 +41831,9 @@ var require_permessage_deflate = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/validation.js
+// node_modules/ws/lib/validation.js
 var require_validation = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/validation.js"(exports, module) {
+  "node_modules/ws/lib/validation.js"(exports, module) {
     "use strict";
     var { isUtf8 } = __require("buffer");
     var { hasBlob } = require_constants();
@@ -42032,9 +42032,9 @@ var require_validation = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/receiver.js
+// node_modules/ws/lib/receiver.js
 var require_receiver = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/receiver.js"(exports, module) {
+  "node_modules/ws/lib/receiver.js"(exports, module) {
     "use strict";
     var { Writable: Writable3 } = __require("stream");
     var PerMessageDeflate2 = require_permessage_deflate();
@@ -42655,9 +42655,9 @@ var require_receiver = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/sender.js
+// node_modules/ws/lib/sender.js
 var require_sender = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/sender.js"(exports, module) {
+  "node_modules/ws/lib/sender.js"(exports, module) {
     "use strict";
     var { Duplex } = __require("stream");
     var { randomFillSync } = __require("crypto");
@@ -43148,9 +43148,9 @@ var require_sender = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/event-target.js
+// node_modules/ws/lib/event-target.js
 var require_event_target = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/event-target.js"(exports, module) {
+  "node_modules/ws/lib/event-target.js"(exports, module) {
     "use strict";
     var { kForOnEventAttribute, kListener } = require_constants();
     var kCode = /* @__PURE__ */ Symbol("kCode");
@@ -43377,9 +43377,9 @@ var require_event_target = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/extension.js
+// node_modules/ws/lib/extension.js
 var require_extension = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/extension.js"(exports, module) {
+  "node_modules/ws/lib/extension.js"(exports, module) {
     "use strict";
     var { tokenChars } = require_validation();
     function push(dest, name, elem) {
@@ -43530,9 +43530,9 @@ var require_extension = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/websocket.js
+// node_modules/ws/lib/websocket.js
 var require_websocket = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/websocket.js"(exports, module) {
+  "node_modules/ws/lib/websocket.js"(exports, module) {
     "use strict";
     var EventEmitter5 = __require("events");
     var https2 = __require("https");
@@ -44426,9 +44426,9 @@ var require_websocket = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/stream.js
+// node_modules/ws/lib/stream.js
 var require_stream = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/stream.js"(exports, module) {
+  "node_modules/ws/lib/stream.js"(exports, module) {
     "use strict";
     var WebSocket3 = require_websocket();
     var { Duplex } = __require("stream");
@@ -44524,9 +44524,9 @@ var require_stream = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/subprotocol.js
+// node_modules/ws/lib/subprotocol.js
 var require_subprotocol = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/subprotocol.js"(exports, module) {
+  "node_modules/ws/lib/subprotocol.js"(exports, module) {
     "use strict";
     var { tokenChars } = require_validation();
     function parse3(header) {
@@ -44569,9 +44569,9 @@ var require_subprotocol = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/websocket-server.js
+// node_modules/ws/lib/websocket-server.js
 var require_websocket_server = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/lib/websocket-server.js"(exports, module) {
+  "node_modules/ws/lib/websocket-server.js"(exports, module) {
     "use strict";
     var EventEmitter5 = __require("events");
     var http2 = __require("http");
@@ -44970,10 +44970,10 @@ var require_websocket_server = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ws/wrapper.mjs
+// node_modules/ws/wrapper.mjs
 var import_stream, import_extension, import_permessage_deflate, import_receiver, import_sender, import_subprotocol, import_websocket, import_websocket_server, wrapper_default;
 var init_wrapper = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ws/wrapper.mjs"() {
+  "node_modules/ws/wrapper.mjs"() {
     import_stream = __toESM(require_stream(), 1);
     import_extension = __toESM(require_extension(), 1);
     import_permessage_deflate = __toESM(require_permessage_deflate(), 1);
@@ -44986,14 +44986,14 @@ var init_wrapper = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js
+// node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js
 var NodeWebSocketTransport_exports = {};
 __export(NodeWebSocketTransport_exports, {
   NodeWebSocketTransport: () => NodeWebSocketTransport
 });
 var NodeWebSocketTransport;
 var init_NodeWebSocketTransport = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/node/NodeWebSocketTransport.js"() {
     init_wrapper();
     init_util();
     init_version();
@@ -45044,7 +45044,7 @@ var init_NodeWebSocketTransport = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/types.js
+// node_modules/@puppeteer/browsers/lib/browser-data/types.js
 function verifyChromeReleaseChannel(value) {
   if (Object.values(ChromeReleaseChannel).includes(value)) {
     return value;
@@ -45053,7 +45053,7 @@ function verifyChromeReleaseChannel(value) {
 }
 var Browser3, BrowserPlatform, BrowserTag, ChromeReleaseChannel;
 var init_types = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/types.js"() {
+  "node_modules/@puppeteer/browsers/lib/browser-data/types.js"() {
     (function(Browser4) {
       Browser4["CHROME"] = "chrome";
       Browser4["CHROMEHEADLESSSHELL"] = "chrome-headless-shell";
@@ -45088,7 +45088,7 @@ var init_types = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/httpUtil.js
+// node_modules/@puppeteer/browsers/lib/httpUtil.js
 import { createHash as createHash7 } from "node:crypto";
 import { createWriteStream, unlinkSync } from "node:fs";
 import * as http from "node:http";
@@ -45220,7 +45220,7 @@ function getText(url) {
 }
 var HashVerifier;
 var init_httpUtil = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/httpUtil.js"() {
+  "node_modules/@puppeteer/browsers/lib/httpUtil.js"() {
     HashVerifier = class {
       #hash = createHash7("sha256");
       update(chunk) {
@@ -45243,7 +45243,7 @@ var init_httpUtil = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome.js
+// node_modules/@puppeteer/browsers/lib/browser-data/chrome.js
 import { execSync } from "node:child_process";
 import os3 from "node:os";
 import path7 from "node:path";
@@ -45506,7 +45506,7 @@ function compareVersions(a2, b2) {
 }
 var baseVersionUrl, WINDOWS_ENV_PARAM_NAMES;
 var init_chrome = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome.js"() {
+  "node_modules/@puppeteer/browsers/lib/browser-data/chrome.js"() {
     init_httpUtil();
     init_types();
     baseVersionUrl = "https://googlechromelabs.github.io/chrome-for-testing";
@@ -45520,7 +45520,7 @@ var init_chrome = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js
+// node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js
 import path8 from "node:path";
 function folder2(platform) {
   switch (platform) {
@@ -45561,13 +45561,13 @@ function relativeExecutablePath2(platform, _buildId) {
   }
 }
 var init_chrome_headless_shell = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js"() {
+  "node_modules/@puppeteer/browsers/lib/browser-data/chrome-headless-shell.js"() {
     init_types();
     init_chrome();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js
+// node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js
 import path9 from "node:path";
 function folder3(platform) {
   switch (platform) {
@@ -45604,13 +45604,13 @@ function relativeExecutablePath3(platform, _buildId) {
   }
 }
 var init_chromedriver = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js"() {
+  "node_modules/@puppeteer/browsers/lib/browser-data/chromedriver.js"() {
     init_types();
     init_chrome();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromium.js
+// node_modules/@puppeteer/browsers/lib/browser-data/chromium.js
 import path10 from "node:path";
 function archive(platform, buildId) {
   switch (platform) {
@@ -45666,13 +45666,13 @@ function compareVersions2(a2, b2) {
   return Number(a2) - Number(b2);
 }
 var init_chromium = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/chromium.js"() {
+  "node_modules/@puppeteer/browsers/lib/browser-data/chromium.js"() {
     init_httpUtil();
     init_types();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/firefox.js
+// node_modules/@puppeteer/browsers/lib/browser-data/firefox.js
 import fs2 from "node:fs";
 import path11 from "node:path";
 function getFormat(buildId) {
@@ -46015,7 +46015,7 @@ function compareVersions3(a2, b2) {
 }
 var FirefoxChannel, baseVersionUrl2;
 var init_firefox = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/firefox.js"() {
+  "node_modules/@puppeteer/browsers/lib/browser-data/firefox.js"() {
     init_httpUtil();
     init_types();
     (function(FirefoxChannel2) {
@@ -46029,7 +46029,7 @@ var init_firefox = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/browser-data.js
+// node_modules/@puppeteer/browsers/lib/browser-data/browser-data.js
 async function resolveBuildIdForBrowserTag(browser, platform, tag) {
   switch (browser) {
     case Browser3.FIREFOX:
@@ -46183,7 +46183,7 @@ function getVersionComparator(browser) {
 }
 var downloadUrls, downloadPaths, executablePathByBrowser, versionComparators;
 var init_browser_data = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/browser-data/browser-data.js"() {
+  "node_modules/@puppeteer/browsers/lib/browser-data/browser-data.js"() {
     init_chrome_headless_shell();
     init_chrome();
     init_chromedriver();
@@ -46221,11 +46221,11 @@ var init_browser_data = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/debug.js
+// node_modules/@puppeteer/browsers/lib/debug.js
 import { debuglog as debuglog2 } from "node:util";
 var debug2;
 var init_debug = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/debug.js"() {
+  "node_modules/@puppeteer/browsers/lib/debug.js"() {
     debug2 = (prefix) => {
       const log = debuglog2(prefix);
       return log.enabled ? log : void 0;
@@ -46233,7 +46233,7 @@ var init_debug = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/detectPlatform.js
+// node_modules/@puppeteer/browsers/lib/detectPlatform.js
 import os4 from "node:os";
 function detectBrowserPlatform() {
   const platform = os4.platform();
@@ -46261,12 +46261,12 @@ function isWindows11(version) {
   return false;
 }
 var init_detectPlatform = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/detectPlatform.js"() {
+  "node_modules/@puppeteer/browsers/lib/detectPlatform.js"() {
     init_browser_data();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/Cache.js
+// node_modules/@puppeteer/browsers/lib/Cache.js
 import fs3 from "node:fs";
 import os5 from "node:os";
 import path12 from "node:path";
@@ -46284,7 +46284,7 @@ function parseFolderPath(folderPath) {
 }
 var debugCache, InstalledBrowser, Cache;
 var init_Cache = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/Cache.js"() {
+  "node_modules/@puppeteer/browsers/lib/Cache.js"() {
     init_browser_data();
     init_debug();
     init_detectPlatform();
@@ -46449,7 +46449,7 @@ var init_Cache = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/launch.js
+// node_modules/@puppeteer/browsers/lib/launch.js
 import childProcess from "node:child_process";
 import { EventEmitter as EventEmitter4 } from "node:events";
 import { accessSync } from "node:fs";
@@ -46526,7 +46526,7 @@ function isErrnoException(obj) {
 }
 var debugLaunch, CDP_WEBSOCKET_ENDPOINT_REGEX, WEBDRIVER_BIDI_WEBSOCKET_ENDPOINT_REGEX, processListeners, dispatchers, Process, PROCESS_ERROR_EXPLANATION, TimeoutError2;
 var init_launch = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/launch.js"() {
+  "node_modules/@puppeteer/browsers/lib/launch.js"() {
     init_browser_data();
     init_Cache();
     init_debug();
@@ -46814,10 +46814,10 @@ If you think this is a bug, please report it on the Puppeteer issue tracker.`;
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/DefaultProvider.js
+// node_modules/@puppeteer/browsers/lib/DefaultProvider.js
 var DefaultProvider;
 var init_DefaultProvider = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/DefaultProvider.js"() {
+  "node_modules/@puppeteer/browsers/lib/DefaultProvider.js"() {
     init_browser_data();
     DefaultProvider = class {
       #baseUrl;
@@ -46843,7 +46843,7 @@ var init_DefaultProvider = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/modern-tar/dist/packer-BtsuoKCV.js
+// node_modules/modern-tar/dist/packer-BtsuoKCV.js
 function writeString(view, offset, size, value) {
   if (value) encoder.encodeInto(value, view.subarray(offset, offset + size));
 }
@@ -47423,7 +47423,7 @@ function createTarPacker(onData, onError, onFinalize) {
 }
 var FILE, LINK, SYMLINK, DIRECTORY, TYPEFLAG, FLAGTYPE, ZERO_BLOCK, EMPTY2, encoder, decoder, isBodyless, stripPath, INITIAL_CAPACITY, CHECKSUM_SPACE, ASCII_ZERO, USTAR_SPLIT_MAX_SIZE, PAX_MAPPING, STATE_HEADER, STATE_BODY, MAX_META_SIZE, truncateErr, EOF_BUFFER;
 var init_packer_BtsuoKCV = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/modern-tar/dist/packer-BtsuoKCV.js"() {
+  "node_modules/modern-tar/dist/packer-BtsuoKCV.js"() {
     FILE = "file";
     LINK = "link";
     SYMLINK = "symlink";
@@ -47485,7 +47485,7 @@ var init_packer_BtsuoKCV = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/modern-tar/dist/fs/index.js
+// node_modules/modern-tar/dist/fs/index.js
 var fs_exports = {};
 __export(fs_exports, {
   packTar: () => packTar,
@@ -48027,7 +48027,7 @@ function unpackTar(directoryPath, options = {}) {
 }
 var win32Reserved, normalizeHeaderName, BIGINT_STAT, WITH_FILE_TYPES, packTarSources, createOperationQueue, BATCH_BYTES, CREATE_FLAGS, STATE_OPENING, STATE_OPEN, STATE_CLOSED, STATE_FAILED, DRAINED_PROMISE, createCache, ENOENT, MAX_SYMLINKS, linkSep, linkParts, createPathCache;
 var init_fs = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/modern-tar/dist/fs/index.js"() {
+  "node_modules/modern-tar/dist/fs/index.js"() {
     init_packer_BtsuoKCV();
     win32Reserved = {
       ":": "\uF03A",
@@ -48369,7 +48369,7 @@ var init_fs = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/fileUtil.js
+// node_modules/@puppeteer/browsers/lib/fileUtil.js
 import { spawnSync, spawn, execFile as execFile2 } from "node:child_process";
 import { constants as constants2, createReadStream, createWriteStream as createWriteStream2 } from "node:fs";
 import { mkdir as mkdir7, readdir as readdir2, symlink as symlink2 } from "node:fs/promises";
@@ -48605,7 +48605,7 @@ async function extractZipEntry(zipFile, entry, folderPath) {
 }
 var execFileAsync2, debugFileUtil, internalConstantsForTesting, ArchiverUnavailableError;
 var init_fileUtil = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/fileUtil.js"() {
+  "node_modules/@puppeteer/browsers/lib/fileUtil.js"() {
     init_debug();
     execFileAsync2 = promisify2(execFile2);
     debugFileUtil = debug2("puppeteer:browsers:fileUtil");
@@ -48618,10 +48618,10 @@ var init_fileUtil = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/ProgressBar.js
+// node_modules/@puppeteer/browsers/lib/ProgressBar.js
 var activeBar, ProgressBar;
 var init_ProgressBar = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/ProgressBar.js"() {
+  "node_modules/@puppeteer/browsers/lib/ProgressBar.js"() {
     activeBar = null;
     ProgressBar = class _ProgressBar {
       #stream;
@@ -48745,7 +48745,7 @@ var init_ProgressBar = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/install.js
+// node_modules/@puppeteer/browsers/lib/install.js
 import assert3 from "node:assert";
 import { spawnSync as spawnSync2 } from "node:child_process";
 import { existsSync, readFileSync as readFileSync2 } from "node:fs";
@@ -49019,7 +49019,7 @@ function toMegabytes(bytes) {
 }
 var debugInstall, times;
 var init_install = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/install.js"() {
+  "node_modules/@puppeteer/browsers/lib/install.js"() {
     init_browser_data();
     init_Cache();
     init_debug();
@@ -49033,7 +49033,7 @@ var init_install = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/cliui/build/lib/index.js
+// node_modules/cliui/build/lib/index.js
 function addBorder(col, ts, style) {
   if (col.border) {
     if (/[.']-+[.']/.test(ts)) {
@@ -49085,7 +49085,7 @@ function cliui(opts, _mixin) {
 }
 var align, top, right, bottom, left, UI, mixin;
 var init_lib2 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/cliui/build/lib/index.js"() {
+  "node_modules/cliui/build/lib/index.js"() {
     "use strict";
     align = {
       right: alignRight,
@@ -49294,7 +49294,7 @@ var init_lib2 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ansi-regex/index.js
+// node_modules/ansi-regex/index.js
 function ansiRegex({ onlyFirst = false } = {}) {
   const ST = "(?:\\u0007|\\u001B\\u005C|\\u009C)";
   const osc = `(?:\\u001B\\][\\s\\S]*?${ST})`;
@@ -49303,11 +49303,11 @@ function ansiRegex({ onlyFirst = false } = {}) {
   return new RegExp(pattern, onlyFirst ? void 0 : "g");
 }
 var init_ansi_regex = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ansi-regex/index.js"() {
+  "node_modules/ansi-regex/index.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/strip-ansi/index.js
+// node_modules/strip-ansi/index.js
 function stripAnsi(string) {
   if (typeof string !== "string") {
     throw new TypeError(`Expected a \`string\`, got \`${typeof string}\``);
@@ -49319,16 +49319,16 @@ function stripAnsi(string) {
 }
 var regex;
 var init_strip_ansi = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/strip-ansi/index.js"() {
+  "node_modules/strip-ansi/index.js"() {
     init_ansi_regex();
     regex = ansiRegex();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/lookup-data.js
+// node_modules/get-east-asian-width/lookup-data.js
 var ambiguousMinimalCodePoint, ambiguousMaximumCodePoint, ambiguousRanges, fullwidthMinimalCodePoint, fullwidthMaximumCodePoint, fullwidthRanges, wideMinimalCodePoint, wideMaximumCodePoint, wideRanges;
 var init_lookup_data = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/lookup-data.js"() {
+  "node_modules/get-east-asian-width/lookup-data.js"() {
     ambiguousMinimalCodePoint = 161;
     ambiguousMaximumCodePoint = 1114109;
     ambiguousRanges = [161, 161, 164, 164, 167, 168, 170, 170, 173, 174, 176, 180, 182, 186, 188, 191, 198, 198, 208, 208, 215, 216, 222, 225, 230, 230, 232, 234, 236, 237, 240, 240, 242, 243, 247, 250, 252, 252, 254, 254, 257, 257, 273, 273, 275, 275, 283, 283, 294, 295, 299, 299, 305, 307, 312, 312, 319, 322, 324, 324, 328, 331, 333, 333, 338, 339, 358, 359, 363, 363, 462, 462, 464, 464, 466, 466, 468, 468, 470, 470, 472, 472, 474, 474, 476, 476, 593, 593, 609, 609, 708, 708, 711, 711, 713, 715, 717, 717, 720, 720, 728, 731, 733, 733, 735, 735, 768, 879, 913, 929, 931, 937, 945, 961, 963, 969, 1025, 1025, 1040, 1103, 1105, 1105, 8208, 8208, 8211, 8214, 8216, 8217, 8220, 8221, 8224, 8226, 8228, 8231, 8240, 8240, 8242, 8243, 8245, 8245, 8251, 8251, 8254, 8254, 8308, 8308, 8319, 8319, 8321, 8324, 8364, 8364, 8451, 8451, 8453, 8453, 8457, 8457, 8467, 8467, 8470, 8470, 8481, 8482, 8486, 8486, 8491, 8491, 8531, 8532, 8539, 8542, 8544, 8555, 8560, 8569, 8585, 8585, 8592, 8601, 8632, 8633, 8658, 8658, 8660, 8660, 8679, 8679, 8704, 8704, 8706, 8707, 8711, 8712, 8715, 8715, 8719, 8719, 8721, 8721, 8725, 8725, 8730, 8730, 8733, 8736, 8739, 8739, 8741, 8741, 8743, 8748, 8750, 8750, 8756, 8759, 8764, 8765, 8776, 8776, 8780, 8780, 8786, 8786, 8800, 8801, 8804, 8807, 8810, 8811, 8814, 8815, 8834, 8835, 8838, 8839, 8853, 8853, 8857, 8857, 8869, 8869, 8895, 8895, 8978, 8978, 9312, 9449, 9451, 9547, 9552, 9587, 9600, 9615, 9618, 9621, 9632, 9633, 9635, 9641, 9650, 9651, 9654, 9655, 9660, 9661, 9664, 9665, 9670, 9672, 9675, 9675, 9678, 9681, 9698, 9701, 9711, 9711, 9733, 9734, 9737, 9737, 9742, 9743, 9756, 9756, 9758, 9758, 9792, 9792, 9794, 9794, 9824, 9825, 9827, 9829, 9831, 9834, 9836, 9837, 9839, 9839, 9886, 9887, 9919, 9919, 9926, 9933, 9935, 9939, 9941, 9953, 9955, 9955, 9960, 9961, 9963, 9969, 9972, 9972, 9974, 9977, 9979, 9980, 9982, 9983, 10045, 10045, 10102, 10111, 11094, 11097, 12872, 12879, 57344, 63743, 65024, 65039, 65533, 65533, 127232, 127242, 127248, 127277, 127280, 127337, 127344, 127373, 127375, 127376, 127387, 127404, 917760, 917999, 983040, 1048573, 1048576, 1114109];
@@ -49341,10 +49341,10 @@ var init_lookup_data = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/utilities.js
+// node_modules/get-east-asian-width/utilities.js
 var isInRange;
 var init_utilities = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/utilities.js"() {
+  "node_modules/get-east-asian-width/utilities.js"() {
     isInRange = (ranges, codePoint) => {
       let low = 0;
       let high = Math.floor(ranges.length / 2) - 1;
@@ -49364,7 +49364,7 @@ var init_utilities = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/lookup.js
+// node_modules/get-east-asian-width/lookup.js
 function findWideFastPathRange(ranges) {
   let fastPathStart = ranges[0];
   let fastPathEnd = ranges[1];
@@ -49383,7 +49383,7 @@ function findWideFastPathRange(ranges) {
 }
 var commonCjkCodePoint, wideFastPathStart, wideFastPathEnd, isAmbiguous, isFullWidth, isWide;
 var init_lookup = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/lookup.js"() {
+  "node_modules/get-east-asian-width/lookup.js"() {
     init_lookup_data();
     init_utilities();
     commonCjkCodePoint = 19968;
@@ -49412,7 +49412,7 @@ var init_lookup = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/index.js
+// node_modules/get-east-asian-width/index.js
 function validate(codePoint) {
   if (!Number.isSafeInteger(codePoint)) {
     throw new TypeError(`Expected a code point, got \`${typeof codePoint}\`.`);
@@ -49426,21 +49426,21 @@ function eastAsianWidth(codePoint, { ambiguousAsWide = false } = {}) {
   return 1;
 }
 var init_get_east_asian_width = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/get-east-asian-width/index.js"() {
+  "node_modules/get-east-asian-width/index.js"() {
     init_lookup();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/emoji-regex/index.js
+// node_modules/emoji-regex/index.js
 var require_emoji_regex = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/emoji-regex/index.js"(exports, module) {
+  "node_modules/emoji-regex/index.js"(exports, module) {
     module.exports = () => {
       return /[#*0-9]\uFE0F?\u20E3|[\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23ED-\u23EF\u23F1\u23F2\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB\u25FC\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692\u2694-\u2697\u2699\u269B\u269C\u26A0\u26A7\u26AA\u26B0\u26B1\u26BD\u26BE\u26C4\u26C8\u26CF\u26D1\u26E9\u26F0-\u26F5\u26F7\u26F8\u26FA\u2702\u2708\u2709\u270F\u2712\u2714\u2716\u271D\u2721\u2733\u2734\u2744\u2747\u2757\u2763\u27A1\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B55\u3030\u303D\u3297\u3299]\uFE0F?|[\u261D\u270C\u270D](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?|[\u270A\u270B](?:\uD83C[\uDFFB-\uDFFF])?|[\u23E9-\u23EC\u23F0\u23F3\u25FD\u2693\u26A1\u26AB\u26C5\u26CE\u26D4\u26EA\u26FD\u2705\u2728\u274C\u274E\u2753-\u2755\u2795-\u2797\u27B0\u27BF\u2B50]|\u26D3\uFE0F?(?:\u200D\uD83D\uDCA5)?|\u26F9(?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|\u2764\uFE0F?(?:\u200D(?:\uD83D\uDD25|\uD83E\uDE79))?|\uD83C(?:[\uDC04\uDD70\uDD71\uDD7E\uDD7F\uDE02\uDE37\uDF21\uDF24-\uDF2C\uDF36\uDF7D\uDF96\uDF97\uDF99-\uDF9B\uDF9E\uDF9F\uDFCD\uDFCE\uDFD4-\uDFDF\uDFF5\uDFF7]\uFE0F?|[\uDF85\uDFC2\uDFC7](?:\uD83C[\uDFFB-\uDFFF])?|[\uDFC4\uDFCA](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDFCB\uDFCC](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDCCF\uDD8E\uDD91-\uDD9A\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF43\uDF45-\uDF4A\uDF4C-\uDF7C\uDF7E-\uDF84\uDF86-\uDF93\uDFA0-\uDFC1\uDFC5\uDFC6\uDFC8\uDFC9\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF8-\uDFFF]|\uDDE6\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF]|\uDDE7\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF]|\uDDE8\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF7\uDDFA-\uDDFF]|\uDDE9\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF]|\uDDEA\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA]|\uDDEB\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7]|\uDDEC\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE]|\uDDED\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA]|\uDDEE\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9]|\uDDEF\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5]|\uDDF0\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF]|\uDDF1\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE]|\uDDF2\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF]|\uDDF3\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF]|\uDDF4\uD83C\uDDF2|\uDDF5\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE]|\uDDF6\uD83C\uDDE6|\uDDF7\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC]|\uDDF8\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF]|\uDDF9\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF]|\uDDFA\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF]|\uDDFB\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA]|\uDDFC\uD83C[\uDDEB\uDDF8]|\uDDFD\uD83C\uDDF0|\uDDFE\uD83C[\uDDEA\uDDF9]|\uDDFF\uD83C[\uDDE6\uDDF2\uDDFC]|\uDF44(?:\u200D\uD83D\uDFEB)?|\uDF4B(?:\u200D\uD83D\uDFE9)?|\uDFC3(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?|\uDFF3\uFE0F?(?:\u200D(?:\u26A7\uFE0F?|\uD83C\uDF08))?|\uDFF4(?:\u200D\u2620\uFE0F?|\uDB40\uDC67\uDB40\uDC62\uDB40(?:\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDC73\uDB40\uDC63\uDB40\uDC74|\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F)?)|\uD83D(?:[\uDC3F\uDCFD\uDD49\uDD4A\uDD6F\uDD70\uDD73\uDD76-\uDD79\uDD87\uDD8A-\uDD8D\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA\uDECB\uDECD-\uDECF\uDEE0-\uDEE5\uDEE9\uDEF0\uDEF3]\uFE0F?|[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDC8F\uDC91\uDCAA\uDD7A\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC](?:\uD83C[\uDFFB-\uDFFF])?|[\uDC6E-\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4\uDEB5](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD74\uDD90](?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?|[\uDC00-\uDC07\uDC09-\uDC14\uDC16-\uDC25\uDC27-\uDC3A\uDC3C-\uDC3E\uDC40\uDC44\uDC45\uDC51-\uDC65\uDC6A\uDC79-\uDC7B\uDC7D-\uDC80\uDC84\uDC88-\uDC8E\uDC90\uDC92-\uDCA9\uDCAB-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDDA4\uDDFB-\uDE2D\uDE2F-\uDE34\uDE37-\uDE41\uDE43\uDE44\uDE48-\uDE4A\uDE80-\uDEA2\uDEA4-\uDEB3\uDEB7-\uDEBF\uDEC1-\uDEC5\uDED0-\uDED2\uDED5-\uDED8\uDEDC-\uDEDF\uDEEB\uDEEC\uDEF4-\uDEFC\uDFE0-\uDFEB\uDFF0]|\uDC08(?:\u200D\u2B1B)?|\uDC15(?:\u200D\uD83E\uDDBA)?|\uDC26(?:\u200D(?:\u2B1B|\uD83D\uDD25))?|\uDC3B(?:\u200D\u2744\uFE0F?)?|\uDC41\uFE0F?(?:\u200D\uD83D\uDDE8\uFE0F?)?|\uDC68(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDC68\uDC69]\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?)|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFC-\uDFFF])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFC-\uDFFF]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFD-\uDFFF]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFD\uDFFF]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?\uDC68\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFE])|\uD83E(?:[\uDD1D\uDEEF]\u200D\uD83D\uDC68\uD83C[\uDFFB-\uDFFE]|[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3])))?))?|\uDC69(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:\uDC8B\u200D\uD83D)?[\uDC68\uDC69]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?|\uDC69\u200D\uD83D(?:\uDC66(?:\u200D\uD83D\uDC66)?|\uDC67(?:\u200D\uD83D[\uDC66\uDC67])?))|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFC-\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFC-\uDFFF]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFD-\uDFFF]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFD\uDFFF]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D\uD83D(?:[\uDC68\uDC69]|\uDC8B\u200D\uD83D[\uDC68\uDC69])\uD83C[\uDFFB-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83D\uDC69\uD83C[\uDFFB-\uDFFE])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3]|\uDD1D\u200D\uD83D[\uDC68\uDC69]\uD83C[\uDFFB-\uDFFE]|\uDEEF\u200D\uD83D\uDC69\uD83C[\uDFFB-\uDFFE])))?))?|\uDD75(?:\uD83C[\uDFFB-\uDFFF]|\uFE0F)?(?:\u200D[\u2640\u2642]\uFE0F?)?|\uDE2E(?:\u200D\uD83D\uDCA8)?|\uDE35(?:\u200D\uD83D\uDCAB)?|\uDE36(?:\u200D\uD83C\uDF2B\uFE0F?)?|\uDE42(?:\u200D[\u2194\u2195]\uFE0F?)?|\uDEB6(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?)|\uD83E(?:[\uDD0C\uDD0F\uDD18-\uDD1F\uDD30-\uDD34\uDD36\uDD77\uDDB5\uDDB6\uDDBB\uDDD2\uDDD3\uDDD5\uDEC3-\uDEC5\uDEF0\uDEF2-\uDEF8](?:\uD83C[\uDFFB-\uDFFF])?|[\uDD26\uDD35\uDD37-\uDD39\uDD3C-\uDD3E\uDDB8\uDDB9\uDDCD\uDDCF\uDDD4\uDDD6-\uDDDD](?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDDDE\uDDDF](?:\u200D[\u2640\u2642]\uFE0F?)?|[\uDD0D\uDD0E\uDD10-\uDD17\uDD20-\uDD25\uDD27-\uDD2F\uDD3A\uDD3F-\uDD45\uDD47-\uDD76\uDD78-\uDDB4\uDDB7\uDDBA\uDDBC-\uDDCC\uDDD0\uDDE0-\uDDFF\uDE70-\uDE7C\uDE80-\uDE8A\uDE8E-\uDEC2\uDEC6\uDEC8\uDECD-\uDEDC\uDEDF-\uDEEA\uDEEF]|\uDDCE(?:\uD83C[\uDFFB-\uDFFF])?(?:\u200D(?:[\u2640\u2642]\uFE0F?(?:\u200D\u27A1\uFE0F?)?|\u27A1\uFE0F?))?|\uDDD1(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1|\uDDD1\u200D\uD83E\uDDD2(?:\u200D\uD83E\uDDD2)?|\uDDD2(?:\u200D\uD83E\uDDD2)?))|\uD83C(?:\uDFFB(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFC-\uDFFF])))?|\uDFFC(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFB\uDFFD-\uDFFF])))?|\uDFFD(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])))?|\uDFFE(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFD\uDFFF])))?|\uDFFF(?:\u200D(?:[\u2695\u2696\u2708]\uFE0F?|\u2764\uFE0F?\u200D(?:\uD83D\uDC8B\u200D)?\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE]|\uD83C[\uDF3E\uDF73\uDF7C\uDF84\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D(?:[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uDC30\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE])|\uD83E(?:[\uDDAF\uDDBC\uDDBD](?:\u200D\u27A1\uFE0F?)?|[\uDDB0-\uDDB3\uDE70]|\uDD1D\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFF]|\uDEEF\u200D\uD83E\uDDD1\uD83C[\uDFFB-\uDFFE])))?))?|\uDEF1(?:\uD83C(?:\uDFFB(?:\u200D\uD83E\uDEF2\uD83C[\uDFFC-\uDFFF])?|\uDFFC(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFD-\uDFFF])?|\uDFFD(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])?|\uDFFE(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFD\uDFFF])?|\uDFFF(?:\u200D\uD83E\uDEF2\uD83C[\uDFFB-\uDFFE])?))?)/g;
     };
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/string-width/index.js
+// node_modules/string-width/index.js
 function stringWidth(string, options = {}) {
   if (typeof string !== "string" || string.length === 0) {
     return 0;
@@ -49487,7 +49487,7 @@ function stringWidth(string, options = {}) {
 }
 var import_emoji_regex, segmenter, defaultIgnorableCodePointRegex;
 var init_string_width = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/string-width/index.js"() {
+  "node_modules/string-width/index.js"() {
     init_strip_ansi();
     init_get_east_asian_width();
     import_emoji_regex = __toESM(require_emoji_regex(), 1);
@@ -49496,7 +49496,7 @@ var init_string_width = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/ansi-styles/index.js
+// node_modules/ansi-styles/index.js
 function assembleStyles() {
   const codes = /* @__PURE__ */ new Map();
   for (const [groupName, group] of Object.entries(styles)) {
@@ -49613,7 +49613,7 @@ function assembleStyles() {
 }
 var ANSI_BACKGROUND_OFFSET, wrapAnsi16, wrapAnsi256, wrapAnsi16m, styles, modifierNames, foregroundColorNames, backgroundColorNames, colorNames, ansiStyles, ansi_styles_default;
 var init_ansi_styles = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/ansi-styles/index.js"() {
+  "node_modules/ansi-styles/index.js"() {
     ANSI_BACKGROUND_OFFSET = 10;
     wrapAnsi16 = (offset = 0) => (code) => `\x1B[${code + offset}m`;
     wrapAnsi256 = (offset = 0) => (code) => `\x1B[${38 + offset};5;${code}m`;
@@ -49687,13 +49687,13 @@ var init_ansi_styles = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/wrap-ansi/index.js
+// node_modules/wrap-ansi/index.js
 function wrapAnsi(string, columns, options) {
   return String(string).normalize().replaceAll("\r\n", "\n").split("\n").map((line) => exec(line, columns, options)).join("\n");
 }
 var ESCAPES, END_CODE, ANSI_ESCAPE_BELL, ANSI_CSI, ANSI_OSC, ANSI_SGR_TERMINATOR, ANSI_ESCAPE_LINK, wrapAnsiCode, wrapAnsiHyperlink, wordLengths, wrapWord, stringVisibleTrimSpacesRight, exec;
 var init_wrap_ansi = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/wrap-ansi/index.js"() {
+  "node_modules/wrap-ansi/index.js"() {
     init_string_width();
     init_strip_ansi();
     init_ansi_styles();
@@ -49850,7 +49850,7 @@ var init_wrap_ansi = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/cliui/index.mjs
+// node_modules/cliui/index.mjs
 function ui(opts) {
   return cliui(opts, {
     stringWidth,
@@ -49859,7 +49859,7 @@ function ui(opts) {
   });
 }
 var init_cliui = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/cliui/index.mjs"() {
+  "node_modules/cliui/index.mjs"() {
     init_lib2();
     init_string_width();
     init_strip_ansi();
@@ -49867,7 +49867,7 @@ var init_cliui = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/escalade/sync/index.mjs
+// node_modules/escalade/sync/index.mjs
 import { dirname as dirname3, resolve as resolve3 } from "path";
 import { readdirSync, statSync } from "fs";
 function sync_default(start, callback) {
@@ -49884,11 +49884,11 @@ function sync_default(start, callback) {
   }
 }
 var init_sync = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/escalade/sync/index.mjs"() {
+  "node_modules/escalade/sync/index.mjs"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/string-utils.js
+// node_modules/yargs-parser/build/lib/string-utils.js
 function camelCase(str) {
   const isCamelCase = str !== str.toLowerCase() && str !== str.toUpperCase();
   if (!isCamelCase) {
@@ -49942,11 +49942,11 @@ function looksLikeNumber(x2) {
   return /^[-]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x2);
 }
 var init_string_utils = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/string-utils.js"() {
+  "node_modules/yargs-parser/build/lib/string-utils.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/tokenize-arg-string.js
+// node_modules/yargs-parser/build/lib/tokenize-arg-string.js
 function tokenizeArgString(argString) {
   if (Array.isArray(argString)) {
     return argString.map((e) => typeof e !== "string" ? e + "" : e);
@@ -49978,14 +49978,14 @@ function tokenizeArgString(argString) {
   return args;
 }
 var init_tokenize_arg_string = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/tokenize-arg-string.js"() {
+  "node_modules/yargs-parser/build/lib/tokenize-arg-string.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/yargs-parser-types.js
+// node_modules/yargs-parser/build/lib/yargs-parser-types.js
 var DefaultValuesForTypeKey;
 var init_yargs_parser_types = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/yargs-parser-types.js"() {
+  "node_modules/yargs-parser/build/lib/yargs-parser-types.js"() {
     (function(DefaultValuesForTypeKey2) {
       DefaultValuesForTypeKey2["BOOLEAN"] = "boolean";
       DefaultValuesForTypeKey2["STRING"] = "string";
@@ -49995,7 +49995,7 @@ var init_yargs_parser_types = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/yargs-parser.js
+// node_modules/yargs-parser/build/lib/yargs-parser.js
 function combineAliases(aliases) {
   const aliasArrays = [];
   const combined = /* @__PURE__ */ Object.create(null);
@@ -50043,7 +50043,7 @@ function stripQuotes(val) {
 }
 var mixin2, YargsParser;
 var init_yargs_parser = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/yargs-parser.js"() {
+  "node_modules/yargs-parser/build/lib/yargs-parser.js"() {
     init_tokenize_arg_string();
     init_yargs_parser_types();
     init_string_utils();
@@ -50842,14 +50842,14 @@ var init_yargs_parser = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/index.js
+// node_modules/yargs-parser/build/lib/index.js
 import { format } from "util";
 import { normalize, resolve as resolve4 } from "path";
 import { readFileSync as readFileSync3 } from "fs";
 import { createRequire } from "node:module";
 var _a9, _b, _c, minNodeVersion, nodeVersion, env, require2, parser, yargsParser, lib_default;
 var init_lib3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs-parser/build/lib/index.js"() {
+  "node_modules/yargs-parser/build/lib/index.js"() {
     init_string_utils();
     init_yargs_parser();
     minNodeVersion = process && process.env && process.env.YARGS_MIN_NODE_VERSION ? Number(process.env.YARGS_MIN_NODE_VERSION) : 20;
@@ -50894,7 +50894,7 @@ var init_lib3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/process-argv.js
+// node_modules/yargs/build/lib/utils/process-argv.js
 function getProcessArgvBinIndex() {
   if (isBundledElectronApp())
     return 0;
@@ -50913,17 +50913,17 @@ function getProcessArgvBin() {
   return process.argv[getProcessArgvBinIndex()];
 }
 var init_process_argv = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/process-argv.js"() {
+  "node_modules/yargs/build/lib/utils/process-argv.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/y18n/build/lib/platform-shims/node.js
+// node_modules/y18n/build/lib/platform-shims/node.js
 import { readFileSync as readFileSync4, statSync as statSync2, writeFile } from "fs";
 import { format as format2 } from "util";
 import { resolve as resolve5 } from "path";
 var node_default;
 var init_node = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/y18n/build/lib/platform-shims/node.js"() {
+  "node_modules/y18n/build/lib/platform-shims/node.js"() {
     node_default = {
       fs: {
         readFileSync: readFileSync4,
@@ -50942,7 +50942,7 @@ var init_node = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/y18n/build/lib/index.js
+// node_modules/y18n/build/lib/index.js
 function y18n(opts, _shim) {
   shim = _shim;
   const y18n3 = new Y18N(opts);
@@ -50957,7 +50957,7 @@ function y18n(opts, _shim) {
 }
 var shim, Y18N;
 var init_lib4 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/y18n/build/lib/index.js"() {
+  "node_modules/y18n/build/lib/index.js"() {
     Y18N = class {
       constructor(opts) {
         opts = opts || {};
@@ -51107,10 +51107,10 @@ var init_lib4 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/y18n/index.mjs
+// node_modules/y18n/index.mjs
 var y18n2, y18n_default;
 var init_y18n = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/y18n/index.mjs"() {
+  "node_modules/y18n/index.mjs"() {
     init_node();
     init_lib4();
     y18n2 = (opts) => {
@@ -51120,9 +51120,9 @@ var init_y18n = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/get-caller-file/index.js
+// node_modules/get-caller-file/index.js
 var require_get_caller_file = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/get-caller-file/index.js"(exports, module) {
+  "node_modules/get-caller-file/index.js"(exports, module) {
     "use strict";
     module.exports = function getCallerFile2(position) {
       if (position === void 0) {
@@ -51144,7 +51144,7 @@ var require_get_caller_file = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/lib/platform-shims/esm.mjs
+// node_modules/yargs/lib/platform-shims/esm.mjs
 import { notStrictEqual, strictEqual } from "assert";
 import { inspect } from "util";
 import { fileURLToPath } from "url";
@@ -51153,7 +51153,7 @@ import { createRequire as createRequire2 } from "node:module";
 import { readFileSync as readFileSync5, readdirSync as readdirSync2 } from "node:fs";
 var import_get_caller_file, __dirname, mainFilename, require3, esm_default;
 var init_esm = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/lib/platform-shims/esm.mjs"() {
+  "node_modules/yargs/lib/platform-shims/esm.mjs"() {
     "use strict";
     init_cliui();
     init_sync();
@@ -51214,7 +51214,7 @@ var init_esm = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/typings/common-types.js
+// node_modules/yargs/build/lib/typings/common-types.js
 function assertNotStrictEqual(actual, expected, shim3, message) {
   shim3.assert.notStrictEqual(actual, expected, message);
 }
@@ -51225,23 +51225,23 @@ function objectKeys(object) {
   return Object.keys(object);
 }
 var init_common_types = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/typings/common-types.js"() {
+  "node_modules/yargs/build/lib/typings/common-types.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/is-promise.js
+// node_modules/yargs/build/lib/utils/is-promise.js
 function isPromise2(maybePromise) {
   return !!maybePromise && !!maybePromise.then && typeof maybePromise.then === "function";
 }
 var init_is_promise = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/is-promise.js"() {
+  "node_modules/yargs/build/lib/utils/is-promise.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/yerror.js
+// node_modules/yargs/build/lib/yerror.js
 var YError;
 var init_yerror = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/yerror.js"() {
+  "node_modules/yargs/build/lib/yerror.js"() {
     YError = class _YError extends Error {
       constructor(msg) {
         super(msg || "yargs error");
@@ -51254,7 +51254,7 @@ var init_yerror = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/parse-command.js
+// node_modules/yargs/build/lib/parse-command.js
 function parseCommand(cmd) {
   const extraSpacesStrippedCommand = cmd.replace(/\s{2,}/g, " ");
   const splitCommand = extraSpacesStrippedCommand.split(/\s+(?![^[]*]|[^<]*>)/);
@@ -51287,11 +51287,11 @@ function parseCommand(cmd) {
   return parsedCommand;
 }
 var init_parse_command = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/parse-command.js"() {
+  "node_modules/yargs/build/lib/parse-command.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/argsert.js
+// node_modules/yargs/build/lib/argsert.js
 function argsert(arg1, arg2, arg3) {
   function parseArgs() {
     return typeof arg1 === "object" ? [{ demanded: [], optional: [] }, arg1, arg2] : [
@@ -51349,14 +51349,14 @@ function argumentTypeError(observedType, allowedTypes, position) {
 }
 var positionName;
 var init_argsert = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/argsert.js"() {
+  "node_modules/yargs/build/lib/argsert.js"() {
     init_yerror();
     init_parse_command();
     positionName = ["first", "second", "third", "fourth", "fifth", "sixth"];
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/middleware.js
+// node_modules/yargs/build/lib/middleware.js
 function commandMiddlewareFactory(commandMiddleware) {
   if (!commandMiddleware)
     return [];
@@ -51385,7 +51385,7 @@ function applyMiddleware(argv, yargs, middlewares, beforeValidation) {
 }
 var GlobalMiddleware;
 var init_middleware = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/middleware.js"() {
+  "node_modules/yargs/build/lib/middleware.js"() {
     init_argsert();
     init_is_promise();
     GlobalMiddleware = class {
@@ -51445,7 +51445,7 @@ var init_middleware = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/maybe-async-result.js
+// node_modules/yargs/build/lib/utils/maybe-async-result.js
 function maybeAsyncResult(getResult, resultHandler, errorHandler = (err) => {
   throw err;
 }) {
@@ -51460,12 +51460,12 @@ function isFunction2(arg) {
   return typeof arg === "function";
 }
 var init_maybe_async_result = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/maybe-async-result.js"() {
+  "node_modules/yargs/build/lib/utils/maybe-async-result.js"() {
     init_is_promise();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/command.js
+// node_modules/yargs/build/lib/command.js
 function command(usage2, validation2, globalMiddleware, shim3) {
   return new CommandInstance(usage2, validation2, globalMiddleware, shim3);
 }
@@ -51486,7 +51486,7 @@ function isCommandHandlerDefinition(cmd) {
 }
 var DEFAULT_MARKER, CommandInstance;
 var init_command = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/command.js"() {
+  "node_modules/yargs/build/lib/command.js"() {
     init_common_types();
     init_is_promise();
     init_middleware();
@@ -51897,7 +51897,7 @@ var init_command = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/obj-filter.js
+// node_modules/yargs/build/lib/utils/obj-filter.js
 function objFilter(original = {}, filter2 = () => true) {
   const obj = {};
   objectKeys(original).forEach((key) => {
@@ -51908,12 +51908,12 @@ function objFilter(original = {}, filter2 = () => true) {
   return obj;
 }
 var init_obj_filter = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/obj-filter.js"() {
+  "node_modules/yargs/build/lib/utils/obj-filter.js"() {
     init_common_types();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/set-blocking.js
+// node_modules/yargs/build/lib/utils/set-blocking.js
 function setBlocking(blocking) {
   if (typeof process === "undefined")
     return;
@@ -51925,11 +51925,11 @@ function setBlocking(blocking) {
   });
 }
 var init_set_blocking = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/set-blocking.js"() {
+  "node_modules/yargs/build/lib/utils/set-blocking.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/usage.js
+// node_modules/yargs/build/lib/usage.js
 function isBoolean(fail) {
   return typeof fail === "boolean";
 }
@@ -52455,17 +52455,17 @@ function getText2(text) {
   return isIndentedText(text) ? text.text : text;
 }
 var init_usage = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/usage.js"() {
+  "node_modules/yargs/build/lib/usage.js"() {
     init_obj_filter();
     init_yerror();
     init_set_blocking();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/completion-templates.js
+// node_modules/yargs/build/lib/completion-templates.js
 var completionShTemplate, completionZshTemplate;
 var init_completion_templates = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/completion-templates.js"() {
+  "node_modules/yargs/build/lib/completion-templates.js"() {
     completionShTemplate = `###-begin-{{app_name}}-completions-###
 #
 # yargs command completion script
@@ -52527,7 +52527,7 @@ fi
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/completion.js
+// node_modules/yargs/build/lib/completion.js
 function completion(yargs, usage2, command2, shim3) {
   return new Completion(yargs, usage2, command2, shim3);
 }
@@ -52539,7 +52539,7 @@ function isFallbackCompletionFunction(completionFunction) {
 }
 var Completion;
 var init_completion = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/completion.js"() {
+  "node_modules/yargs/build/lib/completion.js"() {
     init_command();
     init_common_types();
     init_completion_templates();
@@ -52750,7 +52750,7 @@ var init_completion = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/levenshtein.js
+// node_modules/yargs/build/lib/utils/levenshtein.js
 function levenshtein(a2, b2) {
   if (a2.length === 0)
     return b2.length;
@@ -52781,11 +52781,11 @@ function levenshtein(a2, b2) {
   return matrix[b2.length][a2.length];
 }
 var init_levenshtein = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/levenshtein.js"() {
+  "node_modules/yargs/build/lib/utils/levenshtein.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/validation.js
+// node_modules/yargs/build/lib/validation.js
 function validation(yargs, usage2, shim3) {
   const __ = shim3.y18n.__;
   const __n = shim3.y18n.__n;
@@ -53054,7 +53054,7 @@ ${customMsgs.join("\n")}` : "";
 }
 var specialKeys;
 var init_validation = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/validation.js"() {
+  "node_modules/yargs/build/lib/validation.js"() {
     init_argsert();
     init_common_types();
     init_levenshtein();
@@ -53063,7 +53063,7 @@ var init_validation = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/apply-extends.js
+// node_modules/yargs/build/lib/utils/apply-extends.js
 function applyExtends(config2, cwd, mergeExtends, _shim) {
   shim2 = _shim;
   let defaultConfig = {};
@@ -53115,13 +53115,13 @@ function mergeDeep(config1, config2) {
 }
 var previouslyVisitedConfigs, shim2;
 var init_apply_extends = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/utils/apply-extends.js"() {
+  "node_modules/yargs/build/lib/utils/apply-extends.js"() {
     init_yerror();
     previouslyVisitedConfigs = [];
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/yargs-factory.js
+// node_modules/yargs/build/lib/yargs-factory.js
 function YargsFactory(_shim) {
   return (processArgs = [], cwd = _shim.process.cwd(), parentRequire) => {
     const yargs = new YargsInstance(processArgs, cwd, parentRequire, _shim);
@@ -53141,7 +53141,7 @@ function isYargsInstance(y) {
 }
 var __classPrivateFieldSet, __classPrivateFieldGet, _YargsInstance_command, _YargsInstance_cwd, _YargsInstance_context, _YargsInstance_completion, _YargsInstance_completionCommand, _YargsInstance_defaultShowHiddenOpt, _YargsInstance_exitError, _YargsInstance_detectLocale, _YargsInstance_emittedWarnings, _YargsInstance_exitProcess, _YargsInstance_frozens, _YargsInstance_globalMiddleware, _YargsInstance_groups, _YargsInstance_hasOutput, _YargsInstance_helpOpt, _YargsInstance_isGlobalContext, _YargsInstance_logger, _YargsInstance_output, _YargsInstance_options, _YargsInstance_parentRequire, _YargsInstance_parserConfig, _YargsInstance_parseFn, _YargsInstance_parseContext, _YargsInstance_pkgs, _YargsInstance_preservedGroups, _YargsInstance_processArgs, _YargsInstance_recommendCommands, _YargsInstance_shim, _YargsInstance_strict, _YargsInstance_strictCommands, _YargsInstance_strictOptions, _YargsInstance_usage, _YargsInstance_usageConfig, _YargsInstance_versionOpt, _YargsInstance_validation, kCopyDoubleDash, kCreateLogger, kDeleteFromParserHintObject, kEmitWarning, kFreeze, kGetDollarZero, kGetParserConfiguration, kGetUsageConfiguration, kGuessLocale, kGuessVersion, kParsePositionalNumbers, kPkgUp, kPopulateParserHintArray, kPopulateParserHintSingleValueDictionary, kPopulateParserHintArrayDictionary, kPopulateParserHintDictionary, kSanitizeKey, kSetKey, kUnfreeze, kValidateAsync, kGetCommandInstance, kGetContext, kGetHasOutput, kGetLoggerInstance, kGetParseContext, kGetUsageInstance, kGetValidationInstance, kHasParseCallback, kIsGlobalContext, kPostProcess, kRebase, kReset, kRunYargsParserAndExecuteCommands, kRunValidation, kSetHasOutput, kTrackManuallySetKeys, DEFAULT_LOCALE, YargsInstance;
 var init_yargs_factory = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/build/lib/yargs-factory.js"() {
+  "node_modules/yargs/build/lib/yargs-factory.js"() {
     init_command();
     init_common_types();
     init_yerror();
@@ -54603,7 +54603,7 @@ var init_yargs_factory = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/index.mjs
+// node_modules/yargs/index.mjs
 var yargs_exports = {};
 __export(yargs_exports, {
   default: () => yargs_default,
@@ -54611,7 +54611,7 @@ __export(yargs_exports, {
 });
 var Yargs, yargs_default;
 var init_yargs = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/index.mjs"() {
+  "node_modules/yargs/index.mjs"() {
     "use strict";
     init_esm();
     init_yargs_factory();
@@ -54620,7 +54620,7 @@ var init_yargs = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/yargs/helpers/helpers.mjs
+// node_modules/yargs/helpers/helpers.mjs
 var helpers_exports = {};
 __export(helpers_exports, {
   Parser: () => lib_default,
@@ -54629,7 +54629,7 @@ __export(helpers_exports, {
 });
 var applyExtends2;
 var init_helpers = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/yargs/helpers/helpers.mjs"() {
+  "node_modules/yargs/helpers/helpers.mjs"() {
     init_apply_extends();
     init_process_argv();
     init_lib3();
@@ -54640,7 +54640,7 @@ var init_helpers = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/CLI.js
+// node_modules/@puppeteer/browsers/lib/CLI.js
 import { spawn as spawn2 } from "node:child_process";
 import fs5 from "node:fs";
 import os8 from "node:os";
@@ -54655,7 +54655,7 @@ function isValidPlatform(platform) {
 }
 var packageVersion2, CLI;
 var init_CLI = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/CLI.js"() {
+  "node_modules/@puppeteer/browsers/lib/CLI.js"() {
     init_browser_data();
     init_Cache();
     init_detectPlatform();
@@ -54977,16 +54977,16 @@ var init_CLI = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/provider.js
+// node_modules/@puppeteer/browsers/lib/provider.js
 function buildArchiveFilename(browser, platform, buildId, extension2 = "zip") {
   return `${browser}-${platform}-${buildId}.${extension2}`;
 }
 var init_provider = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/provider.js"() {
+  "node_modules/@puppeteer/browsers/lib/provider.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/main.js
+// node_modules/@puppeteer/browsers/lib/main.js
 var main_exports = {};
 __export(main_exports, {
   Browser: () => Browser3,
@@ -55017,7 +55017,7 @@ __export(main_exports, {
   uninstall: () => uninstall
 });
 var init_main = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@puppeteer/browsers/lib/main.js"() {
+  "node_modules/@puppeteer/browsers/lib/main.js"() {
     init_launch();
     init_install();
     init_detectPlatform();
@@ -55030,7 +55030,7 @@ var init_main = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/LaunchOptions.js
+// node_modules/puppeteer-core/lib/puppeteer/node/LaunchOptions.js
 var LaunchOptions_exports = {};
 __export(LaunchOptions_exports, {
   convertPuppeteerChannelToBrowsersChannel: () => convertPuppeteerChannelToBrowsersChannel
@@ -55048,12 +55048,12 @@ function convertPuppeteerChannelToBrowsersChannel(channel) {
   }
 }
 var init_LaunchOptions = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/LaunchOptions.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/node/LaunchOptions.js"() {
     init_main();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js
+// node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js
 function assertSupportedUrlRestrictions(options) {
   if (options.blocklist && options.allowlist) {
     throw new Error("Cannot specify both blocklist and allowlist");
@@ -55162,7 +55162,7 @@ async function getWSEndpoint(browserURL) {
 }
 var getWebSocketTransportClass;
 var init_BrowserConnector3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/BrowserConnector.js"() {
     init_urlpattern_polyfill();
     init_BrowserConnector2();
     init_BrowserConnector();
@@ -55175,10 +55175,10 @@ var init_BrowserConnector3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Puppeteer.js
+// node_modules/puppeteer-core/lib/puppeteer/common/Puppeteer.js
 var Puppeteer;
 var init_Puppeteer = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/Puppeteer.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/Puppeteer.js"() {
     init_BrowserConnector3();
     init_CustomQueryHandler();
     Puppeteer = class {
@@ -55264,15 +55264,15 @@ var init_Puppeteer = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TaskQueue.js
+// node_modules/puppeteer-core/lib/puppeteer/common/TaskQueue.js
 var init_TaskQueue = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/TaskQueue.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/TaskQueue.js"() {
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/common.js
+// node_modules/puppeteer-core/lib/puppeteer/common/common.js
 var init_common = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/common/common.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/common/common.js"() {
     init_BrowserWebSocketTransport();
     init_CallbackRegistry();
     init_AriaQueryHandler();
@@ -55305,10 +55305,10 @@ var init_common = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/revisions.js
+// node_modules/puppeteer-core/lib/puppeteer/revisions.js
 var PUPPETEER_REVISIONS;
 var init_revisions = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/revisions.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/revisions.js"() {
     PUPPETEER_REVISIONS = Object.freeze({
       chrome: "150.0.7871.24",
       "chrome-headless-shell": "150.0.7871.24",
@@ -55317,9 +55317,9 @@ var init_revisions = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/util.js
+// node_modules/puppeteer-core/lib/puppeteer/util/util.js
 var init_util3 = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/util/util.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/util/util.js"() {
     init_assert();
     init_Deferred();
     init_Mutex();
@@ -55331,9 +55331,9 @@ var init_util3 = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/index-browser.js
+// node_modules/puppeteer-core/lib/puppeteer/index-browser.js
 var init_index_browser = __esm({
-  "../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/index-browser.js"() {
+  "node_modules/puppeteer-core/lib/puppeteer/index-browser.js"() {
     init_api();
     init_cdp();
     init_common();
@@ -55342,9 +55342,9 @@ var init_index_browser = __esm({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/array.js
+// node_modules/fast-glob/out/utils/array.js
 var require_array = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/array.js"(exports) {
+  "node_modules/fast-glob/out/utils/array.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.splitWhen = exports.flatten = void 0;
@@ -55369,9 +55369,9 @@ var require_array = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/errno.js
+// node_modules/fast-glob/out/utils/errno.js
 var require_errno = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/errno.js"(exports) {
+  "node_modules/fast-glob/out/utils/errno.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isEnoentCodeError = void 0;
@@ -55382,9 +55382,9 @@ var require_errno = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/fs.js
+// node_modules/fast-glob/out/utils/fs.js
 var require_fs = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/fs.js"(exports) {
+  "node_modules/fast-glob/out/utils/fs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createDirentFromStats = void 0;
@@ -55407,9 +55407,9 @@ var require_fs = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/path.js
+// node_modules/fast-glob/out/utils/path.js
 var require_path = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/path.js"(exports) {
+  "node_modules/fast-glob/out/utils/path.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convertPosixPathToPattern = exports.convertWindowsPathToPattern = exports.convertPathToPattern = exports.escapePosixPath = exports.escapeWindowsPath = exports.escape = exports.removeLeadingDotSegment = exports.makeAbsolute = exports.unixify = void 0;
@@ -55460,9 +55460,9 @@ var require_path = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/is-extglob/index.js
+// node_modules/is-extglob/index.js
 var require_is_extglob = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/is-extglob/index.js"(exports, module) {
+  "node_modules/is-extglob/index.js"(exports, module) {
     module.exports = function isExtglob(str) {
       if (typeof str !== "string" || str === "") {
         return false;
@@ -55477,9 +55477,9 @@ var require_is_extglob = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/is-glob/index.js
+// node_modules/is-glob/index.js
 var require_is_glob = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/is-glob/index.js"(exports, module) {
+  "node_modules/is-glob/index.js"(exports, module) {
     var isExtglob = require_is_extglob();
     var chars = { "{": "}", "(": ")", "[": "]" };
     var strictCheck = function(str) {
@@ -55608,9 +55608,9 @@ var require_is_glob = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/glob-parent/index.js
+// node_modules/glob-parent/index.js
 var require_glob_parent = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/glob-parent/index.js"(exports, module) {
+  "node_modules/glob-parent/index.js"(exports, module) {
     "use strict";
     var isGlob = require_is_glob();
     var pathPosixDirname = __require("path").posix.dirname;
@@ -55637,9 +55637,9 @@ var require_glob_parent = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/utils.js
+// node_modules/braces/lib/utils.js
 var require_utils = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/utils.js"(exports) {
+  "node_modules/braces/lib/utils.js"(exports) {
     "use strict";
     exports.isInteger = (num) => {
       if (typeof num === "number") {
@@ -55719,9 +55719,9 @@ var require_utils = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/stringify.js
+// node_modules/braces/lib/stringify.js
 var require_stringify = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/stringify.js"(exports, module) {
+  "node_modules/braces/lib/stringify.js"(exports, module) {
     "use strict";
     var utils = require_utils();
     module.exports = (ast, options = {}) => {
@@ -55750,9 +55750,9 @@ var require_stringify = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/is-number/index.js
+// node_modules/is-number/index.js
 var require_is_number = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/is-number/index.js"(exports, module) {
+  "node_modules/is-number/index.js"(exports, module) {
     "use strict";
     module.exports = function(num) {
       if (typeof num === "number") {
@@ -55766,9 +55766,9 @@ var require_is_number = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/to-regex-range/index.js
+// node_modules/to-regex-range/index.js
 var require_to_regex_range = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/to-regex-range/index.js"(exports, module) {
+  "node_modules/to-regex-range/index.js"(exports, module) {
     "use strict";
     var isNumber2 = require_is_number();
     var toRegexRange = (min, max, options) => {
@@ -55977,9 +55977,9 @@ var require_to_regex_range = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fill-range/index.js
+// node_modules/fill-range/index.js
 var require_fill_range = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fill-range/index.js"(exports, module) {
+  "node_modules/fill-range/index.js"(exports, module) {
     "use strict";
     var util = __require("util");
     var toRegexRange = require_to_regex_range();
@@ -56171,9 +56171,9 @@ var require_fill_range = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/compile.js
+// node_modules/braces/lib/compile.js
 var require_compile = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/compile.js"(exports, module) {
+  "node_modules/braces/lib/compile.js"(exports, module) {
     "use strict";
     var fill = require_fill_range();
     var utils = require_utils();
@@ -56223,9 +56223,9 @@ var require_compile = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/expand.js
+// node_modules/braces/lib/expand.js
 var require_expand = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/expand.js"(exports, module) {
+  "node_modules/braces/lib/expand.js"(exports, module) {
     "use strict";
     var fill = require_fill_range();
     var stringify2 = require_stringify();
@@ -56317,9 +56317,9 @@ var require_expand = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/constants.js
+// node_modules/braces/lib/constants.js
 var require_constants2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/constants.js"(exports, module) {
+  "node_modules/braces/lib/constants.js"(exports, module) {
     "use strict";
     module.exports = {
       MAX_LENGTH: 1e4,
@@ -56418,9 +56418,9 @@ var require_constants2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/parse.js
+// node_modules/braces/lib/parse.js
 var require_parse = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/braces/lib/parse.js"(exports, module) {
+  "node_modules/braces/lib/parse.js"(exports, module) {
     "use strict";
     var stringify2 = require_stringify();
     var {
@@ -56656,9 +56656,9 @@ var require_parse = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/braces/index.js
+// node_modules/braces/index.js
 var require_braces = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/braces/index.js"(exports, module) {
+  "node_modules/braces/index.js"(exports, module) {
     "use strict";
     var stringify2 = require_stringify();
     var compile = require_compile();
@@ -56719,9 +56719,9 @@ var require_braces = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/constants.js
+// node_modules/picomatch/lib/constants.js
 var require_constants3 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/constants.js"(exports, module) {
+  "node_modules/picomatch/lib/constants.js"(exports, module) {
     "use strict";
     var path31 = __require("path");
     var WIN_SLASH = "\\\\/";
@@ -56920,9 +56920,9 @@ var require_constants3 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/utils.js
+// node_modules/picomatch/lib/utils.js
 var require_utils2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/utils.js"(exports) {
+  "node_modules/picomatch/lib/utils.js"(exports) {
     "use strict";
     var path31 = __require("path");
     var win32 = process.platform === "win32";
@@ -56981,9 +56981,9 @@ var require_utils2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/scan.js
+// node_modules/picomatch/lib/scan.js
 var require_scan = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/scan.js"(exports, module) {
+  "node_modules/picomatch/lib/scan.js"(exports, module) {
     "use strict";
     var utils = require_utils2();
     var {
@@ -57311,9 +57311,9 @@ var require_scan = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/parse.js
+// node_modules/picomatch/lib/parse.js
 var require_parse2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/parse.js"(exports, module) {
+  "node_modules/picomatch/lib/parse.js"(exports, module) {
     "use strict";
     var constants3 = require_constants3();
     var utils = require_utils2();
@@ -58313,9 +58313,9 @@ var require_parse2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/picomatch.js
+// node_modules/picomatch/lib/picomatch.js
 var require_picomatch = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/lib/picomatch.js"(exports, module) {
+  "node_modules/picomatch/lib/picomatch.js"(exports, module) {
     "use strict";
     var path31 = __require("path");
     var scan = require_scan();
@@ -58454,17 +58454,17 @@ var require_picomatch = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/picomatch/index.js
+// node_modules/picomatch/index.js
 var require_picomatch2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/picomatch/index.js"(exports, module) {
+  "node_modules/picomatch/index.js"(exports, module) {
     "use strict";
     module.exports = require_picomatch();
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/micromatch/index.js
+// node_modules/micromatch/index.js
 var require_micromatch = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/micromatch/index.js"(exports, module) {
+  "node_modules/micromatch/index.js"(exports, module) {
     "use strict";
     var util = __require("util");
     var braces = require_braces();
@@ -58623,9 +58623,9 @@ var require_micromatch = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/pattern.js
+// node_modules/fast-glob/out/utils/pattern.js
 var require_pattern = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/pattern.js"(exports) {
+  "node_modules/fast-glob/out/utils/pattern.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isAbsolute = exports.partitionAbsoluteAndRelative = exports.removeDuplicateSlashes = exports.matchAny = exports.convertPatternsToRe = exports.makeRe = exports.getPatternParts = exports.expandBraceExpansion = exports.expandPatternsWithBraceExpansion = exports.isAffectDepthOfReadingPattern = exports.endsWithSlashGlobStar = exports.hasGlobStar = exports.getBaseDirectory = exports.isPatternRelatedToParentDirectory = exports.getPatternsOutsideCurrentDirectory = exports.getPatternsInsideCurrentDirectory = exports.getPositivePatterns = exports.getNegativePatterns = exports.isPositivePattern = exports.isNegativePattern = exports.convertToNegativePattern = exports.convertToPositivePattern = exports.isDynamicPattern = exports.isStaticPattern = void 0;
@@ -58788,9 +58788,9 @@ var require_pattern = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/merge2/index.js
+// node_modules/merge2/index.js
 var require_merge2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/merge2/index.js"(exports, module) {
+  "node_modules/merge2/index.js"(exports, module) {
     "use strict";
     var Stream2 = __require("stream");
     var PassThrough2 = Stream2.PassThrough;
@@ -58907,9 +58907,9 @@ var require_merge2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/stream.js
+// node_modules/fast-glob/out/utils/stream.js
 var require_stream2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/stream.js"(exports) {
+  "node_modules/fast-glob/out/utils/stream.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.merge = void 0;
@@ -58930,9 +58930,9 @@ var require_stream2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/string.js
+// node_modules/fast-glob/out/utils/string.js
 var require_string = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/string.js"(exports) {
+  "node_modules/fast-glob/out/utils/string.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isEmpty = exports.isString = void 0;
@@ -58947,9 +58947,9 @@ var require_string = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/index.js
+// node_modules/fast-glob/out/utils/index.js
 var require_utils3 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/utils/index.js"(exports) {
+  "node_modules/fast-glob/out/utils/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.string = exports.stream = exports.pattern = exports.path = exports.fs = exports.errno = exports.array = void 0;
@@ -58970,9 +58970,9 @@ var require_utils3 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/managers/tasks.js
+// node_modules/fast-glob/out/managers/tasks.js
 var require_tasks = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/managers/tasks.js"(exports) {
+  "node_modules/fast-glob/out/managers/tasks.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convertPatternGroupToTask = exports.convertPatternGroupsToTasks = exports.groupPatternsByBaseDirectory = exports.getNegativePatternsAsPositive = exports.getPositivePatterns = exports.convertPatternsToTasks = exports.generate = void 0;
@@ -59066,9 +59066,9 @@ var require_tasks = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/providers/async.js
+// node_modules/@nodelib/fs.stat/out/providers/async.js
 var require_async = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/providers/async.js"(exports) {
+  "node_modules/@nodelib/fs.stat/out/providers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.read = void 0;
@@ -59108,9 +59108,9 @@ var require_async = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/providers/sync.js
+// node_modules/@nodelib/fs.stat/out/providers/sync.js
 var require_sync = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/providers/sync.js"(exports) {
+  "node_modules/@nodelib/fs.stat/out/providers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.read = void 0;
@@ -59136,9 +59136,9 @@ var require_sync = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/adapters/fs.js
+// node_modules/@nodelib/fs.stat/out/adapters/fs.js
 var require_fs2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/adapters/fs.js"(exports) {
+  "node_modules/@nodelib/fs.stat/out/adapters/fs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createFileSystemAdapter = exports.FILE_SYSTEM_ADAPTER = void 0;
@@ -59159,9 +59159,9 @@ var require_fs2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/settings.js
+// node_modules/@nodelib/fs.stat/out/settings.js
 var require_settings = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/settings.js"(exports) {
+  "node_modules/@nodelib/fs.stat/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var fs9 = require_fs2();
@@ -59181,9 +59181,9 @@ var require_settings = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/index.js
+// node_modules/@nodelib/fs.stat/out/index.js
 var require_out = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.stat/out/index.js"(exports) {
+  "node_modules/@nodelib/fs.stat/out/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.statSync = exports.stat = exports.Settings = void 0;
@@ -59213,9 +59213,9 @@ var require_out = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/queue-microtask/index.js
+// node_modules/queue-microtask/index.js
 var require_queue_microtask = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/queue-microtask/index.js"(exports, module) {
+  "node_modules/queue-microtask/index.js"(exports, module) {
     var promise;
     module.exports = typeof queueMicrotask === "function" ? queueMicrotask.bind(typeof window !== "undefined" ? window : global) : (cb) => (promise || (promise = Promise.resolve())).then(cb).catch((err) => setTimeout(() => {
       throw err;
@@ -59223,9 +59223,9 @@ var require_queue_microtask = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/run-parallel/index.js
+// node_modules/run-parallel/index.js
 var require_run_parallel = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/run-parallel/index.js"(exports, module) {
+  "node_modules/run-parallel/index.js"(exports, module) {
     module.exports = runParallel;
     var queueMicrotask2 = require_queue_microtask();
     function runParallel(tasks, cb) {
@@ -59273,9 +59273,9 @@ var require_run_parallel = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/constants.js
+// node_modules/@nodelib/fs.scandir/out/constants.js
 var require_constants4 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/constants.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/constants.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IS_SUPPORT_READDIR_WITH_FILE_TYPES = void 0;
@@ -59293,9 +59293,9 @@ var require_constants4 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/utils/fs.js
+// node_modules/@nodelib/fs.scandir/out/utils/fs.js
 var require_fs3 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/utils/fs.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/utils/fs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createDirentFromStats = void 0;
@@ -59318,9 +59318,9 @@ var require_fs3 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/utils/index.js
+// node_modules/@nodelib/fs.scandir/out/utils/index.js
 var require_utils4 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/utils/index.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/utils/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.fs = void 0;
@@ -59329,9 +59329,9 @@ var require_utils4 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/common.js
+// node_modules/@nodelib/fs.scandir/out/providers/common.js
 var require_common = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/common.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/providers/common.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.joinPathSegments = void 0;
@@ -59345,9 +59345,9 @@ var require_common = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/async.js
+// node_modules/@nodelib/fs.scandir/out/providers/async.js
 var require_async2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/async.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/providers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.readdir = exports.readdirWithFileTypes = exports.read = void 0;
@@ -59455,9 +59455,9 @@ var require_async2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/sync.js
+// node_modules/@nodelib/fs.scandir/out/providers/sync.js
 var require_sync2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/providers/sync.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/providers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.readdir = exports.readdirWithFileTypes = exports.read = void 0;
@@ -59514,9 +59514,9 @@ var require_sync2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/adapters/fs.js
+// node_modules/@nodelib/fs.scandir/out/adapters/fs.js
 var require_fs4 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/adapters/fs.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/adapters/fs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createFileSystemAdapter = exports.FILE_SYSTEM_ADAPTER = void 0;
@@ -59539,9 +59539,9 @@ var require_fs4 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/settings.js
+// node_modules/@nodelib/fs.scandir/out/settings.js
 var require_settings2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/settings.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var path31 = __require("path");
@@ -59569,9 +59569,9 @@ var require_settings2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/index.js
+// node_modules/@nodelib/fs.scandir/out/index.js
 var require_out2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.scandir/out/index.js"(exports) {
+  "node_modules/@nodelib/fs.scandir/out/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Settings = exports.scandirSync = exports.scandir = void 0;
@@ -59601,9 +59601,9 @@ var require_out2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/reusify/reusify.js
+// node_modules/reusify/reusify.js
 var require_reusify = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/reusify/reusify.js"(exports, module) {
+  "node_modules/reusify/reusify.js"(exports, module) {
     "use strict";
     function reusify(Constructor) {
       var head = new Constructor();
@@ -59632,9 +59632,9 @@ var require_reusify = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fastq/queue.js
+// node_modules/fastq/queue.js
 var require_queue = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fastq/queue.js"(exports, module) {
+  "node_modules/fastq/queue.js"(exports, module) {
     "use strict";
     var reusify = require_reusify();
     function fastqueue(context2, worker, _concurrency) {
@@ -59916,9 +59916,9 @@ var require_queue = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/common.js
+// node_modules/@nodelib/fs.walk/out/readers/common.js
 var require_common2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/common.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/readers/common.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.joinPathSegments = exports.replacePathSegmentSeparator = exports.isAppliedFilter = exports.isFatalError = void 0;
@@ -59950,9 +59950,9 @@ var require_common2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/reader.js
+// node_modules/@nodelib/fs.walk/out/readers/reader.js
 var require_reader = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/reader.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/readers/reader.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var common = require_common2();
@@ -59967,9 +59967,9 @@ var require_reader = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/async.js
+// node_modules/@nodelib/fs.walk/out/readers/async.js
 var require_async3 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/async.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/readers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var events_1 = __require("events");
@@ -60070,9 +60070,9 @@ var require_async3 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/async.js
+// node_modules/@nodelib/fs.walk/out/providers/async.js
 var require_async4 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/async.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/providers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var async_1 = require_async3();
@@ -60106,9 +60106,9 @@ var require_async4 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/stream.js
+// node_modules/@nodelib/fs.walk/out/providers/stream.js
 var require_stream3 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/stream.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/providers/stream.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var stream_1 = __require("stream");
@@ -60147,9 +60147,9 @@ var require_stream3 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/sync.js
+// node_modules/@nodelib/fs.walk/out/readers/sync.js
 var require_sync3 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/readers/sync.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/readers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var fsScandir = require_out2();
@@ -60211,9 +60211,9 @@ var require_sync3 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/sync.js
+// node_modules/@nodelib/fs.walk/out/providers/sync.js
 var require_sync4 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/providers/sync.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/providers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var sync_1 = require_sync3();
@@ -60231,9 +60231,9 @@ var require_sync4 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/settings.js
+// node_modules/@nodelib/fs.walk/out/settings.js
 var require_settings3 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/settings.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var path31 = __require("path");
@@ -60263,9 +60263,9 @@ var require_settings3 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/index.js
+// node_modules/@nodelib/fs.walk/out/index.js
 var require_out3 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/@nodelib/fs.walk/out/index.js"(exports) {
+  "node_modules/@nodelib/fs.walk/out/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Settings = exports.walkStream = exports.walkSync = exports.walk = void 0;
@@ -60303,9 +60303,9 @@ var require_out3 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/reader.js
+// node_modules/fast-glob/out/readers/reader.js
 var require_reader2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/reader.js"(exports) {
+  "node_modules/fast-glob/out/readers/reader.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var path31 = __require("path");
@@ -60342,9 +60342,9 @@ var require_reader2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/stream.js
+// node_modules/fast-glob/out/readers/stream.js
 var require_stream4 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/stream.js"(exports) {
+  "node_modules/fast-glob/out/readers/stream.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var stream_1 = __require("stream");
@@ -60399,9 +60399,9 @@ var require_stream4 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/async.js
+// node_modules/fast-glob/out/readers/async.js
 var require_async5 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/async.js"(exports) {
+  "node_modules/fast-glob/out/readers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var fsWalk = require_out3();
@@ -60438,9 +60438,9 @@ var require_async5 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/matchers/matcher.js
+// node_modules/fast-glob/out/providers/matchers/matcher.js
 var require_matcher = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/matchers/matcher.js"(exports) {
+  "node_modules/fast-glob/out/providers/matchers/matcher.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60489,9 +60489,9 @@ var require_matcher = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/matchers/partial.js
+// node_modules/fast-glob/out/providers/matchers/partial.js
 var require_partial = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/matchers/partial.js"(exports) {
+  "node_modules/fast-glob/out/providers/matchers/partial.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var matcher_1 = require_matcher();
@@ -60526,9 +60526,9 @@ var require_partial = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/deep.js
+// node_modules/fast-glob/out/providers/filters/deep.js
 var require_deep = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/deep.js"(exports) {
+  "node_modules/fast-glob/out/providers/filters/deep.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60591,9 +60591,9 @@ var require_deep = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/entry.js
+// node_modules/fast-glob/out/providers/filters/entry.js
 var require_entry = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/entry.js"(exports) {
+  "node_modules/fast-glob/out/providers/filters/entry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60679,9 +60679,9 @@ var require_entry = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/error.js
+// node_modules/fast-glob/out/providers/filters/error.js
 var require_error = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/filters/error.js"(exports) {
+  "node_modules/fast-glob/out/providers/filters/error.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60700,9 +60700,9 @@ var require_error = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/transformers/entry.js
+// node_modules/fast-glob/out/providers/transformers/entry.js
 var require_entry2 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/transformers/entry.js"(exports) {
+  "node_modules/fast-glob/out/providers/transformers/entry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var utils = require_utils3();
@@ -60732,9 +60732,9 @@ var require_entry2 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/provider.js
+// node_modules/fast-glob/out/providers/provider.js
 var require_provider = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/provider.js"(exports) {
+  "node_modules/fast-glob/out/providers/provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var path31 = __require("path");
@@ -60786,9 +60786,9 @@ var require_provider = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/async.js
+// node_modules/fast-glob/out/providers/async.js
 var require_async6 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/async.js"(exports) {
+  "node_modules/fast-glob/out/providers/async.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var async_1 = require_async5();
@@ -60815,9 +60815,9 @@ var require_async6 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/stream.js
+// node_modules/fast-glob/out/providers/stream.js
 var require_stream5 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/stream.js"(exports) {
+  "node_modules/fast-glob/out/providers/stream.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var stream_1 = __require("stream");
@@ -60849,9 +60849,9 @@ var require_stream5 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/sync.js
+// node_modules/fast-glob/out/readers/sync.js
 var require_sync5 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/readers/sync.js"(exports) {
+  "node_modules/fast-glob/out/readers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var fsStat = require_out();
@@ -60897,9 +60897,9 @@ var require_sync5 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/sync.js
+// node_modules/fast-glob/out/providers/sync.js
 var require_sync6 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/providers/sync.js"(exports) {
+  "node_modules/fast-glob/out/providers/sync.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var sync_1 = require_sync5();
@@ -60926,9 +60926,9 @@ var require_sync6 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/settings.js
+// node_modules/fast-glob/out/settings.js
 var require_settings4 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/settings.js"(exports) {
+  "node_modules/fast-glob/out/settings.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DEFAULT_FILE_SYSTEM_ADAPTER = void 0;
@@ -60986,9 +60986,9 @@ var require_settings4 = __commonJS({
   }
 });
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/index.js
+// node_modules/fast-glob/out/index.js
 var require_out4 = __commonJS({
-  "../../../oracle/plugins/oracle-firefox/node_modules/fast-glob/out/index.js"(exports, module) {
+  "node_modules/fast-glob/out/index.js"(exports, module) {
     "use strict";
     var taskManager = require_tasks();
     var async_1 = require_async6();
@@ -61290,14 +61290,14 @@ import { chmod as chmod4, link as link2, mkdir as mkdir5, open as open3, readFil
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.7.0",
+  "packageVersion": "1.7.2",
   "protocolVersion": 9,
   "minimumReaderProtocol": 8,
   "minimumWriterProtocol": 9,
   "schemaVersion": 8,
-  "releaseSequence": 1700,
-  "sourceDigest": "5a793ded893553106b214700d502a8bbe88af7e081571805b161c6afd7420ec9",
-  "buildId": "oracle-firefox-1.7.0-5a793ded89355310"
+  "releaseSequence": 1705,
+  "sourceDigest": "81b641123e08d668eb9602922546f24e0eaa5478d6862f51f0eea2ccf598d5e9",
+  "buildId": "oracle-firefox-1.7.2-81b641123e08d668"
 });
 
 // src/build-info.mjs
@@ -63673,6 +63673,9 @@ var StateStore = class extends EventEmitter {
     };
     for (const row of rows) {
       if (!outstandingStates.has(row.state)) continue;
+      if ((/* @__PURE__ */ new Set(["submission_uncertain", "response_uncertain", "quarantined"])).has(row.state) && !row.quarantined_lane) {
+        continue;
+      }
       let logicalState;
       if (row.state === "input_required" || row.state === "input_invalid" || attentionByLane.has(row.conversation_key)) {
         logicalState = "blocked_attention";
@@ -63892,6 +63895,22 @@ var StateStore = class extends EventEmitter {
         FROM completion_subscriptions
         WHERE chain_id = ? AND state = 'open' AND (? = 'attention_required' OR mode != 'manual')
       `).run(sequence, now, chainId, state);
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?),
+            claim_id=NULL, claimed_at=NULL,
+            claim_kind=NULL, claim_expires_at=NULL, next_attempt_at=NULL,
+            last_error_json='{"code":"COMPLETION_SUPERSEDED"}'
+        WHERE state IN ('pending','claimed','delivered')
+          AND subscription_id IN (
+            SELECT id FROM completion_subscriptions
+            WHERE chain_id=? AND state='open'
+          )
+          AND id < (
+            SELECT MAX(newer.id) FROM completion_deliveries newer
+            WHERE newer.subscription_id=completion_deliveries.subscription_id
+          )
+      `).run(now, chainId);
     }
     if (TERMINAL_CHAIN_STATES.has(state)) {
       this.db.prepare(`
@@ -64903,6 +64922,11 @@ var StateStore = class extends EventEmitter {
     const counts = (rows) => Object.fromEntries(rows.map((row) => [row.state, Number(row.count)]));
     const subscriptions = { open: 0, closed: 0, ...counts(subscriptionRows) };
     const deliveries = { pending: 0, claimed: 0, delivered: 0, acknowledged: 0, ...counts(deliveryRows) };
+    const superseded = Number(this.db.prepare(`
+      SELECT COUNT(*) count FROM completion_deliveries
+      WHERE state='acknowledged' AND json_extract(last_error_json, '$.code')='COMPLETION_SUPERSEDED'
+    `).get()?.count || 0);
+    deliveries.acknowledged = Math.max(0, deliveries.acknowledged - superseded);
     const retry2 = this.db.prepare(`
       SELECT COUNT(*) AS scheduled,
              MIN(next_attempt_at) AS next_attempt_at,
@@ -64918,7 +64942,8 @@ var StateStore = class extends EventEmitter {
       subscriptions: { ...subscriptions, total: subscriptions.open + subscriptions.closed },
       deliveries: {
         ...deliveries,
-        total: deliveries.pending + deliveries.claimed + deliveries.delivered + deliveries.acknowledged
+        superseded,
+        total: deliveries.pending + deliveries.claimed + deliveries.delivered + deliveries.acknowledged + superseded
       },
       retry: {
         scheduled: Number(retry2?.scheduled || 0),
@@ -65151,6 +65176,18 @@ var StateStore = class extends EventEmitter {
       }, subscription);
     });
   }
+  requeueExpiredSubscriberClaims(now = (/* @__PURE__ */ new Date()).toISOString()) {
+    const changed = this.db.prepare(`
+      UPDATE completion_deliveries
+      SET state='pending', claim_id=NULL, claimed_at=NULL,
+          claim_kind=NULL, claim_expires_at=NULL
+      WHERE state='claimed' AND claim_kind='subscriber'
+        AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?
+    `).run(now);
+    const count = Number(changed.changes);
+    if (count > 0) this.emit("change", null);
+    return count;
+  }
   publicCompletionDelivery(delivery, subscription) {
     return {
       deliveryId: delivery.id,
@@ -65190,6 +65227,13 @@ var StateStore = class extends EventEmitter {
         WHERE d.id = ? AND d.subscription_id = ?
       `).get(deliveryId, subscription.id);
       if (!row) throw codedError("COMPLETION_NOT_FOUND", "No accessible completion delivery matches that reference.");
+      if (parse(row.last_error_json)?.code === "COMPLETION_SUPERSEDED") {
+        throw codedError(
+          "COMPLETION_SUPERSEDED",
+          "A newer durable completion state replaced this delivery. Claim the current delivery before acknowledging it.",
+          { safeToRetry: true }
+        );
+      }
       this.db.prepare(`
         UPDATE completion_deliveries
         SET state='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?),
@@ -65333,6 +65377,13 @@ var StateStore = class extends EventEmitter {
   rebuildCompletionDeliveries() {
     return this.transaction(() => {
       const now = (/* @__PURE__ */ new Date()).toISOString();
+      const reclaimed = this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='pending', claim_id=NULL, claimed_at=NULL,
+            claim_kind=NULL, claim_expires_at=NULL
+        WHERE state='claimed' AND claim_kind='subscriber'
+          AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?
+      `).run(now);
       const terminalChains = this.db.prepare(`
         SELECT c.id, c.active_job_id, c.state
         FROM job_chains c
@@ -65353,7 +65404,24 @@ var StateStore = class extends EventEmitter {
         WHERE s.state='open' AND s.mode!='manual'
           AND e.state IN (${Array.from(WAKE_CHAIN_STATES).map(() => "?").join(",")})
       `).run(now, ...WAKE_CHAIN_STATES);
-      return { chainEvents: terminalChains.length, deliveries: Number(inserted.changes) };
+      const superseded = this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?),
+            claim_id=NULL, claimed_at=NULL,
+            claim_kind=NULL, claim_expires_at=NULL, next_attempt_at=NULL,
+            last_error_json='{"code":"COMPLETION_SUPERSEDED"}'
+        WHERE state IN ('pending','claimed','delivered')
+          AND id < (
+            SELECT MAX(newer.id) FROM completion_deliveries newer
+            WHERE newer.subscription_id=completion_deliveries.subscription_id
+          )
+      `).run(now);
+      return {
+        chainEvents: terminalChains.length,
+        deliveries: Number(inserted.changes),
+        reclaimedClaims: Number(reclaimed.changes),
+        supersededDeliveries: Number(superseded.changes)
+      };
     });
   }
   waitForChange(timeoutMs) {
@@ -65578,7 +65646,7 @@ import os12 from "node:os";
 import path20 from "node:path";
 import { promisify as promisify4 } from "node:util";
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node-env-setup.js
+// node_modules/puppeteer-core/lib/puppeteer/node-env-setup.js
 init_environment();
 import fs from "node:fs";
 import path6 from "node:path";
@@ -65590,10 +65658,10 @@ environment.value = {
   ScreenRecorder: environment.value.ScreenRecorder
 };
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/index.js
+// node_modules/puppeteer-core/lib/puppeteer/index.js
 init_index_browser();
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
+// node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
 init_main();
 init_util();
 init_assert();
@@ -65601,7 +65669,7 @@ import { mkdtemp } from "node:fs/promises";
 import os9 from "node:os";
 import path17 from "node:path";
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
+// node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
 init_main();
 init_rxjs();
 init_Browser2();
@@ -65615,7 +65683,7 @@ import { existsSync as existsSync2 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join as join4 } from "node:path";
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/PipeTransport.js
+// node_modules/puppeteer-core/lib/puppeteer/node/PipeTransport.js
 init_EventEmitter();
 init_util();
 init_assert();
@@ -65686,7 +65754,7 @@ var PipeTransport = class {
   }
 };
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
+// node_modules/puppeteer-core/lib/puppeteer/node/BrowserLauncher.js
 function getBrowserTypeDisplayName(browserType) {
   switch (browserType) {
     case Browser3.FIREFOX:
@@ -65986,10 +66054,10 @@ For (2), check out our guide on configuring puppeteer at https://pptr.dev/guides
   }
 };
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
+// node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
 init_LaunchOptions();
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/util/fs.js
+// node_modules/puppeteer-core/lib/puppeteer/node/util/fs.js
 import fs6 from "node:fs";
 var rmOptions = {
   force: true,
@@ -66000,7 +66068,7 @@ async function rm7(path31) {
   await fs6.promises.rm(path31, rmOptions);
 }
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
+// node_modules/puppeteer-core/lib/puppeteer/node/ChromeLauncher.js
 var ChromeLauncher = class extends BrowserLauncher {
   constructor(puppeteer2) {
     super(puppeteer2, "chrome");
@@ -66216,7 +66284,7 @@ function removeMatchingFlags(array, flag) {
   return array;
 }
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/FirefoxLauncher.js
+// node_modules/puppeteer-core/lib/puppeteer/node/FirefoxLauncher.js
 init_main();
 init_util();
 init_assert();
@@ -66366,7 +66434,7 @@ var FirefoxLauncher = class _FirefoxLauncher extends BrowserLauncher {
   }
 };
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/PuppeteerNode.js
+// node_modules/puppeteer-core/lib/puppeteer/node/PuppeteerNode.js
 init_main();
 init_Puppeteer();
 init_revisions();
@@ -66588,7 +66656,7 @@ var PuppeteerNode = class extends Puppeteer {
   }
 };
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/node/ScreenRecorder.js
+// node_modules/puppeteer-core/lib/puppeteer/node/ScreenRecorder.js
 init_rxjs();
 init_CDPSession();
 init_Debug();
@@ -66870,7 +66938,7 @@ var ScreenRecorder = (() => {
   };
 })();
 
-// ../../../oracle/plugins/oracle-firefox/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js
+// node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js
 init_environment();
 environment.value.ScreenRecorder = ScreenRecorder;
 var puppeteer = new PuppeteerNode({
@@ -67021,6 +67089,8 @@ var FILE_INPUT_SELECTORS = [
 // src/firefox.mjs
 var execFileAsync3 = promisify3(execFile3);
 var ORACLE_APPROVED_ATTACHMENTS = /* @__PURE__ */ new WeakMap();
+var ORACLE_OWNED_DRAFTS = /* @__PURE__ */ new WeakMap();
+var CHATGPT_COOLDOWN_PATTERN = /(?:you(?:'|’)?re making )?too many requests(?: too quickly)?|temporarily rate[- ]limited|please try again (?:in a (?:few )?minutes?|later)|(?:you(?:'|’)?ve|you have) (?:reached|hit) (?:the |your )?(?:current )?(?:usage |message |pro )?limit|please wait before trying again/iu;
 var delay = (milliseconds) => new Promise((resolve7) => setTimeout(resolve7, milliseconds));
 function normalizeSemanticText(value) {
   return String(value ?? "").replace(/\r\n?/gu, "\n").replace(/\u00a0/gu, " ").replace(/\t/gu, "    ").normalize("NFC").replace(/[ \t]+\n/gu, "\n").replace(/\n[ \t]+/gu, "\n").trim();
@@ -67100,6 +67170,11 @@ function classifyAssistantResponseFailure(assistant) {
 }
 function attachmentManifestKey(values = []) {
   return [...values].map((value) => String(value).trim().replace(/\(\d+\)(?=\.[^.]+$)/u, "")).sort().join("\0");
+}
+function exactHashMatches(turns, expectedHash) {
+  return turns.filter(
+    (turn) => turn.role === "user" && semanticTextHash(turn.text) === expectedHash
+  );
 }
 function normalizeConversationTitle(value) {
   return String(value ?? "").replace(/\s+/gu, " ").trim();
@@ -67612,6 +67687,7 @@ async function launchFirefox({ headless = false, profileDir = profileDirectory()
     executablePath: executablePath2,
     userDataDir: profileDir,
     headless,
+    args: ["-no-remote"],
     defaultViewport: { width: 1280, height: 900 },
     ...downloadPath ? {
       extraPrefsFirefox: {
@@ -67925,24 +68001,76 @@ async function inspectComposerState(page) {
     { inputSelectors: INPUT_SELECTORS, fileSelectors: FILE_INPUT_SELECTORS }
   );
 }
-async function insertComposerText(page, text, { expectedAttachments } = {}) {
+async function clearComposerText(page) {
+  const editor = await waitForComposer(page);
+  await editor.click();
+  await editor.evaluate((node) => {
+    node.focus();
+    if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) {
+      const prototype = node instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+      if (setter) setter.call(node, "");
+      else node.value = "";
+    } else {
+      node.replaceChildren();
+    }
+    node.dispatchEvent(new InputEvent("input", {
+      bubbles: true,
+      data: null,
+      inputType: "deleteContentBackward"
+    }));
+    node.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await delay(250);
+}
+async function insertComposerText(page, text, {
+  expectedAttachments,
+  discardExistingDraft = false
+} = {}) {
   const content = String(text);
   if (!content) throw new Error("Cannot submit an empty prompt.");
   const before = await inspectComposerState(page);
-  if (normalizeSemanticText(before.text)) {
-    throw new Error("ChatGPT composer contains an existing draft. Refusing to clear or overwrite it.");
-  }
   const expected = [...expectedAttachments ?? ORACLE_APPROVED_ATTACHMENTS.get(page) ?? []].sort();
   if (before.attachments.join("\0") !== expected.join("\0")) {
     throw new Error(`ChatGPT composer already contains foreign attachments: ${before.attachments.join(", ")}.`);
+  }
+  if (normalizeSemanticText(before.text)) {
+    if (discardExistingDraft !== true) {
+      throw codedError(
+        "COMPOSER_DRAFT_PRESENT",
+        "ChatGPT composer contains an existing draft. Explicit user authorization is required to discard it.",
+        {
+          safeToRetry: false,
+          recoveryAction: "Ask the user to clear the draft manually or explicitly authorize discardExistingDraft for one new start.",
+          details: { discardExistingDraftAvailable: true }
+        }
+      );
+    }
+    await clearComposerText(page);
+    const cleared = await inspectComposerState(page);
+    if (normalizeSemanticText(cleared.text)) {
+      throw codedError(
+        "COMPOSER_CLEAR_FAILED",
+        "The explicitly authorized composer draft could not be cleared; no message was sent.",
+        { safeToRetry: false }
+      );
+    }
+    if (cleared.attachments.join("\0") !== expected.join("\0")) {
+      throw codedError(
+        "ATTACHMENT_MISMATCH",
+        "The composer attachment set changed while clearing the explicitly authorized text draft; no message was sent.",
+        { safeToRetry: false }
+      );
+    }
   }
   const editor = await waitForComposer(page);
   await editor.click();
   const editorKind = await editor.evaluate(
     (node) => node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement ? "value" : "contenteditable"
   );
+  let insertedFingerprint;
   if (editorKind === "value") {
-    await editor.evaluate((node, value) => {
+    insertedFingerprint = await editor.evaluate((node, value) => {
       node.focus();
       const prototype = node instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
       const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
@@ -67956,6 +68084,7 @@ async function insertComposerText(page, text, { expectedAttachments } = {}) {
         })
       );
       node.dispatchEvent(new Event("change", { bubbles: true }));
+      return node.value;
     }, content);
   } else {
     const inserted = await editor.evaluate((node, value) => {
@@ -67968,16 +68097,19 @@ async function insertComposerText(page, text, { expectedAttachments } = {}) {
         selection?.removeAllRanges();
         selection?.addRange(range);
       }
-      return document.execCommand("insertText", false, value);
+      const accepted = document.execCommand("insertText", false, value);
+      return { accepted, fingerprint: node.innerHTML };
     }, content);
-    if (!inserted) {
+    if (!inserted.accepted) {
       throw codedError(
         "COMPOSER_INSERT_FAILED",
         "Firefox refused the atomic composer insertion; no message was sent.",
         { safeToRetry: true }
       );
     }
+    insertedFingerprint = inserted.fingerprint;
   }
+  ORACLE_OWNED_DRAFTS.set(page, { editor, fingerprint: insertedFingerprint });
   await delay(250);
   const observed = await readComposerText(page);
   const expectedNormalized = normalizeSemanticText(content);
@@ -67993,6 +68125,32 @@ async function insertComposerText(page, text, { expectedAttachments } = {}) {
     );
   }
   return observed.length;
+}
+async function clearOwnedComposerDraft(page) {
+  const owned = ORACLE_OWNED_DRAFTS.get(page);
+  ORACLE_OWNED_DRAFTS.delete(page);
+  if (!owned) return false;
+  try {
+    return await owned.editor.evaluate((node, fingerprint) => {
+      if (!node.isConnected || ("value" in node ? node.value : node.innerHTML) !== fingerprint) return false;
+      const root = node.closest('[data-testid*="composer"]') || node.closest("form") || node.parentElement;
+      if (!root || root.querySelector('[data-testid*="attachment"], [data-testid*="file"], [aria-label*="Remove attachment" i], [title*="attachment" i]')) return false;
+      if (Array.from(root.querySelectorAll('input[type="file"]')).some((input2) => input2.files?.length)) return false;
+      if (node instanceof HTMLTextAreaElement || node instanceof HTMLInputElement) {
+        const prototype = node instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+        if (setter) setter.call(node, "");
+        else node.value = "";
+      } else {
+        node.replaceChildren();
+      }
+      node.dispatchEvent(new InputEvent("input", { bubbles: true, data: null, inputType: "deleteContentBackward" }));
+      node.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    }, owned.fingerprint);
+  } finally {
+    await owned.editor.dispose().catch(() => void 0);
+  }
 }
 async function uploadAttachmentFiles(page, filePaths, { timeoutMs = 6e5 } = {}) {
   const boundedTimeout = Math.max(1e3, Math.min(18e5, timeoutMs));
@@ -68163,12 +68321,22 @@ async function waitForUserMessage(page, baselineCount, expectedText, { timeoutMs
       hash: expectedHash,
       attachments: expectedManifest
     });
-    const match = matchIndex >= 0 ? newUsers2[matchIndex] : null;
+    let match = matchIndex >= 0 ? newUsers2[matchIndex] : null;
+    let attachmentEvidence = match ? "rendered_manifest" : null;
+    if (!match && expectedManifest.length > 0) {
+      const missingManifestMatches = exactHashMatches(newUsers2, expectedHash).filter((turn) => Array.isArray(turn.attachments) && turn.attachments.length === 0);
+      if (missingManifestMatches.length === 1) {
+        [match] = missingManifestMatches;
+        attachmentEvidence = "pre_submit_verified_post_submit_unavailable";
+      }
+    }
     if (match) {
-      if (!requireCanonicalUrl) return { ...latest, userTurn: { ...match, hash: expectedHash } };
+      if (!requireCanonicalUrl) {
+        return { ...latest, userTurn: { ...match, hash: expectedHash, attachmentEvidence } };
+      }
       try {
         normalizeConversationUrl(latest.url);
-        return { ...latest, userTurn: { ...match, hash: expectedHash } };
+        return { ...latest, userTurn: { ...match, hash: expectedHash, attachmentEvidence } };
       } catch {
       }
     }
@@ -68206,6 +68374,9 @@ async function submitComposer(page) {
   if (!button) {
     throw new Error("A visible, enabled ChatGPT Send button was not found. No submission was attempted.");
   }
+  const owned = ORACLE_OWNED_DRAFTS.get(page);
+  ORACLE_OWNED_DRAFTS.delete(page);
+  await owned?.editor.dispose().catch(() => void 0);
   await button.click();
   await button.dispose();
   return "button";
@@ -68242,8 +68413,12 @@ async function probeAssistantAfterTurn(page, userTurn, { includeContent = false 
       return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
     };
     const normalize3 = (value) => String(value || "").replace(/\r\n?/gu, "\n").replace(/\u00a0/gu, " ").replace(/\t/gu, "    ").normalize("NFC").replace(/[ \t]+\n/gu, "\n").replace(/\n[ \t]+/gu, "\n").trim();
-    const hash = (value) => {
+    const hash = async (value) => {
       const bytes = new TextEncoder().encode(normalize3(value));
+      if (globalThis.crypto?.subtle) {
+        const digest2 = await crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(digest2), (byte) => byte.toString(16).padStart(2, "0")).join("");
+      }
       const words = [];
       const hashWords = [];
       const constants3 = [];
@@ -68294,7 +68469,7 @@ async function probeAssistantAfterTurn(page, userTurn, { includeContent = false 
         const next = [a2, b2, c, d, e, f, g, h];
         for (let index = 0; index < 8; index += 1) hashWords[index] = hashWords[index] + next[index] | 0;
       }
-      return hashWords.map((word) => (word >>> 0).toString(16).padStart(8, "0")).join("");
+      return hashWords.slice(0, 8).map((word) => (word >>> 0).toString(16).padStart(8, "0")).join("");
     };
     const serializeUserSource = (node) => {
       if (node.nodeType === Node.TEXT_NODE) return node.textContent || "";
@@ -68440,13 +68615,22 @@ async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, st
       stableSince = Date.now();
       terminalCycles = 0;
     }
-    if (probe2.assistant && (key !== `${cachedAssistant?.id || ""}:${cachedAssistant?.hash || ""}` || terminalHint && terminalContentKey !== key)) {
+    if (terminalHint && Date.now() - stableSince >= stableMs && terminalContentKey !== key) {
       const content = await boundedAssistantTurnProbe(page, userTurn, { includeContent: true }, boundedTimeout);
       monitorMetrics.contentFetchCount += 1;
       monitorMetrics.maxProbeLatencyMs = Math.max(monitorMetrics.maxProbeLatencyMs, content.latencyMs);
       monitorMetrics.maxProbePayloadBytes = Math.max(monitorMetrics.maxProbePayloadBytes, content.payloadBytes);
+      const contentKey = content.assistant ? `${content.assistant.id || ""}:${content.assistant.hash}` : "";
+      if (contentKey !== key || content.stopVisible || !(content.assistant?.completionVisible || content.assistant?.errorIndicators?.length)) {
+        cachedAssistant = null;
+        terminalContentKey = "";
+        terminalCycles = 0;
+        stableSince = Date.now();
+        await delay(Math.min(500, Math.max(0, deadline - Date.now())));
+        continue;
+      }
       cachedAssistant = content.assistant;
-      if (terminalHint && content.assistant) terminalContentKey = key;
+      if (content.assistant) terminalContentKey = key;
     }
     const assistant = cachedAssistant ? {
       ...cachedAssistant,
@@ -68454,7 +68638,7 @@ async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, st
       html: cachedAssistant.html || ""
     } : null;
     const responseFailure = classifyAssistantResponseFailure(assistant);
-    const terminal = terminalHint && assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure);
+    const terminal = terminalHint && terminalContentKey === key && assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure);
     if (terminal) {
       terminalCycles += 1;
       if (terminalCycles >= 3 && Date.now() - stableSince >= stableMs) {
@@ -68479,7 +68663,7 @@ async function waitForAssistantAfterTurn(page, userTurn, { timeoutMs = 108e5, st
     } else {
       terminalCycles = 0;
     }
-    await delay(500);
+    await delay(Math.min(terminalHint ? 500 : 2e3, Math.max(0, deadline - Date.now())));
   }
   throw codedError(
     "RESPONSE_TIMEOUT",
@@ -68500,7 +68684,7 @@ async function reconcileAssistantAfterTurn(page, userTurn) {
   const content = await boundedAssistantTurnProbe(page, userTurn, { includeContent: true }, 3e4);
   const assistant = content.assistant;
   const responseFailure = classifyAssistantResponseFailure(assistant);
-  const terminal = assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure) && !probe2.stopVisible;
+  const terminal = assistant && !isPlaceholder(assistant.text) && (assistant.completionVisible || responseFailure) && !probe2.stopVisible && !content.stopVisible && assistant.id === probe2.assistant.id && assistant.hash === probe2.assistant.hash;
   if (!terminal) return null;
   if (isChatGptCooldownText(assistant.text)) {
     throw codedError("ACCOUNT_COOLDOWN", "ChatGPT rejected the submitted turn because the account is temporarily rate-limited. Oracle did not retry.", {
@@ -68527,20 +68711,63 @@ async function reconcileAssistantAfterTurn(page, userTurn) {
 }
 function isChatGptCooldownText(value) {
   const normalized = String(value ?? "").replace(/\s+/gu, " ").trim();
-  return /(?:you(?:'|’)?re making )?too many requests(?: too quickly)?|temporarily rate[- ]limited|please try again (?:in a (?:few )?minutes?|later)/iu.test(normalized);
+  return CHATGPT_COOLDOWN_PATTERN.test(normalized);
+}
+async function installChatGptCooldownObserver(page) {
+  await page.evaluate(({ patternSource, patternFlags }) => {
+    const key = "__oracleFirefoxCooldownObserverV1";
+    const existing = globalThis[key];
+    existing?.observer?.disconnect?.();
+    const pattern = new RegExp(patternSource, patternFlags);
+    const state = { notices: [], observer: null };
+    const noticeContainer = (element) => element.closest([
+      '[role="alert"]',
+      '[role="status"]',
+      "[aria-live]",
+      "[data-sonner-toast]",
+      '[data-testid*="toast"]',
+      '[data-testid*="error"]',
+      '[class*="toast"]',
+      '[class*="notification"]'
+    ].join(","));
+    const record = (node) => {
+      const element = node instanceof HTMLElement ? node : node?.parentElement instanceof HTMLElement ? node.parentElement : null;
+      if (!element || element.closest('[data-message-author-role], [data-turn], [data-testid^="conversation-turn"]')) return;
+      const container = noticeContainer(element) || element;
+      const style = getComputedStyle(container);
+      if (!noticeContainer(element) && style.position !== "fixed" && style.position !== "absolute") return;
+      const text = String(container.innerText || container.textContent || "").replace(/\s+/gu, " ").trim();
+      if (!text || !pattern.test(text)) return;
+      state.notices.push({
+        id: container.getAttribute("data-testid") || container.getAttribute("data-sonner-toast") || container.id || null,
+        text: text.slice(0, 500)
+      });
+      if (state.notices.length > 8) state.notices.shift();
+    };
+    state.observer = new MutationObserver((records) => {
+      for (const recordEntry of records) {
+        for (const node of recordEntry.addedNodes) record(node);
+      }
+    });
+    state.observer.observe(document.documentElement, { childList: true, subtree: true });
+    globalThis[key] = state;
+  }, { patternSource: CHATGPT_COOLDOWN_PATTERN.source, patternFlags: CHATGPT_COOLDOWN_PATTERN.flags });
 }
 async function readChatGptCooldownNotice(page) {
-  return page.evaluate(() => {
+  return page.evaluate(({ patternSource, patternFlags }) => {
+    const pattern = new RegExp(patternSource, patternFlags);
+    const captured = globalThis.__oracleFirefoxCooldownObserverV1?.notices?.at(-1) || null;
+    if (captured) return captured;
     const visible = (node) => node instanceof HTMLElement && node.getBoundingClientRect().width > 0 && node.getBoundingClientRect().height > 0;
     const notices = Array.from(
-      document.querySelectorAll('[role="alert"], [data-sonner-toast], [data-testid*="toast"], [data-testid*="error"]')
+      document.querySelectorAll('[role="alert"], [role="status"], [aria-live], [data-sonner-toast], [data-testid*="toast"], [data-testid*="error"], [class*="toast"], [class*="notification"]')
     ).filter(visible);
-    const matched = notices.map((node) => ({
+    const matched = notices.filter((node) => !node.closest('[data-message-author-role], [data-turn], [data-testid^="conversation-turn"]')).map((node) => ({
       id: node.getAttribute("data-testid") || node.getAttribute("data-sonner-toast") || node.id || null,
       text: (node.innerText || node.textContent || "").replace(/\s+/gu, " ").trim()
-    })).find((notice) => /too many requests(?: too quickly)?|temporarily rate[- ]limited|try again later/iu.test(notice.text));
+    })).find((notice) => pattern.test(notice.text));
     return matched || null;
-  });
+  }, { patternSource: CHATGPT_COOLDOWN_PATTERN.source, patternFlags: CHATGPT_COOLDOWN_PATTERN.flags });
 }
 
 // src/safari-webdriver.mjs
@@ -71118,9 +71345,17 @@ async function readChatGptCookies({ sourceProfileDir, sqlitePath } = {}) {
 }
 
 // src/model.mjs
-var MODEL_STRATEGY_VERSION = "firefox-pro-v1";
+var MODEL_STRATEGY_VERSION = "firefox-pro-v2";
+var MODEL_PICKER_SELECTORS = [
+  '[data-testid="model-switcher-dropdown-button"]',
+  'button[data-testid*="model-switcher"]',
+  "button.__composer-pill",
+  'button[aria-label^="Model" i]',
+  'button[aria-label^="Select model" i]',
+  'button[aria-label^="Choose model" i]'
+];
 function normalize2(value) {
-  return String(value ?? "").toLowerCase().replace(/[^a-z0-9]+/gu, " ").replace(/\s+/gu, " ").trim();
+  return String(value ?? "").toLowerCase().replace(/(\d)(pro)\b/gu, "$1 $2").replace(/[^a-z0-9]+/gu, " ").replace(/\s+/gu, " ").trim();
 }
 function isCurrentProLabel(value) {
   const label = normalize2(value);
@@ -71129,30 +71364,23 @@ function isCurrentProLabel(value) {
   return !["5 4", "5 2", "5 1", "5 0", "gpt54", "gpt52", "gpt51", "gpt50"].some((legacy) => label.includes(legacy));
 }
 async function readVisibleModelSignals(page) {
-  return page.evaluate(() => {
+  return page.evaluate((selectors) => {
     const visible = (node) => {
       if (!(node instanceof HTMLElement)) return false;
       const rect = node.getBoundingClientRect();
       const style = window.getComputedStyle(node);
       return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
     };
-    const selectors = [
-      'button[data-testid="model-switcher-dropdown-button"]',
-      'button[data-testid*="model-switcher"]',
-      "button.__composer-pill",
-      'button[aria-label*="model" i]',
-      '[data-testid="model-switcher-dropdown-button"]'
-    ];
     const signals = [];
     for (const selector of selectors) {
       for (const node of document.querySelectorAll(selector)) {
-        if (!visible(node)) continue;
+        if (!visible(node) || node.closest('aside, nav, [data-message-author-role], [data-turn], [data-testid*="history"], [data-testid*="sidebar"]')) continue;
         const label = [node.textContent, node.getAttribute("aria-label"), node.getAttribute("title"), node.getAttribute("data-testid")].filter(Boolean).join(" ").replace(/\s+/gu, " ").trim();
         if (label) signals.push({ selector, label });
       }
     }
     return signals;
-  });
+  }, MODEL_PICKER_SELECTORS);
 }
 async function verifyModelRequirement(page, requirement = "pro") {
   const signals = await readVisibleModelSignals(page);
@@ -71191,21 +71419,21 @@ async function ensureModelRequirement(page, requirement = "pro") {
   } catch (error) {
     if (error?.code !== "MODEL_REQUIREMENT_NOT_MET") throw error;
   }
-  const button = await page.evaluateHandle(() => {
+  const button = await page.evaluateHandle((selectors) => {
     const visible = (node) => {
       if (!(node instanceof HTMLElement)) return false;
       const rect = node.getBoundingClientRect();
       const style = window.getComputedStyle(node);
       return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
     };
-    const explicit = document.querySelector('button[data-testid="model-switcher-dropdown-button"], button[data-testid*="model-switcher"]');
-    if (visible(explicit)) return explicit;
-    return Array.from(document.querySelectorAll('button.__composer-pill, button[aria-label*="model" i]')).find((node) => {
-      if (!visible(node)) return false;
-      const label = `${node.textContent || ""} ${node.getAttribute("aria-label") || ""}`.toLowerCase();
-      return !label.includes("remove") && !label.includes("attachment");
-    }) || null;
-  });
+    for (const selector of selectors) {
+      const candidate = Array.from(document.querySelectorAll(selector)).find(
+        (node) => visible(node) && !node.closest('aside, nav, [data-message-author-role], [data-turn], [data-testid*="history"], [data-testid*="sidebar"]')
+      );
+      if (candidate) return candidate;
+    }
+    return null;
+  }, MODEL_PICKER_SELECTORS);
   const element = button.asElement();
   if (!element) {
     await button.dispose();
@@ -71498,6 +71726,7 @@ async function prepareJobRequest(operation, input2) {
     responseTimeoutSeconds,
     attachmentTimeoutSeconds,
     modelRequirement,
+    discardExistingDraft: input2.discardExistingDraft === true,
     maxAutomaticEvidenceReplies,
     responseFailurePolicy,
     maxAutomaticResponseRetries: responseFailurePolicy === "retry-once" ? 1 : 0,
@@ -71996,7 +72225,9 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
     }
     const attachmentManifest = attachmentPaths.map((attachmentPath) => path28.basename(attachmentPath));
     transitionExecution(store2, executionClaim, job.id, "attachment_processing", { attachmentManifest });
-    await browserManager.withInputFocus(lease, () => insertComposerText(lease.page, composerPrompt));
+    await browserManager.withInputFocus(lease, () => insertComposerText(lease.page, composerPrompt, {
+      discardExistingDraft: job.request.discardExistingDraft === true
+    }));
     if (attachmentPaths.length > 0) {
       await uploadAttachmentFiles(lease.page, attachmentPaths, {
         timeoutMs: job.request.attachmentTimeoutSeconds * 1e3
@@ -72035,6 +72266,7 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
           }
           const finalModelEvidence = await verifyModelRequirement(lease.page, job.request.modelRequirement);
           triggerFailpoint("after_model_verification");
+          await installChatGptCooldownObserver(lease.page);
           (executionClaim ? store2.consumeSubmitPermitClaimed.bind(store2, executionClaim) : store2.consumeSubmitPermit.bind(store2, job.id))(
             submitPermit.id,
             { modelEvidence: finalModelEvidence, submittedMessageHash: semanticTextHash(composerPrompt) },
@@ -72118,6 +72350,23 @@ async function executeJob({ jobId, store: store2, browserManager, beforeSubmit, 
     }
     if (current.state === "cancelled_pre_submit") throw error;
     if (executionClaim && current.executionKind === "monitor_only") throw error;
+    if (lease && !current.submitIntentAt && !current.submissionMayHaveOccurred) {
+      let timer2;
+      try {
+        await Promise.race([
+          browserManager.withInputFocus(lease, async () => {
+            if (executionClaim) store2.assertExecution(executionClaim);
+            await clearOwnedComposerDraft(lease.page);
+          }),
+          new Promise((resolve7) => {
+            timer2 = setTimeout(resolve7, 2e3);
+          })
+        ]);
+      } catch {
+      } finally {
+        clearTimeout(timer2);
+      }
+    }
     const failed = executionClaim ? store2.markFailureClaimed(executionClaim, error) : store2.markFailure(job.id, error);
     await writeFinalMetadata(failed, {
       jobId: failed.id,
@@ -72326,7 +72575,7 @@ var Coordinator = class {
     this.attentionWakeTimer = null;
     this.abandonedClaimSweepTimer = null;
     this.onStoreChange = (job) => {
-      if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
+      if (this.legacyCompletionFiles && job) this.queueCompletionRecord(job.rootJobId || job.id);
       this.queueSystemNotifications();
       this.scheduleAttentionWake();
       this.schedule();
@@ -72810,6 +73059,7 @@ var Coordinator = class {
       if (this.closed || this.safeMode) return;
       try {
         const recovered = this.sweepAbandonedExecutions();
+        this.store.requeueExpiredSubscriberClaims();
         if (recovered.length && !this.draining) this.schedule();
       } catch (error) {
         this.safeMode = true;
@@ -73160,10 +73410,24 @@ var Coordinator = class {
     try {
       await openExistingConversation(lease.page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
       const snapshot = await assistantSnapshot(lease.page);
-      const candidates = snapshot.turns.filter(
-        (turn) => turn.role === "user" && attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || [])
+      const userCandidates = snapshot.turns.filter((turn) => turn.role === "user");
+      const expectedManifest = job.attachmentManifest || [];
+      const expectedManifestKey = attachmentManifestKey(expectedManifest);
+      const exactTextMatches = userCandidates.filter(
+        (turn) => semanticTextHash(turn.text) === job.submittedMessageHash
       );
-      const matches = candidates.filter((turn) => semanticTextHash(turn.text) === job.submittedMessageHash);
+      let matches = exactTextMatches.filter(
+        (turn) => attachmentManifestKey(turn.attachments) === expectedManifestKey
+      );
+      if (matches.length === 0 && expectedManifest.length > 0 && exactTextMatches.length === 1) {
+        const [onlyExactTextMatch] = exactTextMatches;
+        if (Array.isArray(onlyExactTextMatch.attachments) && onlyExactTextMatch.attachments.length === 0) {
+          matches = [{
+            ...onlyExactTextMatch,
+            attachmentEvidence: "pre_submit_verified_post_submit_unavailable"
+          }];
+        }
+      }
       let expectedText = null;
       if (job.request?.delivery === "attachment") {
         expectedText = [
@@ -73176,8 +73440,8 @@ var Coordinator = class {
       }
       return {
         matches,
-        candidateCount: candidates.length,
-        mismatch: expectedText && candidates.length ? semanticMismatchDetails(expectedText, candidates.at(-1).text) : null
+        candidateCount: userCandidates.length,
+        mismatch: expectedText && userCandidates.length ? semanticMismatchDetails(expectedText, userCandidates.at(-1).text) : null
       };
     } finally {
       await this.browserManager.releasePage(lease.jobId);

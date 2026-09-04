@@ -1697,6 +1697,15 @@ export class StateStore extends EventEmitter {
     };
     for (const row of rows) {
       if (!outstandingStates.has(row.state)) continue;
+      if (
+        new Set(["submission_uncertain", "response_uncertain", "quarantined"]).has(row.state) &&
+        !row.quarantined_lane
+      ) {
+        // Uncertainty is terminal. It remains operationally outstanding only
+        // while its exact lane quarantine is active; explicit acknowledgement
+        // resolves that barrier without rewriting historical job state.
+        continue;
+      }
       let logicalState;
       if (
         row.state === "input_required" || row.state === "input_invalid" ||
@@ -1937,6 +1946,22 @@ export class StateStore extends EventEmitter {
         FROM completion_subscriptions
         WHERE chain_id = ? AND state = 'open' AND (? = 'attention_required' OR mode != 'manual')
       `).run(sequence, now, chainId, state);
+      this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?),
+            claim_id=NULL, claimed_at=NULL,
+            claim_kind=NULL, claim_expires_at=NULL, next_attempt_at=NULL,
+            last_error_json='{"code":"COMPLETION_SUPERSEDED"}'
+        WHERE state IN ('pending','claimed','delivered')
+          AND subscription_id IN (
+            SELECT id FROM completion_subscriptions
+            WHERE chain_id=? AND state='open'
+          )
+          AND id < (
+            SELECT MAX(newer.id) FROM completion_deliveries newer
+            WHERE newer.subscription_id=completion_deliveries.subscription_id
+          )
+      `).run(now, chainId);
     }
     if (TERMINAL_CHAIN_STATES.has(state)) {
       this.db.prepare(`
@@ -3013,6 +3038,11 @@ export class StateStore extends EventEmitter {
     const counts = (rows) => Object.fromEntries(rows.map((row) => [row.state, Number(row.count)]));
     const subscriptions = { open: 0, closed: 0, ...counts(subscriptionRows) };
     const deliveries = { pending: 0, claimed: 0, delivered: 0, acknowledged: 0, ...counts(deliveryRows) };
+    const superseded = Number(this.db.prepare(`
+      SELECT COUNT(*) count FROM completion_deliveries
+      WHERE state='acknowledged' AND json_extract(last_error_json, '$.code')='COMPLETION_SUPERSEDED'
+    `).get()?.count || 0);
+    deliveries.acknowledged = Math.max(0, deliveries.acknowledged - superseded);
     const retry = this.db.prepare(`
       SELECT COUNT(*) AS scheduled,
              MIN(next_attempt_at) AS next_attempt_at,
@@ -3028,7 +3058,8 @@ export class StateStore extends EventEmitter {
       subscriptions: { ...subscriptions, total: subscriptions.open + subscriptions.closed },
       deliveries: {
         ...deliveries,
-        total: deliveries.pending + deliveries.claimed + deliveries.delivered + deliveries.acknowledged,
+        superseded,
+        total: deliveries.pending + deliveries.claimed + deliveries.delivered + deliveries.acknowledged + superseded,
       },
       retry: {
         scheduled: Number(retry?.scheduled || 0),
@@ -3285,6 +3316,19 @@ export class StateStore extends EventEmitter {
     });
   }
 
+  requeueExpiredSubscriberClaims(now = new Date().toISOString()) {
+    const changed = this.db.prepare(`
+      UPDATE completion_deliveries
+      SET state='pending', claim_id=NULL, claimed_at=NULL,
+          claim_kind=NULL, claim_expires_at=NULL
+      WHERE state='claimed' AND claim_kind='subscriber'
+        AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?
+    `).run(now);
+    const count = Number(changed.changes);
+    if (count > 0) this.emit("change", null);
+    return count;
+  }
+
   publicCompletionDelivery(delivery, subscription) {
     return {
       deliveryId: delivery.id,
@@ -3326,6 +3370,13 @@ export class StateStore extends EventEmitter {
         WHERE d.id = ? AND d.subscription_id = ?
       `).get(deliveryId, subscription.id);
       if (!row) throw codedError("COMPLETION_NOT_FOUND", "No accessible completion delivery matches that reference.");
+      if (parse(row.last_error_json)?.code === "COMPLETION_SUPERSEDED") {
+        throw codedError(
+          "COMPLETION_SUPERSEDED",
+          "A newer durable completion state replaced this delivery. Claim the current delivery before acknowledging it.",
+          { safeToRetry: true },
+        );
+      }
       this.db.prepare(`
         UPDATE completion_deliveries
         SET state='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?),
@@ -3476,6 +3527,13 @@ export class StateStore extends EventEmitter {
   rebuildCompletionDeliveries() {
     return this.transaction(() => {
       const now = new Date().toISOString();
+      const reclaimed = this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='pending', claim_id=NULL, claimed_at=NULL,
+            claim_kind=NULL, claim_expires_at=NULL
+        WHERE state='claimed' AND claim_kind='subscriber'
+          AND claim_expires_at IS NOT NULL AND claim_expires_at <= ?
+      `).run(now);
       const terminalChains = this.db.prepare(`
         SELECT c.id, c.active_job_id, c.state
         FROM job_chains c
@@ -3496,7 +3554,24 @@ export class StateStore extends EventEmitter {
         WHERE s.state='open' AND s.mode!='manual'
           AND e.state IN (${Array.from(WAKE_CHAIN_STATES).map(() => "?").join(",")})
       `).run(now, ...WAKE_CHAIN_STATES);
-      return { chainEvents: terminalChains.length, deliveries: Number(inserted.changes) };
+      const superseded = this.db.prepare(`
+        UPDATE completion_deliveries
+        SET state='acknowledged', acknowledged_at=COALESCE(acknowledged_at, ?),
+            claim_id=NULL, claimed_at=NULL,
+            claim_kind=NULL, claim_expires_at=NULL, next_attempt_at=NULL,
+            last_error_json='{"code":"COMPLETION_SUPERSEDED"}'
+        WHERE state IN ('pending','claimed','delivered')
+          AND id < (
+            SELECT MAX(newer.id) FROM completion_deliveries newer
+            WHERE newer.subscription_id=completion_deliveries.subscription_id
+          )
+      `).run(now);
+      return {
+        chainEvents: terminalChains.length,
+        deliveries: Number(inserted.changes),
+        reclaimedClaims: Number(reclaimed.changes),
+        supersededDeliveries: Number(superseded.changes),
+      };
     });
   }
 

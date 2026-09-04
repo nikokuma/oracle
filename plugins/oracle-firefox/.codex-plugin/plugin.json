@@ -1,6 +1,6 @@
 {
   "name": "oracle-firefox",
-  "version": "1.7.0+codex.20260809170000",
+  "version": "1.7.2+codex.20260904231117",
   "description": "Run durable, capability-isolated ChatGPT Pro consultations through safely selected Firefox, native macOS Chrome, or Safari backends.",
   "author": {
     "name": "nikokuma",
@@ -35,6 +35,7 @@
       "Context Bundling",
       "Validated ZIP Uploads",
       "ChatGPT Consultation",
+      "Explicit Draft Discard Authorization",
       "ChatGPT Projects",
       "Existing Chat Continuation",
       "Generated File Downloads",

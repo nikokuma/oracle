@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -131,7 +131,7 @@ test("CLI publishes version, session attention, and start-receipt recovery", { t
       env: broker.env,
       timeout: 10_000,
     })).stdout);
-    assert.deepEqual(version, { version: "1.7.0" });
+    assert.deepEqual(version, { version: "1.7.2" });
 
     const attention = JSON.parse((await execFileAsync(process.execPath, [cliPath, "list-attention"], {
       env: broker.env,

@@ -40,7 +40,7 @@ The wrapper adds only `--plugin-dir <stable-install-path>`. It preserves every o
 
 ### Claude Desktop
 
-Download and open [`oracle-firefox-1.7.0.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.7.0.mcpb). During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
+Install [`oracle-firefox-1.7.2.mcpb`](plugins/oracle-firefox/releases/oracle-firefox-1.7.2.mcpb), which includes the response, draft, and Pro-verification reliability fixes. During installation, set the Node executable to a Node.js 24+ command or path if `node` on your PATH is older.
 
 ## Choose a browser
 
@@ -148,6 +148,8 @@ Job status, wait, result, and list views expose `executionMode`, `blockedReason`
 
 When an agent uses the bundled Oracle skill, the default is `responseFailurePolicy=retry-once`, recovery-chain following, and one harness-appropriate completion handoff. You do not need to repeat those instructions. Explicit requests such as “do not retry,” “notify me only,” or “no automation” override the skill default. Direct CLI/MCP callers that bypass the skill retain the conservative raw default `responseFailurePolicy=report`.
 
+If ChatGPT has preserved unsent composer text, Oracle fails closed by default. After the user explicitly authorizes discarding that exact draft, MCP callers may set `discardExistingDraft: true`, or CLI callers may add `--discard-existing-draft`, to clear text once before inserting the authorized prompt. The authorization never removes or replaces attachments.
+
 `job_wait` and `completion_wait` are event-driven inside the broker; they sleep until durable state changes rather than repeatedly checking SQLite. The CLI watcher follows an authorized recovery/evidence chain and can display one macOS notification. A local watcher uses no model tokens while idle, but it cannot resume a stopped model turn unless its host provides a wake API. Codex can attach one task heartbeat to the exact chain; without a host wake API, use the notification and resume manually.
 
 New logical jobs receive a capability-bound durable completion subscription with claim, delivered, and acknowledgement states. Completion events contain only safe routing state, never the prompt, answer, cookies, capability secrets, paths, or browser-profile contents. Legacy completion files are disabled unless `ORACLE_FIREFOX_LEGACY_COMPLETION_FILES=1` is explicitly set while operating serially.
@@ -165,7 +167,7 @@ The default `responseFailurePolicy=report` sends nothing else. With `retry-once`
 - Pro is selected and visibly verified before each message unless the caller explicitly requests `current`.
 - Each authorization allows at most one Send-button click. An explicitly enabled one-shot recovery receives its own deterministic child authorization.
 - The broker writes `submit_intent` to SQLite before clicking Send and never retries past that boundary.
-- Existing drafts and foreign attachments are never cleared or overwritten.
+- Existing drafts fail closed unless the user gives explicit one-start text-discard authorization; foreign attachments are never cleared or overwritten.
 - The whole composer message must match after Unicode and line-ending normalization.
 - Attachments must exactly match, finish processing, and leave the composer send-ready.
 - Assistant completion is bound to the exact submitted user turn, not the latest visible response or turn count.

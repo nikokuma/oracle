@@ -14,14 +14,14 @@ import { fileURLToPath } from "node:url";
 
 // src/generated-build-info.mjs
 var GENERATED_BUILD_INFO = Object.freeze({
-  "packageVersion": "1.7.0",
+  "packageVersion": "1.7.2",
   "protocolVersion": 9,
   "minimumReaderProtocol": 8,
   "minimumWriterProtocol": 9,
   "schemaVersion": 8,
-  "releaseSequence": 1700,
-  "sourceDigest": "5a793ded893553106b214700d502a8bbe88af7e081571805b161c6afd7420ec9",
-  "buildId": "oracle-firefox-1.7.0-5a793ded89355310"
+  "releaseSequence": 1705,
+  "sourceDigest": "81b641123e08d668eb9602922546f24e0eaa5478d6862f51f0eea2ccf598d5e9",
+  "buildId": "oracle-firefox-1.7.2-81b641123e08d668"
 });
 
 // src/build-info.mjs
@@ -1251,7 +1251,8 @@ function common(args2) {
     maxAutomaticEvidenceReplies: number(args2, ["--max-evidence-replies"], 3),
     responseFailurePolicy: option(args2, ["--response-failure-policy"], "report"),
     completionMode: option(args2, ["--completion-mode"], "manual"),
-    headless: bool(args2, "--headless")
+    headless: bool(args2, "--headless"),
+    discardExistingDraft: bool(args2, "--discard-existing-draft")
   };
 }
 function target(args2) {

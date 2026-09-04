@@ -6,6 +6,12 @@ Keep the root `jobId`, `jobHandle`, `completionHandle`, `receiptRecoveryHandle`,
 
 `RECEIPT_MAY_EXIST` means start delivery was ambiguous. Call `recover_start_receipt` with the preserved authorization id, digest, and receipt handle. This rotates access to the same committed chain; never create a new authorization or replay the request. `receiptState: "recovered"` confirms recovery.
 
+## Draft errors
+
+`COMPOSER_DRAFT_PRESENT` means text remains in the destination composer. The broker rolls back only its own unchanged text-only draft when that same execution fails before Send. It preserves existing drafts, edited text, attachments, and every possible submission.
+
+Do not repeatedly create new starts against the same draft. A remaining draft requires the user to clear it or explicitly authorize `discardExistingDraft: true` for one exact new start. If submission may have occurred, reconcile that job first; draft discard never authorizes a duplicate Send.
+
 ## Response failure
 
 `responseDisposition: "reasoning_stopped"` or `"transient_failure"` is a positively classified failure tied to the exact assistant turn. Similar words inside ordinary prose do not count.

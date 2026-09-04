@@ -247,7 +247,7 @@ export class Coordinator {
     this.attentionWakeTimer = null;
     this.abandonedClaimSweepTimer = null;
     this.onStoreChange = (job) => {
-      if (this.legacyCompletionFiles) this.queueCompletionRecord(job.rootJobId || job.id);
+      if (this.legacyCompletionFiles && job) this.queueCompletionRecord(job.rootJobId || job.id);
       this.queueSystemNotifications();
       this.scheduleAttentionWake();
       this.schedule();
@@ -775,6 +775,7 @@ export class Coordinator {
       if (this.closed || this.safeMode) return;
       try {
         const recovered = this.sweepAbandonedExecutions();
+        this.store.requeueExpiredSubscriberClaims();
         if (recovered.length && !this.draining) this.schedule();
       } catch (error) {
         this.safeMode = true;
@@ -1167,11 +1168,24 @@ export class Coordinator {
     try {
       await openExistingConversation(lease.page, { conversationUrl: job.conversationUrl, title: job.chatTitle });
       const snapshot = await assistantSnapshot(lease.page);
-      const candidates = snapshot.turns.filter((turn) =>
-        turn.role === "user" &&
-        attachmentManifestKey(turn.attachments) === attachmentManifestKey(job.attachmentManifest || [])
+      const userCandidates = snapshot.turns.filter((turn) => turn.role === "user");
+      const expectedManifest = job.attachmentManifest || [];
+      const expectedManifestKey = attachmentManifestKey(expectedManifest);
+      const exactTextMatches = userCandidates.filter((turn) =>
+        semanticTextHash(turn.text) === job.submittedMessageHash
       );
-      const matches = candidates.filter((turn) => semanticTextHash(turn.text) === job.submittedMessageHash);
+      let matches = exactTextMatches.filter((turn) =>
+        attachmentManifestKey(turn.attachments) === expectedManifestKey
+      );
+      if (matches.length === 0 && expectedManifest.length > 0 && exactTextMatches.length === 1) {
+        const [onlyExactTextMatch] = exactTextMatches;
+        if (Array.isArray(onlyExactTextMatch.attachments) && onlyExactTextMatch.attachments.length === 0) {
+          matches = [{
+            ...onlyExactTextMatch,
+            attachmentEvidence: "pre_submit_verified_post_submit_unavailable",
+          }];
+        }
+      }
       let expectedText = null;
       if (job.request?.delivery === "attachment") {
         expectedText = [
@@ -1184,9 +1198,9 @@ export class Coordinator {
       }
       return {
         matches,
-        candidateCount: candidates.length,
-        mismatch: expectedText && candidates.length
-          ? semanticMismatchDetails(expectedText, candidates.at(-1).text)
+        candidateCount: userCandidates.length,
+        mismatch: expectedText && userCandidates.length
+          ? semanticMismatchDetails(expectedText, userCandidates.at(-1).text)
           : null,
       };
     } finally {
